@@ -351,7 +351,7 @@ const Services: React.FC = () => {
                             s.content.toLowerCase().includes(searchTerm.toLowerCase()) ||
                             (s.series || '').toLowerCase().includes(searchTerm.toLowerCase());
       return matchesType && matchesSeries && matchesSearch;
-    }).sort((a, b) => new Date(a.date).getTime() - new Date(a.date).getTime());
+    }).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   }, [services, selectedType, selectedSeries, searchTerm, statsPeriod]);
 
   const SERVICE_HEADERS = [

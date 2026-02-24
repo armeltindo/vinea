@@ -214,7 +214,7 @@ const Meditations: React.FC = () => {
       return m.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
              (m.excerpt || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
              m.scripture.toLowerCase().includes(searchTerm.toLowerCase());
-    }).sort((a, b) => new Date(a.date).getTime() - new Date(a.date).getTime());
+    }).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   }, [meditations, searchTerm, statsPeriod]);
 
   const handleDownloadTemplate = () => {

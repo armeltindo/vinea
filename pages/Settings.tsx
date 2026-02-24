@@ -399,7 +399,7 @@ const Settings: React.FC = () => {
     const load = async () => {
       const [settings, users] = await Promise.all([getChurchSettings(), getAdminUsers()]);
       if (settings) {
-        setChurchInfo({
+        const loaded = {
           name: settings.name || 'Vinea Community',
           slogan: settings.slogan || 'Enracinés en Christ',
           phone: settings.phone || '',
@@ -410,7 +410,16 @@ const Settings: React.FC = () => {
           currency: settings.currency || 'F CFA',
           language: settings.language || 'Français',
           timezone: settings.timezone || 'UTC',
-        });
+        };
+        setChurchInfo(loaded);
+        // Sync to localStorage so Sidebar gets correct values on load
+        localStorage.setItem('vinea_church_info', JSON.stringify({
+          name: loaded.name,
+          logo: loaded.logo,
+          primaryColor: loaded.primaryColor,
+          currency: loaded.currency,
+        }));
+        window.dispatchEvent(new Event('vinea_church_info_updated'));
       }
       if (users.length > 0) {
         setAdminUsers(users.map((u: any) => ({
@@ -449,6 +458,15 @@ const Settings: React.FC = () => {
     localStorage.setItem('vinea_service_types', JSON.stringify(serviceTypes));
     localStorage.setItem('vinea_departments', JSON.stringify(departments));
     localStorage.setItem('vinea_notification_settings', JSON.stringify(notificationSettings));
+
+    // Persist church info for Sidebar (name, logo, primaryColor) and formatCurrency() (currency)
+    localStorage.setItem('vinea_church_info', JSON.stringify({
+      name: churchInfo.name,
+      logo: churchInfo.logo,
+      primaryColor: churchInfo.primaryColor,
+      currency: churchInfo.currency,
+    }));
+    window.dispatchEvent(new Event('vinea_church_info_updated'));
 
     upsertChurchSettings({
       id: 'main',

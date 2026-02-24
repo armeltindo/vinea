@@ -257,7 +257,7 @@ const Finances: React.FC = () => {
       const matchesType = typeFilter === 'Tous' || op.type === typeFilter;
       const matchesCategory = !selectedCategoryFilter || op.category === selectedCategoryFilter;
       return matchesSearch && matchesType && matchesCategory;
-    }).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    }).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   }, [operations, searchTerm, typeFilter, members, selectedCategoryFilter, startDate, endDate]);
 
   const campaignsWithStats = useMemo(() => {

@@ -229,7 +229,7 @@ const Meetings: React.FC = () => {
                           m.location.toLowerCase().includes(searchTerm.toLowerCase());
       const matchesCat = selectedCategory === 'Toutes' || m.category === selectedCategory;
       return matchesSearch && matchesCat;
-    }).sort((a, b) => new Date(a.date).getTime() - new Date(a.date).getTime());
+    }).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   }, [meetings, searchTerm, selectedCategory]);
 
   const handleFormSubmit = async (e: React.FormEvent) => {

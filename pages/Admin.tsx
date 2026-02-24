@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import Card from '../components/Card';
 import LogoutModal from '../components/LogoutModal';
+import { supabase } from '../lib/supabase';
 import { 
   User, 
   Shield, 
@@ -34,9 +35,9 @@ const Admin: React.FC = () => {
   const [activeSubTab, setActiveSubTab] = useState('profile');
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
-  const handleLogout = () => {
-    console.log("Utilisateur déconnecté (depuis Admin)");
+  const handleLogout = async () => {
     setShowLogoutConfirm(false);
+    await supabase.auth.signOut();
   };
 
   return (

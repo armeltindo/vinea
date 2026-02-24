@@ -224,22 +224,25 @@ const App: React.FC = () => {
   const ALL_PERMISSIONS = ['dashboard', 'members', 'visitors', 'spiritual', 'discipleship', 'attendance', 'planning', 'services', 'meetings', 'events', 'finances', 'meditations', 'reports', 'settings', 'admin'];
 
   const applyAdminUser = (adminUser: any, email: string) => {
+    let perms: string[];
     if (!adminUser || adminUser.role === 'Super Admin') {
       setCurrentUserRole('Super Admin');
-      setCurrentUserPermissions(ALL_PERMISSIONS);
+      perms = ALL_PERMISSIONS;
+      setCurrentUserPermissions(perms);
       if (adminUser) {
         setAdminName(adminUser.full_name ?? 'Admin Vinea');
         setAdminAvatar(adminUser.avatar ?? `https://api.dicebear.com/7.x/avataaars/svg?seed=${email}`);
       }
     } else {
-      const perms: string[] = adminUser.permissions?.length > 2
-        ? adminUser.permissions
-        : ALL_PERMISSIONS;
+      perms = adminUser.permissions?.length > 2 ? adminUser.permissions : ALL_PERMISSIONS;
       setCurrentUserRole(adminUser.role ?? 'Administrateur');
       setCurrentUserPermissions(perms);
       setAdminName(adminUser.full_name ?? 'Admin Vinea');
       setAdminAvatar(adminUser.avatar ?? `https://api.dicebear.com/7.x/avataaars/svg?seed=${email}`);
     }
+    // Sync permissions to localStorage so Sidebar shows the correct menu items
+    localStorage.setItem('vinea_user_permissions', JSON.stringify(perms));
+    window.dispatchEvent(new Event('vinea_auth_updated'));
   };
 
   useEffect(() => {
@@ -324,7 +327,6 @@ const App: React.FC = () => {
                      (activeTab === 'spiritual' && currentUserPermissions.includes('dashboard'));
 
     if (!canAccess && activeTab !== 'dashboard') {
-      setActiveTab('dashboard');
       return <Dashboard onNavigate={setActiveTab} adminName={adminName} />;
     }
 

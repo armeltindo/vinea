@@ -149,7 +149,7 @@ const RECURRENCE_OPTIONS: ActivityRecurrence[] = [
 ];
 
 const Planning: React.FC = () => {
-  const [churchName, setChurchName] = useState('Vineala');
+  const [churchName, setChurchName] = useState('Vinea');
   const [departments, setDepartments] = useState<DepartmentInfo[]>([]);
   const [activities, setActivities] = useState<DepartmentActivity[]>([]);
   const [members, setMembers] = useState<Member[]>([]);

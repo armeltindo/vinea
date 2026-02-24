@@ -221,28 +221,39 @@ const App: React.FC = () => {
 
 
   // --- Supabase Auth ---
+  const ALL_PERMISSIONS = ['dashboard', 'members', 'visitors', 'spiritual', 'discipleship', 'attendance', 'planning', 'services', 'meetings', 'events', 'finances', 'meditations', 'reports', 'settings', 'admin'];
+
+  const applyAdminUser = (adminUser: any, email: string) => {
+    if (!adminUser || adminUser.role === 'Super Admin') {
+      setCurrentUserRole('Super Admin');
+      setCurrentUserPermissions(ALL_PERMISSIONS);
+      if (adminUser) {
+        setAdminName(adminUser.full_name ?? 'Admin Vinea');
+        setAdminAvatar(adminUser.avatar ?? `https://api.dicebear.com/7.x/avataaars/svg?seed=${email}`);
+      }
+    } else {
+      const perms: string[] = adminUser.permissions?.length > 2
+        ? adminUser.permissions
+        : ALL_PERMISSIONS;
+      setCurrentUserRole(adminUser.role ?? 'Administrateur');
+      setCurrentUserPermissions(perms);
+      setAdminName(adminUser.full_name ?? 'Admin Vinea');
+      setAdminAvatar(adminUser.avatar ?? `https://api.dicebear.com/7.x/avataaars/svg?seed=${email}`);
+    }
+  };
+
   useEffect(() => {
     // Vérifier la session existante au démarrage
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.user) {
         getAdminUserByEmail(session.user.email ?? '').then(adminUser => {
-          if (adminUser) {
-            const perms: string[] = adminUser.permissions?.includes('spiritual')
-              ? adminUser.permissions
-              : [...(adminUser.permissions ?? ['dashboard']), 'spiritual'];
-            setCurrentUserRole(adminUser.role ?? 'Super Admin');
-            setCurrentUserPermissions(perms);
-            setAdminName(adminUser.full_name ?? 'Admin Vinea');
-            setAdminAvatar(adminUser.avatar ?? `https://api.dicebear.com/7.x/avataaars/svg?seed=${session.user.email}`);
-          } else {
-            // Super Admin par défaut si aucun enregistrement
-            setCurrentUserRole('Super Admin');
-            setCurrentUserPermissions(['dashboard', 'members', 'visitors', 'spiritual', 'discipleship', 'attendance', 'planning', 'services', 'meetings', 'events', 'finances', 'meditations', 'reports', 'settings', 'admin']);
-          }
+          applyAdminUser(adminUser, session.user.email ?? '');
           setIsAuthenticated(true);
+          setAuthLoading(false);
         });
+      } else {
+        setAuthLoading(false);
       }
-      setAuthLoading(false);
     });
 
     // Écouter les changements de session

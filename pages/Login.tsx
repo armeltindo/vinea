@@ -451,14 +451,11 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
       // Récupérer le profil administrateur
       const adminUser = await getAdminUserByEmail(data.user.email ?? '');
 
+      const ALL_PERMISSIONS = ['dashboard', 'members', 'visitors', 'spiritual', 'discipleship', 'attendance', 'planning', 'services', 'meetings', 'events', 'finances', 'meditations', 'reports', 'settings', 'admin'];
+
       if (!adminUser) {
         // Super Admin par défaut si aucun enregistrement admin_users
-        onLogin(
-          email,
-          'Super Admin',
-          ['dashboard', 'members', 'visitors', 'spiritual', 'discipleship', 'attendance', 'planning', 'services', 'meetings', 'events', 'finances', 'meditations', 'reports', 'settings', 'admin'],
-          data.user.email ?? 'Admin'
-        );
+        onLogin(email, 'Super Admin', ALL_PERMISSIONS, data.user.email ?? 'Admin');
         return;
       }
 
@@ -469,8 +466,10 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
         return;
       }
 
-      const perms: string[] = adminUser.permissions ?? ['dashboard'];
-      if (!perms.includes('spiritual')) perms.push('spiritual');
+      // Super Admin ou permissions insuffisantes → accès complet
+      const perms: string[] = (adminUser.role === 'Super Admin' || !adminUser.permissions || adminUser.permissions.length <= 2)
+        ? ALL_PERMISSIONS
+        : adminUser.permissions;
       onLogin(email, adminUser.role ?? 'Administrateur', perms, adminUser.full_name);
 
     } catch (err) {

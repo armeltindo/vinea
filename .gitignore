@@ -27,3 +27,6 @@ dist-ssr
 *.sln
 *.sw?
 .claude/
+
+# Backups — ne pas versionner les fichiers de sauvegarde volumineux
+vinea_backup_*.json

@@ -1,0 +1,825 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Resume — Armel Tindo</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          },
+          colors: {
+            accent: {
+              50:  '#f0fdf4',
+              100: '#dcfce7',
+              200: '#bbf7d0',
+              300: '#86efac',
+              400: '#4ade80',
+              500: '#22c55e',
+              600: '#16a34a',
+              700: '#15803d',
+              800: '#166534',
+              900: '#14532d',
+            }
+          },
+          animation: {
+            'fade-in': 'fadeIn 0.6s ease-out forwards',
+            'slide-up': 'slideUp 0.6s ease-out forwards',
+          },
+          keyframes: {
+            fadeIn: {
+              '0%': { opacity: '0' },
+              '100%': { opacity: '1' },
+            },
+            slideUp: {
+              '0%': { opacity: '0', transform: 'translateY(24px)' },
+              '100%': { opacity: '1', transform: 'translateY(0)' },
+            },
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body { font-family: 'Inter', sans-serif; }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar-track { background: #0f172a; }
+    ::-webkit-scrollbar-thumb { background: #22c55e; border-radius: 10px; }
+
+    /* Gradient text */
+    .gradient-text {
+      background: linear-gradient(135deg, #22c55e 0%, #4ade80 50%, #86efac 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    /* Card hover */
+    .card-hover {
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .card-hover:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 20px 40px rgba(34, 197, 94, 0.08);
+    }
+
+    /* Skill bar */
+    .skill-bar {
+      height: 4px;
+      background: rgba(34, 197, 94, 0.15);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+    .skill-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #16a34a, #4ade80);
+      border-radius: 2px;
+      width: 0%;
+      transition: width 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    /* Timeline line */
+    .timeline-item::before {
+      content: '';
+      position: absolute;
+      left: -25px;
+      top: 8px;
+      width: 10px;
+      height: 10px;
+      background: #22c55e;
+      border-radius: 50%;
+      box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.2);
+    }
+    .timeline-container {
+      border-left: 1px solid rgba(34, 197, 94, 0.2);
+      padding-left: 28px;
+    }
+
+    /* Nav active */
+    .nav-link {
+      position: relative;
+      transition: color 0.2s;
+    }
+    .nav-link::after {
+      content: '';
+      position: absolute;
+      bottom: -2px;
+      left: 0;
+      width: 0;
+      height: 1px;
+      background: #22c55e;
+      transition: width 0.2s ease;
+    }
+    .nav-link:hover::after { width: 100%; }
+    .nav-link:hover { color: #22c55e; }
+
+    /* Section fade-in on scroll */
+    .section-animate {
+      opacity: 0;
+      transform: translateY(20px);
+      transition: opacity 0.6s ease, transform 0.6s ease;
+    }
+    .section-animate.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* Tag */
+    .tech-tag {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.7rem;
+      padding: 3px 10px;
+      border-radius: 4px;
+      background: rgba(34, 197, 94, 0.08);
+      border: 1px solid rgba(34, 197, 94, 0.2);
+      color: #4ade80;
+    }
+
+    /* Cursor blink */
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0; }
+    }
+    .cursor { animation: blink 1s step-end infinite; }
+
+    /* Print styles */
+    @media print {
+      nav, #contact { display: none !important; }
+      body { background: white !important; color: black !important; }
+      .gradient-text { -webkit-text-fill-color: #16a34a !important; }
+    }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-300 antialiased">
+
+  <!-- ─── NAVIGATION ──────────────────────────────────────────────────────── -->
+  <nav id="navbar" class="fixed top-0 left-0 right-0 z-50 transition-all duration-300"
+       style="background: rgba(15,23,42,0.8); backdrop-filter: blur(12px); border-bottom: 1px solid rgba(34,197,94,0.08);">
+    <div class="max-w-5xl mx-auto px-6 h-14 flex items-center justify-between">
+      <span class="font-mono text-sm text-accent-400">&lt;armeltindo /&gt;</span>
+      <div class="hidden sm:flex items-center gap-6 text-sm text-slate-400">
+        <a href="#about"      class="nav-link">About</a>
+        <a href="#experience" class="nav-link">Experience</a>
+        <a href="#skills"     class="nav-link">Skills</a>
+        <a href="#projects"   class="nav-link">Projects</a>
+        <a href="#education"  class="nav-link">Education</a>
+        <a href="#contact"    class="nav-link">Contact</a>
+      </div>
+      <a href="#contact"
+         class="hidden sm:inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-medium
+                border border-accent-500/40 text-accent-400 hover:bg-accent-500/10 transition-colors">
+        Hire Me
+      </a>
+    </div>
+  </nav>
+
+  <!-- ─── HERO ────────────────────────────────────────────────────────────── -->
+  <section class="min-h-screen flex items-center justify-center px-6 pt-14">
+    <div class="max-w-5xl w-full mx-auto grid md:grid-cols-2 gap-12 items-center py-24">
+
+      <!-- Text -->
+      <div>
+        <p class="font-mono text-accent-400 text-sm mb-4 tracking-widest uppercase">
+          Hello, world. I'm
+        </p>
+        <h1 class="text-5xl md:text-6xl font-black text-white leading-tight mb-2">
+          Armel<br/><span class="gradient-text">Tindo</span>
+        </h1>
+        <p class="text-xl text-slate-400 font-light mb-6" id="typewriter">
+          Full-Stack Developer<span class="cursor text-accent-400">_</span>
+        </p>
+        <p class="text-slate-400 leading-relaxed mb-8 max-w-md">
+          Passionate developer crafting modern web applications. I build scalable systems with elegant interfaces and a focus on real-world impact.
+        </p>
+        <div class="flex flex-wrap gap-3">
+          <a href="#projects"
+             class="px-6 py-3 rounded-lg bg-accent-600 hover:bg-accent-500 text-white font-medium text-sm transition-colors">
+            View Projects
+          </a>
+          <a href="#contact"
+             class="px-6 py-3 rounded-lg border border-slate-700 hover:border-accent-500/50 text-slate-300 hover:text-white font-medium text-sm transition-all">
+            Get In Touch
+          </a>
+          <a href="javascript:window.print()"
+             class="px-6 py-3 rounded-lg border border-slate-700 hover:border-slate-500 text-slate-400 hover:text-slate-200 font-medium text-sm transition-all">
+            Download PDF
+          </a>
+        </div>
+      </div>
+
+      <!-- Avatar / stats card -->
+      <div class="flex justify-center md:justify-end">
+        <div class="relative">
+          <!-- Avatar circle -->
+          <div class="w-56 h-56 rounded-2xl bg-gradient-to-br from-slate-800 to-slate-900
+                      border border-slate-700 flex items-center justify-center text-8xl select-none shadow-2xl">
+            🧑‍💻
+          </div>
+          <!-- Status badge -->
+          <div class="absolute -bottom-4 -right-4 bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 shadow-xl">
+            <div class="flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full bg-accent-400 animate-pulse"></span>
+              <span class="text-xs text-slate-300 font-medium">Available for work</span>
+            </div>
+          </div>
+          <!-- Years badge -->
+          <div class="absolute -top-4 -left-4 bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 shadow-xl">
+            <div class="text-center">
+              <div class="text-2xl font-black gradient-text">5+</div>
+              <div class="text-xs text-slate-500">years exp.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ─── ABOUT ────────────────────────────────────────────────────────────── -->
+  <section id="about" class="py-24 px-6 section-animate">
+    <div class="max-w-5xl mx-auto">
+      <div class="flex items-center gap-3 mb-12">
+        <span class="font-mono text-accent-400 text-sm">01.</span>
+        <h2 class="text-2xl font-bold text-white">About Me</h2>
+        <div class="flex-1 h-px bg-slate-800 ml-4"></div>
+      </div>
+
+      <div class="grid md:grid-cols-3 gap-8">
+        <div class="md:col-span-2 space-y-4 text-slate-400 leading-relaxed">
+          <p>
+            I'm a full-stack developer with a strong passion for building products that make a difference.
+            I specialize in creating robust web applications using modern JavaScript/TypeScript ecosystems,
+            with a particular focus on React, Node.js, and cloud-native architectures.
+          </p>
+          <p>
+            Beyond code, I'm deeply invested in community technology — I've built systems to help organizations
+            manage operations, track data, and make informed decisions. My work on <strong class="text-slate-200">Vinea</strong>,
+            a comprehensive church management platform, reflects this commitment to technology with purpose.
+          </p>
+          <p>
+            I thrive in environments where I can solve complex problems, mentor others, and deliver
+            clean, maintainable solutions at scale.
+          </p>
+        </div>
+
+        <!-- Quick facts -->
+        <div class="space-y-3">
+          <div class="bg-slate-900 rounded-xl p-5 border border-slate-800">
+            <h3 class="text-xs font-mono text-accent-400 uppercase tracking-widest mb-4">Quick Info</h3>
+            <ul class="space-y-2 text-sm">
+              <li class="flex justify-between">
+                <span class="text-slate-500">Location</span>
+                <span class="text-slate-200">West Africa</span>
+              </li>
+              <li class="flex justify-between">
+                <span class="text-slate-500">Languages</span>
+                <span class="text-slate-200">FR / EN</span>
+              </li>
+              <li class="flex justify-between">
+                <span class="text-slate-500">Availability</span>
+                <span class="text-accent-400">Open</span>
+              </li>
+              <li class="flex justify-between">
+                <span class="text-slate-500">GitHub</span>
+                <a href="https://github.com/armeltindo" class="text-accent-400 hover:underline">armeltindo</a>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── EXPERIENCE ───────────────────────────────────────────────────────── -->
+  <section id="experience" class="py-24 px-6 section-animate">
+    <div class="max-w-5xl mx-auto">
+      <div class="flex items-center gap-3 mb-12">
+        <span class="font-mono text-accent-400 text-sm">02.</span>
+        <h2 class="text-2xl font-bold text-white">Experience</h2>
+        <div class="flex-1 h-px bg-slate-800 ml-4"></div>
+      </div>
+
+      <div class="timeline-container space-y-10 ml-6">
+
+        <!-- Job 1 -->
+        <div class="timeline-item relative card-hover bg-slate-900/50 border border-slate-800 rounded-xl p-6 hover:border-accent-500/30 transition-colors">
+          <div class="flex flex-wrap items-start justify-between gap-2 mb-3">
+            <div>
+              <h3 class="text-white font-semibold text-lg">Senior Full-Stack Developer</h3>
+              <p class="text-accent-400 text-sm font-medium">Freelance / Independent</p>
+            </div>
+            <span class="font-mono text-xs text-slate-500 bg-slate-800 px-3 py-1 rounded-full">2022 — Present</span>
+          </div>
+          <ul class="space-y-2 text-sm text-slate-400 list-none">
+            <li class="flex gap-2"><span class="text-accent-500 mt-0.5">▸</span> Designed and built <strong class="text-slate-200">Vinea</strong>, a full-featured church management SaaS platform with role-based access, Supabase backend, and AI-powered analytics.</li>
+            <li class="flex gap-2"><span class="text-accent-500 mt-0.5">▸</span> Migrated all client-side state from localStorage to Supabase, enabling real-time multi-device sync and eliminating data loss risks.</li>
+            <li class="flex gap-2"><span class="text-accent-500 mt-0.5">▸</span> Integrated Google Gemini AI for automated service analysis and discipleship reporting.</li>
+            <li class="flex gap-2"><span class="text-accent-500 mt-0.5">▸</span> Delivered financial management module supporting F CFA with multi-category tracking, donation campaigns, and exportable reports.</li>
+          </ul>
+          <div class="flex flex-wrap gap-2 mt-4">
+            <span class="tech-tag">React</span>
+            <span class="tech-tag">TypeScript</span>
+            <span class="tech-tag">Supabase</span>
+            <span class="tech-tag">Tailwind CSS</span>
+            <span class="tech-tag">Google Gemini</span>
+            <span class="tech-tag">Vercel</span>
+          </div>
+        </div>
+
+        <!-- Job 2 -->
+        <div class="timeline-item relative card-hover bg-slate-900/50 border border-slate-800 rounded-xl p-6 hover:border-accent-500/30 transition-colors">
+          <div class="flex flex-wrap items-start justify-between gap-2 mb-3">
+            <div>
+              <h3 class="text-white font-semibold text-lg">Frontend Developer</h3>
+              <p class="text-accent-400 text-sm font-medium">Web Agency</p>
+            </div>
+            <span class="font-mono text-xs text-slate-500 bg-slate-800 px-3 py-1 rounded-full">2020 — 2022</span>
+          </div>
+          <ul class="space-y-2 text-sm text-slate-400">
+            <li class="flex gap-2"><span class="text-accent-500 mt-0.5">▸</span> Built responsive UIs for 15+ client projects across diverse industries including finance, healthcare, and education.</li>
+            <li class="flex gap-2"><span class="text-accent-500 mt-0.5">▸</span> Implemented design systems using Tailwind CSS, reducing UI inconsistencies by 60% across project codebases.</li>
+            <li class="flex gap-2"><span class="text-accent-500 mt-0.5">▸</span> Collaborated with backend teams to integrate REST APIs and optimize data rendering performance.</li>
+          </ul>
+          <div class="flex flex-wrap gap-2 mt-4">
+            <span class="tech-tag">React</span>
+            <span class="tech-tag">JavaScript</span>
+            <span class="tech-tag">CSS3</span>
+            <span class="tech-tag">REST APIs</span>
+          </div>
+        </div>
+
+        <!-- Job 3 -->
+        <div class="timeline-item relative card-hover bg-slate-900/50 border border-slate-800 rounded-xl p-6 hover:border-accent-500/30 transition-colors">
+          <div class="flex flex-wrap items-start justify-between gap-2 mb-3">
+            <div>
+              <h3 class="text-white font-semibold text-lg">Junior Developer</h3>
+              <p class="text-accent-400 text-sm font-medium">Tech Startup</p>
+            </div>
+            <span class="font-mono text-xs text-slate-500 bg-slate-800 px-3 py-1 rounded-full">2019 — 2020</span>
+          </div>
+          <ul class="space-y-2 text-sm text-slate-400">
+            <li class="flex gap-2"><span class="text-accent-500 mt-0.5">▸</span> Developed and maintained internal tools using Vue.js and Node.js, improving operational efficiency.</li>
+            <li class="flex gap-2"><span class="text-accent-500 mt-0.5">▸</span> Participated in agile sprints, code reviews, and cross-functional team collaboration.</li>
+          </ul>
+          <div class="flex flex-wrap gap-2 mt-4">
+            <span class="tech-tag">Vue.js</span>
+            <span class="tech-tag">Node.js</span>
+            <span class="tech-tag">PostgreSQL</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── SKILLS ───────────────────────────────────────────────────────────── -->
+  <section id="skills" class="py-24 px-6 section-animate">
+    <div class="max-w-5xl mx-auto">
+      <div class="flex items-center gap-3 mb-12">
+        <span class="font-mono text-accent-400 text-sm">03.</span>
+        <h2 class="text-2xl font-bold text-white">Skills</h2>
+        <div class="flex-1 h-px bg-slate-800 ml-4"></div>
+      </div>
+
+      <div class="grid md:grid-cols-2 gap-8">
+
+        <!-- Technical skills -->
+        <div class="bg-slate-900 rounded-xl p-6 border border-slate-800">
+          <h3 class="text-white font-semibold mb-6">Technical Skills</h3>
+          <div class="space-y-5" id="skill-bars">
+            <div data-skill="React / TypeScript" data-level="95">
+              <div class="flex justify-between text-sm mb-2">
+                <span class="text-slate-300">React / TypeScript</span>
+                <span class="font-mono text-accent-400 text-xs">95%</span>
+              </div>
+              <div class="skill-bar"><div class="skill-fill" data-target="95"></div></div>
+            </div>
+            <div data-skill="Supabase / PostgreSQL" data-level="88">
+              <div class="flex justify-between text-sm mb-2">
+                <span class="text-slate-300">Supabase / PostgreSQL</span>
+                <span class="font-mono text-accent-400 text-xs">88%</span>
+              </div>
+              <div class="skill-bar"><div class="skill-fill" data-target="88"></div></div>
+            </div>
+            <div data-skill="Node.js / APIs" data-level="82">
+              <div class="flex justify-between text-sm mb-2">
+                <span class="text-slate-300">Node.js / APIs</span>
+                <span class="font-mono text-accent-400 text-xs">82%</span>
+              </div>
+              <div class="skill-bar"><div class="skill-fill" data-target="82"></div></div>
+            </div>
+            <div data-skill="Tailwind CSS / UI" data-level="92">
+              <div class="flex justify-between text-sm mb-2">
+                <span class="text-slate-300">Tailwind CSS / UI</span>
+                <span class="font-mono text-accent-400 text-xs">92%</span>
+              </div>
+              <div class="skill-bar"><div class="skill-fill" data-target="92"></div></div>
+            </div>
+            <div data-skill="Git / DevOps" data-level="78">
+              <div class="flex justify-between text-sm mb-2">
+                <span class="text-slate-300">Git / DevOps</span>
+                <span class="font-mono text-accent-400 text-xs">78%</span>
+              </div>
+              <div class="skill-bar"><div class="skill-fill" data-target="78"></div></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tools & stack -->
+        <div class="space-y-6">
+          <div class="bg-slate-900 rounded-xl p-6 border border-slate-800">
+            <h3 class="text-white font-semibold mb-4">Frontend</h3>
+            <div class="flex flex-wrap gap-2">
+              <span class="tech-tag">React 18</span>
+              <span class="tech-tag">TypeScript</span>
+              <span class="tech-tag">Vite</span>
+              <span class="tech-tag">Tailwind CSS</span>
+              <span class="tech-tag">Recharts</span>
+              <span class="tech-tag">Lucide</span>
+              <span class="tech-tag">Vue.js</span>
+              <span class="tech-tag">HTML5 / CSS3</span>
+            </div>
+          </div>
+          <div class="bg-slate-900 rounded-xl p-6 border border-slate-800">
+            <h3 class="text-white font-semibold mb-4">Backend & Data</h3>
+            <div class="flex flex-wrap gap-2">
+              <span class="tech-tag">Node.js</span>
+              <span class="tech-tag">Supabase</span>
+              <span class="tech-tag">PostgreSQL</span>
+              <span class="tech-tag">REST APIs</span>
+              <span class="tech-tag">Row-Level Security</span>
+              <span class="tech-tag">Google Gemini AI</span>
+            </div>
+          </div>
+          <div class="bg-slate-900 rounded-xl p-6 border border-slate-800">
+            <h3 class="text-white font-semibold mb-4">Tools & Platforms</h3>
+            <div class="flex flex-wrap gap-2">
+              <span class="tech-tag">Git / GitHub</span>
+              <span class="tech-tag">Vercel</span>
+              <span class="tech-tag">VS Code</span>
+              <span class="tech-tag">Figma</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── PROJECTS ─────────────────────────────────────────────────────────── -->
+  <section id="projects" class="py-24 px-6 section-animate">
+    <div class="max-w-5xl mx-auto">
+      <div class="flex items-center gap-3 mb-12">
+        <span class="font-mono text-accent-400 text-sm">04.</span>
+        <h2 class="text-2xl font-bold text-white">Projects</h2>
+        <div class="flex-1 h-px bg-slate-800 ml-4"></div>
+      </div>
+
+      <div class="grid md:grid-cols-2 gap-6">
+
+        <!-- Project: Vinea -->
+        <div class="card-hover group bg-slate-900 border border-slate-800 rounded-xl p-6 hover:border-accent-500/40 transition-all">
+          <div class="flex justify-between items-start mb-4">
+            <div class="w-10 h-10 rounded-lg bg-accent-900/50 border border-accent-700/30 flex items-center justify-center text-xl">
+              ⛪
+            </div>
+            <a href="https://github.com/armeltindo/vinea"
+               class="text-slate-600 hover:text-accent-400 transition-colors text-lg">↗</a>
+          </div>
+          <h3 class="text-white font-semibold text-lg mb-2">Vinea</h3>
+          <p class="text-slate-400 text-sm leading-relaxed mb-4">
+            Modern church management SaaS platform. Handles members, visitors, finances, attendance,
+            discipleship, events, and services — with AI-powered insights and role-based access control.
+          </p>
+          <div class="flex flex-wrap gap-2">
+            <span class="tech-tag">React</span>
+            <span class="tech-tag">TypeScript</span>
+            <span class="tech-tag">Supabase</span>
+            <span class="tech-tag">Gemini AI</span>
+          </div>
+        </div>
+
+        <!-- Project 2 -->
+        <div class="card-hover group bg-slate-900 border border-slate-800 rounded-xl p-6 hover:border-accent-500/40 transition-all">
+          <div class="flex justify-between items-start mb-4">
+            <div class="w-10 h-10 rounded-lg bg-blue-900/30 border border-blue-700/30 flex items-center justify-center text-xl">
+              📊
+            </div>
+            <span class="text-slate-700 text-lg">↗</span>
+          </div>
+          <h3 class="text-white font-semibold text-lg mb-2">Finance Tracker</h3>
+          <p class="text-slate-400 text-sm leading-relaxed mb-4">
+            Multi-category financial management module with donation campaigns, budget planning,
+            and detailed reporting. Supports F CFA and multiple payment methods.
+          </p>
+          <div class="flex flex-wrap gap-2">
+            <span class="tech-tag">React</span>
+            <span class="tech-tag">Recharts</span>
+            <span class="tech-tag">PostgreSQL</span>
+          </div>
+        </div>
+
+        <!-- Project 3 -->
+        <div class="card-hover group bg-slate-900 border border-slate-800 rounded-xl p-6 hover:border-accent-500/40 transition-all">
+          <div class="flex justify-between items-start mb-4">
+            <div class="w-10 h-10 rounded-lg bg-purple-900/30 border border-purple-700/30 flex items-center justify-center text-xl">
+              🤖
+            </div>
+            <span class="text-slate-700 text-lg">↗</span>
+          </div>
+          <h3 class="text-white font-semibold text-lg mb-2">AI Service Analyzer</h3>
+          <p class="text-slate-400 text-sm leading-relaxed mb-4">
+            Automated church service analysis system powered by Google Gemini. Generates structured
+            reports, sermon summaries, and attendance insights from raw service data.
+          </p>
+          <div class="flex flex-wrap gap-2">
+            <span class="tech-tag">Gemini AI</span>
+            <span class="tech-tag">TypeScript</span>
+            <span class="tech-tag">Supabase</span>
+          </div>
+        </div>
+
+        <!-- Project 4 -->
+        <div class="card-hover group bg-slate-900 border border-slate-800 rounded-xl p-6 hover:border-accent-500/40 transition-all">
+          <div class="flex justify-between items-start mb-4">
+            <div class="w-10 h-10 rounded-lg bg-orange-900/30 border border-orange-700/30 flex items-center justify-center text-xl">
+              📅
+            </div>
+            <span class="text-slate-700 text-lg">↗</span>
+          </div>
+          <h3 class="text-white font-semibold text-lg mb-2">Visitor Follow-Up System</h3>
+          <p class="text-slate-400 text-sm leading-relaxed mb-4">
+            Smart visitor pipeline with calendar-based follow-up scheduling, automated reminders,
+            and status tracking from first visit through membership integration.
+          </p>
+          <div class="flex flex-wrap gap-2">
+            <span class="tech-tag">React</span>
+            <span class="tech-tag">Tailwind</span>
+            <span class="tech-tag">Supabase RLS</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── EDUCATION ─────────────────────────────────────────────────────────── -->
+  <section id="education" class="py-24 px-6 section-animate">
+    <div class="max-w-5xl mx-auto">
+      <div class="flex items-center gap-3 mb-12">
+        <span class="font-mono text-accent-400 text-sm">05.</span>
+        <h2 class="text-2xl font-bold text-white">Education</h2>
+        <div class="flex-1 h-px bg-slate-800 ml-4"></div>
+      </div>
+
+      <div class="grid md:grid-cols-2 gap-6">
+
+        <div class="card-hover bg-slate-900 border border-slate-800 rounded-xl p-6 hover:border-accent-500/30 transition-all">
+          <div class="flex items-start gap-4">
+            <div class="w-12 h-12 rounded-xl bg-accent-900/30 border border-accent-700/20 flex items-center justify-center text-2xl flex-shrink-0">
+              🎓
+            </div>
+            <div>
+              <h3 class="text-white font-semibold">B.Sc. Computer Science</h3>
+              <p class="text-accent-400 text-sm mt-1">University — West Africa</p>
+              <p class="font-mono text-xs text-slate-500 mt-1">2016 — 2019</p>
+              <p class="text-slate-400 text-sm mt-3">
+                Foundations in algorithms, data structures, software engineering, databases, and networking.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div class="card-hover bg-slate-900 border border-slate-800 rounded-xl p-6 hover:border-accent-500/30 transition-all">
+          <div class="flex items-start gap-4">
+            <div class="w-12 h-12 rounded-xl bg-blue-900/30 border border-blue-700/20 flex items-center justify-center text-2xl flex-shrink-0">
+              📜
+            </div>
+            <div>
+              <h3 class="text-white font-semibold">React & TypeScript Certification</h3>
+              <p class="text-accent-400 text-sm mt-1">Online — Udemy / freeCodeCamp</p>
+              <p class="font-mono text-xs text-slate-500 mt-1">2020</p>
+              <p class="text-slate-400 text-sm mt-3">
+                Advanced React patterns, TypeScript, hooks, performance optimization, and testing.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div class="card-hover bg-slate-900 border border-slate-800 rounded-xl p-6 hover:border-accent-500/30 transition-all">
+          <div class="flex items-start gap-4">
+            <div class="w-12 h-12 rounded-xl bg-purple-900/30 border border-purple-700/20 flex items-center justify-center text-2xl flex-shrink-0">
+              🏆
+            </div>
+            <div>
+              <h3 class="text-white font-semibold">Supabase / PostgreSQL</h3>
+              <p class="text-accent-400 text-sm mt-1">Self-directed Learning</p>
+              <p class="font-mono text-xs text-slate-500 mt-1">2022</p>
+              <p class="text-slate-400 text-sm mt-3">
+                Row-level security, real-time subscriptions, edge functions, and database design patterns.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div class="card-hover bg-slate-900 border border-slate-800 rounded-xl p-6 hover:border-accent-500/30 transition-all">
+          <div class="flex items-start gap-4">
+            <div class="w-12 h-12 rounded-xl bg-yellow-900/30 border border-yellow-700/20 flex items-center justify-center text-2xl flex-shrink-0">
+              ✨
+            </div>
+            <div>
+              <h3 class="text-white font-semibold">AI Integration</h3>
+              <p class="text-accent-400 text-sm mt-1">Google Developer Program</p>
+              <p class="font-mono text-xs text-slate-500 mt-1">2024</p>
+              <p class="text-slate-400 text-sm mt-3">
+                Gemini API, prompt engineering, structured output generation, and AI-augmented app design.
+              </p>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── CONTACT ───────────────────────────────────────────────────────────── -->
+  <section id="contact" class="py-24 px-6 section-animate">
+    <div class="max-w-5xl mx-auto">
+      <div class="flex items-center gap-3 mb-12">
+        <span class="font-mono text-accent-400 text-sm">06.</span>
+        <h2 class="text-2xl font-bold text-white">Contact</h2>
+        <div class="flex-1 h-px bg-slate-800 ml-4"></div>
+      </div>
+
+      <div class="grid md:grid-cols-2 gap-12 items-center">
+
+        <div>
+          <h3 class="text-3xl font-bold text-white mb-4">Let's work <span class="gradient-text">together.</span></h3>
+          <p class="text-slate-400 leading-relaxed mb-8">
+            I'm currently open to freelance projects, full-time positions, and interesting collaborations.
+            Whether you have a project in mind or just want to chat — my inbox is always open.
+          </p>
+          <div class="space-y-4">
+            <a href="mailto:armeltindo@example.com"
+               class="flex items-center gap-3 text-slate-300 hover:text-accent-400 transition-colors group">
+              <span class="w-9 h-9 rounded-lg bg-slate-800 group-hover:bg-accent-900/30 border border-slate-700 group-hover:border-accent-700/40 flex items-center justify-center text-sm transition-all">✉️</span>
+              <span>armeltindo@example.com</span>
+            </a>
+            <a href="https://github.com/armeltindo"
+               class="flex items-center gap-3 text-slate-300 hover:text-accent-400 transition-colors group">
+              <span class="w-9 h-9 rounded-lg bg-slate-800 group-hover:bg-accent-900/30 border border-slate-700 group-hover:border-accent-700/40 flex items-center justify-center text-sm transition-all">🐙</span>
+              <span>github.com/armeltindo</span>
+            </a>
+            <a href="https://linkedin.com/in/armeltindo"
+               class="flex items-center gap-3 text-slate-300 hover:text-accent-400 transition-colors group">
+              <span class="w-9 h-9 rounded-lg bg-slate-800 group-hover:bg-accent-900/30 border border-slate-700 group-hover:border-accent-700/40 flex items-center justify-center text-sm transition-all">💼</span>
+              <span>linkedin.com/in/armeltindo</span>
+            </a>
+          </div>
+        </div>
+
+        <!-- Contact form -->
+        <div class="bg-slate-900 border border-slate-800 rounded-xl p-6">
+          <h3 class="text-white font-medium mb-5 text-sm">Send a message</h3>
+          <form id="contact-form" class="space-y-4" onsubmit="handleFormSubmit(event)">
+            <div>
+              <label class="block text-xs text-slate-500 mb-1.5 font-mono">Name</label>
+              <input type="text" placeholder="Your name" required
+                class="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2.5 text-sm text-slate-200
+                       placeholder-slate-600 focus:outline-none focus:border-accent-500/50 focus:ring-1 focus:ring-accent-500/20 transition-colors" />
+            </div>
+            <div>
+              <label class="block text-xs text-slate-500 mb-1.5 font-mono">Email</label>
+              <input type="email" placeholder="your@email.com" required
+                class="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2.5 text-sm text-slate-200
+                       placeholder-slate-600 focus:outline-none focus:border-accent-500/50 focus:ring-1 focus:ring-accent-500/20 transition-colors" />
+            </div>
+            <div>
+              <label class="block text-xs text-slate-500 mb-1.5 font-mono">Message</label>
+              <textarea rows="4" placeholder="Tell me about your project..." required
+                class="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2.5 text-sm text-slate-200
+                       placeholder-slate-600 focus:outline-none focus:border-accent-500/50 focus:ring-1 focus:ring-accent-500/20 transition-colors resize-none"></textarea>
+            </div>
+            <button type="submit"
+              class="w-full py-3 rounded-lg bg-accent-600 hover:bg-accent-500 text-white font-medium text-sm transition-colors">
+              Send Message
+            </button>
+            <div id="form-success" class="hidden text-center text-accent-400 text-sm py-2">
+              Message sent! I'll get back to you soon.
+            </div>
+          </form>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── FOOTER ───────────────────────────────────────────────────────────── -->
+  <footer class="border-t border-slate-800 py-8 px-6 text-center">
+    <p class="text-slate-600 text-sm font-mono">
+      Designed & Built by <span class="text-accent-400">Armel Tindo</span> · 2024
+    </p>
+    <p class="text-slate-700 text-xs mt-2">
+      Built with React · Tailwind CSS · Supabase
+    </p>
+  </footer>
+
+  <!-- ─── SCRIPTS ──────────────────────────────────────────────────────────── -->
+  <script>
+    // ── Typewriter effect
+    const roles = ['Full-Stack Developer', 'React Specialist', 'UI/UX Enthusiast', 'Problem Solver'];
+    let roleIndex = 0;
+    let charIndex = 0;
+    let isDeleting = false;
+    const typewriterEl = document.getElementById('typewriter');
+
+    function typewriter() {
+      const currentRole = roles[roleIndex];
+      const displayed = isDeleting
+        ? currentRole.slice(0, charIndex--)
+        : currentRole.slice(0, charIndex++);
+
+      typewriterEl.innerHTML = displayed + '<span class="cursor text-accent-400">_</span>';
+
+      if (!isDeleting && charIndex > currentRole.length) {
+        setTimeout(() => { isDeleting = true; typewriter(); }, 2000);
+        return;
+      }
+      if (isDeleting && charIndex < 0) {
+        isDeleting = false;
+        roleIndex = (roleIndex + 1) % roles.length;
+        setTimeout(typewriter, 400);
+        return;
+      }
+      setTimeout(typewriter, isDeleting ? 50 : 90);
+    }
+    setTimeout(typewriter, 1000);
+
+    // ── Scroll-based section animations
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+          // Animate skill bars when skills section becomes visible
+          if (entry.target.id === 'skills' || entry.target.querySelector('#skill-bars')) {
+            animateSkillBars();
+          }
+        }
+      });
+    }, { threshold: 0.1 });
+
+    document.querySelectorAll('.section-animate').forEach(el => observer.observe(el));
+
+    // ── Skill bar animation
+    let skillsAnimated = false;
+    function animateSkillBars() {
+      if (skillsAnimated) return;
+      skillsAnimated = true;
+      document.querySelectorAll('.skill-fill').forEach(bar => {
+        const target = bar.dataset.target;
+        setTimeout(() => { bar.style.width = target + '%'; }, 200);
+      });
+    }
+
+    // ── Contact form
+    function handleFormSubmit(e) {
+      e.preventDefault();
+      const form = document.getElementById('contact-form');
+      const success = document.getElementById('form-success');
+      form.querySelectorAll('input, textarea, button').forEach(el => el.disabled = true);
+      success.classList.remove('hidden');
+    }
+
+    // ── Active nav highlight on scroll
+    const sections = document.querySelectorAll('section[id]');
+    const navLinks = document.querySelectorAll('.nav-link');
+
+    window.addEventListener('scroll', () => {
+      const scrollY = window.scrollY;
+      sections.forEach(section => {
+        if (scrollY >= section.offsetTop - 100) {
+          navLinks.forEach(link => {
+            link.style.color = '';
+            if (link.getAttribute('href') === '#' + section.id) {
+              link.style.color = '#4ade80';
+            }
+          });
+        }
+      });
+    }, { passive: true });
+  </script>
+
+</body>
+</html>

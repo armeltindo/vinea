@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { 
   X, Phone, MessageCircle, Mail, MapPin, Calendar, 
   User, Info, History, Sparkles, Zap, Clock, 
@@ -18,6 +18,7 @@ import { Visitor, VisitorStatus, FollowUpEntry, VisitorQualification, Member } f
 import { formatPhone } from '../constants';
 import { cn, generateId, getInitials } from '../utils';
 import { suggestVisitorFollowUp, generateWelcomeMessage } from '../lib/gemini';
+import { getMembers } from '../lib/db';
 
 interface VisitorDetailsProps {
   visitor: Visitor | null;
@@ -55,7 +56,11 @@ const VisitorDetails: React.FC<VisitorDetailsProps> = ({
     nextStepDate: '' 
   });
 
-  const members: Member[] = useMemo(() => JSON.parse(localStorage.getItem('vinea_members') || '[]'), []);
+  const [members, setMembers] = useState<Member[]>([]);
+
+  useEffect(() => {
+    getMembers().then(setMembers);
+  }, []);
   
   const parrain = useMemo(() => {
     if (!visitor?.parrainId) return null;

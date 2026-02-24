@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { 
   X, 
   Phone, 
@@ -39,6 +39,7 @@ import {
 import { Member, MemberStatus, Department, DepartmentActivity, ActivityStatus } from '../types';
 import { formatPhone } from '../constants';
 import { cn, getInitials, getDisplayNickname, formatFirstName } from '../utils';
+import { getMembers, getDepartmentActivities, getDiscipleshipEnrollments } from '../lib/db';
 
 const getDepartmentIcon = (dept: Department, size = 14) => {
   switch (dept) {
@@ -82,9 +83,16 @@ interface MemberDetailsProps {
 const MemberDetails: React.FC<MemberDetailsProps> = ({ member, isOpen, onClose, onEdit, onDelete, onPreviewPhoto }) => {
   if (!member) return null;
 
-  const allMembers: Member[] = useMemo(() => {
-    const saved = localStorage.getItem('vinea_members');
-    return saved ? JSON.parse(saved) : [];
+  const [allMembers, setAllMembers] = useState<Member[]>([]);
+  const [activities, setActivities] = useState<DepartmentActivity[]>([]);
+  const [enrollments, setEnrollments] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (isOpen) {
+      getMembers().then(setAllMembers);
+      getDepartmentActivities().then(setActivities);
+      getDiscipleshipEnrollments().then(setEnrollments);
+    }
   }, [isOpen]);
 
   const spouseMember = useMemo(() => {
@@ -121,46 +129,37 @@ const MemberDetails: React.FC<MemberDetailsProps> = ({ member, isOpen, onClose, 
       });
     }
 
-    const savedActivities = localStorage.getItem('vinea_planning_activities');
-    if (savedActivities) {
-      const activities: DepartmentActivity[] = JSON.parse(savedActivities);
-      activities.forEach(act => {
-        if (act.responsibleId.toLowerCase().includes(memberFullName) || act.responsibleId.toLowerCase().includes(member.lastName.toLowerCase())) {
-          events.push({
-            id: act.id,
-            date: act.deadline || act.createdAt,
-            type: 'Service',
-            label: `${act.status === ActivityStatus.REALISEE ? 'A réalisé' : 'Responsable de'} : ${act.title}`,
-            icon: <Target size={12} className="text-indigo-500" />
-          });
-        }
-      });
-    }
-
-    const savedEnrollments = localStorage.getItem('vinea_discipleship_enrollments');
-    if (savedEnrollments) {
-      const enrollments = JSON.parse(savedEnrollments);
-      const pathways = [
-        { id: 'p1', title: 'Nouveaux Convertis' },
-        { id: 'p2', title: 'Affermissement' },
-        { id: 'p3', title: 'Leadership' },
-        { id: 'p4', title: 'Service & Ministère' }
-      ];
-      
-      enrollments.filter((e: any) => e.memberId === member.id).forEach((e: any) => {
-        const path = pathways.find(p => p.id === e.pathwayId);
+    activities.forEach(act => {
+      if (act.responsibleId.toLowerCase().includes(memberFullName) || act.responsibleId.toLowerCase().includes(member.lastName.toLowerCase())) {
         events.push({
-          id: e.id,
-          date: e.startDate,
-          type: 'Formation',
-          label: `Inscription au parcours ${path?.title || 'spirituel'}`,
-          icon: <BookOpen size={12} className="text-emerald-500" />
+          id: act.id,
+          date: act.deadline || act.createdAt,
+          type: 'Service',
+          label: `${act.status === ActivityStatus.REALISEE ? 'A réalisé' : 'Responsable de'} : ${act.title}`,
+          icon: <Target size={12} className="text-indigo-500" />
         });
+      }
+    });
+
+    const pathways = [
+      { id: 'p1', title: 'Nouveaux Convertis' },
+      { id: 'p2', title: 'Affermissement' },
+      { id: 'p3', title: 'Leadership' },
+      { id: 'p4', title: 'Service & Ministère' }
+    ];
+    enrollments.filter((e: any) => e.memberId === member.id).forEach((e: any) => {
+      const path = pathways.find(p => p.id === e.pathwayId);
+      events.push({
+        id: e.id,
+        date: e.startDate,
+        type: 'Formation',
+        label: `Inscription au parcours ${path?.title || 'spirituel'}`,
+        icon: <BookOpen size={12} className="text-emerald-500" />
       });
-    }
+    });
 
     return events.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-  }, [member]);
+  }, [member, activities, enrollments]);
 
   const handleCall = (num?: string) => {
     const phone = num || member.phone;

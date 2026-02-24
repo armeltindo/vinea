@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { 
   LayoutDashboard, 
   Users, 
@@ -24,6 +24,12 @@ interface SidebarProps {
   setActiveTab: (tab: string) => void;
   onLogout: () => void;
   userRole: string;
+  userPermissions: string[];
+  adminName: string;
+  adminAvatar: string;
+  churchName: string;
+  churchLogo: string | null;
+  primaryColor: string;
 }
 
 const MENU_ITEMS = [
@@ -43,65 +49,7 @@ const MENU_ITEMS = [
   { id: 'settings', label: 'Paramètres', icon: Settings },
 ];
 
-// Fix: Correctly type the Sidebar component with its props interface to resolve "Property 'activeTab' does not exist on type 'IntrinsicAttributes'" error in App.tsx
-const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, onLogout, userRole }) => {
-  const [churchName, setChurchName] = useState('Vinea');
-  const [churchLogo, setChurchLogo] = useState<string | null>(null);
-  const [primaryColor, setPrimaryColor] = useState('#2563EB');
-  const [adminName, setAdminName] = useState('Admin Vinea');
-  const [adminAvatar, setAdminAvatar] = useState('https://api.dicebear.com/7.x/avataaars/svg?seed=Jean');
-  
-  const [userPermissions, setUserPermissions] = useState<string[]>(() => {
-    const saved = localStorage.getItem('vinea_user_permissions');
-    let perms = saved ? JSON.parse(saved) : ['dashboard', 'spiritual'];
-    if (!perms.includes('spiritual')) {
-      perms.push('spiritual');
-    }
-    return perms;
-  });
-
-  const loadSettings = () => {
-    const savedChurch = localStorage.getItem('vinea_church_info');
-    if (savedChurch) {
-      try {
-        const info = JSON.parse(savedChurch);
-        setChurchName(info.name || 'Vinea');
-        setChurchLogo(info.logo || null);
-        setPrimaryColor(info.primaryColor || '#2563EB');
-      } catch (e) { console.error(e); }
-    }
-
-    const savedAdmin = localStorage.getItem('vinea_admin_info');
-    if (savedAdmin) {
-      try {
-        const info = JSON.parse(savedAdmin);
-        setAdminName(info.fullName || 'Admin Vinea');
-        setAdminAvatar(info.avatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=Jean');
-      } catch (e) { console.error(e); }
-    }
-
-    const savedPerms = localStorage.getItem('vinea_user_permissions');
-    if (savedPerms) {
-      const parsed = JSON.parse(savedPerms);
-      if (!parsed.includes('spiritual')) {
-        parsed.push('spiritual');
-      }
-      setUserPermissions(parsed);
-    }
-  };
-
-  useEffect(() => {
-    loadSettings();
-    window.addEventListener('vinea_church_info_updated', loadSettings);
-    window.addEventListener('vinea_admin_info_updated', loadSettings);
-    window.addEventListener('vinea_auth_updated', loadSettings);
-    return () => {
-      window.removeEventListener('vinea_church_info_updated', loadSettings);
-      window.removeEventListener('vinea_admin_info_updated', loadSettings);
-      window.removeEventListener('vinea_auth_updated', loadSettings);
-    };
-  }, []);
-
+const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, onLogout, userRole, userPermissions, adminName, adminAvatar, churchName, churchLogo, primaryColor }) => {
   const filteredMenuItems = MENU_ITEMS.filter(item => userPermissions.includes(item.id));
 
   return (

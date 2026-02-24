@@ -34,7 +34,7 @@ import {
 import { analyzePageData } from '../lib/gemini';
 import { formatCurrency, DEPARTMENTS } from '../constants';
 import { cn, generateId } from '../utils';
-import { getChurchEvents, createChurchEvent, updateChurchEvent, deleteChurchEvent } from '../lib/db';
+import { getChurchEvents, createChurchEvent, updateChurchEvent, deleteChurchEvent, getAppConfig, setAppConfig } from '../lib/db';
 
 interface Expense {
   id: string;
@@ -77,19 +77,19 @@ interface TeamAssignment {
 
 const Events: React.FC = () => {
   const [events, setEvents] = useState<Event[]>([]);
-  const [goals, setGoals] = useState<Goal[]>(() => {
-    const saved = localStorage.getItem('vinea_event_goals');
-    return saved ? JSON.parse(saved) : [];
-  });
-  const [assignments, setAssignments] = useState<TeamAssignment[]>(() => {
-    const saved = localStorage.getItem('vinea_event_assignments');
-    return saved ? JSON.parse(saved) : [];
-  });
+  const [goals, setGoals] = useState<Goal[]>([]);
+  const [assignments, setAssignments] = useState<TeamAssignment[]>([]);
 
   useEffect(() => {
-    getChurchEvents().then(data => setEvents(data.map(e => ({
-      ...e, registered: e.registeredCount, target: e.targetCount
-    })) as any));
+    Promise.all([
+      getChurchEvents(),
+      getAppConfig('event_goals'),
+      getAppConfig('event_assignments'),
+    ]).then(([eventsData, savedGoals, savedAssignments]) => {
+      setEvents(eventsData.map(e => ({ ...e, registered: e.registeredCount, target: e.targetCount })) as any);
+      if (savedGoals) setGoals(savedGoals);
+      if (savedAssignments) setAssignments(savedAssignments);
+    });
   }, []);
 
   const [activeTab, setActiveTab] = useState<'upcoming' | 'archives'>('upcoming');
@@ -113,14 +113,8 @@ const Events: React.FC = () => {
   const [newAssignment, setNewAssignment] = useState({ dept: DEPARTMENTS[0] as any, eventId: '', status: 'En attente' as const });
   const [newGoalData, setNewGoalData] = useState({ label: '', value: 0, color: 'bg-indigo-600' });
 
-  // Persistence (goals & assignments are local-only)
-  useEffect(() => {
-    localStorage.setItem('vinea_event_goals', JSON.stringify(goals));
-  }, [goals]);
-
-  useEffect(() => {
-    localStorage.setItem('vinea_event_assignments', JSON.stringify(assignments));
-  }, [assignments]);
+  useEffect(() => { setAppConfig('event_goals', goals); }, [goals]);
+  useEffect(() => { setAppConfig('event_assignments', assignments); }, [assignments]);
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);

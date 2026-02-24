@@ -68,7 +68,7 @@ import { analyzePageData, generateDonationReceipt } from '../lib/gemini';
 import { cn, generateId, getInitials, formatFirstName } from '../utils';
 import { OperationType, PaymentMethod, FinancialRecord, Member, DonationCampaign, DonationPromise } from '../types';
 import { GoogleGenAI } from "@google/genai";
-import { getFinancialRecords, createFinancialRecord, updateFinancialRecord, deleteFinancialRecord, getDonationCampaigns, createDonationCampaign, updateDonationCampaign, deleteDonationCampaign, getDonationPromises, createDonationPromise, deleteDonationPromise, getMembers, getChurchSettings } from '../lib/db';
+import { getFinancialRecords, createFinancialRecord, updateFinancialRecord, deleteFinancialRecord, getDonationCampaigns, createDonationCampaign, updateDonationCampaign, deleteDonationCampaign, getDonationPromises, createDonationPromise, deleteDonationPromise, getMembers, getChurchSettings, getAppConfig, setAppConfig } from '../lib/db';
 
 interface FinanceCategory {
   id: string;
@@ -110,10 +110,7 @@ const Finances: React.FC = () => {
   const [operations, setOperations] = useState<FinancialRecord[]>([]);
   const [campaigns, setCampaigns] = useState<DonationCampaign[]>([]);
   const [promises, setPromises] = useState<DonationPromise[]>([]);
-  const [categories, setCategories] = useState<FinanceCategory[]>(() => {
-    const saved = localStorage.getItem('vinea_finance_categories_v2');
-    return saved ? JSON.parse(saved) : DEFAULT_CATEGORIES;
-  });
+  const [categories, setCategories] = useState<FinanceCategory[]>(DEFAULT_CATEGORIES);
   const [members, setMembers] = useState<Member[]>([]);
   const [churchName, setChurchName] = useState('Vinea');
 
@@ -190,24 +187,26 @@ const Finances: React.FC = () => {
 
   useEffect(() => {
     const load = async () => {
-      const [ops, camps, proms, mems, settings] = await Promise.all([
+      const [ops, camps, proms, mems, settings, savedCats] = await Promise.all([
         getFinancialRecords(),
         getDonationCampaigns(),
         getDonationPromises(),
         getMembers(),
         getChurchSettings(),
+        getAppConfig('finance_categories'),
       ]);
       setOperations(ops);
       setCampaigns(camps);
       setPromises(proms);
       setMembers(mems);
       if (settings?.name) setChurchName(settings.name);
+      if (savedCats) setCategories(savedCats);
     };
     load();
   }, []);
 
   useEffect(() => {
-    localStorage.setItem('vinea_finance_categories_v2', JSON.stringify(categories));
+    setAppConfig('finance_categories', categories);
   }, [categories]);
 
   const totals = useMemo(() => {

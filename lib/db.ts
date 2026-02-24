@@ -1010,3 +1010,59 @@ export const upsertNotification = async (n: any): Promise<void> => {
     .upsert(db, { onConflict: 'id', ignoreDuplicates: true });
   if (error) console.error('upsertNotification:', error.message);
 };
+
+// ─────────────────────────────────────────────
+// APP CONFIG (stockage clé-valeur générique)
+// ─────────────────────────────────────────────
+
+export const getAppConfig = async (key: string): Promise<any | null> => {
+  const { data, error } = await supabase
+    .from('app_config')
+    .select('value')
+    .eq('key', key)
+    .maybeSingle();
+  if (error) { console.error('getAppConfig:', error.message); return null; }
+  return data?.value ?? null;
+};
+
+export const setAppConfig = async (key: string, value: any): Promise<void> => {
+  const { error } = await supabase
+    .from('app_config')
+    .upsert({ key, value, updated_at: new Date().toISOString() }, { onConflict: 'key' });
+  if (error) console.error('setAppConfig:', error.message);
+};
+
+// ─────────────────────────────────────────────
+// DISCIPLESHIP ENROLLMENTS
+// ─────────────────────────────────────────────
+
+export const getDiscipleshipEnrollments = async (): Promise<any[]> => {
+  const { data, error } = await supabase
+    .from('discipleship_enrollments')
+    .select('*')
+    .order('created_at', { ascending: false });
+  if (error) { console.error('getDiscipleshipEnrollments:', error.message); return []; }
+  return (data ?? []).map((row: any) => ({
+    id: row.id,
+    memberId: row.member_id,
+    pathwayId: row.pathway_id,
+    progress: row.progress ?? 0,
+    startDate: row.start_date,
+    lastUpdate: row.last_update,
+  }));
+};
+
+export const upsertDiscipleshipEnrollment = async (e: any): Promise<void> => {
+  const { error } = await supabase
+    .from('discipleship_enrollments')
+    .upsert(
+      { id: e.id, member_id: e.memberId, pathway_id: e.pathwayId, progress: e.progress ?? 0, start_date: e.startDate, last_update: e.lastUpdate },
+      { onConflict: 'id' }
+    );
+  if (error) console.error('upsertDiscipleshipEnrollment:', error.message);
+};
+
+export const deleteDiscipleshipEnrollment = async (id: string): Promise<void> => {
+  const { error } = await supabase.from('discipleship_enrollments').delete().eq('id', id);
+  if (error) console.error('deleteDiscipleshipEnrollment:', error.message);
+};

@@ -30,19 +30,11 @@ export const SPIRITUAL_EXERCISES_LIST: SpiritualExerciseDef[] = [
 ];
 
 /**
- * Récupère la devise configurée dans les paramètres de l'église
+ * Cache mémoire de la devise — alimenté par App.tsx au chargement des settings.
  */
-export const getCurrency = () => {
-  try {
-    const saved = localStorage.getItem('vinea_church_info');
-    if (saved) {
-      return JSON.parse(saved).currency || 'F CFA';
-    }
-  } catch (e) {
-    console.error("Erreur lecture devise settings:", e);
-  }
-  return 'F CFA';
-};
+let _currencyCache = 'F CFA';
+export const setCurrencyCache = (currency: string) => { _currencyCache = currency; };
+export const getCurrency = () => _currencyCache;
 
 export const formatPhone = (val: string) => {
   const digits = val.replace(/\D/g, '');

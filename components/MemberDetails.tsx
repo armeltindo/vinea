@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { 
   X, 
   Phone, 
@@ -39,6 +39,7 @@ import {
 import { Member, MemberStatus, Department, DepartmentActivity, ActivityStatus } from '../types';
 import { formatPhone } from '../constants';
 import { cn, getInitials, getDisplayNickname, formatFirstName } from '../utils';
+import { getMembers, getDepartmentActivities } from '../lib/db';
 
 const getDepartmentIcon = (dept: Department, size = 14) => {
   switch (dept) {
@@ -82,9 +83,14 @@ interface MemberDetailsProps {
 const MemberDetails: React.FC<MemberDetailsProps> = ({ member, isOpen, onClose, onEdit, onDelete, onPreviewPhoto }) => {
   if (!member) return null;
 
-  const allMembers: Member[] = useMemo(() => {
-    const saved = localStorage.getItem('vinea_members');
-    return saved ? JSON.parse(saved) : [];
+  const [allMembers, setAllMembers] = useState<Member[]>([]);
+  const [activities, setActivities] = useState<DepartmentActivity[]>([]);
+
+  useEffect(() => {
+    if (isOpen) {
+      getMembers().then(setAllMembers);
+      getDepartmentActivities().then(setActivities);
+    }
   }, [isOpen]);
 
   const spouseMember = useMemo(() => {
@@ -121,21 +127,17 @@ const MemberDetails: React.FC<MemberDetailsProps> = ({ member, isOpen, onClose, 
       });
     }
 
-    const savedActivities = localStorage.getItem('vinea_planning_activities');
-    if (savedActivities) {
-      const activities: DepartmentActivity[] = JSON.parse(savedActivities);
-      activities.forEach(act => {
-        if (act.responsibleId.toLowerCase().includes(memberFullName) || act.responsibleId.toLowerCase().includes(member.lastName.toLowerCase())) {
-          events.push({
-            id: act.id,
-            date: act.deadline || act.createdAt,
-            type: 'Service',
-            label: `${act.status === ActivityStatus.REALISEE ? 'A réalisé' : 'Responsable de'} : ${act.title}`,
-            icon: <Target size={12} className="text-indigo-500" />
-          });
-        }
-      });
-    }
+    activities.forEach(act => {
+      if (act.responsibleId.toLowerCase().includes(memberFullName) || act.responsibleId.toLowerCase().includes(member.lastName.toLowerCase())) {
+        events.push({
+          id: act.id,
+          date: act.deadline || act.createdAt,
+          type: 'Service',
+          label: `${act.status === ActivityStatus.REALISEE ? 'A réalisé' : 'Responsable de'} : ${act.title}`,
+          icon: <Target size={12} className="text-indigo-500" />
+        });
+      }
+    });
 
     const savedEnrollments = localStorage.getItem('vinea_discipleship_enrollments');
     if (savedEnrollments) {
@@ -160,7 +162,7 @@ const MemberDetails: React.FC<MemberDetailsProps> = ({ member, isOpen, onClose, 
     }
 
     return events.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-  }, [member]);
+  }, [member, activities]);
 
   const handleCall = (num?: string) => {
     const phone = num || member.phone;

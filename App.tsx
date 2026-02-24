@@ -49,6 +49,7 @@ const App: React.FC = () => {
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [showQuickAction, setShowQuickAction] = useState(false);
+  const [accessToast, setAccessToast] = useState<string | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [authLoading, setAuthLoading] = useState(true);
 
@@ -332,11 +333,16 @@ const App: React.FC = () => {
     setShowLogoutConfirm(false);
   };
 
+  const showAccessToast = (message: string) => {
+    setAccessToast(message);
+    setTimeout(() => setAccessToast(null), 3500);
+  };
+
   const handleQuickAction = (tabId: string) => {
     if (currentUserPermissions.includes(tabId)) {
       setActiveTab(tabId);
     } else {
-      alert("Accès refusé : Vous n'avez pas la permission d'accéder à ce module.");
+      showAccessToast("Accès refusé : vous n'avez pas la permission d'accéder à ce module.");
     }
   };
 
@@ -347,7 +353,7 @@ const App: React.FC = () => {
       window.dispatchEvent(new Event('vinea_settings_nav'));
     } else {
       setIsProfileOpen(false);
-      alert("Accès refusé aux paramètres de profil complet.");
+      showAccessToast("Accès refusé aux paramètres de profil complet.");
     }
   };
 
@@ -561,6 +567,14 @@ const App: React.FC = () => {
           20%, 40%, 60%, 80% { transform: rotate(-10deg); }
         }
       `}</style>
+
+      {/* Toast accès refusé */}
+      {accessToast && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[9999] flex items-center gap-3 bg-slate-900 text-white text-sm font-semibold px-5 py-3 rounded-2xl shadow-2xl animate-in fade-in slide-in-from-bottom-4 duration-300">
+          <span className="w-2 h-2 rounded-full bg-rose-500 shrink-0"></span>
+          {accessToast}
+        </div>
+      )}
     </div>
   );
 };

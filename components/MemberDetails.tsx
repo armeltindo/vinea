@@ -39,7 +39,7 @@ import {
 import { Member, MemberStatus, Department, DepartmentActivity, ActivityStatus } from '../types';
 import { formatPhone } from '../constants';
 import { cn, getInitials, getDisplayNickname, formatFirstName } from '../utils';
-import { getMembers, getDepartmentActivities } from '../lib/db';
+import { getMembers, getDepartmentActivities, getDiscipleshipEnrollments } from '../lib/db';
 
 const getDepartmentIcon = (dept: Department, size = 14) => {
   switch (dept) {
@@ -85,11 +85,13 @@ const MemberDetails: React.FC<MemberDetailsProps> = ({ member, isOpen, onClose, 
 
   const [allMembers, setAllMembers] = useState<Member[]>([]);
   const [activities, setActivities] = useState<DepartmentActivity[]>([]);
+  const [enrollments, setEnrollments] = useState<any[]>([]);
 
   useEffect(() => {
     if (isOpen) {
       getMembers().then(setAllMembers);
       getDepartmentActivities().then(setActivities);
+      getDiscipleshipEnrollments().then(setEnrollments);
     }
   }, [isOpen]);
 
@@ -139,30 +141,25 @@ const MemberDetails: React.FC<MemberDetailsProps> = ({ member, isOpen, onClose, 
       }
     });
 
-    const savedEnrollments = localStorage.getItem('vinea_discipleship_enrollments');
-    if (savedEnrollments) {
-      const enrollments = JSON.parse(savedEnrollments);
-      const pathways = [
-        { id: 'p1', title: 'Nouveaux Convertis' },
-        { id: 'p2', title: 'Affermissement' },
-        { id: 'p3', title: 'Leadership' },
-        { id: 'p4', title: 'Service & Ministère' }
-      ];
-      
-      enrollments.filter((e: any) => e.memberId === member.id).forEach((e: any) => {
-        const path = pathways.find(p => p.id === e.pathwayId);
-        events.push({
-          id: e.id,
-          date: e.startDate,
-          type: 'Formation',
-          label: `Inscription au parcours ${path?.title || 'spirituel'}`,
-          icon: <BookOpen size={12} className="text-emerald-500" />
-        });
+    const pathways = [
+      { id: 'p1', title: 'Nouveaux Convertis' },
+      { id: 'p2', title: 'Affermissement' },
+      { id: 'p3', title: 'Leadership' },
+      { id: 'p4', title: 'Service & Ministère' }
+    ];
+    enrollments.filter((e: any) => e.memberId === member.id).forEach((e: any) => {
+      const path = pathways.find(p => p.id === e.pathwayId);
+      events.push({
+        id: e.id,
+        date: e.startDate,
+        type: 'Formation',
+        label: `Inscription au parcours ${path?.title || 'spirituel'}`,
+        icon: <BookOpen size={12} className="text-emerald-500" />
       });
-    }
+    });
 
     return events.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-  }, [member, activities]);
+  }, [member, activities, enrollments]);
 
   const handleCall = (num?: string) => {
     const phone = num || member.phone;

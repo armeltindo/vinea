@@ -74,7 +74,7 @@ import {
 import { cn, generateId, formatFirstName } from '../utils';
 import { SERVICES_LIST, DEPARTMENTS as CONST_DEPARTMENTS } from '../constants';
 import { MemberStatus, VisitorStatus, MemberType, NotificationSettings } from '../types';
-import { getChurchSettings, upsertChurchSettings, getAdminUsers, upsertAdminUser, deleteAdminUser, getAppConfig, setAppConfig } from '../lib/db';
+import { getChurchSettings, upsertChurchSettings, getAdminUsers, upsertAdminUser, deleteAdminUser, getAppConfig, setAppConfig, createMember, createVisitor, createFinancialRecord, createChurchService, createDonationCampaign } from '../lib/db';
 import { supabase } from '../lib/supabase';
 
 interface ListManagerProps {
@@ -591,10 +591,23 @@ const Settings: React.FC = () => {
         const backup = JSON.parse(event.target?.result as string);
         const keys = Object.keys(backup);
         if (keys.length === 0) throw new Error("Fichier de sauvegarde invalide ou vide.");
-        setImportSummary({
-          churchName: backup['church_info']?.name || 'Inconnu',
-          membersCount: 0, financesCount: 0, servicesCount: 0, visitorsCount: 0
-        });
+
+        // Détecter l'ancien format localStorage (clés préfixées "vinea_")
+        const isLegacyFormat = keys.some(k => k.startsWith('vinea_'));
+
+        if (isLegacyFormat) {
+          const cInfo = backup['vinea_church_info'] || {};
+          setImportSummary({
+            churchName: cInfo.name || 'Inconnu',
+            membersCount: Array.isArray(backup['vinea_members']) ? backup['vinea_members'].length : 0,
+            financesCount: Array.isArray(backup['vinea_finances']) ? backup['vinea_finances'].length : 0,
+            servicesCount: Array.isArray(backup['vinea_services']) ? backup['vinea_services'].length : 0,
+            visitorsCount: Array.isArray(backup['vinea_visitors']) ? backup['vinea_visitors'].length : 0,
+          });
+        } else {
+          setImportSummary({ churchName: backup['church_info']?.name || 'Inconnu', membersCount: 0, financesCount: 0, servicesCount: 0, visitorsCount: 0 });
+        }
+
         setPendingImport(backup);
         setIsImportModalOpen(true);
       } catch (err) {
@@ -608,13 +621,176 @@ const Settings: React.FC = () => {
   const applyImport = async () => {
     if (!pendingImport) return;
     try {
-      await Promise.all(
-        Object.entries(pendingImport).map(([key, value]) => setAppConfig(key, value))
-      );
+      const keys = Object.keys(pendingImport);
+      const isLegacyFormat = keys.some(k => k.startsWith('vinea_'));
+
+      if (isLegacyFormat) {
+        // ── Ancien format localStorage → router vers les tables Supabase ──
+
+        // Membres
+        const members = pendingImport['vinea_members'];
+        if (Array.isArray(members)) {
+          for (const m of members) {
+            await createMember({
+              id: m.id || generateId(),
+              lastName: m.lastName || m.last_name || '',
+              firstName: m.firstName || m.first_name || '',
+              nickname: m.nickname,
+              gender: m.gender,
+              birthDate: m.birthDate || m.birth_date,
+              maritalStatus: m.maritalStatus || m.marital_status || '',
+              weddingDate: m.weddingDate || m.wedding_date,
+              spouseName: m.spouseName || m.spouse_name,
+              phone: m.phone,
+              secondaryPhone: m.secondaryPhone || m.secondary_phone,
+              email: m.email,
+              whatsappPhone: m.whatsappPhone || m.whatsapp_phone,
+              whatsapp: m.whatsapp ?? false,
+              address: m.address,
+              emergencyContact: m.emergencyContact || m.emergency_contact || { name: '', phone: '', relation: '' },
+              type: m.type || 'Membre simple',
+              status: m.status || 'Actif',
+              isDiscipleMaker: m.isDiscipleMaker ?? m.is_disciple_maker ?? false,
+              baptized: m.baptized ?? false,
+              baptizedDate: m.baptizedDate || m.baptized_date,
+              baptizedBy: m.baptizedBy || m.baptized_by,
+              baptizedChurch: m.baptizedChurch || m.baptized_church,
+              joinDate: m.joinDate || m.join_date,
+              departments: m.departments || [],
+              profession: m.profession,
+              skills: m.skills,
+              notes: m.notes,
+              source: m.source || '',
+              invitedBy: m.invitedBy || m.invited_by,
+              assignedDiscipleMakerId: m.assignedDiscipleMakerId || m.assigned_disciple_maker_id,
+              photoUrl: m.photoUrl || m.photo_url,
+            });
+          }
+        }
+
+        // Visiteurs
+        const visitors = pendingImport['vinea_visitors'];
+        if (Array.isArray(visitors)) {
+          for (const v of visitors) {
+            await createVisitor({
+              id: v.id || generateId(),
+              lastName: v.lastName || v.last_name || '',
+              firstName: v.firstName || v.first_name || '',
+              gender: v.gender,
+              phone: v.phone,
+              whatsappPhone: v.whatsappPhone || v.whatsapp_phone,
+              address: v.address,
+              visitDate: v.visitDate || v.visit_date || new Date().toISOString().split('T')[0],
+              service: v.service || '',
+              source: v.source || '',
+              invitedBy: v.invitedBy || v.invited_by,
+              status: v.status || 'En attente',
+              notes: v.notes || '',
+              followUpHistory: v.followUpHistory || v.follow_up_history || [],
+              qualification: v.qualification || { seekingChurch: false, needsPrayer: false, livesNearby: false, hasChildren: false, firstTimeChristian: false, wantsToServe: false },
+              parrainId: v.parrainId || v.parrain_id,
+            });
+          }
+        }
+
+        // Finances
+        const finances = pendingImport['vinea_finances'];
+        if (Array.isArray(finances)) {
+          for (const f of finances) {
+            await createFinancialRecord({
+              id: f.id || generateId(),
+              type: f.type,
+              category: f.category,
+              amount: f.amount,
+              date: f.date || new Date().toISOString().split('T')[0],
+              memberId: f.memberId || f.member_id,
+              externalName: f.externalName || f.external_name,
+              campaignId: f.campaignId || f.campaign_id,
+              paymentMethod: f.paymentMethod || f.payment_method || 'Espèces',
+              description: f.description || '',
+            });
+          }
+        }
+
+        // Cultes
+        const services = pendingImport['vinea_services'];
+        if (Array.isArray(services)) {
+          for (const s of services) {
+            await createChurchService({
+              id: s.id || generateId(),
+              date: s.date || new Date().toISOString().split('T')[0],
+              time: s.time || '',
+              serviceType: s.serviceType || s.service_type || '',
+              series: s.series,
+              speaker: s.speaker || '',
+              worshipLeader: s.worshipLeader || s.worship_leader,
+              praiseLeader: s.praiseLeader || s.praise_leader,
+              moderator: s.moderator,
+              theme: s.theme || '',
+              scripture: s.scripture || '',
+              content: s.content || '',
+              aiAnalysis: s.aiAnalysis || s.ai_analysis,
+              socialSummary: s.socialSummary || s.social_summary,
+              tags: s.tags || [],
+              youtubeLink: s.youtubeLink || s.youtube_link,
+              facebookLink: s.facebookLink || s.facebook_link,
+              audioLink: s.audioLink || s.audio_link,
+              attendance: s.attendance,
+            });
+          }
+        }
+
+        // Campagnes de dons
+        const campaigns = pendingImport['vinea_campaigns'];
+        if (Array.isArray(campaigns)) {
+          for (const c of campaigns) {
+            await createDonationCampaign({
+              id: c.id || generateId(),
+              name: c.name || '',
+              description: c.description || '',
+              goal: c.goal,
+              startDate: c.startDate || c.start_date || new Date().toISOString().split('T')[0],
+              endDate: c.endDate || c.end_date,
+              status: c.status || 'Active',
+            });
+          }
+        }
+
+        // Infos église
+        const churchInfo = pendingImport['vinea_church_info'];
+        if (churchInfo && typeof churchInfo === 'object') {
+          const { upsertChurchSettings: upsert } = await import('../lib/db');
+          await upsert({ id: 'main', ...churchInfo, logoUrl: churchInfo.logoUrl || churchInfo.logo_url, primaryColor: churchInfo.primaryColor || churchInfo.primary_color });
+        }
+
+        // Config restante (notifications, listes, etc.)
+        const CONFIG_KEYS_MAP: Record<string, string> = {
+          'vinea_notification_settings': 'notification_settings',
+          'vinea_member_statuses': 'member_statuses',
+          'vinea_member_roles': 'member_roles',
+          'vinea_visitor_statuses': 'visitor_statuses',
+          'vinea_service_types': 'service_types',
+          'vinea_departments': 'departments',
+          'vinea_ai_config': 'ai_config',
+          'vinea_finance_categories': 'finance_categories',
+        };
+        for (const [oldKey, newKey] of Object.entries(CONFIG_KEYS_MAP)) {
+          if (pendingImport[oldKey] !== undefined) {
+            await setAppConfig(newKey, pendingImport[oldKey]);
+          }
+        }
+
+      } else {
+        // Nouveau format Supabase → stocker dans app_config
+        await Promise.all(
+          Object.entries(pendingImport).map(([key, value]) => setAppConfig(key, value))
+        );
+      }
+
       setIsImportModalOpen(false);
       setIsImportSuccessModalOpen(true);
     } catch (err) {
-      alert("Erreur lors de l'application de l'importation.");
+      alert("Erreur lors de l'application de l'importation : " + (err instanceof Error ? err.message : String(err)));
     }
   };
 

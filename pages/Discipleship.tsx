@@ -42,7 +42,7 @@ import { Member, MemberType, Visitor, VisitorStatus } from '../types';
 import { analyzePageData } from '../lib/gemini';
 import { cn, generateId, getInitials, getInitialsFromString, formatFirstName } from '../utils';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
-import { getMembers, getVisitors, getDiscipleshipPairs, createDiscipleshipPair, updateDiscipleshipPair, deleteDiscipleshipPair } from '../lib/db';
+import { getMembers, getVisitors, getDiscipleshipPairs, createDiscipleshipPair, updateDiscipleshipPair, deleteDiscipleshipPair, getDiscipleshipEnrollments, upsertDiscipleshipEnrollment, deleteDiscipleshipEnrollment } from '../lib/db';
 
 interface Pathway {
   id: string;
@@ -87,16 +87,12 @@ const Discipleship: React.FC = () => {
   const [members, setMembers] = useState<Member[]>([]);
   const [visitors, setVisitors] = useState<Visitor[]>([]);
   const [activePairs, setActivePairs] = useState<DiscipleshipPair[]>([]);
-  const [enrollments, setEnrollments] = useState<Enrollment[]>(() => {
-    const saved = localStorage.getItem('vinea_discipleship_enrollments');
-    return saved ? JSON.parse(saved) : [];
-  });
+  const [enrollments, setEnrollments] = useState<Enrollment[]>([]);
 
   useEffect(() => {
-    Promise.all([getMembers(), getVisitors(), getDiscipleshipPairs()]).then(([mbrs, vis, pairs]) => {
+    Promise.all([getMembers(), getVisitors(), getDiscipleshipPairs(), getDiscipleshipEnrollments()]).then(([mbrs, vis, pairs, enrolls]) => {
       setMembers(mbrs);
       setVisitors(vis);
-      // Reconstruct mentorName/discipleName from members list
       setActivePairs(pairs.map((p: any) => {
         const mentor = mbrs.find(m => m.id === p.mentorId);
         const disciple = mbrs.find(m => m.id === p.discipleId);
@@ -106,6 +102,7 @@ const Discipleship: React.FC = () => {
           discipleName: disciple ? `${formatFirstName(disciple.firstName)} ${disciple.lastName.toUpperCase()}` : p.discipleId,
         };
       }));
+      setEnrollments(enrolls as Enrollment[]);
     });
   }, []);
 
@@ -166,10 +163,7 @@ const Discipleship: React.FC = () => {
     );
   }, [activePairs, searchQuery]);
 
-  // Persistance des enrollments (local-only, pas de table DB)
-  useEffect(() => {
-    localStorage.setItem('vinea_discipleship_enrollments', JSON.stringify(enrollments));
-  }, [enrollments]);
+  // Les enrollments sont désormais persistés dans la table discipleship_enrollments (Supabase)
 
   const handleAnalyze = async () => {
     setIsAnalyzing(true);
@@ -278,7 +272,7 @@ const Discipleship: React.FC = () => {
     }
   };
 
-  const handleAddEnrollment = (e: React.FormEvent) => {
+  const handleAddEnrollment = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedPathway || !newEnrollment.memberId) return;
 
@@ -298,22 +292,29 @@ const Discipleship: React.FC = () => {
     };
 
     setEnrollments(prev => [...prev, enrollment]);
+    await upsertDiscipleshipEnrollment(enrollment);
     setIsEnrollModalOpen(false);
     setNewEnrollment({ memberId: '', progress: 0 });
     setEnrollmentSearch('');
   };
 
-  const handleUpdateProgress = (enrollmentId: string, newProgress: number) => {
-    setEnrollments(prev => prev.map(e => 
-      e.id === enrollmentId 
-        ? { ...e, progress: Math.min(100, Math.max(0, newProgress)), lastUpdate: new Date().toISOString().split('T')[0] } 
+  const handleUpdateProgress = async (enrollmentId: string, newProgress: number) => {
+    const lastUpdate = new Date().toISOString().split('T')[0];
+    setEnrollments(prev => prev.map(e =>
+      e.id === enrollmentId
+        ? { ...e, progress: Math.min(100, Math.max(0, newProgress)), lastUpdate }
         : e
     ));
+    const updated = enrollments.find(e => e.id === enrollmentId);
+    if (updated) {
+      await upsertDiscipleshipEnrollment({ ...updated, progress: Math.min(100, Math.max(0, newProgress)), lastUpdate });
+    }
   };
 
-  const handleUnenroll = (enrollmentId: string) => {
+  const handleUnenroll = async (enrollmentId: string) => {
     if (window.confirm("Voulez-vous vraiment retirer ce membre du parcours ?")) {
       setEnrollments(prev => prev.filter(e => e.id !== enrollmentId));
+      await deleteDiscipleshipEnrollment(enrollmentId);
     }
   };
 

@@ -81,7 +81,7 @@ import { cn, generateId, getInitials, formatFirstName } from '../utils';
 import { Member, MemberType, Visitor, OperationType, AttendanceSession, DepartmentActivity, ActivityStatus } from '../types';
 import { SERVICES_LIST } from '../constants';
 import { GoogleGenAI } from "@google/genai";
-import { getAttendanceSessions, createAttendanceSession, updateAttendanceSession, deleteAttendanceSession, getMembers, getVisitors, getChurchSettings } from '../lib/db';
+import { getAttendanceSessions, createAttendanceSession, updateAttendanceSession, deleteAttendanceSession, getMembers, getVisitors, getChurchSettings, getAppConfig, setAppConfig } from '../lib/db';
 
 interface AbsentEntry {
   person: Member | Visitor;
@@ -97,12 +97,7 @@ const Attendance: React.FC = () => {
   const [members, setMembers] = useState<Member[]>([]);
   const [visitors, setVisitors] = useState<Visitor[]>([]);
   const [churchName, setChurchName] = useState('Vinea');
-  const [assignments, setAssignments] = useState<Record<string, string>>(() => {
-    try {
-      const saved = localStorage.getItem('vinea_attendance_assignments_v2');
-      return saved ? JSON.parse(saved) : {};
-    } catch (e) { return {}; }
-  });
+  const [assignments, setAssignments] = useState<Record<string, string>>({});
 
   const [availableServices, setAvailableServices] = useState<string[]>(SERVICES_LIST);
   const [analysis, setAnalysis] = useState<string | null>(null);
@@ -135,12 +130,7 @@ const Attendance: React.FC = () => {
   const [assignmentTarget, setAssignmentTarget] = useState<AbsentEntry | null>(null);
   const [staffSearchTerm, setStaffSearchTerm] = useState('');
 
-  const [followUpHistory, setFollowUpHistory] = useState<Record<string, any[]>>(() => {
-    try {
-      const saved = localStorage.getItem('vinea_attendance_followup_history');
-      return saved ? JSON.parse(saved) : {};
-    } catch (e) { return {}; }
-  });
+  const [followUpHistory, setFollowUpHistory] = useState<Record<string, any[]>>({});
 
 
   const [followUpMember, setFollowUpMember] = useState<Member | Visitor | null>(null);
@@ -182,27 +172,26 @@ const Attendance: React.FC = () => {
 
   useEffect(() => {
     const load = async () => {
-      const [h, m, v, settings] = await Promise.all([
+      const [h, m, v, settings, savedAssignments, savedFollowUp] = await Promise.all([
         getAttendanceSessions(),
         getMembers(),
         getVisitors(),
         getChurchSettings(),
+        getAppConfig('attendance_assignments'),
+        getAppConfig('attendance_followup_history'),
       ]);
       setHistory(h as any[]);
       setMembers(m);
       setVisitors(v);
       if (settings?.name) setChurchName(settings.name);
+      if (savedAssignments) setAssignments(savedAssignments);
+      if (savedFollowUp) setFollowUpHistory(savedFollowUp);
     };
     load();
   }, []);
 
-  useEffect(() => {
-    localStorage.setItem('vinea_attendance_followup_history', JSON.stringify(followUpHistory));
-  }, [followUpHistory]);
-
-  useEffect(() => {
-    localStorage.setItem('vinea_attendance_assignments_v2', JSON.stringify(assignments));
-  }, [assignments]);
+  useEffect(() => { setAppConfig('attendance_followup_history', followUpHistory); }, [followUpHistory]);
+  useEffect(() => { setAppConfig('attendance_assignments', assignments); }, [assignments]);
 
   const chronortedHistory = useMemo(() => {
     return [...history].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());

@@ -2,15 +2,9 @@ import { GoogleGenAI } from "@google/genai";
 
 const getAI = () => new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY });
 
-const getChurchName = () => {
-  try {
-    const saved = localStorage.getItem('vinea_church_info');
-    if (saved) {
-      return JSON.parse(saved).name || 'Vinea';
-    }
-  } catch (e) {}
-  return 'Vinea';
-};
+let _churchNameCache = 'Vinea';
+export const setChurchNameCache = (name: string) => { _churchNameCache = name; };
+const getChurchName = () => _churchNameCache;
 
 /**
  * Instruction système commune pour garantir l'usage de la version Louis Segond 1910

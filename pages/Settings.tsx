@@ -74,7 +74,8 @@ import {
 import { cn, generateId, formatFirstName } from '../utils';
 import { SERVICES_LIST, DEPARTMENTS as CONST_DEPARTMENTS } from '../constants';
 import { MemberStatus, VisitorStatus, MemberType, NotificationSettings } from '../types';
-import { getChurchSettings, upsertChurchSettings, getAdminUsers, upsertAdminUser, deleteAdminUser } from '../lib/db';
+import { getChurchSettings, upsertChurchSettings, getAdminUsers, upsertAdminUser, deleteAdminUser, getAppConfig, setAppConfig } from '../lib/db';
+import { supabase } from '../lib/supabase';
 
 interface ListManagerProps {
   title: string;
@@ -325,60 +326,31 @@ const Settings: React.FC = () => {
     timezone: 'UTC'
   });
 
-  const [adminInfo, setAdminInfo] = useState(() => {
-    const saved = localStorage.getItem('vinea_admin_info');
-    return saved ? JSON.parse(saved) : {
-      fullName: 'Administrateur Vinea',
-      role: 'Super Admin',
-      email: 'admin@vinea.org',
-      avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Admin'
-    };
+  const [adminInfo, setAdminInfo] = useState({
+    fullName: 'Administrateur Vinea',
+    role: 'Super Admin',
+    email: 'admin@vinea.org',
+    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Admin'
   });
 
-  const [notificationSettings, setNotificationSettings] = useState<NotificationSettings>(() => {
-    const saved = localStorage.getItem('vinea_notification_settings');
-    return saved ? JSON.parse(saved) : {
-      enableBirthdays: true,
-      enableEvents: true,
-      enableFollowUps: true,
-      daysBeforeEvent: 3
-    };
+  const [notificationSettings, setNotificationSettings] = useState<NotificationSettings>({
+    enableBirthdays: true,
+    enableEvents: true,
+    enableFollowUps: true,
+    daysBeforeEvent: 3
   });
 
-  const [memberStatuses, setMemberStatuses] = useState<string[]>(() => {
-    const saved = localStorage.getItem('vinea_member_statuses');
-    return saved ? JSON.parse(saved) : Object.values(MemberStatus);
-  });
-
-  const [memberTypes, setMemberTypes] = useState<string[]>(() => {
-    const saved = localStorage.getItem('vinea_member_roles');
-    return saved ? JSON.parse(saved) : Object.values(MemberType);
-  });
-
-  const [visitorStatuses, setVisitorStatuses] = useState<string[]>(() => {
-    const saved = localStorage.getItem('vinea_visitor_statuses');
-    return saved ? JSON.parse(saved) : Object.values(VisitorStatus);
-  });
-
-  const [serviceTypes, setServiceTypes] = useState<string[]>(() => {
-    const saved = localStorage.getItem('vinea_service_types');
-    return saved ? JSON.parse(saved) : SERVICES_LIST;
-  });
-
-  const [departments, setDepartments] = useState<string[]>(() => {
-    const saved = localStorage.getItem('vinea_departments');
-    return saved ? JSON.parse(saved) : CONST_DEPARTMENTS;
-  });
-
+  const [memberStatuses, setMemberStatuses] = useState<string[]>(Object.values(MemberStatus));
+  const [memberTypes, setMemberTypes] = useState<string[]>(Object.values(MemberType));
+  const [visitorStatuses, setVisitorStatuses] = useState<string[]>(Object.values(VisitorStatus));
+  const [serviceTypes, setServiceTypes] = useState<string[]>(SERVICES_LIST);
+  const [departments, setDepartments] = useState<string[]>(CONST_DEPARTMENTS);
   const [adminUsers, setAdminUsers] = useState<AdminUser[]>([]);
 
-  const [aiConfig, setAiConfig] = useState(() => {
-    const saved = localStorage.getItem('vinea_ai_config');
-    return saved ? JSON.parse(saved) : {
-      tone: 'Chaleureux & Pastoral',
-      autoSuggest: true,
-      language: 'Français'
-    };
+  const [aiConfig, setAiConfig] = useState({
+    tone: 'Chaleureux & Pastoral',
+    autoSuggest: true,
+    language: 'Français'
   });
 
   const [pendingImport, setPendingImport] = useState<any | null>(null);
@@ -397,9 +369,23 @@ const Settings: React.FC = () => {
 
   useEffect(() => {
     const load = async () => {
-      const [settings, users] = await Promise.all([getChurchSettings(), getAdminUsers()]);
+      const { data: { user } } = await supabase.auth.getUser();
+      const currentEmail = user?.email ?? '';
+
+      const [settings, users, notifData, memberStatusesData, memberTypesData, visitorStatusesData, serviceTypesData, departmentsData, aiConfigData] = await Promise.all([
+        getChurchSettings(),
+        getAdminUsers(),
+        getAppConfig('notification_settings'),
+        getAppConfig('member_statuses'),
+        getAppConfig('member_roles'),
+        getAppConfig('visitor_statuses'),
+        getAppConfig('service_types'),
+        getAppConfig('departments'),
+        getAppConfig('ai_config'),
+      ]);
+
       if (settings) {
-        const loaded = {
+        setChurchInfo({
           name: settings.name || 'Vinea Community',
           slogan: settings.slogan || 'Enracinés en Christ',
           phone: settings.phone || '',
@@ -410,28 +396,34 @@ const Settings: React.FC = () => {
           currency: settings.currency || 'F CFA',
           language: settings.language || 'Français',
           timezone: settings.timezone || 'UTC',
-        };
-        setChurchInfo(loaded);
-        // Sync to localStorage so Sidebar gets correct values on load
-        localStorage.setItem('vinea_church_info', JSON.stringify({
-          name: loaded.name,
-          logo: loaded.logo,
-          primaryColor: loaded.primaryColor,
-          currency: loaded.currency,
-        }));
-        window.dispatchEvent(new Event('vinea_church_info_updated'));
+        });
       }
-      if (users.length > 0) {
-        setAdminUsers(users.map((u: any) => ({
-          id: u.id,
-          fullName: u.full_name,
-          email: u.email,
-          role: u.role,
-          status: u.status,
-          avatar: u.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${u.full_name}`,
-          lastActive: u.last_active || 'Inconnu',
-          permissions: u.permissions || ['dashboard'],
-        })));
+
+      if (notifData) setNotificationSettings(notifData);
+      if (memberStatusesData) setMemberStatuses(memberStatusesData);
+      if (memberTypesData) setMemberTypes(memberTypesData);
+      if (visitorStatusesData) setVisitorStatuses(visitorStatusesData);
+      if (serviceTypesData) setServiceTypes(serviceTypesData);
+      if (departmentsData) setDepartments(departmentsData);
+      if (aiConfigData) setAiConfig(aiConfigData);
+
+      const mappedUsers = users.map((u: any) => ({
+        id: u.id,
+        fullName: u.full_name,
+        email: u.email,
+        role: u.role,
+        status: u.status,
+        avatar: u.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${u.full_name}`,
+        lastActive: u.last_active || 'Inconnu',
+        permissions: u.permissions || ['dashboard'],
+      }));
+
+      if (mappedUsers.length > 0) {
+        setAdminUsers(mappedUsers);
+        const me = mappedUsers.find((u: any) => u.email.toLowerCase() === currentEmail.toLowerCase());
+        if (me) {
+          setAdminInfo({ fullName: me.fullName, role: me.role, email: me.email, avatar: me.avatar });
+        }
       } else {
         setAdminUsers([{
           id: 'u1',
@@ -448,45 +440,53 @@ const Settings: React.FC = () => {
     load();
   }, []);
 
-  const handleSave = () => {
+  const handleSave = async () => {
     setIsSaving(true);
-    localStorage.setItem('vinea_admin_info', JSON.stringify(adminInfo));
-    localStorage.setItem('vinea_ai_config', JSON.stringify(aiConfig));
-    localStorage.setItem('vinea_member_statuses', JSON.stringify(memberStatuses));
-    localStorage.setItem('vinea_member_roles', JSON.stringify(memberTypes));
-    localStorage.setItem('vinea_visitor_statuses', JSON.stringify(visitorStatuses));
-    localStorage.setItem('vinea_service_types', JSON.stringify(serviceTypes));
-    localStorage.setItem('vinea_departments', JSON.stringify(departments));
-    localStorage.setItem('vinea_notification_settings', JSON.stringify(notificationSettings));
 
-    // Persist church info for Sidebar (name, logo, primaryColor) and formatCurrency() (currency)
-    localStorage.setItem('vinea_church_info', JSON.stringify({
-      name: churchInfo.name,
-      logo: churchInfo.logo,
-      primaryColor: churchInfo.primaryColor,
-      currency: churchInfo.currency,
-    }));
+    await Promise.all([
+      upsertChurchSettings({
+        id: 'main',
+        name: churchInfo.name,
+        slogan: churchInfo.slogan,
+        phone: churchInfo.phone,
+        email: churchInfo.email,
+        address: churchInfo.address,
+        logoUrl: churchInfo.logo,
+        primaryColor: churchInfo.primaryColor,
+        currency: churchInfo.currency,
+        language: churchInfo.language,
+        timezone: churchInfo.timezone,
+      }),
+      setAppConfig('notification_settings', notificationSettings),
+      setAppConfig('member_statuses', memberStatuses),
+      setAppConfig('member_roles', memberTypes),
+      setAppConfig('visitor_statuses', visitorStatuses),
+      setAppConfig('service_types', serviceTypes),
+      setAppConfig('departments', departments),
+      setAppConfig('ai_config', aiConfig),
+    ]);
+
+    // Mettre à jour l'admin user courant si les infos ont changé
+    const matchingUser = adminUsers.find(u => u.email.toLowerCase() === adminInfo.email.toLowerCase());
+    if (matchingUser) {
+      await upsertAdminUser({
+        id: matchingUser.id,
+        full_name: adminInfo.fullName,
+        email: adminInfo.email,
+        role: matchingUser.role,
+        status: matchingUser.status,
+        avatar: adminInfo.avatar,
+        last_active: matchingUser.lastActive,
+        permissions: matchingUser.permissions,
+      });
+    }
+
+    // Notifier App.tsx de recharger les settings (currency, nom, logo, couleur + notif settings)
     window.dispatchEvent(new Event('vinea_church_info_updated'));
 
-    upsertChurchSettings({
-      id: 'main',
-      name: churchInfo.name,
-      slogan: churchInfo.slogan,
-      phone: churchInfo.phone,
-      email: churchInfo.email,
-      address: churchInfo.address,
-      logoUrl: churchInfo.logo,
-      primaryColor: churchInfo.primaryColor,
-      currency: churchInfo.currency,
-      language: churchInfo.language,
-      timezone: churchInfo.timezone,
-    });
-
-    setTimeout(() => {
-      setIsSaving(false);
-      setSaveSuccess(true);
-      setTimeout(() => setSaveSuccess(false), 3000);
-    }, 1200);
+    setIsSaving(false);
+    setSaveSuccess(true);
+    setTimeout(() => setSaveSuccess(false), 3000);
   };
 
   const handleOpenEditUser = (user: AdminUser) => {
@@ -564,18 +564,13 @@ const Settings: React.FC = () => {
     }
   };
 
-  const handleExportFullData = () => {
+  const handleExportFullData = async () => {
+    const APP_CONFIG_KEYS = ['notification_settings', 'member_statuses', 'member_roles', 'visitor_statuses', 'service_types', 'departments', 'ai_config', 'finance_categories', 'event_goals', 'event_assignments', 'attendance_assignments', 'attendance_followup_history'];
     const backup: Record<string, any> = {};
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
-      if (key && key.startsWith('vinea_')) {
-        try {
-          backup[key] = JSON.parse(localStorage.getItem(key) || '{}');
-        } catch (e) {
-          backup[key] = localStorage.getItem(key);
-        }
-      }
-    }
+    await Promise.all(APP_CONFIG_KEYS.map(async key => {
+      const val = await getAppConfig(key);
+      if (val !== null) backup[key] = val;
+    }));
     const dataStr = JSON.stringify(backup, null, 2);
     const blob = new Blob([dataStr], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
@@ -595,67 +590,27 @@ const Settings: React.FC = () => {
       try {
         const backup = JSON.parse(event.target?.result as string);
         const keys = Object.keys(backup);
-        if (keys.length === 0 || !keys.some(k => k.startsWith('vinea_'))) {
-          throw new Error("Fichier de sauvegarde invalide ou vide.");
-        }
-        const cInfo = backup['vinea_church_info'] || {};
-        const membersList = backup['vinea_members'] || [];
-        const financesList = backup['vinea_finances'] || [];
-        const servicesList = backup['vinea_services'] || [];
-        const visitorsList = backup['vinea_visitors'] || [];
-
+        if (keys.length === 0) throw new Error("Fichier de sauvegarde invalide ou vide.");
         setImportSummary({
-          churchName: cInfo.name || 'Inconnu',
-          membersCount: Array.isArray(membersList) ? membersList.length : 0,
-          financesCount: Array.isArray(financesList) ? financesList.length : 0,
-          servicesCount: Array.isArray(servicesList) ? servicesList.length : 0,
-          visitorsCount: Array.isArray(visitorsList) ? visitorsList.length : 0
+          churchName: backup['church_info']?.name || 'Inconnu',
+          membersCount: 0, financesCount: 0, servicesCount: 0, visitorsCount: 0
         });
         setPendingImport(backup);
         setIsImportModalOpen(true);
       } catch (err) {
-        alert("Erreur lors de l'chargement : " + (err instanceof Error ? err.message : "Format invalide"));
+        alert("Erreur lors du chargement : " + (err instanceof Error ? err.message : "Format invalide"));
       }
     };
     reader.readAsText(file);
     e.target.value = '';
   };
 
-  const applyImport = () => {
+  const applyImport = async () => {
     if (!pendingImport) return;
     try {
-      for (let i = localStorage.length - 1; i >= 0; i--) {
-        const key = localStorage.key(i);
-        if (key && key.startsWith('vinea_')) {
-          localStorage.removeItem(key);
-        }
-      }
-
-      Object.keys(pendingImport).forEach(key => {
-        let value = pendingImport[key];
-        
-        if (key === 'vinea_user_permissions') {
-          if (Array.isArray(value) && !value.includes('spiritual')) {
-            value.push('spiritual');
-          }
-        }
-
-        if (key === 'vinea_admin_users' && Array.isArray(value)) {
-          value = value.map(user => {
-            if (user.permissions && Array.isArray(user.permissions) && !user.permissions.includes('spiritual')) {
-              return { ...user, permissions: [...user.permissions, 'spiritual'] };
-            }
-            return user;
-          });
-        }
-
-        if (typeof value === 'object' && value !== null) {
-          localStorage.setItem(key, JSON.stringify(value));
-        } else {
-          localStorage.setItem(key, String(value));
-        }
-      });
-
+      await Promise.all(
+        Object.entries(pendingImport).map(([key, value]) => setAppConfig(key, value))
+      );
       setIsImportModalOpen(false);
       setIsImportSuccessModalOpen(true);
     } catch (err) {
@@ -663,14 +618,9 @@ const Settings: React.FC = () => {
     }
   };
 
-  const handleConfirmedPurge = () => {
-    const keysToKeep = ['vinea_auth', 'vinea_user_role', 'vinea_user_permissions', 'vinea_admin_users', 'vinea_admin_info'];
-    for (let i = localStorage.length - 1; i >= 0; i--) {
-      const key = localStorage.key(i);
-      if (key && key.startsWith('vinea_') && !keysToKeep.includes(key)) {
-        localStorage.removeItem(key);
-      }
-    }
+  const handleConfirmedPurge = async () => {
+    const APP_CONFIG_KEYS = ['notification_settings', 'member_statuses', 'member_roles', 'visitor_statuses', 'service_types', 'departments', 'ai_config', 'finance_categories', 'event_goals', 'event_assignments', 'attendance_assignments', 'attendance_followup_history'];
+    await Promise.all(APP_CONFIG_KEYS.map(key => setAppConfig(key, null)));
     window.dispatchEvent(new Event('vinea_data_purged'));
     setIsPurgeModalOpen(false);
     window.location.reload();

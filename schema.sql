@@ -329,7 +329,14 @@ CREATE TABLE church_events (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- 15. INDEXATION POUR LA PERFORMANCE
+-- 15. CONFIGURATION APPLICATIVE (clé-valeur générique)
+CREATE TABLE app_config (
+    key TEXT PRIMARY KEY,
+    value JSONB,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- 16. INDEXATION POUR LA PERFORMANCE
 CREATE INDEX idx_members_full_name ON members (last_name, first_name);
 CREATE INDEX idx_finances_date_type ON financial_records (date, type);
 CREATE INDEX idx_services_date ON church_services (date);
@@ -337,7 +344,7 @@ CREATE INDEX idx_attendance_date ON attendance_sessions (date);
 CREATE INDEX idx_activities_deadline ON department_activities (deadline);
 CREATE INDEX idx_meditations_date ON meditations (date);
 
--- 16. SECURITÉ : ROW LEVEL SECURITY (RLS)
+-- 17. SECURITÉ : ROW LEVEL SECURITY (RLS)
 ALTER TABLE members ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Authenticated users can read members" ON members FOR SELECT USING (auth.role() = 'authenticated');
 

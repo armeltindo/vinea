@@ -20,7 +20,9 @@ import Admin from './pages/Admin';
 import Login from './pages/Login';
 import SpiritualGrowth from './pages/SpiritualGrowth';
 import { supabase } from './lib/supabase';
-import { getAdminUserByEmail, getMembers, getVisitors, getAttendanceSessions, getChurchEvents, upsertNotification } from './lib/db';
+import { getAdminUserByEmail, getMembers, getVisitors, getAttendanceSessions, getChurchEvents, upsertNotification, getChurchSettings, getAppConfig } from './lib/db';
+import { setCurrencyCache } from './constants';
+import { setChurchNameCache } from './lib/gemini';
 import { 
   Search, 
   User, 
@@ -56,6 +58,14 @@ const App: React.FC = () => {
   const [adminName, setAdminName] = useState('Admin Vinea');
   const [adminAvatar, setAdminAvatar] = useState('https://api.dicebear.com/7.x/avataaars/svg?seed=Jean');
 
+  const [churchName, setChurchName] = useState('Vinea');
+  const [churchLogo, setChurchLogo] = useState<string | null>(null);
+  const [primaryColor, setPrimaryColor] = useState('#2563EB');
+
+  const [notifSettings, setNotifSettings] = useState<NotificationSettings>({
+    enableBirthdays: true, enableEvents: true, enableFollowUps: true, daysBeforeEvent: 3
+  });
+
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [readNotificationIds, setReadNotificationIds] = useState<string[]>([]);
 
@@ -70,10 +80,7 @@ const App: React.FC = () => {
 
   // --- Notification Logic ---
   const generateNotifications = useCallback(async () => {
-    const settingsRaw = localStorage.getItem('vinea_notification_settings');
-    const settings: NotificationSettings = settingsRaw
-      ? JSON.parse(settingsRaw)
-      : { enableBirthdays: true, enableEvents: true, enableFollowUps: true, daysBeforeEvent: 3 };
+    const settings: NotificationSettings = notifSettings;
 
     const [members, events, visitors, attendance] = await Promise.all([
       getMembers(),
@@ -186,7 +193,7 @@ const App: React.FC = () => {
     }));
 
     setNotifications(finalNotifs);
-  }, [readNotificationIds]);
+  }, [readNotificationIds, notifSettings]);
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -240,17 +247,32 @@ const App: React.FC = () => {
       setAdminName(adminUser.full_name ?? 'Admin Vinea');
       setAdminAvatar(adminUser.avatar ?? `https://api.dicebear.com/7.x/avataaars/svg?seed=${email}`);
     }
-    // Sync permissions to localStorage so Sidebar shows the correct menu items
-    localStorage.setItem('vinea_user_permissions', JSON.stringify(perms));
-    window.dispatchEvent(new Event('vinea_auth_updated'));
   };
+
+  const loadChurchAndNotifSettings = useCallback(async () => {
+    const [settings, notifSettingsData] = await Promise.all([
+      getChurchSettings(),
+      getAppConfig('notification_settings'),
+    ]);
+    if (settings) {
+      setChurchName(settings.name || 'Vinea');
+      setChurchLogo(settings.logoUrl || null);
+      setPrimaryColor(settings.primaryColor || '#2563EB');
+      setCurrencyCache(settings.currency || 'F CFA');
+      setChurchNameCache(settings.name || 'Vinea');
+    }
+    if (notifSettingsData) {
+      setNotifSettings(notifSettingsData);
+    }
+  }, []);
 
   useEffect(() => {
     // Vérifier la session existante au démarrage
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.user) {
-        getAdminUserByEmail(session.user.email ?? '').then(adminUser => {
+        getAdminUserByEmail(session.user.email ?? '').then(async (adminUser) => {
           applyAdminUser(adminUser, session.user.email ?? '');
+          await loadChurchAndNotifSettings();
           setIsAuthenticated(true);
           setAuthLoading(false);
         });
@@ -268,8 +290,15 @@ const App: React.FC = () => {
       }
     });
 
-    return () => subscription.unsubscribe();
-  }, []);
+    // Recharger les settings depuis Supabase quand ils changent (ex: depuis Settings.tsx)
+    const handleSettingsUpdated = () => { loadChurchAndNotifSettings(); };
+    window.addEventListener('vinea_church_info_updated', handleSettingsUpdated);
+
+    return () => {
+      subscription.unsubscribe();
+      window.removeEventListener('vinea_church_info_updated', handleSettingsUpdated);
+    };
+  }, [loadChurchAndNotifSettings]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -293,9 +322,6 @@ const App: React.FC = () => {
     const finalPermissions = permissions.includes('spiritual') ? permissions : [...permissions, 'spiritual'];
     setCurrentUserPermissions(finalPermissions);
     if (name) setAdminName(name);
-    // Sync to localStorage so Sidebar shows all menu items
-    localStorage.setItem('vinea_user_permissions', JSON.stringify(finalPermissions));
-    window.dispatchEvent(new Event('vinea_auth_updated'));
   };
 
   const handleConfirmLogout = async () => {
@@ -303,7 +329,6 @@ const App: React.FC = () => {
     setIsAuthenticated(false);
     setCurrentUserRole('Super Admin');
     setCurrentUserPermissions(['dashboard', 'spiritual']);
-    localStorage.setItem('vinea_user_permissions', JSON.stringify(['dashboard', 'spiritual']));
     setShowLogoutConfirm(false);
   };
 
@@ -371,11 +396,17 @@ const App: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-slate-50 flex text-slate-900">
-      <Sidebar 
-        activeTab={activeTab} 
-        setActiveTab={setActiveTab} 
-        onLogout={() => setShowLogoutConfirm(true)} 
+      <Sidebar
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        onLogout={() => setShowLogoutConfirm(true)}
         userRole={currentUserRole}
+        userPermissions={currentUserPermissions}
+        adminName={adminName}
+        adminAvatar={adminAvatar}
+        churchName={churchName}
+        churchLogo={churchLogo}
+        primaryColor={primaryColor}
       />
       
       <main className="flex-1 ml-64 min-h-screen transition-all duration-300 relative">

@@ -34,6 +34,7 @@ import {
 import { analyzePageData } from '../lib/gemini';
 import { formatCurrency, DEPARTMENTS } from '../constants';
 import { cn, generateId } from '../utils';
+import { getChurchEvents, createChurchEvent, updateChurchEvent, deleteChurchEvent } from '../lib/db';
 
 interface Expense {
   id: string;
@@ -75,20 +76,21 @@ interface TeamAssignment {
 }
 
 const Events: React.FC = () => {
-  const [events, setEvents] = useState<Event[]>(() => {
-    const saved = localStorage.getItem('vinea_events');
-    return saved ? JSON.parse(saved) : [];
-  });
-
+  const [events, setEvents] = useState<Event[]>([]);
   const [goals, setGoals] = useState<Goal[]>(() => {
     const saved = localStorage.getItem('vinea_event_goals');
     return saved ? JSON.parse(saved) : [];
   });
-
   const [assignments, setAssignments] = useState<TeamAssignment[]>(() => {
     const saved = localStorage.getItem('vinea_event_assignments');
     return saved ? JSON.parse(saved) : [];
   });
+
+  useEffect(() => {
+    getChurchEvents().then(data => setEvents(data.map(e => ({
+      ...e, registered: e.registeredCount, target: e.targetCount
+    })) as any));
+  }, []);
 
   const [activeTab, setActiveTab] = useState<'upcoming' | 'archives'>('upcoming');
   const [searchTerm, setSearchTerm] = useState('');
@@ -111,11 +113,7 @@ const Events: React.FC = () => {
   const [newAssignment, setNewAssignment] = useState({ dept: DEPARTMENTS[0] as any, eventId: '', status: 'En attente' as const });
   const [newGoalData, setNewGoalData] = useState({ label: '', value: 0, color: 'bg-indigo-600' });
 
-  // Persistence
-  useEffect(() => {
-    localStorage.setItem('vinea_events', JSON.stringify(events));
-  }, [events]);
-
+  // Persistence (goals & assignments are local-only)
   useEffect(() => {
     localStorage.setItem('vinea_event_goals', JSON.stringify(goals));
   }, [goals]);
@@ -172,24 +170,22 @@ const Events: React.FC = () => {
     setIsAnalyzing(false);
   };
 
-  const handleFormSubmit = (e: React.FormEvent) => {
+  const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-    setTimeout(() => {
-      if (editingEventId) {
-        setEvents(prev => prev.map(ev => ev.id === editingEventId ? { ...ev, ...formData } : ev));
-        if (selectedEvent?.id === editingEventId) {
-          setSelectedEvent({ ...selectedEvent, ...formData });
-        }
-      } else {
-        const newEvent: Event = { ...formData, id: generateId(), expenseList: [] };
-        setEvents([newEvent, ...events]);
-      }
-      setIsFormOpen(false);
-      setIsSubmitting(false);
-      setEditingEventId(null);
-      setFormData(initialFormState);
-    }, 800);
+    if (editingEventId) {
+      setEvents(prev => prev.map(ev => ev.id === editingEventId ? { ...ev, ...formData } : ev));
+      if (selectedEvent?.id === editingEventId) setSelectedEvent({ ...selectedEvent, ...formData });
+      await updateChurchEvent(editingEventId, { ...formData, registeredCount: formData.registered, targetCount: formData.target });
+    } else {
+      const newEvent: Event = { ...formData, id: generateId(), expenseList: [] };
+      setEvents([newEvent, ...events]);
+      await createChurchEvent({ ...newEvent, registeredCount: newEvent.registered, targetCount: newEvent.target });
+    }
+    setIsFormOpen(false);
+    setIsSubmitting(false);
+    setEditingEventId(null);
+    setFormData(initialFormState);
   };
 
   const handleEditEvent = (event: Event) => {
@@ -243,6 +239,8 @@ const Events: React.FC = () => {
     });
 
     setEvents(updatedEvents);
+    const updatedEv = updatedEvents.find(ev => ev.id === selectedEvent.id);
+    if (updatedEv) updateChurchEvent(selectedEvent.id, { expenses: updatedEv.expenses });
     setNewExpense({ label: '', amount: '' });
   };
 
@@ -259,6 +257,8 @@ const Events: React.FC = () => {
       return ev;
     });
     setEvents(updatedEvents);
+    const updatedEv2 = updatedEvents.find(ev => ev.id === selectedEvent.id);
+    if (updatedEv2) updateChurchEvent(selectedEvent.id, { expenses: updatedEv2.expenses });
   };
 
   const handleUpdateGoalValue = (id: string, value: number) => {
@@ -308,12 +308,13 @@ const Events: React.FC = () => {
     setIsDeleteConfirmOpen(true);
   };
 
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     if (eventToDeleteId) {
       setEvents(events.filter(e => e.id !== eventToDeleteId));
       setAssignments(assignments.filter(a => a.eventId !== eventToDeleteId));
       setIsDeleteConfirmOpen(false);
       setSelectedEvent(null);
+      await deleteChurchEvent(eventToDeleteId);
       setEventToDeleteId(null);
     }
   };

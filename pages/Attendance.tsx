@@ -81,6 +81,7 @@ import { cn, generateId, getInitials, formatFirstName } from '../utils';
 import { Member, MemberType, Visitor, OperationType, AttendanceSession, DepartmentActivity, ActivityStatus } from '../types';
 import { SERVICES_LIST } from '../constants';
 import { GoogleGenAI } from "@google/genai";
+import { getAttendanceSessions, createAttendanceSession, updateAttendanceSession, deleteAttendanceSession, getMembers, getVisitors, getChurchSettings } from '../lib/db';
 
 interface AbsentEntry {
   person: Member | Visitor;
@@ -92,32 +93,10 @@ interface AbsentEntry {
 }
 
 const Attendance: React.FC = () => {
-  const [history, setHistory] = useState<any[]>(() => {
-    try {
-      const saved = localStorage.getItem('vinea_attendance_history');
-      return saved ? JSON.parse(saved) : [];
-    } catch (e) { return []; }
-  });
-  
-  const [members, setMembers] = useState<Member[]>(() => {
-    try {
-      const saved = localStorage.getItem('vinea_members');
-      return saved ? JSON.parse(saved) : [];
-    } catch (e) { return []; }
-  });
-
-  const [visitors, setVisitors] = useState<Visitor[]>(() => {
-    try {
-      const saved = localStorage.getItem('vinea_visitors');
-      return saved ? JSON.parse(saved) : [];
-    } catch (e) { return []; }
-  });
-
-  const churchName = useMemo(() => {
-    const saved = localStorage.getItem('vinea_church_info');
-    return saved ? JSON.parse(saved).name : 'Vinea';
-  }, []);
-
+  const [history, setHistory] = useState<any[]>([]);
+  const [members, setMembers] = useState<Member[]>([]);
+  const [visitors, setVisitors] = useState<Visitor[]>([]);
+  const [churchName, setChurchName] = useState('Vinea');
   const [assignments, setAssignments] = useState<Record<string, string>>(() => {
     try {
       const saved = localStorage.getItem('vinea_attendance_assignments_v2');
@@ -163,6 +142,7 @@ const Attendance: React.FC = () => {
     } catch (e) { return {}; }
   });
 
+
   const [followUpMember, setFollowUpMember] = useState<Member | Visitor | null>(null);
   const [followUpDate, setFollowUpDate] = useState<string>('');
   const [currentNote, setCurrentNote] = useState('');
@@ -201,32 +181,20 @@ const Attendance: React.FC = () => {
   }, [staffMembers, staffSearchTerm]);
 
   useEffect(() => {
-    const loadData = () => {
-      const savedM = localStorage.getItem('vinea_members');
-      if (savedM) setMembers(JSON.parse(savedM));
-      const savedV = localStorage.getItem('vinea_visitors');
-      if (savedV) setVisitors(JSON.parse(savedV));
+    const load = async () => {
+      const [h, m, v, settings] = await Promise.all([
+        getAttendanceSessions(),
+        getMembers(),
+        getVisitors(),
+        getChurchSettings(),
+      ]);
+      setHistory(h as any[]);
+      setMembers(m);
+      setVisitors(v);
+      if (settings?.name) setChurchName(settings.name);
     };
-    loadData();
-    window.addEventListener('vinea_members_updated', loadData);
-    window.addEventListener('vinea_visitors_updated', loadData);
-    return () => {
-      window.removeEventListener('vinea_members_updated', loadData);
-      window.removeEventListener('vinea_visitors_updated', loadData);
-    };
+    load();
   }, []);
-
-  useEffect(() => {
-    const savedServices = localStorage.getItem('vinea_service_types');
-    if (savedServices) {
-      setAvailableServices(JSON.parse(savedServices));
-    }
-  }, []);
-
-  useEffect(() => {
-    localStorage.setItem('vinea_attendance_history', JSON.stringify(history));
-    window.dispatchEvent(new Event('vinea_attendance_updated'));
-  }, [history]);
 
   useEffect(() => {
     localStorage.setItem('vinea_attendance_followup_history', JSON.stringify(followUpHistory));
@@ -447,10 +415,13 @@ const Attendance: React.FC = () => {
     const total = Number(attendanceForm.men) + Number(attendanceForm.women) + Number(attendanceForm.children);
     setTimeout(() => {
       if (editingRecordId) {
-        setHistory(prev => prev.map(h => h.id === editingRecordId ? { ...attendanceForm, id: editingRecordId, total } : h));
+        const updated = { ...attendanceForm, id: editingRecordId, total };
+        setHistory(prev => prev.map(h => h.id === editingRecordId ? updated : h));
+        updateAttendanceSession(editingRecordId, { ...attendanceForm, total, absentMembers: attendanceForm.absentMembers } as any);
       } else {
         const newEntry = { ...attendanceForm, id: generateId(), total };
         setHistory([newEntry, ...history]);
+        createAttendanceSession(newEntry as any);
       }
       setIsFormOpen(false);
       setEditingRecordId(null);
@@ -1312,7 +1283,7 @@ const Attendance: React.FC = () => {
               <h3 className="text-2xl font-black text-slate-900 uppercase">Supprimer ?</h3>
               <p className="text-slate-500 mt-2 text-sm font-medium leading-relaxed italic">Cette action retirera définitivement ce relevé de l'historique.</p>
               <div className="flex flex-col gap-3 mt-8">
-                 <button onClick={() => { if(recordToDeleteId) { setHistory(prev => prev.filter(h => h.id !== recordToDeleteId)); setRecordToDeleteId(null); setIsDeleteConfirmOpen(false); setIsRecordModalOpen(false); } }} className="w-full py-4 bg-rose-600 text-white rounded-2xl text-[10px] font-black uppercase shadow-xl shadow-rose-200 hover:bg-rose-700 transition-all active:scale-95">Confirmer</button>
+                 <button onClick={() => { if(recordToDeleteId) { setHistory(prev => prev.filter(h => h.id !== recordToDeleteId)); deleteAttendanceSession(recordToDeleteId); setRecordToDeleteId(null); setIsDeleteConfirmOpen(false); setIsRecordModalOpen(false); } }} className="w-full py-4 bg-rose-600 text-white rounded-2xl text-[10px] font-black uppercase shadow-xl shadow-rose-200 hover:bg-rose-700 transition-all active:scale-95">Confirmer</button>
                  <button onClick={() => setIsDeleteConfirmOpen(false)} className="w-full py-4 bg-slate-50 text-slate-600 rounded-2xl text-[10px] font-black uppercase border border-slate-200 hover:bg-slate-100 transition-all">Annuler</button>
               </div>
            </div>

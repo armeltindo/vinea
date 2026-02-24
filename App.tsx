@@ -19,6 +19,8 @@ import Settings from './pages/Settings';
 import Admin from './pages/Admin';
 import Login from './pages/Login';
 import SpiritualGrowth from './pages/SpiritualGrowth';
+import { supabase } from './lib/supabase';
+import { getAdminUserByEmail, getMembers, getVisitors, getAttendanceSessions, getChurchEvents, upsertNotification } from './lib/db';
 import { 
   Search, 
   User, 
@@ -45,27 +47,17 @@ const App: React.FC = () => {
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [showQuickAction, setShowQuickAction] = useState(false);
-  const [isAuthenticated, setIsAuthenticated] = useState(() => {
-    return localStorage.getItem('vinea_auth') === 'true';
-  });
-  
-  const [currentUserRole, setCurrentUserRole] = useState(() => {
-    return localStorage.getItem('vinea_user_role') || 'Super Admin';
-  });
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [authLoading, setAuthLoading] = useState(true);
 
-  const [currentUserPermissions, setCurrentUserPermissions] = useState<string[]>(() => {
-    const saved = localStorage.getItem('vinea_user_permissions');
-    return saved ? JSON.parse(saved) : ['dashboard', 'spiritual'];
-  });
-  
+  const [currentUserRole, setCurrentUserRole] = useState('Super Admin');
+  const [currentUserPermissions, setCurrentUserPermissions] = useState<string[]>(['dashboard', 'spiritual']);
+
   const [adminName, setAdminName] = useState('Admin Vinea');
   const [adminAvatar, setAdminAvatar] = useState('https://api.dicebear.com/7.x/avataaars/svg?seed=Jean');
 
   const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [readNotificationIds, setReadNotificationIds] = useState<string[]>(() => {
-    const saved = localStorage.getItem('vinea_read_notifications');
-    return saved ? JSON.parse(saved) : [];
-  });
+  const [readNotificationIds, setReadNotificationIds] = useState<string[]>([]);
 
   const profileRef = useRef<HTMLDivElement>(null);
   const notifRef = useRef<HTMLDivElement>(null);
@@ -77,12 +69,18 @@ const App: React.FC = () => {
   });
 
   // --- Notification Logic ---
-  const generateNotifications = useCallback(() => {
-    const settings: NotificationSettings = JSON.parse(localStorage.getItem('vinea_notification_settings') || '{"enableBirthdays":true,"enableEvents":true,"enableFollowUps":true,"daysBeforeEvent":3}');
-    const members: Member[] = JSON.parse(localStorage.getItem('vinea_members') || '[]');
-    const events = JSON.parse(localStorage.getItem('vinea_events') || '[]');
-    const visitors: Visitor[] = JSON.parse(localStorage.getItem('vinea_visitors') || '[]');
-    const attendance: AttendanceSession[] = JSON.parse(localStorage.getItem('vinea_attendance_history') || '[]');
+  const generateNotifications = useCallback(async () => {
+    const settingsRaw = localStorage.getItem('vinea_notification_settings');
+    const settings: NotificationSettings = settingsRaw
+      ? JSON.parse(settingsRaw)
+      : { enableBirthdays: true, enableEvents: true, enableFollowUps: true, daysBeforeEvent: 3 };
+
+    const [members, events, visitors, attendance] = await Promise.all([
+      getMembers(),
+      getChurchEvents(),
+      getVisitors(),
+      getAttendanceSessions(),
+    ]);
     
     const newNotifications: Notification[] = [];
     const now = new Date();
@@ -179,7 +177,9 @@ const App: React.FC = () => {
       });
     }
 
-    // Filtrer celles déjà lues
+    // Persister et filtrer
+    await Promise.all(newNotifications.map(n => upsertNotification(n)));
+
     const finalNotifs = newNotifications.map(n => ({
       ...n,
       isRead: readNotificationIds.includes(n.id)
@@ -202,14 +202,12 @@ const App: React.FC = () => {
   const markAsRead = (id: string) => {
     const updatedIds = [...readNotificationIds, id];
     setReadNotificationIds(updatedIds);
-    localStorage.setItem('vinea_read_notifications', JSON.stringify(updatedIds));
     setNotifications(prev => prev.map(n => n.id === id ? { ...n, isRead: true } : n));
   };
 
   const markAllAsRead = () => {
     const allIds = notifications.map(n => n.id);
     setReadNotificationIds(allIds);
-    localStorage.setItem('vinea_read_notifications', JSON.stringify(allIds));
     setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
   };
 
@@ -221,38 +219,45 @@ const App: React.FC = () => {
     }
   };
 
-  const syncPermissions = useCallback(() => {
-    const saved = localStorage.getItem('vinea_user_permissions');
-    if (saved) {
-      let perms = JSON.parse(saved);
-      if (perms.includes('dashboard') && !perms.includes('spiritual')) {
-        perms.push('spiritual');
-        localStorage.setItem('vinea_user_permissions', JSON.stringify(perms));
-        setCurrentUserPermissions(perms);
-      } else {
-        setCurrentUserPermissions(perms);
+
+  // --- Supabase Auth ---
+  useEffect(() => {
+    // Vérifier la session existante au démarrage
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) {
+        getAdminUserByEmail(session.user.email ?? '').then(adminUser => {
+          if (adminUser) {
+            const perms: string[] = adminUser.permissions?.includes('spiritual')
+              ? adminUser.permissions
+              : [...(adminUser.permissions ?? ['dashboard']), 'spiritual'];
+            setCurrentUserRole(adminUser.role ?? 'Super Admin');
+            setCurrentUserPermissions(perms);
+            setAdminName(adminUser.full_name ?? 'Admin Vinea');
+            setAdminAvatar(adminUser.avatar ?? `https://api.dicebear.com/7.x/avataaars/svg?seed=${session.user.email}`);
+          } else {
+            // Super Admin par défaut si aucun enregistrement
+            setCurrentUserRole('Super Admin');
+            setCurrentUserPermissions(['dashboard', 'members', 'visitors', 'spiritual', 'discipleship', 'attendance', 'planning', 'services', 'meetings', 'events', 'finances', 'meditations', 'reports', 'settings', 'admin']);
+          }
+          setIsAuthenticated(true);
+        });
       }
-    }
+      setAuthLoading(false);
+    });
+
+    // Écouter les changements de session
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (event === 'SIGNED_OUT' || !session) {
+        setIsAuthenticated(false);
+        setCurrentUserRole('Super Admin');
+        setCurrentUserPermissions(['dashboard', 'spiritual']);
+      }
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
-  const loadAdminInfo = useCallback(() => {
-    const savedAdmin = localStorage.getItem('vinea_admin_info');
-    if (savedAdmin) {
-      try {
-        const info = JSON.parse(savedAdmin);
-        setAdminName(info.fullName || 'Admin Vinea');
-        setAdminAvatar(info.avatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=Jean');
-      } catch (e) { console.error(e); }
-    }
-    syncPermissions();
-  }, [syncPermissions]);
-
   useEffect(() => {
-    loadAdminInfo();
-    window.addEventListener('vinea_admin_info_updated', loadAdminInfo);
-    window.addEventListener('vinea_auth_updated', loadAdminInfo);
-    window.addEventListener('storage', syncPermissions);
-
     const handleClickOutside = (event: MouseEvent) => {
       if (profileRef.current && !profileRef.current.contains(event.target as Node)) {
         setIsProfileOpen(false);
@@ -262,33 +267,26 @@ const App: React.FC = () => {
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
-    
+
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
-      window.removeEventListener('vinea_admin_info_updated', loadAdminInfo);
-      window.removeEventListener('vinea_auth_updated', loadAdminInfo);
-      window.removeEventListener('storage', syncPermissions);
     };
-  }, [loadAdminInfo, syncPermissions]);
+  }, []);
 
-  const handleLogin = (email: string, role: string, permissions: string[]) => {
+  const handleLogin = (email: string, role: string, permissions: string[], name?: string) => {
     setIsAuthenticated(true);
     setCurrentUserRole(role);
     const finalPermissions = permissions.includes('spiritual') ? permissions : [...permissions, 'spiritual'];
     setCurrentUserPermissions(finalPermissions);
-    localStorage.setItem('vinea_auth', 'true');
-    localStorage.setItem('vinea_user_role', role);
-    localStorage.setItem('vinea_user_permissions', JSON.stringify(finalPermissions));
-    window.dispatchEvent(new Event('vinea_auth_updated'));
+    if (name) setAdminName(name);
   };
 
-  const handleConfirmLogout = () => {
+  const handleConfirmLogout = async () => {
+    await supabase.auth.signOut();
     setIsAuthenticated(false);
-    localStorage.removeItem('vinea_auth');
-    localStorage.removeItem('vinea_user_role');
-    localStorage.removeItem('vinea_user_permissions');
+    setCurrentUserRole('Super Admin');
+    setCurrentUserPermissions(['dashboard', 'spiritual']);
     setShowLogoutConfirm(false);
-    window.dispatchEvent(new Event('vinea_auth_updated'));
   };
 
   const handleQuickAction = (tabId: string) => {
@@ -301,7 +299,6 @@ const App: React.FC = () => {
 
   const navigateToSettingsAccount = () => {
     if (currentUserPermissions.includes('settings')) {
-      localStorage.setItem('vinea_settings_target_section', 'admin');
       setActiveTab('settings');
       setIsProfileOpen(false);
       window.dispatchEvent(new Event('vinea_settings_nav'));
@@ -339,6 +336,17 @@ const App: React.FC = () => {
       default: return <Dashboard onNavigate={setActiveTab} adminName={adminName} />;
     }
   };
+
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-50">
+        <div className="flex flex-col items-center gap-4 opacity-40">
+          <div className="w-12 h-12 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+          <p className="text-xs font-black uppercase tracking-widest text-slate-500">Chargement...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!isAuthenticated) {
     return <Login onLogin={handleLogin} />;

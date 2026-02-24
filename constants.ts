@@ -1,5 +1,5 @@
 
-import { MemberType, MemberStatus, Department, Member, Visitor, VisitorStatus, SpiritualExerciseDef } from './types';
+import { Department, SpiritualExerciseDef } from './types';
 
 export const DEPARTMENTS = Object.values(Department).sort();
 
@@ -57,79 +57,4 @@ export const formatCurrency = (val: number) => {
   }).format(val).replace(/\u00a0/g, ' ') + ' ' + currency;
 };
 
-// Mock data generator for demo
-export const MOCK_MEMBERS: Member[] = [
-  {
-    id: 'm1',
-    lastName: 'KOUAKOU',
-    firstName: 'Jean',
-    gender: 'Masculin',
-    maritalStatus: 'Marié',
-    type: MemberType.PASTEUR,
-    isDiscipleMaker: true,
-    baptized: true,
-    status: MemberStatus.ACTIF,
-    departments: [Department.INTERCESSION],
-    source: 'Invitation personnelle',
-    whatsapp: true,
-    emergencyContact: { name: 'Marie Kouakou', phone: '0708091011', relation: 'Épouse' }
-  },
-  {
-    id: 'm2',
-    lastName: 'TRAORE',
-    firstName: 'Awa',
-    gender: 'Féminin',
-    maritalStatus: 'Célibataire',
-    type: MemberType.MEMBRE_SIMPLE,
-    isDiscipleMaker: false,
-    baptized: true,
-    status: MemberStatus.ACTIF,
-    departments: [],
-    source: 'Réseaux sociaux',
-    whatsapp: true,
-    emergencyContact: { name: 'Bakary Traore', phone: '0102030405', relation: 'Frère' }
-  }
-];
-
-export const MOCK_VISITORS: Visitor[] = [
-  {
-    id: 'v1',
-    lastName: 'DIOMANDE',
-    firstName: 'Yaya',
-    gender: 'Masculin',
-    phone: '0506070809',
-    address: 'Abidjan, Cocody',
-    visitDate: '2024-03-17',
-    service: 'Culte de dimanche',
-    source: 'Invitation par un ami',
-    invitedBy: 'Jean Kouakou',
-    status: VisitorStatus.EN_ATTENTE,
-    notes: 'A exprimé le souhait d\'en savoir plus sur le baptême.'
-  },
-  {
-    id: 'v2',
-    lastName: 'BAMBA',
-    firstName: 'Mariam',
-    gender: 'Féminin',
-    phone: '0708091011',
-    address: 'Yopougon, Maroc',
-    visitDate: '2024-03-10',
-    service: 'Veillée de prière',
-    source: 'Réseaux sociaux',
-    status: VisitorStatus.CONTACT_1,
-    notes: 'Rappelée le 12/03. Très ouverte.'
-  },
-  {
-    id: 'v3',
-    lastName: 'OUATTARA',
-    firstName: 'Ibrahim',
-    gender: 'Masculin',
-    phone: '0102030405',
-    address: 'Bingerville',
-    visitDate: '2024-02-25',
-    service: 'Culte de dimanche',
-    source: 'Passage',
-    status: VisitorStatus.MEMBRE,
-    notes: 'S\'est converti lors de l\'appel à la fin du culte.'
-  }
-];
+// Les données sont maintenant chargées depuis Supabase via lib/db.ts

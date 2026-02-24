@@ -1,4 +1,6 @@
 import React, { useState, useMemo, useRef } from 'react';
+import { supabase } from '../lib/supabase';
+import { getAdminUserByEmail } from '../lib/db';
 import { 
   Mail, 
   Lock, 
@@ -17,7 +19,7 @@ import { cn } from '../utils';
 import Logo from '../components/Logo';
 
 interface LoginProps {
-  onLogin: (email: string, role: string, permissions: string[]) => void;
+  onLogin: (email: string, role: string, permissions: string[], name?: string) => void;
 }
 
 type ViewState = 'login' | 'forgot-password' | 'success';
@@ -426,41 +428,55 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
     setIsCapsLock(e.getModifierState('CapsLock'));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setError('');
 
-    setTimeout(() => {
-      // Charger la liste actuelle des utilisateurs
-      const savedAdmins = JSON.parse(localStorage.getItem('vinea_admin_users') || '[]');
-      
-      // 1. Chercher d'abord dans la liste persistée des utilisateurs
-      const user = savedAdmins.find((u: any) => u.email.toLowerCase() === email.toLowerCase());
-      
-      if (user) {
-        if (user.status === 'Actif' && password === 'password') {
-          const perms = user.permissions || ['dashboard'];
-          if (!perms.includes('spiritual')) perms.push('spiritual');
-          onLogin(email, user.role, perms);
-          return;
-        } else if (user.status === 'Inactif') {
-          setError('Accès restreint par l\'administrateur.');
-          setIsLoading(false);
-          return;
-        }
-      }
+    try {
+      const { data, error: authError } = await supabase.auth.signInWithPassword({ email, password });
 
-      // 2. Si non trouvé ou échec liste, vérifier le compte Super Admin de secours par défaut
-      if (email.toLowerCase() === 'admin@vinea.org' && password === 'password') {
-        onLogin(email, 'Super Admin', ['dashboard', 'members', 'visitors', 'spiritual', 'discipleship', 'attendance', 'planning', 'services', 'meetings', 'events', 'finances', 'meditations', 'reports', 'settings']);
+      if (authError) {
+        setError('Identifiants invalides. Vérifiez votre email et mot de passe.');
+        setIsLoading(false);
         return;
       }
 
-      // 3. Échec total
-      setError('Identifiants invalides.');
+      if (!data.user) {
+        setError('Une erreur est survenue. Veuillez réessayer.');
+        setIsLoading(false);
+        return;
+      }
+
+      // Récupérer le profil administrateur
+      const adminUser = await getAdminUserByEmail(data.user.email ?? '');
+
+      if (!adminUser) {
+        // Super Admin par défaut si aucun enregistrement admin_users
+        onLogin(
+          email,
+          'Super Admin',
+          ['dashboard', 'members', 'visitors', 'spiritual', 'discipleship', 'attendance', 'planning', 'services', 'meetings', 'events', 'finances', 'meditations', 'reports', 'settings', 'admin'],
+          data.user.email ?? 'Admin'
+        );
+        return;
+      }
+
+      if (adminUser.status === 'Inactif') {
+        await supabase.auth.signOut();
+        setError('Accès restreint par l\'administrateur.');
+        setIsLoading(false);
+        return;
+      }
+
+      const perms: string[] = adminUser.permissions ?? ['dashboard'];
+      if (!perms.includes('spiritual')) perms.push('spiritual');
+      onLogin(email, adminUser.role ?? 'Administrateur', perms, adminUser.full_name);
+
+    } catch (err) {
+      setError('Erreur de connexion. Vérifiez votre connexion internet.');
       setIsLoading(false);
-    }, 1500);
+    }
   };
 
   const handleButtonMagnetic = (e: React.MouseEvent<HTMLButtonElement>) => {
@@ -618,11 +634,22 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
                </button>
                <h2 className="text-2xl font-black text-slate-900 tracking-tight mb-2">Réinitialisation</h2>
                <p className="text-sm text-slate-500 font-medium mb-8 leading-relaxed">Entrez votre email pour recevoir les instructions de récupération de compte.</p>
-               <form onSubmit={(e) => { e.preventDefault(); setIsLoading(true); setTimeout(() => { setIsLoading(false); setView('success'); }, 2000); }} className="space-y-6">
+               <form onSubmit={async (e) => {
+                 e.preventDefault();
+                 const resetEmail = (e.currentTarget.querySelector('input[type="email"]') as HTMLInputElement)?.value;
+                 if (!resetEmail) return;
+                 setIsLoading(true);
+                 const { error: resetError } = await supabase.auth.resetPasswordForEmail(resetEmail, {
+                   redirectTo: window.location.origin,
+                 });
+                 setIsLoading(false);
+                 if (!resetError) setView('success');
+                 else setError('Erreur lors de l\'envoi. Vérifiez l\'adresse email.');
+               }} className="space-y-6">
                  <div className="space-y-1.5">
                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-3">Email Administrateur</label>
-                   <input 
-                     type="email" 
+                   <input
+                     type="email"
                      className="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:border-indigo-500 outline-none text-sm font-bold shadow-sm"
                      placeholder="admin@vinea.org"
                      required

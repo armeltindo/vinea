@@ -63,6 +63,7 @@ import { analyzePageData } from '../lib/gemini';
 import { formatCurrency, DEPARTMENTS as CONST_DEPARTMENTS } from '../constants';
 import { DepartmentInfo, DepartmentActivity, ActivityStatus, Member, Department, ActivityRecurrence } from '../types';
 import { cn, generateId, formatFirstName, getInitials } from '../utils';
+import { getDepartmentsInfo, upsertDepartmentInfo, deleteDepartmentInfo, getDepartmentActivities, createDepartmentActivity, updateDepartmentActivity, deleteDepartmentActivity, getMembers, getChurchSettings } from '../lib/db';
 
 const formatToUIDate = (isoDate: string | undefined) => {
   if (!isoDate) return '';
@@ -191,65 +192,37 @@ const Planning: React.FC = () => {
     title: '', deptId: '', responsibleId: '', associateName: '', cost: 0, deadline: '', status: ActivityStatus.PLANIFIEE, observations: '', recurrence: 'Ponctuelle'
   });
 
-  const loadData = () => {
-    const savedChurch = localStorage.getItem('vinea_church_info');
-    if (savedChurch) {
-      setChurchName(JSON.parse(savedChurch).name || 'Vineala');
-    }
-
-    const savedMembersRaw = localStorage.getItem('vinea_members');
-    const savedMembers = savedMembersRaw ? JSON.parse(savedMembersRaw) : [];
-    setMembers(savedMembers);
-
-    const savedActivities = localStorage.getItem('vinea_planning_activities');
-    if (savedActivities) {
-      setActivities(JSON.parse(savedActivities));
-    }
-
-    const masterDeptNames: string[] = JSON.parse(localStorage.getItem('vinea_departments') || JSON.stringify(CONST_DEPARTMENTS));
-    const detailedDepts: DepartmentInfo[] = JSON.parse(localStorage.getItem('vinea_planning_departments') || '[]');
-
-    const syncedDepts = masterDeptNames.map(name => {
-      const existing = detailedDepts.find(d => d.name === name);
-      if (existing) return existing;
-      
-      return {
-        id: generateId(),
-        name,
-        description: 'Département à configurer.',
-        presidentId: '',
-        memberIds: [],
-        status: 'Actif',
-        color: '#4f46e5'
-      } as DepartmentInfo;
-    });
-
-    setDepartments(syncedDepts);
-  };
-
   useEffect(() => {
-    loadData();
-    window.addEventListener('vinea_members_updated', loadData);
-    window.addEventListener('vinea_lists_updated', loadData);
-    window.addEventListener('vinea_church_info_updated', loadData);
-    return () => {
-      window.removeEventListener('vinea_members_updated', loadData);
-      window.removeEventListener('vinea_lists_updated', loadData);
-      window.removeEventListener('vinea_church_info_updated', loadData);
+    const load = async () => {
+      const [depts, acts, mems, settings] = await Promise.all([
+        getDepartmentsInfo(),
+        getDepartmentActivities(),
+        getMembers(),
+        getChurchSettings(),
+      ]);
+
+      // Si aucun département en DB, initialiser depuis les constantes
+      if (depts.length === 0) {
+        const defaultDepts: DepartmentInfo[] = CONST_DEPARTMENTS.map(name => ({
+          id: generateId(),
+          name,
+          description: 'Département à configurer.',
+          presidentId: '',
+          memberIds: [],
+          status: 'Actif',
+          color: '#4f46e5'
+        }));
+        setDepartments(defaultDepts);
+      } else {
+        setDepartments(depts);
+      }
+
+      setActivities(acts);
+      setMembers(mems);
+      if (settings?.name) setChurchName(settings.name);
     };
+    load();
   }, []);
-
-  useEffect(() => {
-    if (departments.length > 0) {
-      localStorage.setItem('vinea_planning_departments', JSON.stringify(departments));
-      window.dispatchEvent(new Event('vinea_planning_departments_updated'));
-    }
-  }, [departments]);
-
-  useEffect(() => {
-    localStorage.setItem('vinea_planning_activities', JSON.stringify(activities));
-    window.dispatchEvent(new Event('vinea_attendance_updated'));
-  }, [activities]);
 
   const availableYears = useMemo(() => {
     const yearsSet = new Set<string>();
@@ -348,7 +321,10 @@ const Planning: React.FC = () => {
 
       setActivities(updatedActivities);
       const updatedActivity = updatedActivities.find(a => a.id === activity.id);
-      if (updatedActivity) setSelectedActivityForDetails(updatedActivity);
+      if (updatedActivity) {
+        setSelectedActivityForDetails(updatedActivity);
+        updateDepartmentActivity(activity.id, { status: updatedActivity.status, deadline: updatedActivity.deadline, lastRealizedAt: updatedActivity.lastRealizedAt } as any);
+      }
       setIsSubmitting(false);
     }, 600);
   };
@@ -366,6 +342,7 @@ const Planning: React.FC = () => {
       } else {
         setDepartments(prev => [deptData, ...prev]);
       }
+      upsertDepartmentInfo(deptData);
       setIsDeptFormOpen(false);
       setEditingDept(null);
       setIsSubmitting(false);
@@ -376,6 +353,7 @@ const Planning: React.FC = () => {
     if (deptToDeleteId) {
       setDepartments(prev => prev.filter(d => d.id !== deptToDeleteId));
       setActivities(prev => prev.filter(a => a.deptId !== deptToDeleteId));
+      deleteDepartmentInfo(deptToDeleteId);
       setIsDeleteDeptConfirmOpen(false);
       setDeptToDeleteId(null);
     }
@@ -384,6 +362,7 @@ const Planning: React.FC = () => {
   const confirmDeleteActivity = () => {
     if (activityToDeleteId) {
       setActivities(prev => prev.filter(a => a.id !== activityToDeleteId));
+      deleteDepartmentActivity(activityToDeleteId);
       setIsDeleteActivityConfirmOpen(false);
       setActivityToDeleteId(null);
       if (selectedActivityForDetails?.id === activityToDeleteId) {
@@ -398,10 +377,13 @@ const Planning: React.FC = () => {
     setIsSubmitting(true);
     setTimeout(() => {
       if (editingActivity) {
-        setActivities(prev => prev.map(a => a.id === editingActivity.id ? { ...a, ...activityFormData } as DepartmentActivity : a));
+        const updated = { ...editingActivity, ...activityFormData } as DepartmentActivity;
+        setActivities(prev => prev.map(a => a.id === editingActivity.id ? updated : a));
+        updateDepartmentActivity(editingActivity.id, activityFormData as Partial<DepartmentActivity>);
       } else {
         const newActivity: DepartmentActivity = { ...activityFormData as DepartmentActivity, id: generateId(), createdAt: new Date().toISOString() };
         setActivities(prev => [newActivity, ...prev]);
+        createDepartmentActivity(newActivity);
       }
       setIsActivityFormOpen(false);
       setEditingActivity(null);

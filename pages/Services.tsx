@@ -64,6 +64,7 @@ import { SERVICES_LIST } from '../constants';
 import { cn, generateId } from '../utils';
 import { analyzeSermon, generateSocialSummary, suggestSermonTags } from '../lib/gemini';
 import { ChurchService } from '../types';
+import { getChurchServices, createChurchService, updateChurchService, deleteChurchService } from '../lib/db';
 
 const formatToUIDate = (isoDate: string | undefined) => {
   if (!isoDate) return '';
@@ -131,13 +132,14 @@ const getServiceIcon = (type: string, size = 14) => {
 };
 
 const Services: React.FC = () => {
-  const [services, setServices] = useState<ChurchService[]>(() => {
-    const saved = localStorage.getItem('vinea_services');
-    return saved ? JSON.parse(saved) : [];
-  });
-  
+  const [services, setServices] = useState<ChurchService[]>([]);
+
   const currentYearStr = new Date().getFullYear().toString();
-  const [availableServiceTypes, setAvailableServiceTypes] = useState(SERVICES_LIST);
+  const [availableServiceTypes] = useState(SERVICES_LIST);
+
+  useEffect(() => {
+    getChurchServices().then(setServices);
+  }, []);
   const [selectedType, setSelectedType] = useState<string | null>(null);
   const [selectedSeries, setSelectedSeries] = useState<string | null>(null);
   const [serviceToDeleteId, setServiceToDeleteId] = useState<string | null>(null);
@@ -158,21 +160,6 @@ const Services: React.FC = () => {
   const [importCount, setImportCount] = useState(0);
   const importInputRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => {
-    localStorage.setItem('vinea_services', JSON.stringify(services));
-    window.dispatchEvent(new Event('vinea_services_updated'));
-  }, [services]);
-
-  const loadSettings = () => {
-    const saved = localStorage.getItem('vinea_service_types');
-    if (saved) try { setAvailableServiceTypes(JSON.parse(saved)); } catch (e) {}
-  };
-
-  useEffect(() => {
-    loadSettings();
-    window.addEventListener('vinea_lists_updated', loadSettings);
-    return () => window.removeEventListener('vinea_lists_updated', loadSettings);
-  }, []);
 
   const availableYears = useMemo(() => {
     const years = services.map(s => new Date(s.date).getFullYear().toString());
@@ -241,22 +228,23 @@ const Services: React.FC = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleFormSubmit = (e: React.FormEvent) => {
+  const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validateForm()) return;
     setIsSubmitting(true);
-    setTimeout(() => {
-      if (editingId) {
-        setServices(services.map(s => s.id === editingId ? { ...s, ...formData } : s));
-      } else {
-        const newService = { ...formData, id: generateId() };
-        setServices([newService, ...services]);
-      }
-      setIsFormOpen(false);
-      setEditingId(null);
-      setIsSubmitting(false);
-      resetForm();
-    }, 800);
+    if (editingId) {
+      const updated = { ...services.find(s => s.id === editingId)!, ...formData };
+      setServices(services.map(s => s.id === editingId ? updated : s));
+      await updateChurchService(editingId, formData);
+    } else {
+      const newService: ChurchService = { ...formData as ChurchService, id: generateId() };
+      setServices([newService, ...services]);
+      await createChurchService(newService);
+    }
+    setIsFormOpen(false);
+    setEditingId(null);
+    setIsSubmitting(false);
+    resetForm();
   };
 
   const handleRunAiAnalysis = async (service: ChurchService) => {
@@ -267,6 +255,7 @@ const Services: React.FC = () => {
       const updated = { ...service, aiAnalysis: analysis };
       setServices(services.map(s => s.id === service.id ? updated : s));
       setSelectedService(updated);
+      await updateChurchService(service.id, { aiAnalysis: analysis });
     }
     setIsAnalyzingSermon(false);
   };
@@ -279,6 +268,7 @@ const Services: React.FC = () => {
       const updated = { ...service, socialSummary: summary };
       setServices(services.map(s => s.id === service.id ? updated : s));
       setSelectedService(updated);
+      await updateChurchService(service.id, { socialSummary: summary });
     }
     setIsGeneratingSocial(false);
   };
@@ -291,6 +281,7 @@ const Services: React.FC = () => {
       const updated = { ...service, tags: tags };
       setServices(services.map(s => s.id === service.id ? updated : s));
       setSelectedService(updated);
+      await updateChurchService(service.id, { tags });
     }
     setIsSuggestingTags(false);
   };
@@ -337,12 +328,13 @@ const Services: React.FC = () => {
     setErrors({});
   };
 
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     if (serviceToDeleteId) {
       setServices(services.filter(s => s.id !== serviceToDeleteId));
-      setServiceToDeleteId(null);
       setIsDetailsOpen(false);
       setSelectedService(null);
+      await deleteChurchService(serviceToDeleteId);
+      setServiceToDeleteId(null);
     }
   };
 
@@ -445,6 +437,7 @@ const Services: React.FC = () => {
           importedData.push(entry);
         }
         setServices(prev => [...importedData, ...prev]);
+        importedData.forEach((s: ChurchService) => createChurchService(s));
         setIsImportModalOpen(false);
         setImportCount(importedData.length);
         setIsImportSuccessOpen(true);

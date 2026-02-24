@@ -47,6 +47,7 @@ import {
 } from 'lucide-react';
 import { analyzePageData, generateMeditation, suggestMeditationTitle, suggestMeditationSummary } from '../lib/gemini';
 import { cn, generateId, formatFirstName } from '../utils';
+import { getMeditations, createMeditation, updateMeditation, deleteMeditation } from '../lib/db';
 
 const formatToUIDate = (isoDate: string | undefined) => {
   if (!isoDate) return '';
@@ -101,10 +102,11 @@ const parseCSV = (text: string) => {
 };
 
 const Meditations: React.FC = () => {
-  const [meditations, setMeditations] = useState(() => {
-    const saved = localStorage.getItem('vinea_meditations');
-    return saved ? JSON.parse(saved) : [];
-  });
+  const [meditations, setMeditations] = useState<any[]>([]);
+
+  useEffect(() => {
+    getMeditations().then(setMeditations);
+  }, []);
 
   const currentYearStr = new Date().getFullYear().toString();
   const [searchTerm, setSearchTerm] = useState('');
@@ -136,10 +138,6 @@ const Meditations: React.FC = () => {
     excerpt: ''
   });
 
-  useEffect(() => {
-    localStorage.setItem('vinea_meditations', JSON.stringify(meditations));
-    window.dispatchEvent(new Event('vinea_meditations_updated'));
-  }, [meditations]);
 
   const handleScroll = () => {
     if (scrollContainerRef.current) {
@@ -164,7 +162,10 @@ const Meditations: React.FC = () => {
       let result = '';
       if (field === 'title') result = await suggestMeditationTitle(med.scripture, med.questions) || '';
       else result = await suggestMeditationSummary(med.scripture, med.questions) || '';
-      if (result) setMeditations(prev => prev.map(m => m.id === id ? { ...m, [field]: result } : m));
+      if (result) {
+        setMeditations(prev => prev.map(m => m.id === id ? { ...m, [field]: result } : m));
+        await updateMeditation(id, { [field]: result });
+      }
     } finally {
       setGeneratingMap(prev => ({ ...prev, [key]: false }));
     }
@@ -191,20 +192,19 @@ const Meditations: React.FC = () => {
     setIsAnalyzing(false);
   };
 
-  const handleFormSubmit = (e: React.FormEvent) => {
+  const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.title.trim() && !formData.scripture.trim()) {
       setErrors({ title: "Requis", scripture: "Requis" });
       return;
     }
     setIsSubmitting(true);
-    setTimeout(() => {
-      const newMed = { ...formData, id: generateId(), likes: 0, isRead: false };
-      setMeditations([newMed, ...meditations]);
-      setIsFormOpen(false);
-      setIsSubmitting(false);
-      setFormData({ title: '', scripture: '', questions: '', date: new Date().toISOString().split('T')[0], excerpt: '' });
-    }, 800);
+    const newMed = { ...formData, id: generateId(), likes: 0, isRead: false };
+    setMeditations([newMed, ...meditations]);
+    await createMeditation(newMed);
+    setIsFormOpen(false);
+    setIsSubmitting(false);
+    setFormData({ title: '', scripture: '', questions: '', date: new Date().toISOString().split('T')[0], excerpt: '' });
   };
 
   const filteredMeditations = useMemo(() => {
@@ -274,6 +274,7 @@ const Meditations: React.FC = () => {
         }
         
         setMeditations(prev => [...imported, ...prev]);
+        imported.forEach((m: any) => createMeditation(m));
         setImportCount(imported.length);
         setIsImportSuccessOpen(true);
         setIsImportModalOpen(false);
@@ -285,12 +286,13 @@ const Meditations: React.FC = () => {
     e.target.value = '';
   };
 
-  const confirmDeleteMeditation = () => {
+  const confirmDeleteMeditation = async () => {
     if (meditationToDeleteId) {
       setMeditations(prev => prev.filter(m => m.id !== meditationToDeleteId));
       setIsDeleteConfirmOpen(false);
-      setMeditationToDeleteId(null);
       setReadingMeditation(null);
+      await deleteMeditation(meditationToDeleteId);
+      setMeditationToDeleteId(null);
     }
   };
 
@@ -330,7 +332,7 @@ const Meditations: React.FC = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         {filteredMeditations.length > 0 ? filteredMeditations.map((med) => (
-          <div key={med.id} onClick={() => { setReadingMeditation(med); setIsThemeExpandedDetail(false); if(!med.isRead) setMeditations(prev => prev.map(m => m.id === med.id ? {...m, isRead: true} : m)); }} className={cn("group relative flex flex-col bg-white border-2 rounded-[2.5rem] shadow-sm hover:shadow-xl transition-all cursor-pointer overflow-hidden min-h-[480px]", med.isRead ? "border-emerald-100" : "border-slate-100 hover:border-indigo-400")}>
+          <div key={med.id} onClick={() => { setReadingMeditation(med); setIsThemeExpandedDetail(false); if(!med.isRead) { setMeditations(prev => prev.map(m => m.id === med.id ? {...m, isRead: true} : m)); updateMeditation(med.id, { isRead: true }); } }} className={cn("group relative flex flex-col bg-white border-2 rounded-[2.5rem] shadow-sm hover:shadow-xl transition-all cursor-pointer overflow-hidden min-h-[480px]", med.isRead ? "border-emerald-100" : "border-slate-100 hover:border-indigo-400")}>
             <div className={cn("h-1.5 w-full", med.isRead ? "bg-emerald-500" : "bg-slate-100 group-hover:bg-indigo-500")} />
             <div className="p-8 flex flex-col h-full space-y-6">
               <div className="flex justify-between items-start">
@@ -338,7 +340,7 @@ const Meditations: React.FC = () => {
                   {formatToUIDate(med.date)}
                 </span>
                 <div className="flex gap-1.5" onClick={e => e.stopPropagation()}>
-                  <button onClick={() => setMeditations(prev => prev.map(m => m.id === med.id ? {...m, isRead: !m.isRead} : m))} className={cn("p-2 rounded-xl shadow-sm", med.isRead ? "text-emerald-600 bg-emerald-50" : "text-slate-400 bg-slate-50 hover:text-indigo-600")}>
+                  <button onClick={() => { const newVal = !med.isRead; setMeditations(prev => prev.map(m => m.id === med.id ? {...m, isRead: newVal} : m)); updateMeditation(med.id, { isRead: newVal }); }} className={cn("p-2 rounded-xl shadow-sm", med.isRead ? "text-emerald-600 bg-emerald-50" : "text-slate-400 bg-slate-50 hover:text-indigo-600")}>
                     {med.isRead ? <CheckCircle size={16} strokeWidth={2.5} /> : <Eye size={16} />}
                   </button>
                   <button onClick={(e) => { e.stopPropagation(); setMeditationToDeleteId(med.id); setIsDeleteConfirmOpen(true); }} className="p-2 text-slate-300 bg-slate-50 rounded-xl transition-all opacity-0 group-hover:opacity-100">
@@ -409,7 +411,7 @@ const Meditations: React.FC = () => {
                   <Clock size={12} /><span>5 min lecture</span>
                 </div>
                 <div className="flex items-center gap-3" onClick={e => e.stopPropagation()}>
-                  <button onClick={() => setMeditations(prev => prev.map(m => m.id === med.id ? {...m, likes: m.likes + 1} : m))} className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 rounded-xl text-slate-400 hover:text-rose-500 transition-all group/like shadow-sm border border-slate-100">
+                  <button onClick={() => { const newLikes = med.likes + 1; setMeditations(prev => prev.map(m => m.id === med.id ? {...m, likes: newLikes} : m)); updateMeditation(med.id, { likes: newLikes }); }} className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 rounded-xl text-slate-400 hover:text-rose-500 transition-all group/like shadow-sm border border-slate-100">
                     <Heart size={14} className={cn(med.likes > 0 && "fill-rose-500 text-rose-500")} />
                     <span className="text-[10px] font-black">{med.likes}</span>
                   </button>
@@ -561,7 +563,7 @@ const Meditations: React.FC = () => {
                 {/* IV. FOOTER ACTIONS */}
                 <div className="pt-10 border-t border-slate-100 flex flex-col md:flex-row items-center justify-between gap-6 pb-20">
                   <button 
-                    onClick={() => setMeditations(prev => prev.map(m => m.id === readingMeditation.id ? {...m, likes: m.likes + 1} : m))}
+                    onClick={() => { const newLikes = readingMeditation.likes + 1; setMeditations(prev => prev.map(m => m.id === readingMeditation.id ? {...m, likes: newLikes} : m)); updateMeditation(readingMeditation.id, { likes: newLikes }); }}
                     className="flex items-center gap-3 px-8 py-4 bg-rose-50 text-rose-600 rounded-[1.5rem] border border-rose-100 hover:bg-rose-100 transition-all shadow-sm active:scale-95 group"
                   >
                     <Heart size={20} className={cn(readingMeditation.likes > 0 && "fill-rose-500", "group-hover:scale-110 transition-transform")} />

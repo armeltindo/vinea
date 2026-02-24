@@ -66,6 +66,7 @@ import { analyzePageData } from '../lib/gemini';
 import { formatCurrency } from '../constants';
 import { cn, generateId, getInitials, formatFirstName } from '../utils';
 import { GoogleGenAI } from "@google/genai";
+import { getMembers, getFinancialRecords, getAttendanceSessions, getDepartmentActivities, getDepartmentsInfo, getVisitors } from '../lib/db';
 
 interface DeptMetric {
   id: string;
@@ -124,13 +125,33 @@ const Reports: React.FC = () => {
   const [isPlanOpen, setIsPlanOpen] = useState(false);
 
   // --- Data Loading ---
-  const members: Member[] = useMemo(() => JSON.parse(localStorage.getItem('vinea_members') || '[]'), []);
-  const finances: FinancialRecord[] = useMemo(() => JSON.parse(localStorage.getItem('vinea_finances') || '[]'), []);
-  const attendance: AttendanceSession[] = useMemo(() => JSON.parse(localStorage.getItem('vinea_attendance_history') || '[]'), []);
-  const activities: DepartmentActivity[] = useMemo(() => JSON.parse(localStorage.getItem('vinea_planning_activities') || '[]'), []);
-  const departments: DepartmentInfo[] = useMemo(() => JSON.parse(localStorage.getItem('vinea_planning_departments') || '[]'), []);
-  const visitors: Visitor[] = useMemo(() => JSON.parse(localStorage.getItem('vinea_visitors') || '[]'), []);
-  const enrollments = useMemo(() => JSON.parse(localStorage.getItem('vinea_discipleship_enrollments') || '[]'), []);
+  const [members, setMembers] = useState<Member[]>([]);
+  const [finances, setFinances] = useState<FinancialRecord[]>([]);
+  const [attendance, setAttendance] = useState<AttendanceSession[]>([]);
+  const [activities, setActivities] = useState<DepartmentActivity[]>([]);
+  const [departments, setDepartments] = useState<DepartmentInfo[]>([]);
+  const [visitors, setVisitors] = useState<Visitor[]>([]);
+  const enrollments: any[] = [];
+
+  useEffect(() => {
+    const load = async () => {
+      const [m, f, a, acts, depts, v] = await Promise.all([
+        getMembers(),
+        getFinancialRecords(),
+        getAttendanceSessions(),
+        getDepartmentActivities(),
+        getDepartmentsInfo(),
+        getVisitors(),
+      ]);
+      setMembers(m);
+      setFinances(f);
+      setAttendance(a as AttendanceSession[]);
+      setActivities(acts);
+      setDepartments(depts);
+      setVisitors(v);
+    };
+    load();
+  }, []);
 
   // --- Date Range Helper ---
   const dateRange = useMemo(() => {

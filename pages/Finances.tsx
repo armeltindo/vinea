@@ -68,6 +68,7 @@ import { analyzePageData, generateDonationReceipt } from '../lib/gemini';
 import { cn, generateId, getInitials, formatFirstName } from '../utils';
 import { OperationType, PaymentMethod, FinancialRecord, Member, DonationCampaign, DonationPromise } from '../types';
 import { GoogleGenAI } from "@google/genai";
+import { getFinancialRecords, createFinancialRecord, updateFinancialRecord, deleteFinancialRecord, getDonationCampaigns, createDonationCampaign, updateDonationCampaign, deleteDonationCampaign, getDonationPromises, createDonationPromise, deleteDonationPromise, getMembers, getChurchSettings } from '../lib/db';
 
 interface FinanceCategory {
   id: string;
@@ -106,35 +107,15 @@ const renderActiveShape = (props: any) => {
 };
 
 const Finances: React.FC = () => {
-  const [operations, setOperations] = useState<FinancialRecord[]>(() => {
-    const saved = localStorage.getItem('vinea_finances');
-    return saved ? JSON.parse(saved) : [];
-  });
-
-  const [campaigns, setCampaigns] = useState<DonationCampaign[]>(() => {
-    const saved = localStorage.getItem('vinea_donation_campaigns');
-    return saved ? JSON.parse(saved) : [];
-  });
-
-  const [promises, setPromises] = useState<DonationPromise[]>(() => {
-    const saved = localStorage.getItem('vinea_donation_promises');
-    return saved ? JSON.parse(saved) : [];
-  });
-
+  const [operations, setOperations] = useState<FinancialRecord[]>([]);
+  const [campaigns, setCampaigns] = useState<DonationCampaign[]>([]);
+  const [promises, setPromises] = useState<DonationPromise[]>([]);
   const [categories, setCategories] = useState<FinanceCategory[]>(() => {
     const saved = localStorage.getItem('vinea_finance_categories_v2');
     return saved ? JSON.parse(saved) : DEFAULT_CATEGORIES;
   });
-
-  const [members] = useState<Member[]>(() => {
-    const saved = localStorage.getItem('vinea_members');
-    return saved ? JSON.parse(saved) : [];
-  });
-
-  const churchName = useMemo(() => {
-    const saved = localStorage.getItem('vinea_church_info');
-    return saved ? JSON.parse(saved).name : 'Vinea';
-  }, []);
+  const [members, setMembers] = useState<Member[]>([]);
+  const [churchName, setChurchName] = useState('Vinea');
 
   const [startDate, setStartDate] = useState(() => {
     const now = new Date();
@@ -208,17 +189,22 @@ const Finances: React.FC = () => {
   const [generatedReceipt, setGeneratedReceipt] = useState<string | null>(null);
 
   useEffect(() => {
-    localStorage.setItem('vinea_finances', JSON.stringify(operations));
-    window.dispatchEvent(new Event('vinea_finances_updated'));
-  }, [operations]);
-
-  useEffect(() => {
-    localStorage.setItem('vinea_donation_campaigns', JSON.stringify(campaigns));
-  }, [campaigns]);
-
-  useEffect(() => {
-    localStorage.setItem('vinea_donation_promises', JSON.stringify(promises));
-  }, [promises]);
+    const load = async () => {
+      const [ops, camps, proms, mems, settings] = await Promise.all([
+        getFinancialRecords(),
+        getDonationCampaigns(),
+        getDonationPromises(),
+        getMembers(),
+        getChurchSettings(),
+      ]);
+      setOperations(ops);
+      setCampaigns(camps);
+      setPromises(proms);
+      setMembers(mems);
+      if (settings?.name) setChurchName(settings.name);
+    };
+    load();
+  }, []);
 
   useEffect(() => {
     localStorage.setItem('vinea_finance_categories_v2', JSON.stringify(categories));
@@ -510,12 +496,14 @@ const Finances: React.FC = () => {
         if (selectedOperation?.id === editingOpId) {
           setSelectedOperation(updated);
         }
+        updateFinancialRecord(editingOpId, updated);
       } else {
         const operation: FinancialRecord = {
           ...(opData as FinancialRecord),
           id: generateId()
         };
         setOperations([operation, ...operations]);
+        createFinancialRecord(operation);
       }
       setIsOpFormOpen(false);
       setEditingOpId(null);
@@ -557,6 +545,7 @@ const Finances: React.FC = () => {
         if (selectedCampaign?.id === editingCampaignId) {
           setSelectedCampaign({ ...selectedCampaign, ...updated });
         }
+        updateDonationCampaign(editingCampaignId, updated);
       } else {
         const campaign: DonationCampaign = {
           ...(newCampaign as DonationCampaign),
@@ -564,6 +553,7 @@ const Finances: React.FC = () => {
           status: 'Active'
         };
         setCampaigns([campaign, ...campaigns]);
+        createDonationCampaign(campaign);
       }
       setIsCampaignFormOpen(false);
       setEditingCampaignId(null);
@@ -607,6 +597,7 @@ const Finances: React.FC = () => {
           id: generateId()
         };
         setPromises([promise, ...promises]);
+        createDonationPromise(promise);
         // La modale reste ouverte pour de nouveaux enregistrements
       }
 
@@ -643,6 +634,7 @@ const Finances: React.FC = () => {
   const confirmDeletePromise = () => {
     if (promiseToDeleteId) {
       setPromises(prev => prev.filter(p => p.id !== promiseToDeleteId));
+      deleteDonationPromise(promiseToDeleteId);
       setIsDeletePromiseConfirmOpen(false);
       setPromiseToDeleteId(null);
     }
@@ -668,6 +660,7 @@ const Finances: React.FC = () => {
     if (campaignToDeleteId) {
       setCampaigns(prev => prev.filter(c => c.id !== campaignToDeleteId));
       setPromises(prev => prev.filter(p => p.campaignId !== campaignToDeleteId));
+      deleteDonationCampaign(campaignToDeleteId);
       setIsDeleteCampaignConfirmOpen(false);
       setIsCampaignDetailsOpen(false);
       setCampaignToDeleteId(null);
@@ -1611,6 +1604,7 @@ const Finances: React.FC = () => {
                       const status = selectedCampaign.status === 'Active' ? 'Terminée' : 'Active';
                       setCampaigns(prev => prev.map(c => c.id === selectedCampaign.id ? { ...c, status } as DonationCampaign : c));
                       setSelectedCampaign({ ...selectedCampaign, status } as DonationCampaign);
+                      updateDonationCampaign(selectedCampaign.id, { status });
                     }}
                     className={cn("flex-[2] py-4 rounded-2xl text-[10px] font-black uppercase transition-all shadow-xl", selectedCampaign.status === 'Active' ? "bg-slate-900 text-white" : "bg-emerald-50 text-emerald-700")}
                   >
@@ -1991,7 +1985,7 @@ const Finances: React.FC = () => {
             <h3 className="text-2xl font-black text-slate-900 uppercase">Supprimer ?</h3>
             <p className="text-slate-500 mt-2 text-sm font-medium leading-relaxed italic">Cette action retirera définitivement ce relevé de l'historique.</p>
             <div className="flex flex-col gap-3 mt-8">
-              <button onClick={() => { if(opToDeleteId) { setOperations(prev => prev.filter(h => h.id !== opToDeleteId)); setOpToDeleteId(null); setIsDeleteConfirmOpen(false); setIsOpDetailsOpen(false); } }} className="w-full py-4 bg-rose-600 text-white rounded-2xl text-[10px] font-black uppercase shadow-xl shadow-rose-200 hover:bg-rose-700 transition-all active:scale-95">Confirmer</button>
+              <button onClick={() => { if(opToDeleteId) { setOperations(prev => prev.filter(h => h.id !== opToDeleteId)); deleteFinancialRecord(opToDeleteId); setOpToDeleteId(null); setIsDeleteConfirmOpen(false); setIsOpDetailsOpen(false); } }} className="w-full py-4 bg-rose-600 text-white rounded-2xl text-[10px] font-black uppercase shadow-xl shadow-rose-200 hover:bg-rose-700 transition-all active:scale-95">Confirmer</button>
               <button onClick={() => setIsDeleteConfirmOpen(false)} className="w-full py-4 bg-slate-50 text-slate-600 rounded-2xl text-[10px] font-black uppercase border border-slate-200 hover:bg-slate-100 transition-all">Annuler</button>
             </div>
           </div>

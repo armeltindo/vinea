@@ -60,6 +60,7 @@ import { formatPhone, DEPARTMENTS as CONST_DEPARTMENTS } from '../constants';
 import { Member, MemberStatus, MemberType, Department } from '../types';
 import { analyzePageData } from '../lib/gemini';
 import { cn, generateId, getInitials, getDisplayNickname, formatFirstName } from '../utils';
+import { getMembers, createMember, updateMember, deleteMember, getDiscipleshipPairs } from '../lib/db';
 
 // Helper pour convertir YYYY-MM-DD en DD-MM-YYYY
 const formatToUIDate = (isoDate: string | undefined) => {
@@ -142,87 +143,29 @@ const getDepartmentIcon = (dept: string, size = 10) => {
 };
 
 const Members: React.FC = () => {
-  const [members, setMembers] = useState<Member[]>(() => {
-    const saved = localStorage.getItem('vinea_members');
-    return saved ? JSON.parse(saved) : [];
-  });
-
-  const [discipleshipPairs, setDiscipleshipPairs] = useState<any[]>(() => {
-    const saved = localStorage.getItem('vinea_discipleship_pairs');
-    return saved ? JSON.parse(saved) : [];
-  });
+  const [members, setMembers] = useState<Member[]>([]);
+  const [discipleshipPairs, setDiscipleshipPairs] = useState<any[]>([]);
+  const [isLoadingData, setIsLoadingData] = useState(true);
 
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('Tous les statuts');
   const [roleFilter, setRoleFilter] = useState<string>('Tous les rôles');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc' | 'none'>('none');
-  
-  const [availableStatuses, setAvailableStatuses] = useState<string[]>(Object.values(MemberStatus));
-  const [availableRoles, setAvailableRoles] = useState<string[]>(Object.values(MemberType));
-  const [availableDepartments, setAvailableDepartments] = useState<string[]>(CONST_DEPARTMENTS);
 
-  const loadSettings = () => {
-    const savedStats = localStorage.getItem('vinea_member_statuses');
-    if (savedStats) try { setAvailableStatuses(JSON.parse(savedStats)); } catch (e) {}
-    
-    const savedRoles = localStorage.getItem('vinea_member_roles');
-    if (savedRoles) try { setAvailableRoles(JSON.parse(savedRoles)); } catch (e) {}
-
-    const savedDepts = localStorage.getItem('vinea_departments');
-    if (savedDepts) try { setAvailableDepartments(JSON.parse(savedDepts)); } catch (e) {}
-
-    const savedM = localStorage.getItem('vinea_members');
-    if (savedM) setMembers(JSON.parse(savedM));
-
-    const savedP = localStorage.getItem('vinea_discipleship_pairs');
-    if (savedP) setDiscipleshipPairs(JSON.parse(savedP));
-  };
+  const [availableStatuses] = useState<string[]>(Object.values(MemberStatus));
+  const [availableRoles] = useState<string[]>(Object.values(MemberType));
+  const [availableDepartments] = useState<string[]>(CONST_DEPARTMENTS);
 
   useEffect(() => {
-    loadSettings();
-    window.addEventListener('vinea_lists_updated', loadSettings);
-    window.addEventListener('vinea_members_updated', loadSettings);
-    window.addEventListener('vinea_discipleship_pairs_updated', loadSettings);
-    return () => {
-      window.removeEventListener('vinea_lists_updated', loadSettings);
-      window.removeEventListener('vinea_members_updated', loadSettings);
-      window.removeEventListener('vinea_discipleship_pairs_updated', loadSettings);
+    const load = async () => {
+      setIsLoadingData(true);
+      const [m, p] = await Promise.all([getMembers(), getDiscipleshipPairs()]);
+      setMembers(m);
+      setDiscipleshipPairs(p);
+      setIsLoadingData(false);
     };
+    load();
   }, []);
-
-  useEffect(() => {
-    const membersStr = JSON.stringify(members);
-    const existingStr = localStorage.getItem('vinea_members');
-    
-    if (membersStr !== existingStr) {
-      localStorage.setItem('vinea_members', membersStr);
-      window.dispatchEvent(new Event('vinea_members_updated'));
-
-      // --- SYNCHRONISATION VERS LE PLANNING ---
-      try {
-        const planningDeptsRaw = localStorage.getItem('vinea_planning_departments');
-        if (planningDeptsRaw) {
-          const planningDepts = JSON.parse(planningDeptsRaw);
-          
-          // On reconstruit les listes de membres pour chaque département du planning
-          const updatedPlanningDepts = planningDepts.map((dept: any) => {
-            const memberIdsInDept = members
-              .filter(m => m.departments.includes(dept.name as Department))
-              .map(m => m.id);
-            return { ...dept, memberIds: memberIdsInDept };
-          });
-
-          const newPlanningStr = JSON.stringify(updatedPlanningDepts);
-          if (newPlanningStr !== planningDeptsRaw) {
-            localStorage.setItem('vinea_planning_departments', newPlanningStr);
-            window.dispatchEvent(new Event('vinea_planning_departments_updated'));
-          }
-        }
-      } catch (error) {
-        console.error("Erreur de synchronisation Members -> Planning:", error);
-      }
-    }
-  }, [members]);
 
   const importInputRef = useRef<HTMLInputElement>(null);
 
@@ -315,12 +258,13 @@ const Members: React.FC = () => {
     setIsDeleteConfirmOpen(true);
   };
 
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     if (memberToDeleteId) {
       setMembers(members.filter(m => m.id !== memberToDeleteId));
       setIsDeleteConfirmOpen(false);
       setIsDetailsOpen(false);
       setMemberToDeleteId(null);
+      await deleteMember(memberToDeleteId);
     }
   };
 
@@ -427,6 +371,8 @@ const Members: React.FC = () => {
         setIsImportModalOpen(false);
         setImportCount(newMembers.length);
         setIsImportSuccessOpen(true);
+        // Persist to Supabase in background
+        newMembers.forEach(m => createMember(m));
       } catch (err) {
         alert("Erreur lors de l'importation : Format de fichier invalide.");
       }
@@ -488,10 +434,10 @@ const Members: React.FC = () => {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.lastName || !formData.firstName) return;
-    
+
     const formattedFirstName = formatFirstName(formData.firstName);
     const formattedLastName = formData.lastName.toUpperCase();
     const currentMemberFullName = `${formattedFirstName} ${formattedLastName}`;
@@ -503,6 +449,7 @@ const Members: React.FC = () => {
       const existing = members.find(m => m.id === editingMemberId)!;
       memberToSave = { ...existing, ...formData, firstName: formattedFirstName, lastName: formattedLastName } as Member;
       newMembersList = newMembersList.map(m => m.id === editingMemberId ? memberToSave : m);
+      await updateMember(editingMemberId, memberToSave);
     } else {
       memberToSave = {
         ...formData as Member,
@@ -519,6 +466,7 @@ const Members: React.FC = () => {
         profession: formData.profession || ''
       };
       newMembersList = [memberToSave, ...newMembersList];
+      await createMember(memberToSave);
     }
 
     // Mise à jour bidirectionnelle du conjoint si identifié dans la base
@@ -532,11 +480,13 @@ const Members: React.FC = () => {
       });
 
       if (spouseIndex !== -1) {
-        newMembersList[spouseIndex] = {
+        const updatedSpouse = {
           ...newMembersList[spouseIndex],
           maritalStatus: 'Marié(e)',
           spouseName: currentMemberFullName
         };
+        newMembersList[spouseIndex] = updatedSpouse;
+        await updateMember(updatedSpouse.id, { maritalStatus: 'Marié(e)', spouseName: currentMemberFullName });
       }
     }
 

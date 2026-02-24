@@ -37,6 +37,7 @@ import { analyzePageData } from '../lib/gemini';
 import { cn, generateId, formatFirstName, getInitials, getDisplayNickname } from '../utils';
 import { Member, MemberType, SpiritualExerciseDef, YearlySpiritualGoals, MonthlySpiritualPoint, SpiritualObjective } from '../types';
 import { SPIRITUAL_EXERCISES_LIST } from '../constants';
+import { getMembers, getSpiritualGoals, getSpiritualPoints, upsertSpiritualGoals, upsertSpiritualPoints } from '../lib/db';
 
 const MONTHS = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
 
@@ -55,20 +56,17 @@ const calculateMergedScore = (results: Record<string, boolean>) => {
 };
 
 const SpiritualGrowth: React.FC = () => {
-  const [members, setMembers] = useState<Member[]>(() => {
-    const saved = localStorage.getItem('vinea_members');
-    return saved ? JSON.parse(saved) : [];
-  });
+  const [members, setMembers] = useState<Member[]>([]);
+  const [yearlyGoals, setYearlyGoals] = useState<YearlySpiritualGoals[]>([]);
+  const [monthlyPoints, setMonthlyPoints] = useState<MonthlySpiritualPoint[]>([]);
 
-  const [yearlyGoals, setYearlyGoals] = useState<YearlySpiritualGoals[]>(() => {
-    const saved = localStorage.getItem('vinea_spiritual_goals');
-    return saved ? JSON.parse(saved) : [];
-  });
-
-  const [monthlyPoints, setMonthlyPoints] = useState<MonthlySpiritualPoint[]>(() => {
-    const saved = localStorage.getItem('vinea_spiritual_points');
-    return saved ? JSON.parse(saved) : [];
-  });
+  useEffect(() => {
+    Promise.all([getMembers(), getSpiritualGoals(), getSpiritualPoints()]).then(([mbrs, goals, points]) => {
+      setMembers(mbrs);
+      setYearlyGoals(goals as any);
+      setMonthlyPoints(points as any);
+    });
+  }, []);
 
   const [isNewGoalModalOpen, setIsNewGoalModalOpen] = useState(false);
   const [isPointModalOpen, setIsPointModalOpen] = useState(false);
@@ -84,9 +82,6 @@ const SpiritualGrowth: React.FC = () => {
   const today = new Date();
   const currentYear = today.getFullYear();
 
-  // Persistance
-  useEffect(() => { localStorage.setItem('vinea_spiritual_goals', JSON.stringify(yearlyGoals)); }, [yearlyGoals]);
-  useEffect(() => { localStorage.setItem('vinea_spiritual_points', JSON.stringify(monthlyPoints)); }, [monthlyPoints]);
 
   // Liste des membres qui ont des objectifs pour l'année en cours
   const trackedMembers = useMemo(() => {
@@ -119,26 +114,25 @@ const SpiritualGrowth: React.FC = () => {
   };
 
   const handleSaveGoals = (memberId: string, goalsData: SpiritualObjective[]) => {
+    const existingGoal = yearlyGoals.find(g => g.memberId === memberId && g.year === currentYear);
     const newGoals: YearlySpiritualGoals = {
-      id: generateId(),
-      memberId: memberId,
+      id: existingGoal?.id || generateId(),
+      memberId,
       year: currentYear,
       objectives: goalsData,
-      createdAt: new Date().toISOString()
+      createdAt: existingGoal?.createdAt || new Date().toISOString()
     };
-    
     setYearlyGoals(prev => {
       const filtered = prev.filter(g => !(g.memberId === memberId && g.year === currentYear));
       return [newGoals, ...filtered];
     });
-    
+    upsertSpiritualGoals(newGoals);
     setIsNewGoalModalOpen(false);
     setIsEditGoalsModalOpen(false);
   };
 
   const handleSavePoint = (results: Record<string, boolean>, month: number, year: number) => {
     const score = calculateMergedScore(results);
-
     const newPoint: MonthlySpiritualPoint = {
       id: editingPoint?.id || generateId(),
       memberId: selectedMemberId,
@@ -148,12 +142,11 @@ const SpiritualGrowth: React.FC = () => {
       score,
       createdAt: editingPoint?.createdAt || new Date().toISOString()
     };
-
     setMonthlyPoints(prev => {
-      // On retire l'existant pour ce membre/mois/année pour faire un remplacement propre
       const filtered = prev.filter(p => !(p.memberId === selectedMemberId && p.month === month && p.year === year));
       return [newPoint, ...filtered];
     });
+    upsertSpiritualPoints(newPoint);
     setIsPointModalOpen(false);
     setEditingPoint(null);
   };

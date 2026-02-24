@@ -44,6 +44,7 @@ import { SERVICES_LIST, formatPhone } from '../constants';
 import { Visitor, VisitorStatus, VisitorQualification, Member, MemberType, MemberStatus } from '../types';
 import { analyzePageData } from '../lib/gemini';
 import { cn, generateId, getInitials, formatFirstName } from '../utils';
+import { getMembers, createMember, getVisitors, createVisitor, updateVisitor, deleteVisitor } from '../lib/db';
 
 const QUALIFICATION_ITEMS = [
   { id: 'seekingChurch', label: 'Cherche une église', icon: <Target size={14} /> },
@@ -64,55 +65,23 @@ const formatToUIDate = (isoDate: string | undefined) => {
 const Visitors: React.FC = () => {
   const [availableStatuses] = useState<string[]>(Object.values(VisitorStatus));
   const [statusFilter, setStatusFilter] = useState<string>('Tous les statuts');
-  const [availableServices, setAvailableServices] = useState<string[]>(SERVICES_LIST);
+  const [availableServices] = useState<string[]>(SERVICES_LIST);
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc' | 'none'>('none');
-  
-  const [members, setMembers] = useState<Member[]>(() => {
-    const saved = localStorage.getItem('vinea_members');
-    return saved ? JSON.parse(saved) : [];
-  });
 
-  const [visitors, setVisitors] = useState<Visitor[]>(() => {
-    const saved = localStorage.getItem('vinea_visitors');
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        return parsed.map((v: any) => ({
-          ...v,
-          status: Object.values(VisitorStatus).includes(v.status) ? v.status : VisitorStatus.EN_ATTENTE,
-          qualification: v.qualification || {
-            seekingChurch: false,
-            needsPrayer: false,
-            livesNearby: false,
-            hasChildren: false,
-            firstTimeChristian: false,
-            wantsToServe: false
-          }
-        }));
-      } catch (e) {
-        console.error("Erreur parsing visiteurs", e);
-      }
-    }
-    return [];
-  });
+  const [members, setMembers] = useState<Member[]>([]);
+  const [visitors, setVisitors] = useState<Visitor[]>([]);
+  const [isLoadingData, setIsLoadingData] = useState(true);
 
   useEffect(() => {
-    const savedServices = localStorage.getItem('vinea_service_types');
-    if (savedServices) setAvailableServices(JSON.parse(savedServices));
-    
-    const loadMembers = () => {
-      const savedM = localStorage.getItem('vinea_members');
-      if (savedM) setMembers(JSON.parse(savedM));
+    const load = async () => {
+      setIsLoadingData(true);
+      const [m, v] = await Promise.all([getMembers(), getVisitors()]);
+      setMembers(m);
+      setVisitors(v);
+      setIsLoadingData(false);
     };
-    loadMembers();
-    window.addEventListener('vinea_members_updated', loadMembers);
-    return () => window.removeEventListener('vinea_members_updated', loadMembers);
+    load();
   }, []);
-
-  useEffect(() => {
-    localStorage.setItem('vinea_visitors', JSON.stringify(visitors));
-    window.dispatchEvent(new Event('vinea_visitors_updated'));
-  }, [visitors]);
 
   const [searchTerm, setSearchTerm] = useState('');
   const [parrainSearch, setParrainSearch] = useState('');
@@ -221,7 +190,7 @@ const Visitors: React.FC = () => {
     setIsFormOpen(true);
   };
 
-  const handleSaveVisitor = (e: React.FormEvent) => {
+  const handleSaveVisitor = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.lastName || !formData.firstName) return;
 
@@ -232,20 +201,21 @@ const Visitors: React.FC = () => {
       lastName: (formData.lastName || '').toUpperCase()
     };
 
-    setTimeout(() => {
-      if (editingVisitor) {
-        setVisitors(visitors.map(v => v.id === editingVisitor.id ? { ...v, ...dataToSave } as Visitor : v));
-      } else {
-        const newVisitor: Visitor = {
-          ...dataToSave as Visitor,
-          id: generateId(),
-          followUpHistory: []
-        };
-        setVisitors([newVisitor, ...visitors]);
-      }
-      setIsSubmitting(false);
-      setIsFormOpen(false);
-    }, 600);
+    if (editingVisitor) {
+      const updated = { ...editingVisitor, ...dataToSave } as Visitor;
+      setVisitors(visitors.map(v => v.id === editingVisitor.id ? updated : v));
+      await updateVisitor(editingVisitor.id, updated);
+    } else {
+      const newVisitor: Visitor = {
+        ...dataToSave as Visitor,
+        id: generateId(),
+        followUpHistory: []
+      };
+      setVisitors([newVisitor, ...visitors]);
+      await createVisitor(newVisitor);
+    }
+    setIsSubmitting(false);
+    setIsFormOpen(false);
   };
 
   // Ouvre la modale de validation de conversion
@@ -255,54 +225,51 @@ const Visitors: React.FC = () => {
   };
 
   // Exécute la conversion réelle
-  const executeConversion = () => {
+  const executeConversion = async () => {
     if (!visitorToConvert) return;
 
     setIsSubmitting(true);
 
-    setTimeout(() => {
-      // 1. Création du nouveau membre
-      const newMember: Member = {
-        id: generateId(),
-        lastName: visitorToConvert.lastName.toUpperCase(),
-        firstName: formatFirstName(visitorToConvert.firstName),
-        gender: visitorToConvert.gender,
-        maritalStatus: 'Célibataire', 
-        emergencyContact: { name: '', phone: '', relation: '' },
-        whatsapp: !!visitorToConvert.whatsappPhone || !!visitorToConvert.phone,
-        phone: visitorToConvert.phone || '',
-        whatsappPhone: visitorToConvert.whatsappPhone || '',
-        address: visitorToConvert.address || '',
-        type: MemberType.MEMBRE_SIMPLE,
-        status: MemberStatus.ACTIF,
-        joinDate: new Date().toISOString().split('T')[0],
-        baptized: false,
-        departments: [],
-        source: visitorToConvert.source || 'Visite directe',
-        invitedBy: visitorToConvert.invitedBy || '',
-        isDiscipleMaker: false,
-        notes: `Profil converti depuis le registre des visiteurs. Première visite le ${new Date(visitorToConvert.visitDate).toLocaleDateString()}. Notes d'accueil : ${visitorToConvert.notes}`
-      };
+    // 1. Création du nouveau membre
+    const newMember: Member = {
+      id: generateId(),
+      lastName: visitorToConvert.lastName.toUpperCase(),
+      firstName: formatFirstName(visitorToConvert.firstName),
+      gender: visitorToConvert.gender,
+      maritalStatus: 'Célibataire',
+      emergencyContact: { name: '', phone: '', relation: '' },
+      whatsapp: !!visitorToConvert.whatsappPhone || !!visitorToConvert.phone,
+      phone: visitorToConvert.phone || '',
+      whatsappPhone: visitorToConvert.whatsappPhone || '',
+      address: visitorToConvert.address || '',
+      type: MemberType.MEMBRE_SIMPLE,
+      status: MemberStatus.ACTIF,
+      joinDate: new Date().toISOString().split('T')[0],
+      baptized: false,
+      departments: [],
+      source: visitorToConvert.source || 'Visite directe',
+      invitedBy: visitorToConvert.invitedBy || '',
+      isDiscipleMaker: false,
+      notes: `Profil converti depuis le registre des visiteurs. Première visite le ${new Date(visitorToConvert.visitDate).toLocaleDateString()}. Notes d'accueil : ${visitorToConvert.notes}`
+    };
 
-      // 2. Mise à jour de la liste des membres dans localStorage
-      const updatedMembers = [newMember, ...members];
-      localStorage.setItem('vinea_members', JSON.stringify(updatedMembers));
-      setMembers(updatedMembers);
-      window.dispatchEvent(new Event('vinea_members_updated'));
+    // 2. Persister le membre + mettre à jour le statut visiteur
+    await Promise.all([
+      createMember(newMember),
+      updateVisitor(visitorToConvert.id, { status: VisitorStatus.MEMBRE }),
+    ]);
 
-      // 3. Mise à jour du statut du visiteur
-      const updatedVisitors = visitors.map(v => v.id === visitorToConvert.id ? { ...v, status: VisitorStatus.MEMBRE } : v);
-      setVisitors(updatedVisitors);
-      
-      // 4. Nettoyage et Feedback
-      setIsConvertModalOpen(false);
-      setVisitorToConvert(null);
-      setIsDetailsOpen(false);
-      setSelectedVisitor(null);
-      setIsSubmitting(false);
-      
-      alert(`Le nouveau profil de ${newMember.firstName} a été créé avec succès dans la base des membres.`);
-    }, 800);
+    setMembers(prev => [newMember, ...prev]);
+    setVisitors(visitors.map(v => v.id === visitorToConvert.id ? { ...v, status: VisitorStatus.MEMBRE } : v));
+
+    // 3. Nettoyage
+    setIsConvertModalOpen(false);
+    setVisitorToConvert(null);
+    setIsDetailsOpen(false);
+    setSelectedVisitor(null);
+    setIsSubmitting(false);
+
+    alert(`Le nouveau profil de ${newMember.firstName} a été créé avec succès dans la base des membres.`);
   };
 
   const toggleQualification = (key: keyof VisitorQualification) => {
@@ -601,8 +568,13 @@ const Visitors: React.FC = () => {
         onDelete={(id) => { setVisitorToDeleteId(id); setIsDeleteConfirmOpen(true); }} 
         onConvertToMember={handleOpenConvertModal}
         onAddFollowUp={(id, entry) => {
-          setVisitors(prev => prev.map(v => v.id === id ? { ...v, followUpHistory: [entry, ...(v.followUpHistory || [])] } : v));
-        }} 
+          setVisitors(prev => prev.map(v => {
+            if (v.id !== id) return v;
+            const updated = { ...v, followUpHistory: [entry, ...(v.followUpHistory || [])] };
+            updateVisitor(id, { followUpHistory: updated.followUpHistory });
+            return updated;
+          }));
+        }}
       />
 
       {isFormOpen && (
@@ -754,7 +726,7 @@ const Visitors: React.FC = () => {
             <div className="w-20 h-20 bg-rose-50 text-rose-600 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-inner border border-rose-100/50"><AlertTriangle size={40} /></div>
             <h3 className="text-xl font-black text-slate-900 leading-tight tracking-tight uppercase">Révoquer Fiche ?</h3>
             <div className="flex flex-col gap-3 mt-8">
-              <button onClick={() => { if (visitorToDeleteId) { setVisitors(prev => prev.filter(v => v.id !== visitorToDeleteId)); setIsDeleteConfirmOpen(false); setIsDetailsOpen(false); setVisitorToDeleteId(null); } }} className="w-full py-4 bg-rose-600 text-white rounded-2xl text-[10px] font-black hover:bg-rose-700 transition-all shadow-xl shadow-rose-200 uppercase tracking-widest">Confirmer</button>
+              <button onClick={async () => { if (visitorToDeleteId) { setVisitors(prev => prev.filter(v => v.id !== visitorToDeleteId)); setIsDeleteConfirmOpen(false); setIsDetailsOpen(false); const id = visitorToDeleteId; setVisitorToDeleteId(null); await deleteVisitor(id); } }} className="w-full py-4 bg-rose-600 text-white rounded-2xl text-[10px] font-black hover:bg-rose-700 transition-all shadow-xl shadow-rose-200 uppercase tracking-widest">Confirmer</button>
               <button onClick={() => setIsDeleteConfirmOpen(false)} className="w-full py-4 bg-slate-50 text-slate-500 rounded-2xl text-[10px] font-black hover:bg-slate-100 transition-all border border-slate-200 uppercase tracking-widest">Annuler</button>
             </div>
           </div>

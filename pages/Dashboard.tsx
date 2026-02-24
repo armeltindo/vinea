@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { formatCurrency } from '../constants';
 import { analyzePageData } from '../lib/gemini';
+import { getMembers, getFinancialRecords, getAttendanceSessions, getDepartmentActivities } from '../lib/db';
 import { 
   XAxis, 
   YAxis, 
@@ -50,18 +51,27 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate, adminName }) => {
     deptStats: [] as { name: string, count: number, percent: number }[]
   });
 
-  const loadDashboardData = () => {
-    // 1. Membres et Départements
-    const members: Member[] = JSON.parse(localStorage.getItem('vinea_members') || '[]');
-    const totalMembersCount = members.length;
+  const loadDashboardData = async () => {
+    const months = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Août', 'Sept', 'Oct', 'Nov', 'Déc'];
+    const now = new Date();
+    const currentMonth = now.getMonth();
+    const currentYear = now.getFullYear();
 
+    const [members, finances, attendanceHistory, activities] = await Promise.all([
+      getMembers(),
+      getFinancialRecords(),
+      getAttendanceSessions(),
+      getDepartmentActivities(),
+    ]);
+
+    // 1. Membres et Départements
+    const totalMembersCount = members.length;
     const deptCounts: Record<string, number> = {};
     members.forEach(m => {
       (m.departments || []).forEach(dept => {
         deptCounts[dept] = (deptCounts[dept] || 0) + 1;
       });
     });
-
     const deptStats = Object.entries(deptCounts)
       .map(([name, count]) => ({
         name,
@@ -70,13 +80,8 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate, adminName }) => {
       }))
       .sort((a, b) => b.count - a.count)
       .slice(0, 5);
-    
+
     // 2. Finances (Mois en cours)
-    const finances: FinancialRecord[] = JSON.parse(localStorage.getItem('vinea_finances') || '[]');
-    const now = new Date();
-    const currentMonth = now.getMonth();
-    const currentYear = now.getFullYear();
-    
     const monthlyRevenue = finances
       .filter(f => {
         const d = new Date(f.date);
@@ -85,26 +90,19 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate, adminName }) => {
       .reduce((sum, f) => sum + f.amount, 0);
 
     // 3. Présences
-    const attendanceHistory = JSON.parse(localStorage.getItem('vinea_attendance_history') || '[]');
-    const sortedHistory = [...attendanceHistory].sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    const sortedHistory = [...attendanceHistory].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
     const lastServiceGlobal = sortedHistory[0];
-    const lastDateFormatted = lastServiceGlobal 
+    const lastDateFormatted = lastServiceGlobal
       ? new Date(lastServiceGlobal.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })
       : 'Aucun relevé';
 
-    const sundayServices = sortedHistory
-      .filter((s: any) => s.service === 'Culte de dimanche')
-      .slice(0, 2);
-
+    const sundayServices = sortedHistory.filter(s => s.service === 'Culte de dimanche').slice(0, 2);
     const uniqueAbsentIds = new Set<string>();
-    sundayServices.forEach((service: any) => {
-      if (service.absentMembers && Array.isArray(service.absentMembers)) {
-        service.absentMembers.forEach((memberId: string) => uniqueAbsentIds.add(memberId));
-      }
+    sundayServices.forEach(service => {
+      (service.absentMembers || []).forEach(id => uniqueAbsentIds.add(id));
     });
 
     // 4. Évolution financière (6 derniers mois)
-    const months = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Août', 'Sept', 'Oct', 'Nov', 'Déc'];
     const last6Months = [];
     for (let i = 5; i >= 0; i--) {
       const d = new Date();
@@ -120,18 +118,17 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate, adminName }) => {
       last6Months.push({ name: months[mIdx], revenus: rev });
     }
 
-    // 5. Événements / Activités à venir
-    const activities = JSON.parse(localStorage.getItem('vinea_planning_activities') || '[]');
+    // 5. Activités à venir
     const upcoming = activities
-      .filter((a: any) => a.deadline && new Date(a.deadline) >= now)
-      .sort((a: any, b: any) => new Date(a.deadline).getTime() - new Date(b.deadline).getTime())
+      .filter(a => a.deadline && new Date(a.deadline) >= now)
+      .sort((a, b) => new Date(a.deadline!).getTime() - new Date(b.deadline!).getTime())
       .slice(0, 3)
-      .map((a: any) => ({
+      .map(a => ({
         id: a.id,
-        day: new Date(a.deadline).getDate().toString(),
-        month: months[new Date(a.deadline).getMonth()].toUpperCase(),
+        day: new Date(a.deadline!).getDate().toString(),
+        month: months[new Date(a.deadline!).getMonth()].toUpperCase(),
         title: a.title,
-        time: "Toute la journée",
+        time: 'Toute la journée',
         target: 'planning'
       }));
 
@@ -150,17 +147,6 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate, adminName }) => {
 
   useEffect(() => {
     loadDashboardData();
-    window.addEventListener('vinea_members_updated', loadDashboardData);
-    window.addEventListener('vinea_finances_updated', loadDashboardData);
-    window.addEventListener('vinea_attendance_updated', loadDashboardData);
-    window.addEventListener('vinea_data_purged', loadDashboardData);
-
-    return () => {
-      window.removeEventListener('vinea_members_updated', loadDashboardData);
-      window.removeEventListener('vinea_finances_updated', loadDashboardData);
-      window.removeEventListener('vinea_attendance_updated', loadDashboardData);
-      window.removeEventListener('vinea_data_purged', loadDashboardData);
-    };
   }, []);
 
   const handleAnalyze = async () => {

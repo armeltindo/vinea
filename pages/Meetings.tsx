@@ -13,6 +13,7 @@ import { analyzePageData, generateMeetingMinutes, generateMeetingFlash, extractM
 import { cn, generateId, getInitials, formatFirstName } from '../utils';
 import { Member, MemberType } from '../types';
 import { GoogleGenAI } from "@google/genai";
+import { getMeetings, createMeeting, updateMeeting, deleteMeeting, getMembers } from '../lib/db';
 
 interface MeetingDecision {
   id: string;
@@ -40,15 +41,18 @@ interface Meeting {
 const CATEGORIES = ['Conseil', 'Département', 'Ouvriers', 'Jeunesse', 'Finances', 'Social'];
 
 const Meetings: React.FC = () => {
-  const [meetings, setMeetings] = useState<Meeting[]>(() => {
-    const saved = localStorage.getItem('vinea_meetings');
-    return saved ? JSON.parse(saved) : [];
-  });
+  const [meetings, setMeetings] = useState<Meeting[]>([]);
+  const [members, setMembers] = useState<Member[]>([]);
 
-  const [members] = useState<Member[]>(() => {
-    const saved = localStorage.getItem('vinea_members');
-    return saved ? JSON.parse(saved) : [];
-  });
+  useEffect(() => {
+    Promise.all([
+      getMeetings().then(data => data.map((m: any) => ({ ...m, aiPV: m.aiPv }))),
+      getMembers(),
+    ]).then(([mtgs, mbrs]) => {
+      setMeetings(mtgs as any);
+      setMembers(mbrs);
+    });
+  }, []);
 
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('Toutes');
@@ -66,9 +70,6 @@ const Meetings: React.FC = () => {
   // Nouvel état pour le suivi des présences
   const [isAttendanceTrackerOpen, setIsAttendanceTrackerOpen] = useState(false);
 
-  useEffect(() => {
-    localStorage.setItem('vinea_meetings', JSON.stringify(meetings));
-  }, [meetings]);
 
   const [selectedMeeting, setSelectedMeeting] = useState<Meeting | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -184,6 +185,7 @@ const Meetings: React.FC = () => {
       const updated = { ...meeting, aiPV: response.text };
       setMeetings(prev => prev.map(m => m.id === meeting.id ? updated : m));
       setSelectedMeeting(updated);
+      await updateMeeting(meeting.id, { aiPv: response.text });
     } catch (e) {
       console.error(e);
       alert("Erreur lors de la génération du PV.");
@@ -216,6 +218,7 @@ const Meetings: React.FC = () => {
       const updated = { ...meeting, decisions: [...(meeting.decisions || []), ...newDecisions] };
       setMeetings(prev => prev.map(m => m.id === meeting.id ? updated : m));
       setSelectedMeeting(updated);
+      await updateMeeting(meeting.id, { decisions: updated.decisions });
     }
     setIsExtractingTasks(false);
   };
@@ -229,82 +232,62 @@ const Meetings: React.FC = () => {
     }).sort((a, b) => new Date(a.date).getTime() - new Date(a.date).getTime());
   }, [meetings, searchTerm, selectedCategory]);
 
-  const handleFormSubmit = (e: React.FormEvent) => {
+  const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-    setTimeout(() => {
-      if (editingMeetingId) {
-        setMeetings(meetings.map(m => m.id === editingMeetingId ? { ...m, ...formData } : m));
-        if (selectedMeeting?.id === editingMeetingId) {
-          setSelectedMeeting(prev => prev ? { ...prev, ...formData } : null);
-        }
-      } else {
-        const newMeeting: Meeting = {
-          ...formData,
-          id: generateId(),
-          status: 'Programmé'
-        };
-        setMeetings([newMeeting, ...meetings]);
+    if (editingMeetingId) {
+      setMeetings(meetings.map(m => m.id === editingMeetingId ? { ...m, ...formData } : m));
+      if (selectedMeeting?.id === editingMeetingId) {
+        setSelectedMeeting(prev => prev ? { ...prev, ...formData } : null);
       }
-      setIsFormOpen(false);
-      setIsSubmitting(false);
-      setEditingMeetingId(null);
-    }, 800);
+      await updateMeeting(editingMeetingId, formData);
+    } else {
+      const newMeeting: Meeting = { ...formData, id: generateId(), status: 'Programmé' };
+      setMeetings([newMeeting, ...meetings]);
+      await createMeeting(newMeeting);
+    }
+    setIsFormOpen(false);
+    setIsSubmitting(false);
+    setEditingMeetingId(null);
   };
 
   const toggleStatus = (id: string) => {
-    setMeetings(meetings.map(m => {
-      if (m.id === id) {
-        const newStatus = m.status === 'Programmé' ? 'Terminé' : 'Programmé';
-        const updated = { ...m, status: newStatus as any };
-        if (selectedMeeting?.id === id) setSelectedMeeting(updated);
-        return updated;
-      }
-      return m;
-    }));
+    const meeting = meetings.find(m => m.id === id);
+    if (!meeting) return;
+    const newStatus = meeting.status === 'Programmé' ? 'Terminé' : 'Programmé';
+    setMeetings(meetings.map(m => m.id === id ? { ...m, status: newStatus as any } : m));
+    if (selectedMeeting?.id === id) setSelectedMeeting({ ...meeting, status: newStatus as any });
+    updateMeeting(id, { status: newStatus });
   };
 
   const handleAddDecision = () => {
     if (!newDecisionLabel.trim() || !selectedMeeting) return;
-    
-    const newDecision: MeetingDecision = { 
-      id: generateId(), 
-      label: newDecisionLabel.trim(), 
-      status: 'À faire' 
-    };
-    
-    const updatedMeetings = meetings.map(m => 
-      m.id === selectedMeeting.id 
-        ? { ...m, decisions: [...(m.decisions || []), newDecision] } 
-        : m
-    );
-    
+    const newDecision: MeetingDecision = { id: generateId(), label: newDecisionLabel.trim(), status: 'À faire' };
+    const updatedDecisions = [...(selectedMeeting.decisions || []), newDecision];
+    const updatedMeetings = meetings.map(m => m.id === selectedMeeting.id ? { ...m, decisions: updatedDecisions } : m);
     setMeetings(updatedMeetings);
     setSelectedMeeting(updatedMeetings.find(m => m.id === selectedMeeting.id) || null);
     setNewDecisionLabel('');
     setIsAddingDecision(false);
+    updateMeeting(selectedMeeting.id, { decisions: updatedDecisions });
   };
 
   const handleDeleteDecision = (decisionId: string) => {
     if (!selectedMeeting) return;
-    const updatedMeetings = meetings.map(m => 
-      m.id === selectedMeeting.id 
-        ? { ...m, decisions: (m.decisions || []).filter(d => d.id !== decisionId) } 
-        : m
-    );
+    const updatedDecisions = (selectedMeeting.decisions || []).filter(d => d.id !== decisionId);
+    const updatedMeetings = meetings.map(m => m.id === selectedMeeting.id ? { ...m, decisions: updatedDecisions } : m);
     setMeetings(updatedMeetings);
     setSelectedMeeting(updatedMeetings.find(m => m.id === selectedMeeting.id) || null);
+    updateMeeting(selectedMeeting.id, { decisions: updatedDecisions });
   };
 
   const updateDecisionStatus = (decisionId: string, newStatus: MeetingDecision['status']) => {
     if (!selectedMeeting) return;
-    const updatedMeetings = meetings.map(m => 
-      m.id === selectedMeeting.id 
-        ? { ...m, decisions: (m.decisions || []).map(d => d.id === decisionId ? { ...d, status: newStatus } : d) } 
-        : m
-    );
+    const updatedDecisions = (selectedMeeting.decisions || []).map(d => d.id === decisionId ? { ...d, status: newStatus } : d);
+    const updatedMeetings = meetings.map(m => m.id === selectedMeeting.id ? { ...m, decisions: updatedDecisions } : m);
     setMeetings(updatedMeetings);
     setSelectedMeeting(updatedMeetings.find(m => m.id === selectedMeeting.id) || null);
+    updateMeeting(selectedMeeting.id, { decisions: updatedDecisions });
   };
 
   const toggleAttendeeInForm = (id: string) => {
@@ -329,14 +312,13 @@ const Meetings: React.FC = () => {
     }));
   };
 
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     if (meetingToDeleteId) {
       setMeetings(meetings.filter(m => m.id !== meetingToDeleteId));
       setIsDeleteConfirmOpen(false);
+      if (selectedMeeting?.id === meetingToDeleteId) setSelectedMeeting(null);
+      await deleteMeeting(meetingToDeleteId);
       setMeetingToDeleteId(null);
-      if (selectedMeeting?.id === meetingToDeleteId) {
-        setSelectedMeeting(null);
-      }
     }
   };
 
@@ -452,7 +434,7 @@ const Meetings: React.FC = () => {
                   </div>
                 </div>
               </div>
-            ) : (
+            )) : (
               <div className="py-20 text-center bg-white border border-dashed border-slate-200 rounded-[2.5rem]"><UsersRound size={48} className="mx-auto text-slate-100 mb-4" /><p className="text-sm font-bold text-slate-400 italic">Aucune réunion au registre.</p></div>
             )}
           </div>
@@ -681,7 +663,7 @@ const Meetings: React.FC = () => {
                     <h4 className="text-[10px] font-black text-indigo-600 uppercase tracking-widest flex items-center gap-2"><FileText size={14}/> Procès-Verbal Généré par IA</h4>
                     <div className="flex gap-2">
                       <button onClick={() => { navigator.clipboard.writeText(selectedMeeting.aiPV!); alert("PV copié !"); }} className="p-2 bg-slate-50 text-slate-400 hover:text-indigo-600 rounded-xl transition-colors"><Copy size={16}/></button>
-                      <button onClick={() => setMeetings(prev => prev.map(m => m.id === selectedMeeting.id ? { ...m, aiPV: undefined } : m))} className="p-2 bg-slate-50 text-slate-400 hover:text-rose-600 rounded-xl transition-colors"><X size={16}/></button>
+                      <button onClick={() => { setMeetings(prev => prev.map(m => m.id === selectedMeeting.id ? { ...m, aiPV: undefined } : m)); setSelectedMeeting(prev => prev ? { ...prev, aiPV: undefined } : null); updateMeeting(selectedMeeting.id, { aiPv: null }); }} className="p-2 bg-slate-50 text-slate-400 hover:text-rose-600 rounded-xl transition-colors"><X size={16}/></button>
                     </div>
                   </div>
                   <div className="prose prose-sm max-w-none text-slate-700 font-medium leading-relaxed italic whitespace-pre-wrap">

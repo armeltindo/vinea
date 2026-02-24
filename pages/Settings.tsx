@@ -74,6 +74,7 @@ import {
 import { cn, generateId, formatFirstName } from '../utils';
 import { SERVICES_LIST, DEPARTMENTS as CONST_DEPARTMENTS } from '../constants';
 import { MemberStatus, VisitorStatus, MemberType, NotificationSettings } from '../types';
+import { getChurchSettings, upsertChurchSettings, getAdminUsers, upsertAdminUser, deleteAdminUser } from '../lib/db';
 
 interface ListManagerProps {
   title: string;
@@ -311,20 +312,17 @@ const Settings: React.FC = () => {
   const adminAvatarInputRef = useRef<HTMLInputElement>(null);
   const importBaseInputRef = useRef<HTMLInputElement>(null);
   
-  const [churchInfo, setChurchInfo] = useState(() => {
-    const saved = localStorage.getItem('vinea_church_info');
-    return saved ? JSON.parse(saved) : {
-      name: 'Vinea Community',
-      slogan: 'Enracinés en Christ',
-      phone: '',
-      email: '',
-      address: '',
-      logo: null,
-      primaryColor: '#4f46e5',
-      currency: 'F CFA',
-      language: 'Français',
-      timezone: 'UTC'
-    };
+  const [churchInfo, setChurchInfo] = useState({
+    name: 'Vinea Community',
+    slogan: 'Enracinés en Christ',
+    phone: '',
+    email: '',
+    address: '',
+    logo: null as string | null,
+    primaryColor: '#4f46e5',
+    currency: 'F CFA',
+    language: 'Français',
+    timezone: 'UTC'
   });
 
   const [adminInfo, setAdminInfo] = useState(() => {
@@ -372,20 +370,7 @@ const Settings: React.FC = () => {
     return saved ? JSON.parse(saved) : CONST_DEPARTMENTS;
   });
 
-  const [adminUsers, setAdminUsers] = useState<AdminUser[]>(() => {
-    const saved = localStorage.getItem('vinea_admin_users');
-    if (saved) return JSON.parse(saved);
-    return [{ 
-      id: 'u1', 
-      fullName: 'Administrateur', 
-      email: 'admin@vinea.org', 
-      role: 'Super Admin', 
-      status: 'Actif', 
-      avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Admin', 
-      lastActive: 'Aujourd\'hui',
-      permissions: AVAILABLE_MODULES.map(m => m.id)
-    }];
-  });
+  const [adminUsers, setAdminUsers] = useState<AdminUser[]>([]);
 
   const [aiConfig, setAiConfig] = useState(() => {
     const saved = localStorage.getItem('vinea_ai_config');
@@ -411,13 +396,51 @@ const Settings: React.FC = () => {
   });
 
   useEffect(() => {
-    localStorage.setItem('vinea_admin_users', JSON.stringify(adminUsers));
-    window.dispatchEvent(new Event('vinea_admin_info_updated'));
-  }, [adminUsers]);
+    const load = async () => {
+      const [settings, users] = await Promise.all([getChurchSettings(), getAdminUsers()]);
+      if (settings) {
+        setChurchInfo({
+          name: settings.name || 'Vinea Community',
+          slogan: settings.slogan || 'Enracinés en Christ',
+          phone: settings.phone || '',
+          email: settings.email || '',
+          address: settings.address || '',
+          logo: settings.logoUrl || null,
+          primaryColor: settings.primaryColor || '#4f46e5',
+          currency: settings.currency || 'F CFA',
+          language: settings.language || 'Français',
+          timezone: settings.timezone || 'UTC',
+        });
+      }
+      if (users.length > 0) {
+        setAdminUsers(users.map((u: any) => ({
+          id: u.id,
+          fullName: u.full_name,
+          email: u.email,
+          role: u.role,
+          status: u.status,
+          avatar: u.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${u.full_name}`,
+          lastActive: u.last_active || 'Inconnu',
+          permissions: u.permissions || ['dashboard'],
+        })));
+      } else {
+        setAdminUsers([{
+          id: 'u1',
+          fullName: 'Administrateur',
+          email: 'admin@vinea.org',
+          role: 'Super Admin',
+          status: 'Actif',
+          avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Admin',
+          lastActive: 'Aujourd\'hui',
+          permissions: AVAILABLE_MODULES.map(m => m.id),
+        }]);
+      }
+    };
+    load();
+  }, []);
 
   const handleSave = () => {
     setIsSaving(true);
-    localStorage.setItem('vinea_church_info', JSON.stringify(churchInfo));
     localStorage.setItem('vinea_admin_info', JSON.stringify(adminInfo));
     localStorage.setItem('vinea_ai_config', JSON.stringify(aiConfig));
     localStorage.setItem('vinea_member_statuses', JSON.stringify(memberStatuses));
@@ -425,13 +448,22 @@ const Settings: React.FC = () => {
     localStorage.setItem('vinea_visitor_statuses', JSON.stringify(visitorStatuses));
     localStorage.setItem('vinea_service_types', JSON.stringify(serviceTypes));
     localStorage.setItem('vinea_departments', JSON.stringify(departments));
-    localStorage.setItem('vinea_admin_users', JSON.stringify(adminUsers));
     localStorage.setItem('vinea_notification_settings', JSON.stringify(notificationSettings));
-    
-    window.dispatchEvent(new Event('vinea_church_info_updated'));
-    window.dispatchEvent(new Event('vinea_admin_info_updated'));
-    window.dispatchEvent(new Event('vinea_lists_updated'));
-    
+
+    upsertChurchSettings({
+      id: 'main',
+      name: churchInfo.name,
+      slogan: churchInfo.slogan,
+      phone: churchInfo.phone,
+      email: churchInfo.email,
+      address: churchInfo.address,
+      logoUrl: churchInfo.logo,
+      primaryColor: churchInfo.primaryColor,
+      currency: churchInfo.currency,
+      language: churchInfo.language,
+      timezone: churchInfo.timezone,
+    });
+
     setTimeout(() => {
       setIsSaving(false);
       setSaveSuccess(true);
@@ -457,7 +489,9 @@ const Settings: React.FC = () => {
   const handleSaveUser = (e: React.FormEvent) => {
     e.preventDefault();
     if (editingUser) {
-      setAdminUsers(adminUsers.map(u => u.id === editingUser.id ? { ...u, ...userFormData } as AdminUser : u));
+      const updated = { ...editingUser, ...userFormData } as AdminUser;
+      setAdminUsers(adminUsers.map(u => u.id === editingUser.id ? updated : u));
+      upsertAdminUser({ id: updated.id, full_name: updated.fullName, email: updated.email, role: updated.role, status: updated.status, avatar: updated.avatar, last_active: updated.lastActive, permissions: updated.permissions });
     } else {
       const newUser: AdminUser = {
         ...userFormData as AdminUser,
@@ -466,6 +500,7 @@ const Settings: React.FC = () => {
         lastActive: 'Jamais'
       };
       setAdminUsers([...adminUsers, newUser]);
+      upsertAdminUser({ id: newUser.id, full_name: newUser.fullName, email: newUser.email, role: newUser.role, status: newUser.status, avatar: newUser.avatar, last_active: newUser.lastActive, permissions: newUser.permissions });
     }
     setIsUserFormOpen(false);
     setEditingUser(null);
@@ -474,6 +509,7 @@ const Settings: React.FC = () => {
   const confirmDeleteUser = () => {
     if (userToDelete) {
       setAdminUsers(adminUsers.filter(u => u.id !== userToDelete.id));
+      deleteAdminUser(userToDelete.id);
       setIsUserDeleteModalOpen(false);
       setUserToDelete(null);
     }

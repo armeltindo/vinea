@@ -42,6 +42,7 @@ import { Member, MemberType, Visitor, VisitorStatus } from '../types';
 import { analyzePageData } from '../lib/gemini';
 import { cn, generateId, getInitials, getInitialsFromString, formatFirstName } from '../utils';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
+import { getMembers, getVisitors, getDiscipleshipPairs, createDiscipleshipPair, updateDiscipleshipPair, deleteDiscipleshipPair } from '../lib/db';
 
 interface Pathway {
   id: string;
@@ -81,27 +82,32 @@ const PATHWAYS: Pathway[] = [
 const Discipleship: React.FC = () => {
   const [analysis, setAnalysis] = useState<string | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
-  
+
   // --- Data States ---
-  const members: Member[] = useMemo(() => {
-    const saved = localStorage.getItem('vinea_members');
-    return saved ? JSON.parse(saved) : [];
-  }, []);
-
-  const visitors: Visitor[] = useMemo(() => {
-    const saved = localStorage.getItem('vinea_visitors');
-    return saved ? JSON.parse(saved) : [];
-  }, []);
-
-  const [activePairs, setActivePairs] = useState<DiscipleshipPair[]>(() => {
-    const saved = localStorage.getItem('vinea_discipleship_pairs');
-    return saved ? JSON.parse(saved) : [];
-  });
-
+  const [members, setMembers] = useState<Member[]>([]);
+  const [visitors, setVisitors] = useState<Visitor[]>([]);
+  const [activePairs, setActivePairs] = useState<DiscipleshipPair[]>([]);
   const [enrollments, setEnrollments] = useState<Enrollment[]>(() => {
     const saved = localStorage.getItem('vinea_discipleship_enrollments');
     return saved ? JSON.parse(saved) : [];
   });
+
+  useEffect(() => {
+    Promise.all([getMembers(), getVisitors(), getDiscipleshipPairs()]).then(([mbrs, vis, pairs]) => {
+      setMembers(mbrs);
+      setVisitors(vis);
+      // Reconstruct mentorName/discipleName from members list
+      setActivePairs(pairs.map((p: any) => {
+        const mentor = mbrs.find(m => m.id === p.mentorId);
+        const disciple = mbrs.find(m => m.id === p.discipleId);
+        return {
+          ...p,
+          mentorName: mentor ? `${formatFirstName(mentor.firstName)} ${mentor.lastName.toUpperCase()}` : p.mentorId,
+          discipleName: disciple ? `${formatFirstName(disciple.firstName)} ${disciple.lastName.toUpperCase()}` : p.discipleId,
+        };
+      }));
+    });
+  }, []);
 
   // --- UI States ---
   const [selectedPathway, setSelectedPathway] = useState<Pathway | null>(null);
@@ -160,16 +166,10 @@ const Discipleship: React.FC = () => {
     );
   }, [activePairs, searchQuery]);
 
-  // Persistance automatique
+  // Persistance des enrollments (local-only, pas de table DB)
   useEffect(() => {
     localStorage.setItem('vinea_discipleship_enrollments', JSON.stringify(enrollments));
-    
-    const pairsStr = JSON.stringify(activePairs);
-    if (pairsStr !== localStorage.getItem('vinea_discipleship_pairs')) {
-      localStorage.setItem('vinea_discipleship_pairs', pairsStr);
-      window.dispatchEvent(new Event('vinea_discipleship_pairs_updated'));
-    }
-  }, [enrollments, activePairs]);
+  }, [enrollments]);
 
   const handleAnalyze = async () => {
     setIsAnalyzing(true);
@@ -234,29 +234,28 @@ const Discipleship: React.FC = () => {
     }
   };
 
-  const handleSavePair = (e: React.FormEvent) => {
+  const handleSavePair = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!pairFormData.mentorId || !pairFormData.discipleId) return;
     if (pairFormData.mentorId === pairFormData.discipleId) {
       alert("Le mentor et le disciple doivent être des personnes différentes.");
       return;
     }
-
     const mentor = getMemberInfo(pairFormData.mentorId!);
     const disciple = getMemberInfo(pairFormData.discipleId!);
-
     const pairData: DiscipleshipPair = {
       ...(pairFormData as DiscipleshipPair),
       id: editingPair?.id || generateId(),
       mentorName: `${formatFirstName(mentor?.firstName || '')} ${mentor?.lastName?.toUpperCase()}`,
       discipleName: `${formatFirstName(disciple?.firstName || '')} ${disciple?.lastName?.toUpperCase()}`,
     };
-
     if (editingPair) {
       setActivePairs(prev => prev.map(p => p.id === editingPair.id ? pairData : p));
       if (selectedPair?.id === editingPair.id) setSelectedPair(pairData);
+      await updateDiscipleshipPair(editingPair.id, { mentorId: pairData.mentorId, discipleId: pairData.discipleId, startDate: pairData.startDate, progress: pairData.progress, status: pairData.status, lastMeeting: pairData.lastMeeting });
     } else {
       setActivePairs(prev => [pairData, ...prev]);
+      await createDiscipleshipPair({ id: pairData.id, mentorId: pairData.mentorId, discipleId: pairData.discipleId, startDate: pairData.startDate, progress: pairData.progress, status: pairData.status, lastMeeting: pairData.lastMeeting });
     }
     setIsPairModalOpen(false);
   };
@@ -266,7 +265,7 @@ const Discipleship: React.FC = () => {
     setIsDeleteConfirmOpen(true);
   };
 
-  const confirmDeletePair = () => {
+  const confirmDeletePair = async () => {
     if (pairToDeleteId) {
       setActivePairs(prev => prev.filter(p => p.id !== pairToDeleteId));
       setIsPairModalOpen(false);
@@ -274,6 +273,7 @@ const Discipleship: React.FC = () => {
       setIsDeleteConfirmOpen(false);
       setEditingPair(null);
       setSelectedPair(null);
+      await deleteDiscipleshipPair(pairToDeleteId);
       setPairToDeleteId(null);
     }
   };

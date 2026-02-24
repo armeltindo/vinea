@@ -129,7 +129,7 @@ Pour contrer les sept décrets du malin, décidez cette semaine de ne plus laiss
 
 **Que le Seigneur fortifie votre marche et que votre discipline spirituelle devienne le canal de Sa puissance glorieuse !**', 'Le monde des ténèbres n''est pas un mythe ! Le diable a décrété la ruine de vos foyers et de votre foi. Pas d''excuses : les exercices spirituels sont l''unique gage de votre puissance. « Ne donnez pas accès au diable » (Éphésiens 4:27). Écoutez ce message et triomphez ! 🔥
 
-#MIDC #CombatSpirituel #Croissance #Victoire', ARRAY["Combat spirituel", "Prière", "Discipline spirituelle", "Vigilance", "Vérité"]::TEXT[], NULL, NULL, NULL, NULL),
+#MIDC #CombatSpirituel #Croissance #Victoire', ARRAY['Combat spirituel', 'Prière', 'Discipline spirituelle', 'Vigilance', 'Vérité']::TEXT[], NULL, NULL, NULL, NULL),
 ('sektf0rfd', '2026-01-11', '09:00', 'Culte de dimanche', NULL, 'Pasteur', NULL, NULL, NULL, 'La pratique obligatoire des exercices spirituels, le seul gage de la croissance spirituelle et de la puissance pour affronter les problèmes de la vie', 'Josué 1 : 8 ; Apocalypse 3 : 20', 'La pratique des exercices spirituels est un devoir obligatoire pour le Chrétien qui veut avoir du succès et réussir dans cette vie remplie de méchants.
 1. La lecture biblique
 2. La prière', NULL, NULL, ARRAY[]::TEXT[], NULL, NULL, NULL, NULL),

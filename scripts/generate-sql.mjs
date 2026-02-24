@@ -20,8 +20,8 @@ function esc(v) {
   if (typeof v === 'boolean') return v ? 'TRUE' : 'FALSE';
   if (typeof v === 'number') return String(v);
   if (Array.isArray(v)) {
-    // TEXT[] literal
-    const items = v.map((i) => `"${String(i).replace(/"/g, '\\"')}"`);
+    // TEXT[] literal — single quotes required, double quotes are identifiers in PostgreSQL
+    const items = v.map((i) => `'${String(i).replace(/'/g, "''")}'`);
     return `ARRAY[${items.join(', ')}]::TEXT[]`;
   }
   if (typeof v === 'object') {

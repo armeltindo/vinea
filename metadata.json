@@ -1,0 +1,8 @@
+{
+  "name": "Vinea",
+  "description": "Système de gestion d'église moderne et avancé pour administrateurs. Gère les membres, les visiteurs, le discipolat, les présences, les finances et les cultes avec une interface élégante en F CFA.",
+  "requestFramePermissions": [
+    "camera",
+    "geolocation"
+  ]
+}

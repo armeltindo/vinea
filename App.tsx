@@ -293,6 +293,9 @@ const App: React.FC = () => {
     const finalPermissions = permissions.includes('spiritual') ? permissions : [...permissions, 'spiritual'];
     setCurrentUserPermissions(finalPermissions);
     if (name) setAdminName(name);
+    // Sync to localStorage so Sidebar shows all menu items
+    localStorage.setItem('vinea_user_permissions', JSON.stringify(finalPermissions));
+    window.dispatchEvent(new Event('vinea_auth_updated'));
   };
 
   const handleConfirmLogout = async () => {
@@ -300,6 +303,7 @@ const App: React.FC = () => {
     setIsAuthenticated(false);
     setCurrentUserRole('Super Admin');
     setCurrentUserPermissions(['dashboard', 'spiritual']);
+    localStorage.setItem('vinea_user_permissions', JSON.stringify(['dashboard', 'spiritual']));
     setShowLogoutConfirm(false);
   };
 

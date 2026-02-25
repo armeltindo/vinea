@@ -29,29 +29,18 @@ import {
   Target
 } from 'lucide-react';
 import { analyzePageData } from '../lib/gemini';
-import { MOCK_MEMBERS, formatCurrency } from '../constants';
+import { formatCurrency } from '../constants';
 import { DepartmentInfo, DepartmentActivity, ActivityStatus, Member, Department } from '../types';
 import { cn, generateId } from '../utils';
-
-const INITIAL_DEPARTMENTS: DepartmentInfo[] = [
-  { id: 'd1', name: Department.EVANGELISATION, description: 'Gagner des âmes pour Christ et missions extérieures.', presidentId: 'm1', memberIds: ['m1', 'm2'], status: 'Actif', color: '#f43f5e' },
-  { id: 'd2', name: Department.INTERCESSION, description: 'Soutenir l\'église et les projets dans la prière fervente.', presidentId: 'm1', memberIds: ['m1'], status: 'Actif', color: '#9333ea' },
-  { id: 'd3', name: Department.LOUANGE, description: 'Conduire le peuple dans l\'adoration et la louange.', presidentId: 'm2', memberIds: ['m2'], status: 'Actif', color: '#8b5cf6' },
-  { id: 'd4', name: Department.ACCUEIL, description: 'Accueil, protocole et bien-être des fidèles.', presidentId: 'm1', memberIds: ['m1', 'm2'], status: 'Actif', color: '#10b981' },
-];
-
-const INITIAL_ACTIVITIES: DepartmentActivity[] = [
-  { id: 'a1', title: 'Campagne de Rue Cocody', deptId: 'd1', responsibleId: 'Jean Kouakou', status: ActivityStatus.EN_COURS, cost: 150000, deadline: '2024-03-30', createdAt: '2024-03-01' },
-  { id: 'a2', title: 'Chaîne de prière 24h', deptId: 'd2', responsibleId: 'Alice Yao', status: ActivityStatus.PLANIFIEE, cost: 15000, deadline: '2024-04-12', createdAt: '2024-03-10' },
-  { id: 'a3', title: 'Répétition Générale', deptId: 'd3', responsibleId: 'Marie Kouakou', status: ActivityStatus.REALISEE, cost: 5000, deadline: '2024-03-15', createdAt: '2024-03-05' },
-];
+import { getDepartmentsInfo, upsertDepartmentInfo, getDepartmentActivities, createDepartmentActivity, updateDepartmentActivity, deleteDepartmentActivity, getMembers } from '../lib/db';
 
 const Departments: React.FC = () => {
-  const [departments, setDepartments] = useState<DepartmentInfo[]>(INITIAL_DEPARTMENTS);
-  const [activities, setActivities] = useState<DepartmentActivity[]>(INITIAL_ACTIVITIES);
+  const [departments, setDepartments] = useState<DepartmentInfo[]>([]);
+  const [activities, setActivities] = useState<DepartmentActivity[]>([]);
+  const [members, setMembers] = useState<Member[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [activeView, setActiveView] = useState<'depts' | 'planning'>('depts');
-  
+
   // Modals
   const [isDeptFormOpen, setIsDeptFormOpen] = useState(false);
   const [isActivityFormOpen, setIsActivityFormOpen] = useState(false);
@@ -68,7 +57,19 @@ const Departments: React.FC = () => {
     title: '', deptId: '', responsibleId: '', associateName: '', cost: 0, deadline: '', status: ActivityStatus.PLANIFIEE, observations: ''
   });
 
-  const members = MOCK_MEMBERS;
+  useEffect(() => {
+    const load = async () => {
+      const [depts, acts, mems] = await Promise.all([
+        getDepartmentsInfo(),
+        getDepartmentActivities(),
+        getMembers(),
+      ]);
+      setDepartments(depts);
+      setActivities(acts);
+      setMembers(mems);
+    };
+    load();
+  }, []);
 
   const stats = useMemo(() => {
     return {
@@ -88,32 +89,39 @@ const Departments: React.FC = () => {
     setIsAnalyzing(false);
   };
 
-  const saveDept = (e: React.FormEvent) => {
+  const saveDept = async (e: React.FormEvent) => {
     e.preventDefault();
     if (editingDept) {
-      setDepartments(departments.map(d => d.id === editingDept.id ? { ...d, ...deptFormData } as DepartmentInfo : d));
+      const updated = { ...editingDept, ...deptFormData } as DepartmentInfo;
+      await upsertDepartmentInfo(updated);
+      setDepartments(departments.map(d => d.id === editingDept.id ? updated : d));
     } else {
       const newDept: DepartmentInfo = { ...deptFormData as DepartmentInfo, id: generateId() };
+      await upsertDepartmentInfo(newDept);
       setDepartments([...departments, newDept]);
     }
     setIsDeptFormOpen(false);
     setEditingDept(null);
   };
 
-  const saveActivity = (e: React.FormEvent) => {
+  const saveActivity = async (e: React.FormEvent) => {
     e.preventDefault();
     if (editingActivity) {
-      setActivities(activities.map(a => a.id === editingActivity.id ? { ...a, ...activityFormData } as DepartmentActivity : a));
+      const updated = { ...editingActivity, ...activityFormData } as DepartmentActivity;
+      await updateDepartmentActivity(updated);
+      setActivities(activities.map(a => a.id === editingActivity.id ? updated : a));
     } else {
       const newActivity: DepartmentActivity = { ...activityFormData as DepartmentActivity, id: generateId(), createdAt: new Date().toISOString() };
+      await createDepartmentActivity(newActivity);
       setActivities([...activities, newActivity]);
     }
     setIsActivityFormOpen(false);
     setEditingActivity(null);
   };
 
-  const deleteActivity = (id: string) => {
+  const deleteActivity = async (id: string) => {
     if (confirm('Voulez-vous supprimer cette activité ?')) {
+      await deleteDepartmentActivity(id);
       setActivities(activities.filter(a => a.id !== id));
     }
   };

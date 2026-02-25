@@ -201,7 +201,7 @@ const Planning: React.FC = () => {
         getChurchSettings(),
       ]);
 
-      // Si aucun département en DB, initialiser depuis les constantes
+      // Si aucun département en DB, initialiser depuis les constantes et persister
       if (depts.length === 0) {
         const defaultDepts: DepartmentInfo[] = CONST_DEPARTMENTS.map(name => ({
           id: generateId(),
@@ -212,6 +212,7 @@ const Planning: React.FC = () => {
           status: 'Actif',
           color: '#4f46e5'
         }));
+        await Promise.all(defaultDepts.map(d => upsertDepartmentInfo(d)));
         setDepartments(defaultDepts);
       } else {
         setDepartments(depts);

@@ -510,7 +510,7 @@ const Planning: React.FC = () => {
                   <div className="pt-4" onClick={e => e.stopPropagation()}>
                     <button 
                       onClick={() => {
-                        setActivityFormData({ status: ActivityStatus.PLANIFIEE, deptId: dept.id, recurrence: 'Ponctuelle' });
+                        setActivityFormData({ title: '', deptId: dept.id, responsibleId: '', associateName: '', cost: 0, deadline: '', status: ActivityStatus.PLANIFIEE, observations: '', recurrence: 'Ponctuelle' });
                         setEditingActivity(null);
                         setResponsibleSearch('');
                         setIsActivityFormOpen(true);
@@ -578,7 +578,7 @@ const Planning: React.FC = () => {
                 </div>
                 
                 <button 
-                  onClick={() => { setActivityFormData({ status: ActivityStatus.PLANIFIEE, recurrence: 'Ponctuelle' }); setEditingActivity(null); setResponsibleSearch(''); setIsActivityFormOpen(true); }} 
+                  onClick={() => { setActivityFormData({ title: '', deptId: '', responsibleId: '', associateName: '', cost: 0, deadline: '', status: ActivityStatus.PLANIFIEE, observations: '', recurrence: 'Ponctuelle' }); setEditingActivity(null); setResponsibleSearch(''); setIsActivityFormOpen(true); }}
                   className="px-6 py-3 bg-indigo-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-xl hover:bg-indigo-700 transition-all active:scale-95 flex items-center gap-2"
                 >
                   <Plus size={16} /> Planifier
@@ -900,9 +900,9 @@ const Planning: React.FC = () => {
             </div>
             <form onSubmit={handleSaveActivity} className="p-8 space-y-8 bg-slate-50/30 overflow-y-auto custom-scrollbar">
                <div className="space-y-6">
-                  <div className="space-y-1.5"><label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Activité *</label><input type="text" required value={activityFormData.title} onChange={e => setActivityFormData({...activityFormData, title: e.target.value})} className="w-full px-5 py-4 bg-white border border-slate-200 rounded-2xl outline-none text-sm font-black shadow-sm" placeholder="Intitulé de l'action..." /></div>
+                  <div className="space-y-1.5"><label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Activité *</label><input type="text" required value={activityFormData.title || ''} onChange={e => setActivityFormData({...activityFormData, title: e.target.value})} className="w-full px-5 py-4 bg-white border border-slate-200 rounded-2xl outline-none text-sm font-black shadow-sm" placeholder="Intitulé de l'action..." /></div>
                   <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-1.5"><label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Département *</label><select required value={activityFormData.deptId} onChange={e => setActivityFormData({...activityFormData, deptId: e.target.value})} className="w-full px-4 py-4 bg-white border border-slate-200 rounded-2xl outline-none text-[10px] font-black uppercase shadow-sm">{departments.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}</select></div>
+                    <div className="space-y-1.5"><label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Département *</label><select required value={activityFormData.deptId || ''} onChange={e => setActivityFormData({...activityFormData, deptId: e.target.value})} className="w-full px-4 py-4 bg-white border border-slate-200 rounded-2xl outline-none text-[10px] font-black uppercase shadow-sm">{departments.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}</select></div>
                     <div className="space-y-1.5"><label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Statut</label><select required value={activityFormData.status} onChange={e => setActivityFormData({...activityFormData, status: e.target.value as ActivityStatus})} className="w-full px-4 py-4 bg-white border border-slate-200 rounded-2xl outline-none text-[10px] font-black uppercase shadow-sm">{Object.values(ActivityStatus).map(s => <option key={s} value={s}>{s}</option>)}</select></div>
                   </div>
                   <div className="space-y-1.5 relative">

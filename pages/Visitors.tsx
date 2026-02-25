@@ -41,7 +41,7 @@ import {
   Check
 } from 'lucide-react';
 import { SERVICES_LIST, formatPhone } from '../constants';
-import { Visitor, VisitorStatus, VisitorQualification, Member, MemberType, MemberStatus } from '../types';
+import { Visitor, VisitorStatus, VisitorQualification, Member, MemberType, MemberStatus, FollowUpEntry } from '../types';
 import { analyzePageData } from '../lib/gemini';
 import { cn, generateId, getInitials, formatFirstName } from '../utils';
 import { getMembers, createMember, getVisitors, createVisitor, updateVisitor, deleteVisitor } from '../lib/db';
@@ -203,19 +203,29 @@ const Visitors: React.FC = () => {
 
     if (editingVisitor) {
       const updated = { ...editingVisitor, ...dataToSave } as Visitor;
-      setVisitors(visitors.map(v => v.id === editingVisitor.id ? updated : v));
       await updateVisitor(editingVisitor.id, updated);
+      setVisitors(visitors.map(v => v.id === editingVisitor.id ? updated : v));
     } else {
       const newVisitor: Visitor = {
         ...dataToSave as Visitor,
         id: generateId(),
         followUpHistory: []
       };
-      setVisitors([newVisitor, ...visitors]);
       await createVisitor(newVisitor);
+      setVisitors([newVisitor, ...visitors]);
     }
     setIsSubmitting(false);
     setIsFormOpen(false);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!visitorToDeleteId) return;
+    const id = visitorToDeleteId;
+    setVisitorToDeleteId(null);
+    setIsDeleteConfirmOpen(false);
+    setIsDetailsOpen(false);
+    await deleteVisitor(id);
+    setVisitors(prev => prev.filter(v => v.id !== id));
   };
 
   // Ouvre la modale de validation de conversion
@@ -567,13 +577,14 @@ const Visitors: React.FC = () => {
         onEdit={(v) => handleOpenForm(v)} 
         onDelete={(id) => { setVisitorToDeleteId(id); setIsDeleteConfirmOpen(true); }} 
         onConvertToMember={handleOpenConvertModal}
-        onAddFollowUp={(id, entry) => {
+        onAddFollowUp={async (id, entry) => {
+          let updatedHistory: FollowUpEntry[] = [];
           setVisitors(prev => prev.map(v => {
             if (v.id !== id) return v;
-            const updated = { ...v, followUpHistory: [entry, ...(v.followUpHistory || [])] };
-            updateVisitor(id, { followUpHistory: updated.followUpHistory });
-            return updated;
+            updatedHistory = [entry, ...(v.followUpHistory || [])];
+            return { ...v, followUpHistory: updatedHistory };
           }));
+          await updateVisitor(id, { followUpHistory: updatedHistory });
         }}
       />
 
@@ -726,7 +737,7 @@ const Visitors: React.FC = () => {
             <div className="w-20 h-20 bg-rose-50 text-rose-600 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-inner border border-rose-100/50"><AlertTriangle size={40} /></div>
             <h3 className="text-xl font-black text-slate-900 leading-tight tracking-tight uppercase">Révoquer Fiche ?</h3>
             <div className="flex flex-col gap-3 mt-8">
-              <button onClick={async () => { if (visitorToDeleteId) { setVisitors(prev => prev.filter(v => v.id !== visitorToDeleteId)); setIsDeleteConfirmOpen(false); setIsDetailsOpen(false); const id = visitorToDeleteId; setVisitorToDeleteId(null); await deleteVisitor(id); } }} className="w-full py-4 bg-rose-600 text-white rounded-2xl text-[10px] font-black hover:bg-rose-700 transition-all shadow-xl shadow-rose-200 uppercase tracking-widest">Confirmer</button>
+              <button onClick={handleConfirmDelete} className="w-full py-4 bg-rose-600 text-white rounded-2xl text-[10px] font-black hover:bg-rose-700 transition-all shadow-xl shadow-rose-200 uppercase tracking-widest">Confirmer</button>
               <button onClick={() => setIsDeleteConfirmOpen(false)} className="w-full py-4 bg-slate-50 text-slate-500 rounded-2xl text-[10px] font-black hover:bg-slate-100 transition-all border border-slate-200 uppercase tracking-widest">Annuler</button>
             </div>
           </div>

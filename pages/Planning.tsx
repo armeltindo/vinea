@@ -302,94 +302,84 @@ const Planning: React.FC = () => {
     setIsAnalyzing(false);
   };
 
-  const handleRealizeOccurrence = (activity: DepartmentActivity) => {
+  const handleRealizeOccurrence = async (activity: DepartmentActivity) => {
     setIsSubmitting(true);
-    setTimeout(() => {
-      const todayIso = new Date().toISOString().split('T')[0];
-      let updatedActivities: DepartmentActivity[];
+    const todayIso = new Date().toISOString().split('T')[0];
+    let patch: Partial<DepartmentActivity>;
 
-      if (activity.recurrence === 'Ponctuelle') {
-        updatedActivities = activities.map(a => 
-          a.id === activity.id ? { ...a, status: ActivityStatus.REALISEE, lastRealizedAt: todayIso } : a
-        );
-      } else {
-        // Logique récurrente : on calcule la prochaine date et on remet en "Planifiée"
-        const nextDate = calculateNextDeadline(activity.deadline || todayIso, activity.recurrence!);
-        updatedActivities = activities.map(a => 
-          a.id === activity.id ? { ...a, deadline: nextDate, status: ActivityStatus.PLANIFIEE, lastRealizedAt: todayIso } : a
-        );
-      }
+    if (activity.recurrence === 'Ponctuelle') {
+      patch = { status: ActivityStatus.REALISEE, lastRealizedAt: todayIso };
+    } else {
+      // Logique récurrente : on calcule la prochaine date et on remet en "Planifiée"
+      const nextDate = calculateNextDeadline(activity.deadline || todayIso, activity.recurrence!);
+      patch = { deadline: nextDate, status: ActivityStatus.PLANIFIEE, lastRealizedAt: todayIso };
+    }
 
-      setActivities(updatedActivities);
-      const updatedActivity = updatedActivities.find(a => a.id === activity.id);
-      if (updatedActivity) {
-        setSelectedActivityForDetails(updatedActivity);
-        updateDepartmentActivity(activity.id, { status: updatedActivity.status, deadline: updatedActivity.deadline, lastRealizedAt: updatedActivity.lastRealizedAt } as any);
-      }
-      setIsSubmitting(false);
-    }, 600);
+    await updateDepartmentActivity(activity.id, patch as any);
+    const updatedActivity = { ...activity, ...patch };
+    setActivities(prev => prev.map(a => a.id === activity.id ? updatedActivity : a));
+    setSelectedActivityForDetails(updatedActivity);
+    setIsSubmitting(false);
   };
 
-  const saveDept = (e: React.FormEvent) => {
+  const saveDept = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
     const deptData = { ...deptFormData as DepartmentInfo };
     if (!editingDept) {
       deptData.id = generateId();
     }
-    setTimeout(() => {
-      if (editingDept) {
-        setDepartments(prev => prev.map(d => d.id === editingDept.id ? deptData : d));
-      } else {
-        setDepartments(prev => [deptData, ...prev]);
-      }
-      upsertDepartmentInfo(deptData);
-      setIsDeptFormOpen(false);
-      setEditingDept(null);
-      setIsSubmitting(false);
-    }, 800);
+    await upsertDepartmentInfo(deptData);
+    if (editingDept) {
+      setDepartments(prev => prev.map(d => d.id === editingDept.id ? deptData : d));
+    } else {
+      setDepartments(prev => [deptData, ...prev]);
+    }
+    setIsDeptFormOpen(false);
+    setEditingDept(null);
+    setIsSubmitting(false);
   };
 
-  const confirmDeleteDept = () => {
+  const confirmDeleteDept = async () => {
     if (deptToDeleteId) {
-      setDepartments(prev => prev.filter(d => d.id !== deptToDeleteId));
-      setActivities(prev => prev.filter(a => a.deptId !== deptToDeleteId));
-      deleteDepartmentInfo(deptToDeleteId);
-      setIsDeleteDeptConfirmOpen(false);
+      const id = deptToDeleteId;
       setDeptToDeleteId(null);
+      setIsDeleteDeptConfirmOpen(false);
+      await deleteDepartmentInfo(id);
+      setDepartments(prev => prev.filter(d => d.id !== id));
+      setActivities(prev => prev.filter(a => a.deptId !== id));
     }
   };
 
-  const confirmDeleteActivity = () => {
+  const confirmDeleteActivity = async () => {
     if (activityToDeleteId) {
-      setActivities(prev => prev.filter(a => a.id !== activityToDeleteId));
-      deleteDepartmentActivity(activityToDeleteId);
-      setIsDeleteActivityConfirmOpen(false);
+      const id = activityToDeleteId;
       setActivityToDeleteId(null);
-      if (selectedActivityForDetails?.id === activityToDeleteId) {
+      setIsDeleteActivityConfirmOpen(false);
+      await deleteDepartmentActivity(id);
+      setActivities(prev => prev.filter(a => a.id !== id));
+      if (selectedActivityForDetails?.id === id) {
         setIsActivityDetailsOpen(false);
         setSelectedActivityForDetails(null);
       }
     }
   };
 
-  const handleSaveActivity = (e: React.FormEvent) => {
+  const handleSaveActivity = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-    setTimeout(() => {
-      if (editingActivity) {
-        const updated = { ...editingActivity, ...activityFormData } as DepartmentActivity;
-        setActivities(prev => prev.map(a => a.id === editingActivity.id ? updated : a));
-        updateDepartmentActivity(editingActivity.id, activityFormData as Partial<DepartmentActivity>);
-      } else {
-        const newActivity: DepartmentActivity = { ...activityFormData as DepartmentActivity, id: generateId(), createdAt: new Date().toISOString() };
-        setActivities(prev => [newActivity, ...prev]);
-        createDepartmentActivity(newActivity);
-      }
-      setIsActivityFormOpen(false);
-      setEditingActivity(null);
-      setIsSubmitting(false);
-    }, 800);
+    if (editingActivity) {
+      const updated = { ...editingActivity, ...activityFormData } as DepartmentActivity;
+      await updateDepartmentActivity(editingActivity.id, activityFormData as Partial<DepartmentActivity>);
+      setActivities(prev => prev.map(a => a.id === editingActivity.id ? updated : a));
+    } else {
+      const newActivity: DepartmentActivity = { ...activityFormData as DepartmentActivity, id: generateId(), createdAt: new Date().toISOString() };
+      await createDepartmentActivity(newActivity);
+      setActivities(prev => [newActivity, ...prev]);
+    }
+    setIsActivityFormOpen(false);
+    setEditingActivity(null);
+    setIsSubmitting(false);
   };
 
   const handleEditDept = (dept: DepartmentInfo) => {
@@ -854,7 +844,7 @@ const Planning: React.FC = () => {
             </div>
             <form onSubmit={saveDept} className="p-8 space-y-6 bg-slate-50/30 overflow-y-auto custom-scrollbar">
                <div className="space-y-4">
-                  <div className="space-y-1.5"><label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Mission / Vision</label><textarea rows={3} value={deptFormData.description} onChange={e => setDeptFormData({...deptFormData, description: e.target.value})} className="w-full px-5 py-4 bg-white border border-slate-200 rounded-2xl outline-none text-sm font-medium resize-none shadow-sm" placeholder="Objectifs du département..." /></div>
+                  <div className="space-y-1.5"><label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Mission / Vision</label><textarea rows={3} value={deptFormData.description || ''} onChange={e => setDeptFormData({...deptFormData, description: e.target.value})} className="w-full px-5 py-4 bg-white border border-slate-200 rounded-2xl outline-none text-sm font-medium resize-none shadow-sm" placeholder="Objectifs du département..." /></div>
                   <div className="space-y-1.5 relative">
                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 flex items-center gap-2"><UserCheck size={12} className="text-indigo-600" /> Responsable Principal</label>
                     <div className="relative group">
@@ -939,7 +929,7 @@ const Planning: React.FC = () => {
                     )}
                   </div>
                   <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-1.5"><label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">{activityFormData.recurrence !== 'Ponctuelle' ? 'Date de mise en vigueur' : 'Échéance'}</label><input type="date" value={activityFormData.deadline} onChange={(e) => setActivityFormData({...activityFormData, deadline: e.target.value})} className="w-full px-5 py-4 bg-white border border-slate-200 rounded-2xl outline-none text-[11px] font-bold shadow-sm" /></div>
+                    <div className="space-y-1.5"><label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">{activityFormData.recurrence !== 'Ponctuelle' ? 'Date de mise en vigueur' : 'Échéance'}</label><input type="date" value={activityFormData.deadline || ''} onChange={(e) => setActivityFormData({...activityFormData, deadline: e.target.value})} className="w-full px-5 py-4 bg-white border border-slate-200 rounded-2xl outline-none text-[11px] font-bold shadow-sm" /></div>
                     <div className="space-y-1.5">
                       <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Récurrence</label>
                       <select 
@@ -955,14 +945,14 @@ const Planning: React.FC = () => {
                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Coût par cycle (FCFA)</label>
                     <input 
                       type="number" 
-                      value={activityFormData.cost} 
-                      onChange={(e) => setActivityFormData({...activityFormData, cost: parseInt(e.target.value) || 0})} 
+                      value={activityFormData.cost ?? 0}
+                      onChange={(e) => setActivityFormData({...activityFormData, cost: parseInt(e.target.value) || 0})}
                       className="w-full px-5 py-4 bg-white border border-slate-200 rounded-2xl outline-none text-sm font-black text-indigo-600 shadow-sm [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" 
                     />
                   </div>
                   <div className="space-y-1.5">
                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Observations / Commentaires</label>
-                    <textarea rows={3} value={activityFormData.observations} onChange={(e) => setActivityFormData({...activityFormData, observations: e.target.value})} className="w-full px-5 py-3.5 bg-white border border-slate-200 rounded-2xl outline-none text-sm font-medium resize-none" placeholder="Précisez les détails..." />
+                    <textarea rows={3} value={activityFormData.observations || ''} onChange={(e) => setActivityFormData({...activityFormData, observations: e.target.value})} className="w-full px-5 py-3.5 bg-white border border-slate-200 rounded-2xl outline-none text-sm font-medium resize-none" placeholder="Précisez les détails..." />
                   </div>
                </div>
                <div className="flex gap-3 pt-6 pb-2">

@@ -260,11 +260,12 @@ const Members: React.FC = () => {
 
   const confirmDelete = async () => {
     if (memberToDeleteId) {
-      setMembers(members.filter(m => m.id !== memberToDeleteId));
+      const idToDelete = memberToDeleteId;
+      setMemberToDeleteId(null);
       setIsDeleteConfirmOpen(false);
       setIsDetailsOpen(false);
-      setMemberToDeleteId(null);
-      await deleteMember(memberToDeleteId);
+      await deleteMember(idToDelete);
+      setMembers(members.filter(m => m.id !== idToDelete));
     }
   };
 
@@ -371,8 +372,8 @@ const Members: React.FC = () => {
         setIsImportModalOpen(false);
         setImportCount(newMembers.length);
         setIsImportSuccessOpen(true);
-        // Persist to Supabase in background
-        newMembers.forEach(m => createMember(m));
+        // Persist to Supabase
+        await Promise.all(newMembers.map(m => createMember(m)));
       } catch (err) {
         alert("Erreur lors de l'importation : Format de fichier invalide.");
       }
@@ -877,7 +878,7 @@ const Members: React.FC = () => {
                     <div className="space-y-1.5"><label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Rôle / Fonction</label><select value={formData.type} onChange={(e) => setFormData({...formData, type: e.target.value as MemberType})} className="w-full px-4 py-3 bg-indigo-50 border-none rounded-2xl outline-none text-[10px] font-black text-indigo-700 uppercase">{availableRoles.map(role => <option key={role} value={role}>{role}</option>)}</select></div>
                     <div className="space-y-1.5"><label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Statut Actuel</label><select value={formData.status} onChange={(e) => setFormData({...formData, status: e.target.value as MemberStatus})} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl outline-none text-[10px] font-black text-slate-700 uppercase">{availableStatuses.map(stat => <option key={stat} value={stat}>{stat}</option>)}</select></div>
                   </div>
-                  <div className="space-y-1.5"><label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Surnom / Petit nom</label><input type="text" value={formData.nickname} onChange={(e) => setFormData({...formData, nickname: e.target.value})} placeholder="Ex: JP" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:border-indigo-300 outline-none text-sm font-bold" /></div>
+                  <div className="space-y-1.5"><label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Surnom / Petit nom</label><input type="text" value={formData.nickname || ''} onChange={(e) => setFormData({...formData, nickname: e.target.value})} placeholder="Ex: JP" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:border-indigo-300 outline-none text-sm font-bold" /></div>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-1.5"><label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Sexe</label><select value={formData.gender} onChange={(e) => setFormData({...formData, gender: e.target.value as any})} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl outline-none text-sm font-bold"><option value="Masculin">Masculin</option><option value="Féminin">Féminin</option></select></div>
                     <div className="space-y-1.5"><label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">État Civil</label><select value={formData.maritalStatus} onChange={(e) => setFormData({...formData, maritalStatus: e.target.value})} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl outline-none text-sm font-bold"><option value="Célibataire">Célibataire</option><option value="Marié(e)">Marié(e)</option><option value="Veuf/Veuve">Veuf/Veuve</option><option value="Fiancé(e)">Fiancé(e)</option></select></div>
@@ -962,12 +963,12 @@ const Members: React.FC = () => {
                 <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-4">
                   <div className="flex items-center gap-2 mb-2"><Phone size={16} className="text-emerald-600" /><h4 className="text-xs font-black text-slate-400 uppercase tracking-widest">Coordonnées</h4></div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                     <div className="space-y-1.5"><label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Téléphone Principal</label><input type="tel" value={formData.phone} onChange={(e) => setFormData({...formData, phone: e.target.value})} placeholder="07 08 09 10 11" className="w-full px-4 py-3 bg-white border border-slate-200 rounded-2xl focus:bg-white focus:border-indigo-300 outline-none text-sm font-bold transition-all" /></div>
-                     <div className="space-y-1.5"><label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Téléphone Secondaire</label><input type="tel" value={formData.secondaryPhone} onChange={(e) => setFormData({...formData, secondaryPhone: e.target.value})} placeholder="07 08 09 10 11" className="w-full px-4 py-3 bg-white border border-slate-200 rounded-2xl focus:bg-white focus:border-indigo-300 outline-none text-sm font-bold transition-all" /></div>
+                     <div className="space-y-1.5"><label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Téléphone Principal</label><input type="tel" value={formData.phone || ''} onChange={(e) => setFormData({...formData, phone: e.target.value})} placeholder="07 08 09 10 11" className="w-full px-4 py-3 bg-white border border-slate-200 rounded-2xl focus:bg-white focus:border-indigo-300 outline-none text-sm font-bold transition-all" /></div>
+                     <div className="space-y-1.5"><label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Téléphone Secondaire</label><input type="tel" value={formData.secondaryPhone || ''} onChange={(e) => setFormData({...formData, secondaryPhone: e.target.value})} placeholder="07 08 09 10 11" className="w-full px-4 py-3 bg-white border border-slate-200 rounded-2xl focus:bg-white focus:border-indigo-300 outline-none text-sm font-bold transition-all" /></div>
                   </div>
-                  <div className="space-y-1.5"><label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Numéro WhatsApp (Optionnel)</label><input type="tel" value={formData.whatsappPhone} onChange={(e) => setFormData({...formData, whatsappPhone: e.target.value})} placeholder="07 08 09 10 11" className="w-full px-4 py-3 bg-white border border-slate-200 rounded-2xl focus:bg-white focus:border-indigo-300 outline-none text-sm font-bold transition-all" /></div>
-                  <div className="space-y-1.5"><label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Email</label><input type="email" value={formData.email} onChange={(e) => setFormData({...formData, email: e.target.value})} placeholder="email@exemple.com" className="w-full px-4 py-3 bg-white border border-slate-200 rounded-2xl focus:bg-white focus:border-indigo-300 outline-none text-sm font-bold transition-all" /></div>
-                  <div className="space-y-1.5"><label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Adresse physique</label><textarea rows={3} value={formData.address} onChange={(e) => setFormData({...formData, address: e.target.value})} placeholder="Ex: Cocody, Rue de la Paix" className="w-full px-5 py-4 bg-white border border-slate-200 rounded-[2rem] outline-none text-sm font-medium resize-none shadow-sm transition-all" /></div>
+                  <div className="space-y-1.5"><label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Numéro WhatsApp (Optionnel)</label><input type="tel" value={formData.whatsappPhone || ''} onChange={(e) => setFormData({...formData, whatsappPhone: e.target.value})} placeholder="07 08 09 10 11" className="w-full px-4 py-3 bg-white border border-slate-200 rounded-2xl focus:bg-white focus:border-indigo-300 outline-none text-sm font-bold transition-all" /></div>
+                  <div className="space-y-1.5"><label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Email</label><input type="email" value={formData.email || ''} onChange={(e) => setFormData({...formData, email: e.target.value})} placeholder="email@exemple.com" className="w-full px-4 py-3 bg-white border border-slate-200 rounded-2xl focus:bg-white focus:border-indigo-300 outline-none text-sm font-bold transition-all" /></div>
+                  <div className="space-y-1.5"><label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Adresse physique</label><textarea rows={3} value={formData.address || ''} onChange={(e) => setFormData({...formData, address: e.target.value})} placeholder="Ex: Cocody, Rue de la Paix" className="w-full px-5 py-4 bg-white border border-slate-200 rounded-[2rem] outline-none text-sm font-medium resize-none shadow-sm transition-all" /></div>
                 </div>
               </div>
               <div className="pt-8 flex gap-4">

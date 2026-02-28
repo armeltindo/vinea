@@ -57,7 +57,8 @@ import {
   Filter,
   CircleDashed,
   RefreshCw,
-  Repeat
+  Repeat,
+  Check
 } from 'lucide-react';
 import { analyzePageData } from '../lib/gemini';
 import { formatCurrency, DEPARTMENTS as CONST_DEPARTMENTS } from '../constants';

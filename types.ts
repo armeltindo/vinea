@@ -121,6 +121,7 @@ export interface DepartmentInfo {
   name: string;
   description: string;
   presidentId: string;
+  assistantId: string;
   memberIds: string[];
   status: 'Actif' | 'Inactif';
   color: string;

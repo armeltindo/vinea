@@ -169,16 +169,16 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate, adminName }) => {
           <p className="text-slate-500 mt-1 font-medium italic">Aperçu stratégique de l'activité réelle de Vinea.</p>
         </div>
         <div className="flex gap-2">
-          <button 
+          <button
             onClick={handleAnalyze}
             disabled={isAnalyzing || stats.totalMembers === 0}
-            className="flex items-center gap-2 px-4 py-2 bg-indigo-50 text-indigo-700 border border-indigo-100 rounded-xl text-sm font-black hover:bg-indigo-100 transition-all disabled:opacity-50 uppercase tracking-widest"
+            className="flex items-center gap-2 px-4 py-2 bg-indigo-50 text-indigo-700 border border-indigo-100 rounded-xl text-sm font-semibold hover:bg-indigo-100 transition-all disabled:opacity-50"
           >
-            <Sparkles size={16} /> {isAnalyzing ? 'Analyse...' : 'Analyse IA'}
+            <Sparkles size={15} /> {isAnalyzing ? 'Analyse...' : 'Analyse IA'}
           </button>
-          <button 
+          <button
             onClick={() => onNavigate('reports')}
-            className="px-4 py-2 bg-white border border-slate-200 rounded-xl text-xs font-black hover:bg-slate-50 transition-colors uppercase tracking-widest text-slate-600 shadow-sm"
+            className="px-4 py-2 bg-white border border-slate-200 rounded-xl text-sm font-medium hover:bg-slate-50 transition-colors text-slate-600 shadow-sm"
           >
             Rapports
           </button>
@@ -215,7 +215,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate, adminName }) => {
           >
             <div className="flex items-end justify-between">
               <span className="text-3xl font-black text-slate-900">{stats.lastAttendance}</span>
-              <span className="text-[10px] font-black text-blue-600 bg-blue-50 px-2 py-1 rounded uppercase tracking-widest">Réel</span>
+              <span className="text-xs font-medium text-blue-600 bg-blue-50 px-2.5 py-1 rounded-lg">Réel</span>
             </div>
           </Card>
         </div>
@@ -278,9 +278,9 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate, adminName }) => {
                     <span className="text-lg leading-none">{ev.day}</span>
                   </div>
                   <div className="flex-1 min-w-0">
-                    <h4 className="font-black text-slate-800 text-sm group-hover:text-indigo-600 transition-colors truncate uppercase tracking-tight">{ev.title}</h4>
-                    <p className="text-[10px] text-slate-500 font-bold flex items-center gap-1.5 mt-1 uppercase tracking-widest">
-                      <Clock size={12} className="text-indigo-400" />
+                    <h4 className="font-semibold text-slate-800 text-sm group-hover:text-indigo-600 transition-colors truncate">{ev.title}</h4>
+                    <p className="text-xs text-slate-500 font-medium flex items-center gap-1.5 mt-1">
+                      <Clock size={11} className="text-indigo-400" />
                       {ev.time}
                     </p>
                   </div>
@@ -293,9 +293,9 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate, adminName }) => {
                 </div>
               )}
             </div>
-            <button 
+            <button
               onClick={() => onNavigate('planning')}
-              className="w-full mt-6 py-3 text-[10px] font-black uppercase tracking-widest text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all border border-dashed border-indigo-200"
+              className="w-full mt-4 py-2.5 text-xs font-medium text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all border border-dashed border-indigo-200"
             >
               Accéder au planning complet
             </button>
@@ -312,7 +312,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate, adminName }) => {
               {stats.deptStats.length > 0 ? stats.deptStats.map((dept) => (
                 <div key={dept.name} className="space-y-2">
                   <div className="flex justify-between items-end">
-                    <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest truncate max-w-[180px]">{dept.name}</span>
+                    <span className="text-xs font-medium text-slate-500 truncate max-w-[180px]">{dept.name}</span>
                     <div className="flex items-center gap-2">
                       <span className="text-xs font-black text-slate-900">{dept.count}</span>
                       <span className="text-[9px] font-bold text-slate-400 uppercase">({dept.percent}%)</span>
@@ -333,9 +333,9 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate, adminName }) => {
               )}
               
               <div className="pt-4 border-t border-slate-50">
-                <button 
+                <button
                   onClick={() => onNavigate('planning')}
-                  className="w-full py-4 bg-slate-900 text-white rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] shadow-lg hover:bg-slate-800 transition-all active:scale-95"
+                  className="w-full py-3 bg-indigo-600 text-white rounded-xl text-sm font-semibold shadow-sm hover:bg-indigo-700 transition-all active:scale-[0.98]"
                 >
                   Gérer les Départements
                 </button>

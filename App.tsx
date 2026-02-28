@@ -28,10 +28,10 @@ import { getAdminUserByEmail, getMembers, getVisitors, getAttendanceSessions, ge
 import { setCurrencyCache } from './constants';
 import { setChurchNameCache } from './lib/gemini';
 import { 
-  Search, 
-  User, 
-  LogOut, 
-  Settings as SettingsIcon, 
+  Search,
+  User,
+  LogOut,
+  Settings as SettingsIcon,
   ChevronRight,
   Home,
   Calendar as CalendarIcon,
@@ -42,13 +42,15 @@ import {
   UserCheck,
   Zap,
   Info,
-  ArrowRight
+  ArrowRight,
+  Menu
 } from 'lucide-react';
 import { cn, formatFirstName } from './utils';
 import { Notification, NotificationSettings, Member, Visitor, AttendanceSession, VisitorStatus } from './types';
 
 const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
@@ -392,9 +394,9 @@ const App: React.FC = () => {
   if (authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50">
-        <div className="flex flex-col items-center gap-4 opacity-40">
-          <div className="w-12 h-12 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
-          <p className="text-xs font-black uppercase tracking-widest text-slate-500">Chargement...</p>
+        <div className="flex flex-col items-center gap-4 opacity-50">
+          <div className="w-10 h-10 border-[3px] border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+          <p className="text-sm font-medium text-slate-400">Chargement...</p>
         </div>
       </div>
     );
@@ -427,20 +429,31 @@ const App: React.FC = () => {
         churchName={churchName}
         churchLogo={churchLogo}
         primaryColor={primaryColor}
+        isOpen={isSidebarOpen}
+        onClose={() => setIsSidebarOpen(false)}
       />
       
-      <main className="flex-1 ml-64 min-h-screen transition-all duration-300 relative">
-        <header className="h-20 bg-white/80 backdrop-blur-md border-b border-slate-200 sticky top-0 z-40 px-8 flex items-center justify-between shadow-sm">
-          <div className="flex items-center gap-4">
+      <main className="flex-1 lg:ml-64 min-h-screen transition-all duration-300 relative">
+        <header className="h-16 bg-white/90 backdrop-blur-md border-b border-slate-200 sticky top-0 z-40 px-4 lg:px-8 flex items-center justify-between shadow-sm">
+          <div className="flex items-center gap-3">
+            {/* Mobile hamburger */}
+            <button
+              onClick={() => setIsSidebarOpen(true)}
+              className="lg:hidden p-2 rounded-xl text-slate-500 hover:bg-slate-100 hover:text-slate-700 transition-colors"
+              aria-label="Ouvrir le menu"
+            >
+              <Menu size={20} />
+            </button>
+
             <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-50 border border-slate-100 rounded-xl">
-              <Home size={14} className="text-slate-400" />
-              <ChevronRight size={12} className="text-slate-300" />
-              <span className="text-xs font-bold text-slate-900 capitalize tracking-tight">{activeTab === 'spiritual' ? 'Spirituel' : activeTab.replace('-', ' ')}</span>
+              <Home size={13} className="text-slate-400" />
+              <ChevronRight size={11} className="text-slate-300" />
+              <span className="text-xs font-semibold text-slate-700 capitalize">{activeTab === 'spiritual' ? 'Spirituel' : activeTab.replace('-', ' ')}</span>
             </div>
-            
-            <div className="hidden lg:flex items-center gap-2 ml-4 text-slate-400">
-              <CalendarIcon size={14} />
-              <span className="text-[11px] font-bold uppercase tracking-wider">{today}</span>
+
+            <div className="hidden lg:flex items-center gap-2 text-slate-400">
+              <CalendarIcon size={13} />
+              <span className="text-xs font-medium text-slate-500">{today}</span>
             </div>
           </div>
 
@@ -456,20 +469,22 @@ const App: React.FC = () => {
                >
                   <Bell size={20} className={cn(unreadCount > 0 && "animate-[bell-swing_2s_ease-in-out_infinite]")} />
                   {unreadCount > 0 && (
-                    <span className="absolute top-1.5 right-1.5 w-4 h-4 bg-rose-500 text-white text-[9px] font-black rounded-full flex items-center justify-center border-2 border-white shadow-sm">
+                    <span className="absolute top-1.5 right-1.5 w-4 h-4 bg-rose-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center border-2 border-white shadow-sm">
                       {unreadCount}
                     </span>
                   )}
                </button>
 
                {isNotificationsOpen && (
-                 <div className="absolute right-0 mt-3 w-80 md:w-96 bg-white border border-slate-200 rounded-[2rem] shadow-2xl overflow-hidden z-50 animate-in fade-in slide-in-from-top-4 duration-200 flex flex-col max-h-[80vh]">
-                    <div className="p-6 bg-slate-900 text-white shrink-0">
-                       <div className="flex justify-between items-center mb-1">
-                          <h3 className="text-sm font-black uppercase tracking-widest">Alertes Vinea</h3>
-                          <button onClick={markAllAsRead} className="text-[9px] font-black text-indigo-400 uppercase hover:text-indigo-300">Tout marquer lu</button>
+                 <div className="absolute right-0 mt-3 w-80 md:w-96 bg-white border border-slate-200 rounded-2xl shadow-2xl overflow-hidden z-50 animate-in fade-in slide-in-from-top-4 duration-200 flex flex-col max-h-[80vh]">
+                    <div className="px-5 py-4 border-b border-slate-100 shrink-0">
+                       <div className="flex justify-between items-center">
+                          <div>
+                            <h3 className="text-sm font-semibold text-slate-900">Notifications</h3>
+                            <p className="text-xs text-slate-400 mt-0.5">{unreadCount} non lue{unreadCount > 1 ? 's' : ''}</p>
+                          </div>
+                          <button onClick={markAllAsRead} className="text-xs font-medium text-indigo-600 hover:text-indigo-700 transition-colors">Tout lire</button>
                        </div>
-                       <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{unreadCount} non lues aujourd'hui</p>
                     </div>
                     <div className="flex-1 overflow-y-auto custom-scrollbar p-2 space-y-1 bg-slate-50/30">
                        {notifications.length > 0 ? notifications.map(n => (
@@ -493,26 +508,26 @@ const App: React.FC = () => {
                                </div>
                                <div className="flex-1 min-w-0">
                                   <div className="flex justify-between items-start gap-2">
-                                     <h4 className="text-xs font-black text-slate-900 uppercase tracking-tight truncate">{n.title}</h4>
-                                     {!n.isRead && <span className="w-1.5 h-1.5 bg-indigo-600 rounded-full mt-1 shrink-0"></span>}
+                                     <h4 className="text-xs font-semibold text-slate-900 truncate">{n.title}</h4>
+                                     {!n.isRead && <span className="w-2 h-2 bg-indigo-600 rounded-full mt-1 shrink-0"></span>}
                                   </div>
-                                  <p className="text-[11px] text-slate-500 font-medium leading-relaxed mt-1">{n.message}</p>
-                                  <div className="mt-3 flex items-center justify-between">
-                                     <span className="text-[8px] font-black text-slate-400 uppercase">{n.date}</span>
-                                     <span className="text-[8px] font-black text-indigo-600 uppercase opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">Voir <ArrowRight size={8}/></span>
+                                  <p className="text-xs text-slate-500 leading-relaxed mt-1">{n.message}</p>
+                                  <div className="mt-2 flex items-center justify-between">
+                                     <span className="text-[10px] text-slate-400">{n.date}</span>
+                                     <span className="text-[10px] font-medium text-indigo-600 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">Voir <ArrowRight size={10}/></span>
                                   </div>
                                </div>
                             </div>
                          </div>
                        )) : (
-                         <div className="py-20 text-center space-y-3 opacity-30">
-                            <Bell size={40} className="mx-auto" />
-                            <p className="text-[10px] font-black uppercase tracking-widest">Aucune alerte pour le moment</p>
+                         <div className="py-16 text-center space-y-3 opacity-30">
+                            <Bell size={36} className="mx-auto" />
+                            <p className="text-xs font-medium text-slate-500">Aucune alerte pour le moment</p>
                          </div>
                        )}
                     </div>
                     <div className="p-4 border-t border-slate-100 bg-white text-center">
-                       <button onClick={() => { setActiveTab('reports'); setIsNotificationsOpen(false); }} className="text-[10px] font-black text-slate-400 uppercase tracking-widest hover:text-indigo-600 transition-colors">Voir les rapports complets</button>
+                       <button onClick={() => { setActiveTab('reports'); setIsNotificationsOpen(false); }} className="text-xs font-medium text-slate-400 hover:text-indigo-600 transition-colors">Voir les rapports complets</button>
                     </div>
                  </div>
                )}
@@ -530,18 +545,18 @@ const App: React.FC = () => {
                   <img src={adminAvatar} alt="Avatar" className="w-full h-full object-cover" />
                 </div>
                 <div className="text-left hidden xl:block pr-2">
-                  <p className="text-sm font-black text-slate-900 leading-none">{adminName}</p>
+                  <p className="text-sm font-semibold text-slate-900 leading-none">{adminName}</p>
                   <div className="flex items-center gap-1.5 mt-1">
                     <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full"></span>
-                    <p className="text-[10px] text-slate-500 uppercase tracking-widest font-bold">En ligne</p>
+                    <p className="text-xs text-slate-400 font-medium">En ligne</p>
                   </div>
                 </div>
               </button>
 
               {isProfileOpen && (
-                <div className="absolute right-0 mt-3 w-64 bg-white border border-slate-200 rounded-3xl shadow-2xl py-3 z-50 animate-in fade-in slide-in-from-top-4 duration-200">
-                  <div className="px-5 py-3 border-b border-slate-50 mb-2">
-                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Gestion {currentUserRole}</p>
+                <div className="absolute right-0 mt-3 w-64 bg-white border border-slate-200 rounded-2xl shadow-2xl py-3 z-50 animate-in fade-in slide-in-from-top-4 duration-200">
+                  <div className="px-5 py-3 border-b border-slate-100 mb-1">
+                    <p className="text-xs font-medium text-slate-400">{currentUserRole}</p>
                   </div>
                   {currentUserPermissions.includes('settings') && (
                     <button onClick={navigateToSettingsAccount} className="w-full text-left px-5 py-3 text-sm font-bold text-slate-600 hover:bg-slate-50 flex items-center gap-3 transition-colors">

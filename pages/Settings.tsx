@@ -450,6 +450,12 @@ const Settings: React.FC = () => {
           window.dispatchEvent(new CustomEvent('vinea_profile_updated', {
             detail: { fullName: me.fullName, avatar: me.avatar }
           }));
+        } else if (currentEmail) {
+          // L'utilisateur auth n'a pas encore d'entrée dans admin_users :
+          // on initialise avec son email afin que la sauvegarde puisse créer l'entrée
+          currentAdminId.current = generateId();
+          setAdminInfo(prev => ({ ...prev, email: currentEmail }));
+          adminInfoLoaded.current = true;
         }
       } else {
         setAdminUsers([{
@@ -462,6 +468,11 @@ const Settings: React.FC = () => {
           lastActive: 'Aujourd\'hui',
           permissions: AVAILABLE_MODULES.map(m => m.id),
         }]);
+        if (currentEmail) {
+          currentAdminId.current = generateId();
+          setAdminInfo(prev => ({ ...prev, email: currentEmail }));
+          adminInfoLoaded.current = true;
+        }
       }
     };
     load();
@@ -493,22 +504,20 @@ const Settings: React.FC = () => {
       setAppConfig('ai_config', aiConfig),
     ]);
 
-    // Mettre à jour l'admin user courant uniquement si le profil a été chargé depuis Supabase
-    // Utilise currentAdminId (stable) pour l'upsert, même si l'email a été modifié dans le formulaire
+    // Sauvegarder le profil admin courant si les données ont été chargées (ou initialisées)
+    // matchingUser peut être absent si c'est un nouvel utilisateur → on utilise des valeurs par défaut
     if (adminInfoLoaded.current && currentAdminId.current) {
       const matchingUser = adminUsers.find(u => u.id === currentAdminId.current);
-      if (matchingUser) {
-        await upsertAdminUser({
-          id: matchingUser.id,
-          full_name: adminInfo.fullName,
-          email: adminInfo.email,
-          role: matchingUser.role,
-          status: matchingUser.status,
-          avatar: adminInfo.avatar,
-          last_active: matchingUser.lastActive,
-          permissions: matchingUser.permissions,
-        });
-      }
+      await upsertAdminUser({
+        id: currentAdminId.current,
+        full_name: adminInfo.fullName,
+        email: adminInfo.email,
+        role: matchingUser?.role ?? 'Super Admin',
+        status: matchingUser?.status ?? 'Actif',
+        avatar: adminInfo.avatar,
+        last_active: matchingUser?.lastActive ?? new Date().toISOString(),
+        permissions: matchingUser?.permissions ?? AVAILABLE_MODULES.map(m => m.id),
+      });
     }
 
     // ── Propager les renommages aux données existantes ──────────────────────

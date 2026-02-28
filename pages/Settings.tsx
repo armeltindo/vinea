@@ -536,6 +536,10 @@ const Settings: React.FC = () => {
 
     // Notifier App.tsx de recharger les settings (currency, nom, logo, couleur + notif settings)
     window.dispatchEvent(new Event('vinea_church_info_updated'));
+    // Notifier App.tsx de mettre à jour le nom et l'avatar affichés dans le header/sidebar
+    window.dispatchEvent(new CustomEvent('vinea_profile_updated', {
+      detail: { fullName: adminInfo.fullName, avatar: adminInfo.avatar }
+    }));
 
     setIsSaving(false);
     setSaveSuccess(true);

@@ -71,24 +71,23 @@ const Departments: React.FC = () => {
       setActivities(acts);
       setMembers(mems);
 
-      // Auto-créer les fiches manquantes pour les départements configurés dans Settings
-      const existingNames = new Set(depts.map(d => d.name));
-      const missing = configNames.filter(name => !existingNames.has(name));
-      const newDepts: DepartmentInfo[] = [];
-      for (const name of missing) {
-        const newDept: DepartmentInfo = {
-          id: generateId(),
+      // Afficher TOUS les noms configurés dans Settings, enrichis avec departments_info si disponible.
+      // Aucune écriture automatique en base (évite les échecs silencieux RLS).
+      const merged: DepartmentInfo[] = configNames.map(name => {
+        const existing = depts.find(d => d.name === name);
+        return existing ?? {
+          id: `__placeholder__${name}`,
           name,
           description: '',
           presidentId: '',
           memberIds: [],
-          status: 'Actif',
+          status: 'Actif' as const,
           color: '#4f46e5',
         };
-        await upsertDepartmentInfo(newDept);
-        newDepts.push(newDept);
-      }
-      setDepartments([...depts, ...newDepts]);
+      });
+      // Conserver aussi les fiches departments_info dont le nom n'est plus dans app_config
+      const orphaned = depts.filter(d => !configNames.includes(d.name));
+      setDepartments([...merged, ...orphaned]);
     };
     load();
   }, []);
@@ -113,11 +112,19 @@ const Departments: React.FC = () => {
 
   const saveDept = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (editingDept) {
+    const isPlaceholder = editingDept?.id.startsWith('__placeholder__');
+    if (editingDept && !isPlaceholder) {
+      // Mise à jour d'une fiche existante
       const updated = { ...editingDept, ...deptFormData } as DepartmentInfo;
       await upsertDepartmentInfo(updated);
       setDepartments(departments.map(d => d.id === editingDept.id ? updated : d));
+    } else if (editingDept && isPlaceholder) {
+      // Première sauvegarde d'un département placeholder → créer la vraie fiche
+      const newDept: DepartmentInfo = { ...deptFormData as DepartmentInfo, id: generateId() };
+      await upsertDepartmentInfo(newDept);
+      setDepartments(departments.map(d => d.id === editingDept.id ? newDept : d));
     } else {
+      // Nouveau département ajouté manuellement
       const newDept: DepartmentInfo = { ...deptFormData as DepartmentInfo, id: generateId() };
       await upsertDepartmentInfo(newDept);
       setDepartments([...departments, newDept]);
@@ -270,9 +277,15 @@ const Departments: React.FC = () => {
                   </div>
                 </div>
 
-                <button onClick={() => { setActivityFormData({ deptId: dept.id, status: ActivityStatus.PLANIFIEE }); setIsActivityFormOpen(true); }} className="w-full py-4 bg-slate-50 border border-slate-200 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-600 hover:bg-indigo-50 hover:text-indigo-600 hover:border-indigo-200 transition-all flex items-center justify-center gap-2">
-                  <Plus size={14} /> Planifier une activité
-                </button>
+                {dept.id.startsWith('__placeholder__') ? (
+                  <button onClick={() => { setEditingDept(dept); setDeptFormData(dept); setIsDeptFormOpen(true); }} className="w-full py-4 bg-amber-50 border border-amber-200 rounded-2xl text-[10px] font-black uppercase tracking-widest text-amber-600 hover:bg-amber-100 transition-all flex items-center justify-center gap-2">
+                    <Edit size={14} /> Configurer ce département
+                  </button>
+                ) : (
+                  <button onClick={() => { setActivityFormData({ deptId: dept.id, status: ActivityStatus.PLANIFIEE }); setIsActivityFormOpen(true); }} className="w-full py-4 bg-slate-50 border border-slate-200 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-600 hover:bg-indigo-50 hover:text-indigo-600 hover:border-indigo-200 transition-all flex items-center justify-center gap-2">
+                    <Plus size={14} /> Planifier une activité
+                  </button>
+                )}
               </div>
             </Card>
           ))}

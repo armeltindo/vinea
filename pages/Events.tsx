@@ -79,16 +79,19 @@ const Events: React.FC = () => {
   const [events, setEvents] = useState<Event[]>([]);
   const [goals, setGoals] = useState<Goal[]>([]);
   const [assignments, setAssignments] = useState<TeamAssignment[]>([]);
+  const [availableDepartments, setAvailableDepartments] = useState<string[]>(DEPARTMENTS);
 
   useEffect(() => {
     Promise.all([
       getChurchEvents(),
       getAppConfig('event_goals'),
       getAppConfig('event_assignments'),
-    ]).then(([eventsData, savedGoals, savedAssignments]) => {
+      getAppConfig('departments'),
+    ]).then(([eventsData, savedGoals, savedAssignments, depts]) => {
       setEvents(eventsData.map(e => ({ ...e, registered: e.registeredCount, target: e.targetCount })) as any);
       if (savedGoals) setGoals(savedGoals);
       if (savedAssignments) setAssignments(savedAssignments);
+      if (depts && Array.isArray(depts)) setAvailableDepartments(depts);
     });
   }, []);
 
@@ -110,7 +113,7 @@ const Events: React.FC = () => {
 
   // Form States
   const [newExpense, setNewExpense] = useState({ label: '', amount: '' });
-  const [newAssignment, setNewAssignment] = useState({ dept: DEPARTMENTS[0] as any, eventId: '', status: 'En attente' as const });
+  const [newAssignment, setNewAssignment] = useState({ dept: '' as any, eventId: '', status: 'En attente' as const });
   const [newGoalData, setNewGoalData] = useState({ label: '', value: 0, color: 'bg-indigo-600' });
 
   useEffect(() => { setAppConfig('event_goals', goals); }, [goals]);
@@ -290,7 +293,7 @@ const Events: React.FC = () => {
     };
 
     setAssignments([assignment, ...assignments]);
-    setNewAssignment({ dept: DEPARTMENTS[0], eventId: '', status: 'En attente' });
+    setNewAssignment({ dept: availableDepartments[0] ?? '', eventId: '', status: 'En attente' });
   };
 
   const handleDeleteAssignment = (id: string) => {
@@ -660,7 +663,7 @@ const Events: React.FC = () => {
                       onChange={(e) => setNewAssignment({...newAssignment, dept: e.target.value as any})}
                       className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl outline-none text-[10px] font-black uppercase tracking-widest focus:ring-4 focus:ring-indigo-500/5 transition-all"
                     >
-                      {DEPARTMENTS.map(d => <option key={d} value={d}>{d}</option>)}
+                      {availableDepartments.map(d => <option key={d} value={d}>{d}</option>)}
                     </select>
                   </div>
                   <div className="space-y-1.5">

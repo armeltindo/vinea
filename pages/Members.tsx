@@ -60,7 +60,7 @@ import { formatPhone, DEPARTMENTS as CONST_DEPARTMENTS } from '../constants';
 import { Member, MemberStatus, MemberType, Department } from '../types';
 import { analyzePageData } from '../lib/gemini';
 import { cn, generateId, getInitials, getDisplayNickname, formatFirstName } from '../utils';
-import { getMembers, createMember, updateMember, deleteMember, getDiscipleshipPairs } from '../lib/db';
+import { getMembers, createMember, updateMember, deleteMember, getDiscipleshipPairs, getAppConfig } from '../lib/db';
 
 // Helper pour convertir YYYY-MM-DD en DD-MM-YYYY
 const formatToUIDate = (isoDate: string | undefined) => {
@@ -154,12 +154,13 @@ const Members: React.FC = () => {
 
   const [availableStatuses] = useState<string[]>(Object.values(MemberStatus));
   const [availableRoles] = useState<string[]>(Object.values(MemberType));
-  const [availableDepartments] = useState<string[]>(CONST_DEPARTMENTS);
+  const [availableDepartments, setAvailableDepartments] = useState<string[]>(CONST_DEPARTMENTS);
 
   useEffect(() => {
     const load = async () => {
       setIsLoadingData(true);
-      const [m, p] = await Promise.all([getMembers(), getDiscipleshipPairs()]);
+      const [m, p, depts] = await Promise.all([getMembers(), getDiscipleshipPairs(), getAppConfig('departments')]);
+      if (depts && Array.isArray(depts)) setAvailableDepartments(depts);
       setMembers(m);
       setDiscipleshipPairs(p);
       setIsLoadingData(false);

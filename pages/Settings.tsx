@@ -367,6 +367,8 @@ const Settings: React.FC = () => {
 
   // Guard : adminInfo n'est sauvegardé/propagé que s'il a été chargé depuis Supabase
   const adminInfoLoaded = useRef(false);
+  // ID stable de l'admin courant — utilisé pour l'upsert même si l'email a été modifié dans le formulaire
+  const currentAdminId = useRef<string | null>(null);
 
   const addRename = (type: keyof typeof pendingRenames.current, oldVal: string, newVal: string) => {
     pendingRenames.current[type].push([oldVal, newVal]);
@@ -443,6 +445,11 @@ const Settings: React.FC = () => {
         if (me) {
           setAdminInfo({ fullName: me.fullName, role: me.role, email: me.email, avatar: me.avatar });
           adminInfoLoaded.current = true;
+          currentAdminId.current = me.id;
+          // Synchroniser le header et la sidebar dès le chargement de Settings
+          window.dispatchEvent(new CustomEvent('vinea_profile_updated', {
+            detail: { fullName: me.fullName, avatar: me.avatar }
+          }));
         }
       } else {
         setAdminUsers([{
@@ -487,9 +494,9 @@ const Settings: React.FC = () => {
     ]);
 
     // Mettre à jour l'admin user courant uniquement si le profil a été chargé depuis Supabase
-    // (évite d'écraser les données réelles avec les valeurs par défaut du state initial)
-    if (adminInfoLoaded.current) {
-      const matchingUser = adminUsers.find(u => u.email.toLowerCase() === adminInfo.email.toLowerCase());
+    // Utilise currentAdminId (stable) pour l'upsert, même si l'email a été modifié dans le formulaire
+    if (adminInfoLoaded.current && currentAdminId.current) {
+      const matchingUser = adminUsers.find(u => u.id === currentAdminId.current);
       if (matchingUser) {
         await upsertAdminUser({
           id: matchingUser.id,

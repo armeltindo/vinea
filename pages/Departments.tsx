@@ -30,12 +30,13 @@ import {
 } from 'lucide-react';
 import { analyzePageData } from '../lib/gemini';
 import { formatCurrency } from '../constants';
-import { DepartmentInfo, DepartmentActivity, ActivityStatus, Member, Department } from '../types';
+import { DepartmentInfo, DepartmentActivity, ActivityStatus, Member } from '../types';
 import { cn, generateId } from '../utils';
-import { getDepartmentsInfo, upsertDepartmentInfo, getDepartmentActivities, createDepartmentActivity, updateDepartmentActivity, deleteDepartmentActivity, getMembers } from '../lib/db';
+import { getDepartmentsInfo, upsertDepartmentInfo, getDepartmentActivities, createDepartmentActivity, updateDepartmentActivity, deleteDepartmentActivity, getMembers, getAppConfig } from '../lib/db';
 
 const Departments: React.FC = () => {
   const [departments, setDepartments] = useState<DepartmentInfo[]>([]);
+  const [availableDepartments, setAvailableDepartments] = useState<string[]>([]);
   const [activities, setActivities] = useState<DepartmentActivity[]>([]);
   const [members, setMembers] = useState<Member[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -59,14 +60,35 @@ const Departments: React.FC = () => {
 
   useEffect(() => {
     const load = async () => {
-      const [depts, acts, mems] = await Promise.all([
+      const [depts, acts, mems, configDepts] = await Promise.all([
         getDepartmentsInfo(),
         getDepartmentActivities(),
         getMembers(),
+        getAppConfig('departments'),
       ]);
-      setDepartments(depts);
+      const configNames: string[] = configDepts ?? [];
+      setAvailableDepartments(configNames);
       setActivities(acts);
       setMembers(mems);
+
+      // Auto-créer les fiches manquantes pour les départements configurés dans Settings
+      const existingNames = new Set(depts.map(d => d.name));
+      const missing = configNames.filter(name => !existingNames.has(name));
+      const newDepts: DepartmentInfo[] = [];
+      for (const name of missing) {
+        const newDept: DepartmentInfo = {
+          id: generateId(),
+          name,
+          description: '',
+          presidentId: '',
+          memberIds: [],
+          status: 'Actif',
+          color: '#4f46e5',
+        };
+        await upsertDepartmentInfo(newDept);
+        newDepts.push(newDept);
+      }
+      setDepartments([...depts, ...newDepts]);
     };
     load();
   }, []);
@@ -145,7 +167,7 @@ const Departments: React.FC = () => {
           <button onClick={handleAnalyze} disabled={isAnalyzing} className="flex items-center gap-2 px-4 py-2 bg-indigo-50 text-indigo-700 border border-indigo-100 rounded-xl text-xs font-black uppercase tracking-widest disabled:opacity-50">
             <Sparkles size={16} /> {isAnalyzing ? 'Analyse...' : 'Analyse Stratégique'}
           </button>
-          <button onClick={() => { setDeptFormData({ name: '', description: '', presidentId: members[0].id, memberIds: [], status: 'Actif', color: '#4f46e5' }); setEditingDept(null); setIsDeptFormOpen(true); }} className="flex items-center gap-2 px-5 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-black hover:bg-indigo-700 transition-all uppercase tracking-widest shadow-lg">
+          <button onClick={() => { setDeptFormData({ name: '', description: '', presidentId: members[0]?.id ?? '', memberIds: [], status: 'Actif', color: '#4f46e5' }); setEditingDept(null); setIsDeptFormOpen(true); }} className="flex items-center gap-2 px-5 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-black hover:bg-indigo-700 transition-all uppercase tracking-widest shadow-lg">
             <Plus size={18} /> Nouveau Département
           </button>
         </div>
@@ -340,7 +362,7 @@ const Departments: React.FC = () => {
                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Nom du département</label>
                     <select required value={deptFormData.name} onChange={(e) => setDeptFormData({...deptFormData, name: e.target.value})} className="w-full px-5 py-3.5 bg-white border border-slate-200 rounded-2xl outline-none text-xs font-black uppercase tracking-widest transition-all">
                        <option value="">Sélectionner un département...</option>
-                       {Object.values(Department).map(d => <option key={d} value={d}>{d}</option>)}
+                       {availableDepartments.map(d => <option key={d} value={d}>{d}</option>)}
                     </select>
                   </div>
                   <div className="space-y-1.5">

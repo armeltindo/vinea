@@ -15,7 +15,6 @@ const LogoutModal: React.FC<LogoutModalProps> = ({ isOpen, onClose, onConfirm })
 
   const handleConfirm = () => {
     setIsProcessing(true);
-    // Simule un délai de déconnexion pour l'aspect pro
     setTimeout(() => {
       onConfirm();
     }, 1200);
@@ -23,50 +22,53 @@ const LogoutModal: React.FC<LogoutModalProps> = ({ isOpen, onClose, onConfirm })
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6">
-      <div 
-        className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300"
+      <div
+        className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm animate-in fade-in duration-200"
         onClick={isProcessing ? undefined : onClose}
       />
-      <div className="relative w-full max-w-sm bg-white rounded-[2rem] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 border border-slate-100">
+      <div className="relative w-full max-w-sm bg-white rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 border border-slate-100">
         <div className="p-8 text-center">
-          <div className="w-20 h-20 bg-rose-50 text-rose-600 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-inner border border-rose-100/50">
-            <LogOut size={38} className={isProcessing ? "animate-pulse" : ""} />
+          <div className="w-16 h-16 bg-rose-50 text-rose-500 rounded-2xl flex items-center justify-center mx-auto mb-5 border border-rose-100">
+            <LogOut size={30} className={isProcessing ? 'animate-pulse' : ''} />
           </div>
-          <h3 className="text-2xl font-black text-slate-900 tracking-tight mb-2">Quitter Vinea ?</h3>
-          <p className="text-slate-500 text-sm leading-relaxed px-2">
-            Votre session actuelle sera fermée. N'oubliez pas d'enregistrer vos modifications en cours.
+
+          <h3 className="text-xl font-bold text-slate-900 mb-2">Quitter Vinea ?</h3>
+          <p className="text-slate-500 text-sm leading-relaxed">
+            Votre session sera fermée. Pensez à enregistrer vos modifications en cours.
           </p>
-          
-          <div className="flex flex-col gap-3 mt-8">
-            <button 
+
+          <div className="flex flex-col gap-3 mt-7">
+            <button
               onClick={handleConfirm}
               disabled={isProcessing}
-              className="w-full py-4 bg-rose-600 text-white rounded-2xl text-sm font-black hover:bg-rose-700 transition-all shadow-lg shadow-rose-200 flex items-center justify-center gap-2 disabled:opacity-80"
+              className="w-full py-3 bg-rose-600 text-white rounded-xl text-sm font-semibold hover:bg-rose-700 active:scale-[0.98] transition-all shadow-md shadow-rose-200/60 flex items-center justify-center gap-2 disabled:opacity-75"
             >
               {isProcessing ? (
                 <>
-                  <Loader2 size={18} className="animate-spin" />
-                  Déconnexion en cours...
+                  <Loader2 size={16} className="animate-spin" />
+                  Déconnexion…
                 </>
               ) : (
-                "Confirmer la déconnexion"
+                'Confirmer la déconnexion'
               )}
             </button>
-            <button 
+            <button
               onClick={onClose}
               disabled={isProcessing}
-              className="w-full py-4 bg-slate-50 text-slate-600 rounded-2xl text-sm font-bold hover:bg-slate-100 transition-all border border-slate-200 disabled:opacity-50"
+              className="w-full py-3 bg-slate-50 text-slate-600 rounded-xl text-sm font-medium hover:bg-slate-100 active:scale-[0.98] transition-all border border-slate-200 disabled:opacity-50"
             >
               Rester connecté
             </button>
           </div>
         </div>
+
         {!isProcessing && (
-          <button 
+          <button
             onClick={onClose}
-            className="absolute top-6 right-6 p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded-full transition-all"
+            aria-label="Fermer"
+            className="absolute top-5 right-5 p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-xl transition-all"
           >
-            <X size={20} />
+            <X size={18} />
           </button>
         )}
       </div>

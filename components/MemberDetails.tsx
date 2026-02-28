@@ -40,6 +40,7 @@ import { Member, MemberStatus, Department, DepartmentActivity, ActivityStatus } 
 import { formatPhone } from '../constants';
 import { cn, getInitials, getDisplayNickname, formatFirstName } from '../utils';
 import { getMembers, getDepartmentActivities, getDiscipleshipEnrollments } from '../lib/db';
+import Avatar from './Avatar';
 
 const getDepartmentIcon = (dept: Department, size = 14) => {
   switch (dept) {
@@ -210,22 +211,15 @@ const MemberDetails: React.FC<MemberDetailsProps> = ({ member, isOpen, onClose, 
           </button>
           
           <div className="relative z-10 flex items-center gap-6">
-            <div 
-              onClick={() => member.photoUrl && onPreviewPhoto?.(member.photoUrl)}
-              className="w-24 h-24 sm:w-28 sm:h-28 rounded-3xl bg-white p-1 shadow-2xl border border-white/20 cursor-pointer group/photo shrink-0"
-            >
-              <div className="w-full h-full rounded-2xl bg-slate-100 flex items-center justify-center text-slate-300 overflow-hidden font-black text-3xl relative">
-                {member.photoUrl ? (
-                  <>
-                    <img src={member.photoUrl} alt="" className="w-full h-full object-cover transition-transform group-hover/photo:scale-110" />
-                    <div className="absolute inset-0 bg-black/20 opacity-0 group-hover/photo:opacity-100 flex items-center justify-center transition-opacity">
-                      <Maximize2 size={24} className="text-white" />
-                    </div>
-                  </>
-                ) : (
-                  getInitials(member.firstName, member.lastName)
-                )}
-              </div>
+            <div className="rounded-2xl bg-white p-1 shadow-2xl border border-white/20 shrink-0">
+              <Avatar
+                firstName={member.firstName}
+                lastName={member.lastName}
+                photoUrl={member.photoUrl}
+                size="2xl"
+                shape="card"
+                onPhotoClick={member.photoUrl ? () => onPreviewPhoto?.(member.photoUrl!) : undefined}
+              />
             </div>
             <div className="min-w-0">
               <h3 className="text-xl sm:text-2xl font-black text-white leading-tight uppercase tracking-tight truncate">
@@ -271,15 +265,19 @@ const MemberDetails: React.FC<MemberDetailsProps> = ({ member, isOpen, onClose, 
               </div>
               {(member.maritalStatus.includes('Marié') || member.spouseName) && (
                 <div className="col-span-2 bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-xl bg-rose-50 flex items-center justify-center text-rose-500 overflow-hidden border border-rose-100 shadow-inner">
-                    {spouseMember && spouseMember.photoUrl ? (
-                      <img src={spouseMember.photoUrl} alt="" className="w-full h-full object-cover" />
-                    ) : spouseMember ? (
-                      <span className="text-sm font-black uppercase text-rose-600">{getInitials(spouseMember.firstName, spouseMember.lastName)}</span>
-                    ) : (
+                  {spouseMember ? (
+                    <Avatar
+                      firstName={spouseMember.firstName}
+                      lastName={spouseMember.lastName}
+                      photoUrl={spouseMember.photoUrl}
+                      size="lg"
+                      shape="card"
+                    />
+                  ) : (
+                    <div className="w-12 h-12 rounded-xl bg-rose-50 flex items-center justify-center text-rose-400 border border-rose-100">
                       <Heart size={20} />
-                    )}
-                  </div>
+                    </div>
+                  )}
                   <div className="flex-1">
                     <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Conjoint(e)</p>
                     <p className="text-xs font-bold text-slate-800 uppercase">{member.spouseName || 'Non spécifié'}</p>

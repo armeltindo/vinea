@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { cn } from '../utils';
 import Logo from './Logo';
+import Avatar from './Avatar';
 
 interface SidebarProps {
   activeTab: string;
@@ -144,13 +145,13 @@ const Sidebar: React.FC<SidebarProps> = ({
           <div className="bg-slate-800/40 border border-slate-700/40 rounded-2xl p-3">
             <div className="flex items-center gap-3">
               <div className="relative shrink-0">
-                <div className="w-9 h-9 rounded-xl bg-slate-700 flex items-center justify-center border border-slate-600 overflow-hidden shadow-sm">
-                  <img
-                    src={adminAvatar}
-                    alt="Avatar"
-                    className="w-full h-full object-cover"
-                  />
-                </div>
+                <Avatar
+                  name={adminName}
+                  photoUrl={adminAvatar || undefined}
+                  size="sm"
+                  shape="rounded"
+                  className="border border-slate-600 shadow-sm"
+                />
                 <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-emerald-500 border-2 border-slate-900 rounded-full"></span>
               </div>
               <div className="flex-1 min-w-0">

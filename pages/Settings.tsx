@@ -566,11 +566,25 @@ const Settings: React.FC = () => {
 
   const handleExportFullData = async () => {
     const APP_CONFIG_KEYS = ['notification_settings', 'member_statuses', 'member_roles', 'visitor_statuses', 'service_types', 'departments', 'ai_config', 'finance_categories', 'event_goals', 'event_assignments', 'attendance_assignments', 'attendance_followup_history'];
-    const backup: Record<string, any> = {};
+    const TABLES = ['members', 'visitors', 'financial_records', 'donation_campaigns', 'donation_promises', 'church_services', 'attendance_sessions', 'departments_info', 'department_activities', 'church_events', 'meetings', 'meditations', 'church_settings', 'spiritual_goals', 'spiritual_points', 'discipleship_pairs', 'discipleship_enrollments'];
+
+    const backup: Record<string, any> = {
+      _version: '1.7.0',
+      _exportedAt: new Date().toISOString(),
+    };
+
+    // Configuration de l'application
     await Promise.all(APP_CONFIG_KEYS.map(async key => {
       const val = await getAppConfig(key);
       if (val !== null) backup[key] = val;
     }));
+
+    // Données des tables Supabase (préfixe _table_)
+    await Promise.all(TABLES.map(async table => {
+      const { data } = await supabase.from(table).select('*');
+      if (data && data.length > 0) backup[`_table_${table}`] = data;
+    }));
+
     const dataStr = JSON.stringify(backup, null, 2);
     const blob = new Blob([dataStr], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
@@ -592,8 +606,11 @@ const Settings: React.FC = () => {
         const keys = Object.keys(backup);
         if (keys.length === 0) throw new Error("Fichier de sauvegarde invalide ou vide.");
         setImportSummary({
-          churchName: backup['church_info']?.name || 'Inconnu',
-          membersCount: 0, financesCount: 0, servicesCount: 0, visitorsCount: 0
+          churchName: backup['_table_church_settings']?.[0]?.name || 'Inconnu',
+          membersCount: backup['_table_members']?.length ?? 0,
+          financesCount: backup['_table_financial_records']?.length ?? 0,
+          servicesCount: backup['_table_church_services']?.length ?? 0,
+          visitorsCount: backup['_table_visitors']?.length ?? 0,
         });
         setPendingImport(backup);
         setIsImportModalOpen(true);
@@ -608,9 +625,29 @@ const Settings: React.FC = () => {
   const applyImport = async () => {
     if (!pendingImport) return;
     try {
+      const tableEntries: [string, any[]][] = [];
+      const configEntries: [string, any][] = [];
+
+      for (const [key, value] of Object.entries(pendingImport)) {
+        if (key.startsWith('_table_')) {
+          tableEntries.push([key.slice('_table_'.length), value as any[]]);
+        } else if (!key.startsWith('_')) {
+          configEntries.push([key, value]);
+        }
+      }
+
+      // Restaurer la configuration
+      await Promise.all(configEntries.map(([key, value]) => setAppConfig(key, value)));
+
+      // Restaurer les données des tables Supabase
       await Promise.all(
-        Object.entries(pendingImport).map(([key, value]) => setAppConfig(key, value))
+        tableEntries.map(async ([table, rows]) => {
+          if (Array.isArray(rows) && rows.length > 0) {
+            await supabase.from(table).upsert(rows, { onConflict: 'id' });
+          }
+        })
       );
+
       setIsImportModalOpen(false);
       setIsImportSuccessModalOpen(true);
     } catch (err) {

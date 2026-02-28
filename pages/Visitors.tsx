@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import Card from '../components/Card';
 import AIAnalysis from '../components/AIAnalysis';
+import Avatar from '../components/Avatar';
 import VisitorDetails from '../components/VisitorDetails';
 import { 
   UserPlus, 
@@ -515,9 +516,13 @@ const Visitors: React.FC = () => {
                 <tr key={visitor.id} className={cn("transition-all cursor-pointer group active:scale-[0.995]", idx % 2 === 0 ? "bg-white" : "bg-slate-50/20", "hover:bg-indigo-50/50")} onClick={() => handleOpenDetails(visitor)}>
                   <td className="px-8 py-5">
                     <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 rounded-2xl bg-slate-100 flex items-center justify-center text-slate-400 font-black text-lg overflow-hidden border border-slate-200 group-hover:scale-105 transition-transform shrink-0 shadow-sm relative">
-                         {getInitials(visitor.firstName, visitor.lastName)}
-                      </div>
+                      <Avatar
+                        firstName={visitor.firstName}
+                        lastName={visitor.lastName}
+                        size="lg"
+                        shape="card"
+                        className="group-hover:scale-105 transition-transform shadow-sm border border-white/60"
+                      />
                       <div className="min-w-0">
                         <p className="text-sm font-black text-slate-900 group-hover:text-indigo-600 transition-colors truncate tracking-tight">
                           {formatFirstName(visitor.firstName)} <span className="uppercase">{visitor.lastName}</span>

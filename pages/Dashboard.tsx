@@ -274,7 +274,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate, adminName }) => {
                   className="flex items-start gap-4 p-4 hover:bg-slate-50 border border-transparent hover:border-slate-100 rounded-2xl transition-all cursor-pointer group"
                 >
                   <div className="w-12 h-12 rounded-2xl bg-indigo-50 flex flex-col items-center justify-center text-indigo-600 font-black shrink-0 shadow-sm border border-indigo-100 group-hover:scale-105 transition-transform">
-                    <span className="text-[10px] font-black leading-none mb-0.5">{ev.month}</span>
+                    <span className="text-[10px] font-semibold leading-none mb-0.5">{ev.month}</span>
                     <span className="text-lg leading-none">{ev.day}</span>
                   </div>
                   <div className="flex-1 min-w-0">
@@ -289,7 +289,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate, adminName }) => {
               )) : (
                 <div className="py-12 text-center flex flex-col items-center opacity-30">
                   <CalendarDays size={48} />
-                  <p className="text-[10px] font-black uppercase mt-3 tracking-widest">Aucune activité prévue</p>
+                  <p className="text-xs font-medium text-slate-400 mt-3">Aucune activité prévue</p>
                 </div>
               )}
             </div>
@@ -315,7 +315,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate, adminName }) => {
                     <span className="text-xs font-medium text-slate-500 truncate max-w-[180px]">{dept.name}</span>
                     <div className="flex items-center gap-2">
                       <span className="text-xs font-black text-slate-900">{dept.count}</span>
-                      <span className="text-[9px] font-bold text-slate-400 uppercase">({dept.percent}%)</span>
+                      <span className="text-xs text-slate-400">({dept.percent}%)</span>
                     </div>
                   </div>
                   <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
@@ -328,7 +328,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate, adminName }) => {
               )) : (
                 <div className="py-20 text-center opacity-20 flex flex-col items-center">
                   <Briefcase size={48} />
-                  <p className="text-[10px] font-black uppercase mt-3 tracking-widest">Aucun département assigné</p>
+                  <p className="text-xs font-medium text-slate-400 mt-3">Aucun département assigné</p>
                 </div>
               )}
               

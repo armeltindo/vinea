@@ -1,11 +1,11 @@
 
 import React from 'react';
-import { 
-  Users, 
-  Wallet, 
-  Church, 
-  UserPlus, 
-  X, 
+import {
+  Users,
+  Wallet,
+  Church,
+  UserPlus,
+  X,
   ChevronRight,
   Plus
 } from 'lucide-react';
@@ -21,71 +21,78 @@ const QuickActionModal: React.FC<QuickActionModalProps> = ({ isOpen, onClose, on
   if (!isOpen) return null;
 
   const ACTIONS = [
-    { 
-      id: 'members', 
-      label: 'Nouveau Membre', 
+    {
+      id: 'members',
+      label: 'Nouveau Membre',
       desc: 'Ajouter une personne à la base',
-      icon: <Users size={24} />, 
-      color: 'bg-indigo-500', 
+      icon: <Users size={22} />,
+      color: 'bg-indigo-500',
       lightColor: 'bg-indigo-50',
-      textColor: 'text-indigo-600'
+      textColor: 'text-indigo-600',
+      hoverBorder: 'hover:border-indigo-200',
     },
-    { 
-      id: 'finances', 
-      label: 'Nouvelle Transaction', 
+    {
+      id: 'finances',
+      label: 'Nouvelle Transaction',
       desc: 'Enregistrer une dîme ou dépense',
-      icon: <Wallet size={24} />, 
-      color: 'bg-emerald-500', 
+      icon: <Wallet size={22} />,
+      color: 'bg-emerald-500',
       lightColor: 'bg-emerald-50',
-      textColor: 'text-emerald-600'
+      textColor: 'text-emerald-600',
+      hoverBorder: 'hover:border-emerald-200',
     },
-    { 
-      id: 'services', 
-      label: 'Programmer Culte', 
+    {
+      id: 'services',
+      label: 'Programmer un Culte',
       desc: 'Planifier un nouveau service',
-      icon: <Church size={24} />, 
-      color: 'bg-amber-500', 
+      icon: <Church size={22} />,
+      color: 'bg-amber-500',
       lightColor: 'bg-amber-50',
-      textColor: 'text-amber-600'
+      textColor: 'text-amber-600',
+      hoverBorder: 'hover:border-amber-200',
     },
-    { 
-      id: 'visitors', 
-      label: 'Nouveau Visiteur', 
-      desc: 'Fiche de suivi pour nouvel arrivant',
-      icon: <UserPlus size={24} />, 
-      color: 'bg-rose-500', 
+    {
+      id: 'visitors',
+      label: 'Nouveau Visiteur',
+      desc: 'Fiche de suivi pour un nouvel arrivant',
+      icon: <UserPlus size={22} />,
+      color: 'bg-rose-500',
       lightColor: 'bg-rose-50',
-      textColor: 'text-rose-600'
+      textColor: 'text-rose-600',
+      hoverBorder: 'hover:border-rose-200',
     },
   ];
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-      <div 
-        className="absolute inset-0 bg-slate-900/40 backdrop-blur-md animate-in fade-in duration-300"
+      <div
+        className="absolute inset-0 bg-slate-900/40 backdrop-blur-md animate-in fade-in duration-200"
         onClick={onClose}
       />
-      
-      <div className="relative w-full max-w-2xl bg-white/90 backdrop-blur-xl rounded-[2.5rem] shadow-2xl border border-white/20 overflow-hidden animate-in zoom-in-95 duration-200">
-        <div className="px-10 py-8 border-b border-slate-100 flex items-center justify-between bg-white/50">
-          <div>
-            <h3 className="text-2xl font-black text-slate-900 tracking-tight flex items-center gap-3">
-              <div className="w-10 h-10 bg-indigo-600 text-white rounded-xl flex items-center justify-center shadow-lg shadow-indigo-200">
-                <Plus size={24} />
-              </div>
-              Actions Rapides
-            </h3>
-            <p className="text-sm text-slate-500 font-medium mt-1">Sélectionnez une action pour commencer immédiatement.</p>
+
+      <div className="relative w-full max-w-xl bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden animate-in zoom-in-95 duration-200">
+        {/* Header */}
+        <div className="px-6 py-5 border-b border-slate-100 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 bg-indigo-600 text-white rounded-xl flex items-center justify-center shadow-md shadow-indigo-200">
+              <Plus size={20} />
+            </div>
+            <div>
+              <h3 className="text-base font-semibold text-slate-900">Actions Rapides</h3>
+              <p className="text-xs text-slate-400 mt-0.5">Sélectionnez une action pour commencer</p>
+            </div>
           </div>
-          <button 
+          <button
             onClick={onClose}
-            className="p-3 hover:bg-slate-100 rounded-2xl text-slate-400 hover:text-slate-900 transition-all"
+            aria-label="Fermer"
+            className="p-2 hover:bg-slate-100 rounded-xl text-slate-400 hover:text-slate-700 transition-all"
           >
-            <X size={24} />
+            <X size={20} />
           </button>
         </div>
 
-        <div className="p-10 grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Actions grid */}
+        <div className="p-5 grid grid-cols-1 sm:grid-cols-2 gap-3">
           {ACTIONS.map((action) => (
             <button
               key={action.id}
@@ -93,41 +100,47 @@ const QuickActionModal: React.FC<QuickActionModalProps> = ({ isOpen, onClose, on
                 onAction(action.id);
                 onClose();
               }}
-              className="group flex items-start gap-5 p-6 bg-white border border-slate-100 rounded-3xl hover:border-indigo-200 hover:shadow-xl hover:shadow-indigo-500/5 transition-all text-left relative overflow-hidden"
+              className={cn(
+                "group flex items-start gap-4 p-5 bg-white border border-slate-100 rounded-xl text-left relative overflow-hidden",
+                "hover:shadow-md hover:shadow-slate-100 active:scale-[0.98] transition-all",
+                action.hoverBorder
+              )}
             >
+              {/* Glow bg */}
               <div className={cn(
-                "absolute top-0 right-0 w-24 h-24 blur-3xl opacity-0 group-hover:opacity-20 transition-opacity",
+                "absolute inset-0 opacity-0 group-hover:opacity-[0.04] transition-opacity rounded-xl",
                 action.color
-              )}></div>
-              
+              )} />
+
               <div className={cn(
-                "w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 shadow-sm border transition-transform group-hover:scale-110 duration-300",
+                "w-12 h-12 rounded-xl flex items-center justify-center shrink-0 border border-white/50 group-hover:scale-105 transition-transform duration-200",
                 action.lightColor,
-                action.textColor,
-                "border-white/50"
+                action.textColor
               )}>
                 {action.icon}
               </div>
-              
-              <div className="flex-1">
-                <h4 className="text-lg font-black text-slate-900 leading-tight group-hover:text-indigo-600 transition-colors">
+
+              <div className="flex-1 min-w-0">
+                <h4 className="text-sm font-semibold text-slate-900 group-hover:text-indigo-700 transition-colors leading-snug">
                   {action.label}
                 </h4>
-                <p className="text-xs text-slate-500 font-medium mt-1 leading-relaxed">
+                <p className="text-xs text-slate-500 mt-1 leading-relaxed">
                   {action.desc}
                 </p>
-                <div className="mt-4 flex items-center gap-1 text-[10px] font-black text-indigo-500 uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity">
-                  Lancer <ChevronRight size={12} />
+                <div className="mt-3 flex items-center gap-1 text-xs text-indigo-500 font-medium opacity-0 group-hover:opacity-100 transition-opacity">
+                  Ouvrir <ChevronRight size={12} />
                 </div>
               </div>
             </button>
           ))}
         </div>
 
-        <div className="px-10 py-6 bg-slate-50 border-t border-slate-100 flex justify-center">
-          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
-            Vinea v1.0.4 • Centre de Commande
-          </p>
+        {/* Footer */}
+        <div className="px-6 py-3.5 bg-slate-50 border-t border-slate-100 flex items-center justify-between">
+          <span className="text-xs text-slate-400">Vinea v1.6.0</span>
+          <button onClick={onClose} className="text-xs text-slate-400 hover:text-slate-600 font-medium transition-colors">
+            Fermer
+          </button>
         </div>
       </div>
     </div>

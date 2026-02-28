@@ -3,6 +3,7 @@ import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react'
 import Sidebar from './components/Sidebar';
 import LogoutModal from './components/LogoutModal';
 import QuickActionModal from './components/QuickActionModal';
+import Avatar from './components/Avatar';
 
 // Dashboard chargé en priorité (page par défaut après connexion)
 import Dashboard from './pages/Dashboard';
@@ -63,7 +64,7 @@ const App: React.FC = () => {
   const [currentUserPermissions, setCurrentUserPermissions] = useState<string[]>(['dashboard', 'spiritual']);
 
   const [adminName, setAdminName] = useState('Admin Vinea');
-  const [adminAvatar, setAdminAvatar] = useState('https://api.dicebear.com/7.x/avataaars/svg?seed=Jean');
+  const [adminAvatar, setAdminAvatar] = useState('');
 
   const [churchName, setChurchName] = useState('Vinea');
   const [churchLogo, setChurchLogo] = useState<string | null>(null);
@@ -245,7 +246,7 @@ const App: React.FC = () => {
       setCurrentUserPermissions(perms);
       if (adminUser) {
         setAdminName(adminUser.full_name ?? 'Admin Vinea');
-        setAdminAvatar(adminUser.avatar ?? `https://api.dicebear.com/7.x/avataaars/svg?seed=${email}`);
+        setAdminAvatar(adminUser.avatar ?? '');
       }
     } else {
       perms = adminUser.permissions?.length > 2 ? adminUser.permissions : ALL_PERMISSIONS;
@@ -442,7 +443,7 @@ const App: React.FC = () => {
         onClose={() => setIsSidebarOpen(false)}
       />
       
-      <main className="flex-1 lg:ml-64 min-h-screen transition-all duration-300 relative">
+      <main className="flex-1 lg:ml-64 min-h-screen bg-slate-50 transition-all duration-300 relative">
         <header className="h-16 bg-white/90 backdrop-blur-md border-b border-slate-200 sticky top-0 z-40 px-4 lg:px-8 flex items-center justify-between shadow-sm">
           <div className="flex items-center gap-3">
             {/* Mobile hamburger */}
@@ -550,9 +551,13 @@ const App: React.FC = () => {
                   isProfileOpen ? "bg-slate-100" : "hover:bg-slate-50"
                 )}
               >
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-indigo-700 flex items-center justify-center text-white font-bold border-2 border-white shadow-md overflow-hidden group-hover:scale-105 transition-transform">
-                  <img src={adminAvatar} alt="Avatar" className="w-full h-full object-cover" />
-                </div>
+                <Avatar
+                  name={adminName}
+                  photoUrl={adminAvatar || undefined}
+                  size="md"
+                  shape="rounded"
+                  className="border-2 border-white shadow-md group-hover:scale-105 transition-transform"
+                />
                 <div className="text-left hidden xl:block pr-2">
                   <p className="text-sm font-semibold text-slate-900 leading-none">{adminName}</p>
                   <div className="flex items-center gap-1.5 mt-1">
@@ -565,22 +570,23 @@ const App: React.FC = () => {
               {isProfileOpen && (
                 <div className="absolute right-0 mt-3 w-64 bg-white border border-slate-200 rounded-2xl shadow-2xl py-3 z-50 animate-in fade-in slide-in-from-top-4 duration-200">
                   <div className="px-5 py-3 border-b border-slate-100 mb-1">
-                    <p className="text-xs font-medium text-slate-400">{currentUserRole}</p>
+                    <p className="text-sm font-semibold text-slate-800 truncate">{adminName}</p>
+                    <p className="text-xs font-medium text-slate-400 mt-0.5">{currentUserRole}</p>
                   </div>
                   {currentUserPermissions.includes('settings') && (
-                    <button onClick={navigateToSettingsAccount} className="w-full text-left px-5 py-3 text-sm font-bold text-slate-600 hover:bg-slate-50 flex items-center gap-3 transition-colors">
+                    <button onClick={navigateToSettingsAccount} className="w-full text-left px-5 py-3 text-sm font-medium text-slate-700 hover:bg-slate-50 flex items-center gap-3 transition-colors">
                       <div className="w-8 h-8 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo-600"><User size={16} /></div>
                       Mon Profil
                     </button>
                   )}
                   {currentUserPermissions.includes('settings') && (
-                    <button onClick={() => { setActiveTab('settings'); setIsProfileOpen(false); }} className="w-full text-left px-5 py-3 text-sm font-bold text-slate-600 hover:bg-slate-50 flex items-center gap-3 transition-colors">
+                    <button onClick={() => { setActiveTab('settings'); setIsProfileOpen(false); }} className="w-full text-left px-5 py-3 text-sm font-medium text-slate-700 hover:bg-slate-50 flex items-center gap-3 transition-colors">
                       <div className="w-8 h-8 rounded-lg bg-slate-50 flex items-center justify-center text-slate-600"><SettingsIcon size={16} /></div>
                       Paramètres
                     </button>
                   )}
                   <div className="mx-4 my-2 border-t border-slate-50"></div>
-                  <button onClick={() => { setShowLogoutConfirm(true); setIsProfileOpen(false); }} className="w-full text-left px-5 py-3 text-sm font-bold text-rose-600 hover:bg-rose-50 flex items-center gap-3 transition-colors group">
+                  <button onClick={() => { setShowLogoutConfirm(true); setIsProfileOpen(false); }} className="w-full text-left px-5 py-3 text-sm font-medium text-rose-600 hover:bg-rose-50 flex items-center gap-3 transition-colors group">
                     <div className="w-8 h-8 rounded-lg bg-rose-50 flex items-center justify-center text-rose-600 group-hover:bg-rose-100 transition-colors"><LogOut size={16} /></div>
                     Déconnexion
                   </button>
@@ -590,7 +596,7 @@ const App: React.FC = () => {
           </div>
         </header>
 
-        <div className="p-8 max-7xl mx-auto">
+        <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto">
           <React.Suspense fallback={pageFallback}>
             {renderContent()}
           </React.Suspense>

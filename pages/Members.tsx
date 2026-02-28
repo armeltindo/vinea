@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import Card from '../components/Card';
 import AIAnalysis from '../components/AIAnalysis';
+import Avatar from '../components/Avatar';
 import MemberDetails from '../components/MemberDetails';
 import { 
   Search, 
@@ -798,17 +799,15 @@ const Members: React.FC = () => {
                   >
                     <td className="px-8 py-5">
                       <div className="flex items-center gap-4">
-                        <div 
-                          onClick={(e) => member.photoUrl && handlePhotoPreview(e, member.photoUrl)}
-                          className="w-12 h-12 rounded-2xl bg-slate-100 flex items-center justify-center text-slate-300 font-black text-lg overflow-hidden border border-slate-200 group-hover:scale-105 transition-transform shrink-0 relative group/photo shadow-sm"
-                        >
-                          {member.photoUrl ? (
-                            <>
-                              <img src={member.photoUrl} alt="" className="w-full h-full object-cover" />
-                              <div className="absolute inset-0 bg-black/20 opacity-0 group-hover/photo:opacity-100 flex items-center justify-center transition-opacity"><Maximize2 size={16} className="text-white" /></div>
-                            </>
-                          ) : getInitials(member.firstName, member.lastName)}
-                        </div>
+                        <Avatar
+                          firstName={member.firstName}
+                          lastName={member.lastName}
+                          photoUrl={member.photoUrl}
+                          size="lg"
+                          shape="card"
+                          className="group-hover:scale-105 transition-transform shadow-sm border border-white/60"
+                          onPhotoClick={member.photoUrl ? () => setPreviewImageUrl(member.photoUrl!) : undefined}
+                        />
                         <div className="min-w-0">
                           <p className="text-sm font-black text-slate-900 group-hover:text-indigo-600 transition-colors truncate tracking-tight">
                             {formatFirstName(member.firstName)} <span className="uppercase">{member.lastName}</span>

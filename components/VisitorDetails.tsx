@@ -19,6 +19,7 @@ import { formatPhone } from '../constants';
 import { cn, generateId, getInitials } from '../utils';
 import { suggestVisitorFollowUp, generateWelcomeMessage } from '../lib/gemini';
 import { getMembers } from '../lib/db';
+import Avatar from './Avatar';
 
 interface VisitorDetailsProps {
   visitor: Visitor | null;
@@ -148,9 +149,13 @@ const VisitorDetails: React.FC<VisitorDetailsProps> = ({
           </button>
           
           <div className="flex items-center gap-6 mt-4">
-            <div className="w-20 h-20 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center text-white text-3xl font-black uppercase">
-              {getInitials(visitor.firstName, visitor.lastName)}
-            </div>
+            <Avatar
+              firstName={visitor.firstName}
+              lastName={visitor.lastName}
+              size="xl"
+              shape="card"
+              className="border-2 border-white/30 shadow-xl"
+            />
             <div>
               <h3 className="text-2xl font-black text-white leading-tight">{visitor.firstName} {visitor.lastName}</h3>
               <span className={cn(
@@ -195,13 +200,13 @@ const VisitorDetails: React.FC<VisitorDetailsProps> = ({
                 
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-2xl bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600 font-black uppercase overflow-hidden">
-                      {parrain.photoUrl ? (
-                        <img src={parrain.photoUrl} alt="" className="w-full h-full object-cover" />
-                      ) : (
-                        getInitials(parrain.firstName, parrain.lastName)
-                      )}
-                    </div>
+                    <Avatar
+                      firstName={parrain.firstName}
+                      lastName={parrain.lastName}
+                      photoUrl={parrain.photoUrl}
+                      size="lg"
+                      shape="card"
+                    />
                     <div>
                       <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Parrain désigné</p>
                       <p className="text-sm font-black text-slate-800 uppercase tracking-tight">{parrain.firstName} {parrain.lastName}</p>

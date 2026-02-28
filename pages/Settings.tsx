@@ -1333,58 +1333,134 @@ const Settings: React.FC = () => {
       {isUserFormOpen && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity" onClick={() => setIsUserFormOpen(false)} />
-          <div className="relative w-full max-w-2xl bg-white rounded-[3rem] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
-            <div className="bg-indigo-600 p-8 text-white shrink-0 relative">
-               <button onClick={() => setIsUserFormOpen(false)} className="absolute top-6 right-6 p-2 hover:bg-white/10 rounded-full transition-colors"><X size={20} /></button>
-               <h3 className="text-xl font-black uppercase tracking-tight">{editingUser ? 'Modifier Collaborateur' : 'Nouveau Collaborateur'}</h3>
-               <p className="text-[10px] font-bold text-indigo-100 uppercase tracking-widest mt-1">Gestion des droits d'accès</p>
+          <div className="relative w-full max-w-xl bg-white rounded-[2.5rem] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
+
+            {/* Header avec aperçu dynamique */}
+            <div className="bg-gradient-to-br from-indigo-600 to-indigo-800 p-7 text-white shrink-0 relative">
+              <button onClick={() => setIsUserFormOpen(false)} className="absolute top-5 right-5 p-2 hover:bg-white/10 rounded-full transition-colors"><X size={18} /></button>
+              <div className="flex items-center gap-4">
+                <div className="w-14 h-14 rounded-2xl bg-white/20 border border-white/30 flex items-center justify-center text-xl font-black shrink-0">
+                  {userFormData.fullName?.[0]?.toUpperCase() || <UserCog size={24} />}
+                </div>
+                <div className="min-w-0">
+                  <h3 className="text-base font-black uppercase tracking-tight leading-tight">
+                    {editingUser ? 'Modifier le collaborateur' : 'Nouveau collaborateur'}
+                  </h3>
+                  <p className="text-indigo-200 text-xs mt-0.5 font-medium truncate">
+                    {userFormData.fullName || 'Nom du collaborateur'}{userFormData.role ? ` · ${userFormData.role}` : ''}
+                  </p>
+                </div>
+              </div>
             </div>
-            <form onSubmit={handleSaveUser} className="flex-1 overflow-y-auto p-8 space-y-8 custom-scrollbar bg-slate-50/30">
-               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-1.5"><label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Nom complet</label><input type="text" required value={userFormData.fullName} onChange={(e) => setUserFormData({...userFormData, fullName: e.target.value})} className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl outline-none text-sm font-bold shadow-sm" /></div>
-                  <div className="space-y-1.5"><label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Email professionnel</label><input type="email" required value={userFormData.email} onChange={(e) => setUserFormData({...userFormData, email: e.target.value})} className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl outline-none text-sm font-bold shadow-sm" /></div>
-               </div>
-               <div className="space-y-4">
-                  <div className="flex items-center justify-between border-b border-slate-200 pb-2">
-                    <h4 className="text-[10px] font-black text-slate-900 uppercase tracking-[0.2em] flex items-center gap-2">
-                      <Shield size={14} className="text-indigo-600" /> Matrice des Permissions
-                    </h4>
-                    <div className="flex gap-2">
-                      <button type="button" onClick={() => setUserFormData({...userFormData, permissions: AVAILABLE_MODULES.map(m => m.id)})} className="text-[9px] font-black text-indigo-600 uppercase hover:underline">Tout activer</button>
-                      <button type="button" onClick={() => setUserFormData({...userFormData, permissions: ['dashboard', 'spiritual']})} className="text-[9px] font-black text-rose-500 uppercase hover:underline">Vider</button>
+
+            <form onSubmit={handleSaveUser} className="flex-1 overflow-y-auto custom-scrollbar divide-y divide-slate-100">
+
+              {/* Section identité */}
+              <div className="p-6 space-y-4">
+                <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] flex items-center gap-1.5">
+                  <UserCircle size={11} /> Identité
+                </p>
+                <div className="space-y-3">
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Nom complet *</label>
+                    <input
+                      type="text" required
+                      value={userFormData.fullName ?? ''}
+                      onChange={(e) => setUserFormData({...userFormData, fullName: e.target.value})}
+                      placeholder="Ex : Jean-Baptiste Dupont"
+                      className="w-full px-4 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl outline-none text-sm font-bold focus:border-indigo-400 focus:ring-2 focus:ring-indigo-50 transition-all placeholder:font-normal placeholder:text-slate-300"
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Email *</label>
+                      <input
+                        type="email" required
+                        value={userFormData.email ?? ''}
+                        onChange={(e) => setUserFormData({...userFormData, email: e.target.value})}
+                        placeholder="email@exemple.com"
+                        className="w-full px-4 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl outline-none text-sm font-bold focus:border-indigo-400 focus:ring-2 focus:ring-indigo-50 transition-all placeholder:font-normal placeholder:text-slate-300"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Fonction</label>
+                      <input
+                        type="text"
+                        value={userFormData.role ?? ''}
+                        onChange={(e) => setUserFormData({...userFormData, role: e.target.value})}
+                        placeholder="Ex : Secrétaire"
+                        className="w-full px-4 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl outline-none text-sm font-bold focus:border-indigo-400 focus:ring-2 focus:ring-indigo-50 transition-all placeholder:font-normal placeholder:text-slate-300"
+                      />
                     </div>
                   </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    {AVAILABLE_MODULES.map((module) => {
-                      const isSelected = userFormData.permissions?.includes(module.id);
-                      return (
-                        <button
-                          key={module.id}
-                          type="button"
-                          onClick={() => togglePermission(module.id)}
-                          className={cn(
-                            "flex items-center justify-between p-4 rounded-2xl border transition-all text-left group",
-                            isSelected ? "bg-indigo-600 border-indigo-600 text-white shadow-lg shadow-indigo-100" : "bg-white border-slate-100 text-slate-500 hover:border-indigo-200"
-                          )}
-                        >
-                          <div className="flex items-center gap-3">
-                             <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center transition-colors", isSelected ? "bg-white/20" : "bg-slate-50 text-slate-400 group-hover:text-indigo-600")}>
-                                <module.icon size={16} />
-                             </div>
-                             <span className="text-[10px] font-black uppercase tracking-tight">{module.label}</span>
-                          </div>
-                          {isSelected && <Check size={14} strokeWidth={4} />}
-                        </button>
-                      );
-                    })}
+                </div>
+
+                {/* Toggle statut */}
+                <div className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-100 mt-2">
+                  <div>
+                    <p className="text-sm font-black text-slate-700">Accès actif</p>
+                    <p className="text-[10px] text-slate-400 font-medium mt-0.5">Ce collaborateur peut se connecter</p>
                   </div>
-               </div>
-               <div className="flex gap-3 pt-4">
-                  <button type="button" onClick={() => setIsUserFormOpen(false)} className="flex-1 py-4 bg-white border border-slate-200 text-slate-500 rounded-2xl text-[10px] font-black uppercase">Annuler</button>
-                  <button type="submit" className="flex-1 py-4 bg-indigo-600 text-white rounded-2xl text-[10px] font-black uppercase shadow-xl flex items-center justify-center gap-2">
-                     <Save size={16} /> Enregistrer
+                  <button
+                    type="button"
+                    onClick={() => setUserFormData({...userFormData, status: userFormData.status === 'Actif' ? 'Inactif' : 'Actif'})}
+                    className={cn("w-12 h-6 rounded-full transition-all relative shrink-0", userFormData.status === 'Actif' ? "bg-emerald-500" : "bg-slate-200")}
+                  >
+                    <span className={cn("absolute top-1 w-4 h-4 bg-white rounded-full shadow-sm transition-all", userFormData.status === 'Actif' ? "left-7" : "left-1")} />
                   </button>
-               </div>
+                </div>
+              </div>
+
+              {/* Section permissions */}
+              <div className="p-6 space-y-4">
+                <div className="flex items-center justify-between">
+                  <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] flex items-center gap-1.5">
+                    <Shield size={11} className="text-indigo-500" /> Modules accessibles
+                    <span className="ml-1 px-1.5 py-0.5 bg-indigo-100 text-indigo-600 rounded text-[9px] font-black">
+                      {userFormData.permissions?.length ?? 0}/{AVAILABLE_MODULES.length}
+                    </span>
+                  </p>
+                  <div className="flex items-center gap-3">
+                    <button type="button" onClick={() => setUserFormData({...userFormData, permissions: AVAILABLE_MODULES.map(m => m.id)})} className="text-[9px] font-black text-indigo-600 uppercase tracking-widest hover:underline">Tout</button>
+                    <span className="text-slate-200 text-xs">|</span>
+                    <button type="button" onClick={() => setUserFormData({...userFormData, permissions: ['dashboard']})} className="text-[9px] font-black text-rose-400 uppercase tracking-widest hover:underline">Réinitialiser</button>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                  {AVAILABLE_MODULES.map((module) => {
+                    const isSelected = userFormData.permissions?.includes(module.id);
+                    return (
+                      <button
+                        key={module.id}
+                        type="button"
+                        onClick={() => togglePermission(module.id)}
+                        className={cn(
+                          "flex items-center gap-2 p-3 rounded-xl border transition-all text-left",
+                          isSelected
+                            ? "bg-indigo-600 border-indigo-600 text-white shadow-md shadow-indigo-100"
+                            : "bg-white border-slate-100 text-slate-400 hover:border-indigo-200 hover:text-indigo-500"
+                        )}
+                      >
+                        <div className={cn("w-6 h-6 rounded-lg flex items-center justify-center shrink-0", isSelected ? "bg-white/20" : "bg-slate-50")}>
+                          <module.icon size={13} />
+                        </div>
+                        <span className="text-[9px] font-black uppercase tracking-tight leading-tight flex-1">{module.label}</span>
+                        {isSelected && <Check size={11} strokeWidth={3} className="shrink-0" />}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Footer actions */}
+              <div className="p-6 flex gap-3 shrink-0">
+                <button type="button" onClick={() => setIsUserFormOpen(false)} className="flex-1 py-3.5 bg-slate-50 border border-slate-200 text-slate-500 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-100 transition-all">
+                  Annuler
+                </button>
+                <button type="submit" className="flex-[2] py-3.5 bg-indigo-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-indigo-100 flex items-center justify-center gap-2 hover:bg-indigo-700 transition-all">
+                  <Save size={14} /> {editingUser ? 'Mettre à jour' : 'Créer le compte'}
+                </button>
+              </div>
             </form>
           </div>
         </div>

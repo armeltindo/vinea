@@ -511,23 +511,23 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
             </div>
           </div>
           <div className="mt-6 text-center">
-            <h1 className="text-xl font-black text-slate-900 uppercase tracking-[0.4em] drop-shadow-sm">Vinea</h1>
+            <h1 className="text-xl font-bold text-slate-900 tracking-widest drop-shadow-sm">Vinea</h1>
             <div className="h-0.5 w-8 bg-indigo-600 mx-auto mt-1 rounded-full opacity-40"></div>
           </div>
         </div>
 
         {/* Main Authentication Card */}
-        <div className="relative bg-white border border-slate-200/60 rounded-[3rem] shadow-[0_32px_64px_-16px_rgba(0,0,0,0.06)] p-8 md:p-10 flex flex-col justify-center overflow-hidden backdrop-blur-sm">
+        <div className="relative bg-white border border-slate-200/60 rounded-2xl shadow-[0_32px_64px_-16px_rgba(0,0,0,0.06)] p-7 md:p-9 flex flex-col justify-center overflow-hidden backdrop-blur-sm">
           
           {view === 'login' ? (
             <div className="relative z-10 animate-in fade-in slide-in-from-bottom-2 duration-700">
               <div className="mb-8">
-                <h2 className="text-2xl font-black text-slate-900 tracking-tight leading-tight">{welcomeGreeting}</h2>
+                <h2 className="text-xl font-bold text-slate-900 tracking-tight leading-tight">{welcomeGreeting}</h2>
               </div>
 
               <form onSubmit={handleSubmit} className="space-y-5">
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-3">Adresse Email</label>
+                  <label className="text-xs font-medium text-slate-500 ml-1">Adresse e-mail</label>
                   <div className="relative group">
                     <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-indigo-500 transition-colors" size={18} />
                     <input 
@@ -537,7 +537,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       placeholder="admin@vinea.org"
-                      className="w-full pl-12 pr-4 py-4 bg-slate-50/50 border border-slate-200 rounded-2xl focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/5 outline-none text-sm font-bold shadow-sm transition-all"
+                      className="w-full pl-12 pr-4 py-3.5 bg-slate-50/50 border border-slate-200 rounded-xl focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/5 outline-none text-sm shadow-sm transition-all"
                       required
                     />
                   </div>
@@ -545,11 +545,11 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
 
                 <div className="space-y-1.5">
                   <div className="flex justify-between items-center px-3">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Mot de passe</label>
-                    <button 
-                      type="button" 
+                    <label className="text-xs font-medium text-slate-500 ml-1">Mot de passe</label>
+                    <button
+                      type="button"
                       onClick={() => setView('forgot-password')}
-                      className="text-[9px] font-black text-indigo-600 uppercase hover:text-indigo-700 tracking-widest transition-colors"
+                      className="text-xs font-medium text-indigo-600 hover:text-indigo-700 transition-colors"
                     >
                       Mot de passe oublié ?
                     </button>
@@ -563,7 +563,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
                       onChange={(e) => setPassword(e.target.value)}
                       onKeyUp={checkCapsLock}
                       placeholder="••••••••"
-                      className="w-full pl-12 pr-14 py-4 bg-slate-50/50 border border-slate-200 rounded-2xl focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/5 outline-none text-sm font-bold shadow-sm transition-all"
+                      className="w-full pl-12 pr-14 py-3.5 bg-slate-50/50 border border-slate-200 rounded-xl focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/5 outline-none text-sm shadow-sm transition-all"
                       required
                     />
                     <button 
@@ -575,8 +575,8 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
                     </button>
                   </div>
                   {isCapsLock && (
-                    <div className="flex items-center gap-2 px-3 py-2 bg-amber-50 border border-amber-100 text-amber-700 rounded-xl text-[9px] font-black uppercase tracking-widest mt-2 animate-pulse">
-                      <AlertCircle size={12} /> VERROUILLAGE MAJUSCULES ACTIF
+                    <div className="flex items-center gap-2 px-3 py-2 bg-amber-50 border border-amber-100 text-amber-700 rounded-xl text-xs font-medium mt-2">
+                      <AlertCircle size={12} /> Verrouillage majuscules actif
                     </div>
                   )}
                 </div>
@@ -593,14 +593,14 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
                       <div className="w-5 h-5 bg-slate-100 border border-slate-200 rounded-lg peer-checked:bg-indigo-600 peer-checked:border-indigo-600 transition-all shadow-inner"></div>
                       <CheckCircle2 className="absolute inset-0 text-white opacity-0 peer-checked:opacity-100 transition-opacity p-0.5" />
                     </div>
-                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest group-hover:text-slate-600 transition-colors">Se souvenir de moi</span>
+                    <span className="text-xs font-medium text-slate-400 group-hover:text-slate-600 transition-colors">Se souvenir de moi</span>
                   </label>
                 </div>
 
                 {error && (
                   <div className="p-4 bg-rose-50 border border-rose-100 rounded-2xl flex items-start gap-3 animate-in shake duration-500">
                     <ShieldAlert className="text-rose-500 shrink-0 mt-0.5" size={16} />
-                    <p className="text-xs font-bold text-rose-700 uppercase tracking-tight">{error}</p>
+                    <p className="text-xs font-medium text-rose-700">{error}</p>
                   </div>
                 )}
 
@@ -610,7 +610,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
                   disabled={isLoading}
                   onMouseMove={handleButtonMagnetic}
                   onMouseLeave={resetButtonMagnetic}
-                  className="group relative w-full py-5 bg-indigo-600 text-white rounded-[1.6rem] text-xs font-black uppercase tracking-[0.25em] shadow-[0_20px_40px_-12px_rgba(79,70,229,0.3)] hover:bg-indigo-700 transition-all flex items-center justify-center gap-3 disabled:opacity-70 overflow-hidden active:scale-95"
+                  className="group relative w-full py-4 bg-indigo-600 text-white rounded-xl text-sm font-semibold shadow-[0_20px_40px_-12px_rgba(79,70,229,0.3)] hover:bg-indigo-700 transition-all flex items-center justify-center gap-3 disabled:opacity-70 overflow-hidden active:scale-[0.98]"
                 >
                   {isLoading ? (
                     <>
@@ -628,10 +628,10 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
             </div>
           ) : view === 'forgot-password' ? (
             <div className="relative z-10 animate-in fade-in slide-in-from-right-2 duration-500">
-               <button onClick={() => setView('login')} className="flex items-center gap-2 text-[10px] font-black text-slate-400 uppercase tracking-widest hover:text-indigo-600 transition-colors mb-8 group">
-                 <ChevronLeft size={16} className="group-hover:-translate-x-1 transition-transform" /> Retour à l'accueil
+               <button onClick={() => setView('login')} className="flex items-center gap-2 text-xs font-medium text-slate-400 hover:text-indigo-600 transition-colors mb-7 group">
+                 <ChevronLeft size={14} className="group-hover:-translate-x-1 transition-transform" /> Retour à la connexion
                </button>
-               <h2 className="text-2xl font-black text-slate-900 tracking-tight mb-2">Réinitialisation</h2>
+               <h2 className="text-xl font-bold text-slate-900 tracking-tight mb-2">Réinitialisation</h2>
                <p className="text-sm text-slate-500 font-medium mb-8 leading-relaxed">Entrez votre email pour recevoir les instructions de récupération de compte.</p>
                <form onSubmit={async (e) => {
                  e.preventDefault();
@@ -646,10 +646,10 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
                  else setError('Erreur lors de l\'envoi. Vérifiez l\'adresse email.');
                }} className="space-y-6">
                  <div className="space-y-1.5">
-                   <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-3">Email Administrateur</label>
+                   <label className="text-xs font-medium text-slate-500 ml-1">Email Administrateur</label>
                    <input
                      type="email"
-                     className="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:border-indigo-500 outline-none text-sm font-bold shadow-sm"
+                     className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/5 outline-none text-sm shadow-sm transition-all"
                      placeholder="admin@vinea.org"
                      required
                    />
@@ -657,7 +657,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
                  <button 
                   type="submit" 
                   disabled={isLoading}
-                  className="w-full py-5 bg-slate-900 text-white rounded-[1.6rem] text-xs font-black uppercase tracking-widest shadow-xl hover:bg-slate-800 disabled:opacity-70 transition-all active:scale-95"
+                  className="w-full py-4 bg-slate-900 text-white rounded-xl text-sm font-semibold shadow-xl hover:bg-slate-800 disabled:opacity-70 transition-all active:scale-[0.98]"
                  >
                    Envoyer le lien de secours
                  </button>
@@ -668,9 +668,9 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
                <div className="w-20 h-20 bg-emerald-500 text-white rounded-[1.8rem] flex items-center justify-center mx-auto mb-6 shadow-[0_20px_40px_-12px_rgba(16,185,129,0.3)] border-4 border-white animate-bounce">
                  <CheckCircle2 size={32} strokeWidth={3} />
                </div>
-               <h2 className="text-2xl font-black text-slate-900 tracking-tight">Vérifiez vos mails</h2>
-               <p className="text-sm text-slate-500 mt-4 font-medium leading-relaxed italic px-4">Si l'adresse existe, un lien magique de connexion vient d'être envoyé.</p>
-               <button onClick={() => view === 'success' && setView('login')} className="mt-10 px-8 py-4 bg-indigo-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-indigo-700 active:scale-95 shadow-lg shadow-indigo-100">
+               <h2 className="text-xl font-bold text-slate-900 tracking-tight">Vérifiez vos mails</h2>
+               <p className="text-sm text-slate-500 mt-3 leading-relaxed px-4">Si l'adresse existe, un lien de réinitialisation vient d'être envoyé.</p>
+               <button onClick={() => view === 'success' && setView('login')} className="mt-8 px-8 py-3 bg-indigo-600 text-white rounded-xl text-sm font-semibold hover:bg-indigo-700 active:scale-[0.98] shadow-md shadow-indigo-200">
                  Retour au portail
                </button>
             </div>
@@ -678,29 +678,25 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
 
           {/* Verse of the day section */}
           <div className="relative z-10 mt-10 pt-8 border-t border-slate-100 text-center">
-            <div className="bg-slate-50/80 p-5 rounded-[2rem] border border-slate-100 shadow-inner group relative overflow-hidden">
-                <div className="absolute top-[-10px] right-[-10px] opacity-5">
-                    <Quote size={80} className="text-indigo-600 rotate-12" />
-                </div>
-                <div className="flex items-center justify-center gap-2 mb-3">
-                  <Sparkles size={14} className="text-amber-500" />
-                  <h4 className="text-[9px] font-black text-slate-400 uppercase tracking-[0.3em]">Méditation du Jour</h4>
-                </div>
-                <p className="text-[13px] font-bold text-slate-700 leading-relaxed italic px-2">
-                  "{selectedVerse.text}"
-                </p>
-                <div className="flex items-center justify-center gap-3 mt-4">
-                  <div className="h-px w-4 bg-slate-200"></div>
-                  <p className="text-[10px] font-black text-indigo-600 uppercase tracking-[0.15em]">
-                    {selectedVerse.ref}
-                  </p>
-                  <div className="h-px w-4 bg-slate-200"></div>
-                </div>
+            <div className="bg-slate-50 p-5 rounded-2xl border border-slate-100 relative overflow-hidden">
+              <div className="absolute top-2 right-2 opacity-[0.04] pointer-events-none">
+                <Quote size={64} className="text-indigo-600 rotate-12" />
+              </div>
+              <div className="flex items-center justify-center gap-2 mb-3">
+                <Sparkles size={13} className="text-amber-500" />
+                <h4 className="text-xs font-medium text-slate-400">Méditation du jour</h4>
+              </div>
+              <p className="text-sm text-slate-600 leading-relaxed italic text-center">
+                « {selectedVerse.text} »
+              </p>
+              <div className="flex items-center justify-center gap-3 mt-3">
+                <div className="h-px w-6 bg-slate-200"></div>
+                <p className="text-xs font-medium text-indigo-500">{selectedVerse.ref}</p>
+                <div className="h-px w-6 bg-slate-200"></div>
+              </div>
             </div>
 
-            <div className="mt-6 flex items-center justify-center gap-2 text-slate-300">
-              <p className="text-[8px] font-black uppercase tracking-[0.2em]">© {currentYear} Vinea • Tous droits réservés</p>
-            </div>
+            <p className="mt-5 text-center text-xs text-slate-300">© {currentYear} Vinea</p>
           </div>
         </div>
       </div>
@@ -711,15 +707,8 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
           25% { transform: translateX(-5px); }
           75% { transform: translateX(5px); }
         }
-        .shake {
-          animation: shake 0.5s ease-in-out;
-        }
-        input::placeholder {
-          text-transform: uppercase;
-          letter-spacing: 0.1em;
-          font-size: 0.7rem;
-          color: #cbd5e1;
-        }
+        .shake { animation: shake 0.5s ease-in-out; }
+        input::placeholder { color: #cbd5e1; font-size: 0.875rem; }
       `}</style>
     </div>
   );

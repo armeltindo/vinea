@@ -322,7 +322,7 @@ const Discipleship: React.FC = () => {
     <div className="space-y-6 animate-in fade-in duration-500 pb-20">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-black text-slate-900 tracking-tight uppercase">Centre de Discipolat</h2>
+          <h2 className="text-2xl font-bold text-slate-900">Centre de Discipolat</h2>
           <p className="text-sm text-slate-500 font-medium italic">Accompagnez chaque fidèle dans sa croissance spirituelle.</p>
         </div>
         <div className="flex items-center gap-3">
@@ -333,10 +333,10 @@ const Discipleship: React.FC = () => {
               placeholder="Chercher mentor ou disciple..." 
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl focus:ring-4 focus:ring-indigo-500/5 focus:border-indigo-300 outline-none text-[10px] font-black uppercase tracking-widest transition-all shadow-sm w-64"
+              className="pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl focus:ring-4 focus:ring-indigo-500/5 focus:border-indigo-300 outline-none text-sm font-normal tracking-wide transition-all shadow-sm w-64"
             />
           </div>
-          <button onClick={handleAnalyze} disabled={isAnalyzing} className="flex items-center gap-2 px-4 py-2 bg-indigo-50 text-indigo-700 border border-indigo-100 rounded-xl text-xs font-black uppercase tracking-widest transition-all shadow-sm hover:bg-indigo-100">
+          <button onClick={handleAnalyze} disabled={isAnalyzing} className="flex items-center gap-2 px-4 py-2 bg-indigo-50 text-indigo-700 border border-indigo-100 rounded-xl text-xs font-medium transition-all shadow-sm hover:bg-indigo-100">
              <Sparkles size={16} className={isAnalyzing ? "animate-pulse" : ""} /> {isAnalyzing ? 'Analyse...' : 'Analyse IA'}
           </button>
         </div>
@@ -356,7 +356,7 @@ const Discipleship: React.FC = () => {
                    >
                      <div className="flex justify-between items-start mb-4 relative z-10">
                        <div className="flex items-center gap-3">
-                         <div className="w-12 h-12 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-center text-emerald-600 font-black text-lg shadow-sm group-hover:scale-105 transition-transform overflow-hidden">
+                         <div className="w-12 h-12 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-center text-emerald-600 font-semibold text-lg shadow-sm group-hover:scale-105 transition-transform overflow-hidden">
                            {discipleMember?.photoUrl ? (
                              <img src={discipleMember.photoUrl} alt="" className="w-full h-full object-cover" />
                            ) : (
@@ -364,26 +364,26 @@ const Discipleship: React.FC = () => {
                            )}
                          </div>
                          <div className="min-w-0">
-                           <p className="text-sm font-black text-slate-900 tracking-tight truncate w-32">{pair.discipleName}</p>
-                           <p className="text-[10px] text-emerald-600 font-bold uppercase tracking-widest">Disciple</p>
+                           <p className="text-sm font-semibold text-slate-900 tracking-tight truncate w-32">{pair.discipleName}</p>
+                           <p className="text-xs text-emerald-600 font-bold">Disciple</p>
                          </div>
                        </div>
                        <span className={cn(
-                          "text-[9px] font-black px-2 py-0.5 rounded uppercase tracking-widest border",
+                          "text-xs font-semibold px-2 py-0.5 rounded border",
                           pair.status === 'Actif' ? "text-emerald-600 bg-emerald-50 border-emerald-100" : "text-amber-600 bg-amber-50 border-amber-100"
                        )}>
                           {pair.status}
                        </span>
                      </div>
                      <div className="space-y-3 relative z-10">
-                        <div className="flex justify-between text-[11px] font-black uppercase tracking-tighter">
+                        <div className="flex justify-between text-xs font-semibolder">
                            <span className="text-slate-500 truncate w-40">Mentor : {pair.mentorName}</span>
                            <span className="text-indigo-600">{pair.progress}%</span>
                         </div>
                         <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden shadow-inner">
                           <div className="h-full bg-indigo-600 rounded-full transition-all duration-1000" style={{ width: `${pair.progress}%` }}></div>
                         </div>
-                        <div className="flex items-center gap-2 pt-2 text-[9px] text-slate-400 font-bold uppercase">
+                        <div className="flex items-center gap-2 pt-2 text-xs text-slate-400">
                            <Clock size={12} className="text-indigo-300" /> {pair.lastMeeting ? `Vu le ${new Date(pair.lastMeeting).toLocaleDateString('fr-FR')}` : 'Aucune séance'}
                         </div>
                      </div>
@@ -392,18 +392,18 @@ const Discipleship: React.FC = () => {
                }) : searchQuery ? (
                  <div className="col-span-full py-12 text-center opacity-30">
                     <SearchIcon size={40} className="mx-auto" />
-                    <p className="text-[10px] font-black uppercase mt-3">Aucun binôme ne correspond à votre recherche</p>
+                    <p className="text-xs font-medium mt-3">Aucun binôme ne correspond à votre recherche</p>
                  </div>
                ) : null}
                {!searchQuery && (
                  <button 
                   onClick={() => handleOpenPairModal()}
-                  className="border-2 border-dashed border-slate-200 rounded-[2rem] p-6 flex flex-col items-center justify-center text-slate-400 hover:border-indigo-300 hover:text-indigo-600 hover:bg-indigo-50/30 transition-all gap-3 group min-h-[160px]"
+                  className="border-2 border-dashed border-slate-200 rounded-xl p-6 flex flex-col items-center justify-center text-slate-400 hover:border-indigo-300 hover:text-indigo-600 hover:bg-indigo-50/30 transition-all gap-3 group min-h-[160px]"
                  >
                    <div className="w-14 h-14 rounded-[1.5rem] bg-slate-50 border border-slate-100 text-slate-300 flex items-center justify-center group-hover:scale-110 group-hover:bg-white group-hover:text-indigo-600 group-hover:shadow-lg transition-all">
                       <UserPlus size={28} />
                    </div>
-                   <span className="text-xs font-black uppercase tracking-[0.2em]">Nouveau Binôme</span>
+                   <span className="text-xs font-medium">Nouveau Binôme</span>
                  </button>
                )}
              </div>
@@ -423,8 +423,8 @@ const Discipleship: React.FC = () => {
                  >
                    <div className={cn("w-1.5 h-10 rounded-full shrink-0", pathway.color)}></div>
                    <div className="flex-1 min-w-0">
-                     <h4 className="text-sm font-black text-slate-800 uppercase tracking-tight truncate group-hover:text-indigo-600 transition-colors">{pathway.title}</h4>
-                     <p className="text-[9px] text-slate-500 font-bold uppercase tracking-widest mt-0.5">
+                     <h4 className="text-sm font-semibold text-slate-800 truncate group-hover:text-indigo-600 transition-colors">{pathway.title}</h4>
+                     <p className="text-xs text-slate-500 font-bold mt-0.5">
                        {getPathwayParticipants(pathway.id).length} inscrits • {getPathwayProgress(pathway.id)}% moy.
                      </p>
                    </div>
@@ -436,17 +436,17 @@ const Discipleship: React.FC = () => {
 
           <div 
             onClick={() => setIsFidelityModalOpen(true)}
-            className="bg-slate-900 rounded-[2.5rem] p-8 text-white overflow-hidden relative group cursor-pointer hover:scale-[1.02] transition-transform shadow-xl shadow-slate-200"
+            className="bg-slate-900 rounded-2xl p-8 text-white overflow-hidden relative group cursor-pointer hover:scale-[1.02] transition-transform shadow-xl shadow-slate-200"
           >
             <div className="absolute top-0 right-0 p-6 opacity-10 group-hover:scale-110 transition-transform">
               <ShieldCheck size={80} />
             </div>
             <div className="relative z-10 space-y-6">
               <div>
-                <p className="text-[10px] font-black text-indigo-400 uppercase tracking-[0.2em] mb-1">Indice de Rétention</p>
-                <span className="text-4xl font-black">{retentionStats.rate}%</span>
+                <p className="text-xs font-semibold text-indigo-400 mb-1">Indice de Rétention</p>
+                <span className="text-4xl font-bold">{retentionStats.rate}%</span>
               </div>
-              <div className="flex items-center gap-2 text-[10px] font-black uppercase text-indigo-300">
+              <div className="flex items-center gap-2 text-xs font-medium text-indigo-300">
                 <ChevronRight size={14} /> Voir l'analyse complète
               </div>
             </div>
@@ -469,13 +469,13 @@ const Discipleship: React.FC = () => {
                 </button>
                 
                 <div className="relative z-10 space-y-4">
-                  <span className="px-3 py-1 bg-white/20 backdrop-blur-md rounded-full text-[10px] font-black uppercase tracking-[0.2em]">
+                  <span className="px-3 py-1 bg-white/20 backdrop-blur-md rounded-full text-xs font-medium">
                     Analyse Stratégique
                   </span>
-                  <h3 className="text-3xl font-black uppercase leading-tight tracking-tighter">
+                  <h3 className="text-3xl font-semibold leading-tight">
                     Indice de Rétention
                   </h3>
-                  <p className="text-xs text-slate-400 font-bold uppercase tracking-widest">
+                  <p className="text-xs text-slate-400 font-bold">
                     Mesure de la transformation des visiteurs en fidèles
                   </p>
                 </div>
@@ -483,15 +483,15 @@ const Discipleship: React.FC = () => {
 
               <div className="flex-1 overflow-y-auto p-10 custom-scrollbar bg-slate-50/30 space-y-8">
                 <div className="grid grid-cols-2 gap-4">
-                  <div className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm text-center">
-                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Visiteurs Totaux</p>
-                    <p className="text-3xl font-black text-slate-900">{retentionStats.total}</p>
+                  <div className="bg-white p-6 rounded-xl border border-slate-100 shadow-sm text-center">
+                    <p className="text-xs font-medium text-slate-500 mb-1">Visiteurs Totaux</p>
+                    <p className="text-3xl font-bold text-slate-900">{retentionStats.total}</p>
                   </div>
-                  <div className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm text-center">
-                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Score de Santé</p>
+                  <div className="bg-white p-6 rounded-xl border border-slate-100 shadow-sm text-center">
+                    <p className="text-xs font-medium text-slate-500 mb-1">Score de Santé</p>
                     <div className="flex items-center justify-center gap-2">
                       <span className={cn(
-                        "text-3xl font-black",
+                        "text-3xl font-semibold",
                         retentionStats.rate > 60 ? "text-emerald-500" : retentionStats.rate > 30 ? "text-amber-500" : "text-rose-500"
                       )}>{retentionStats.rate}%</span>
                       {retentionStats.rate > 50 ? <TrendingUp size={20} className="text-emerald-500" /> : <TrendingDown size={20} className="text-rose-500" />}
@@ -499,8 +499,8 @@ const Discipleship: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm">
-                   <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2 mb-6">
+                <div className="bg-white p-8 rounded-2xl border border-slate-100 shadow-sm">
+                   <h4 className="text-xs font-medium text-slate-500 flex items-center gap-2 mb-6">
                      <PieIcon size={14} className="text-indigo-600" /> Répartition du Suivi
                    </h4>
                    <div className="h-64 w-full">
@@ -526,36 +526,36 @@ const Discipleship: React.FC = () => {
                 </div>
 
                 <div className="space-y-4">
-                  <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Résumé des indicateurs</h4>
+                  <h4 className="text-xs font-medium text-slate-500">Résumé des indicateurs</h4>
                   <div className="space-y-3">
                     <div className="flex items-center justify-between p-4 bg-white border border-slate-100 rounded-2xl">
                       <div className="flex items-center gap-3">
                         <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center"><UserCheck size={16}/></div>
-                        <span className="text-xs font-black text-slate-700 uppercase">Visiteurs Intégrés</span>
+                        <span className="text-xs font-medium text-slate-700">Visiteurs Intégrés</span>
                       </div>
-                      <span className="text-sm font-black text-slate-900">{retentionStats.integrated}</span>
+                      <span className="text-sm font-semibold text-slate-900">{retentionStats.integrated}</span>
                     </div>
                     <div className="flex items-center justify-between p-4 bg-white border border-slate-100 rounded-2xl">
                       <div className="flex items-center gap-3">
                         <div className="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center"><Activity size={16}/></div>
-                        <span className="text-xs font-black text-slate-700 uppercase">Suivi en cours</span>
+                        <span className="text-xs font-medium text-slate-700">Suivi en cours</span>
                       </div>
-                      <span className="text-sm font-black text-slate-900">{retentionStats.ongoing}</span>
+                      <span className="text-sm font-semibold text-slate-900">{retentionStats.ongoing}</span>
                     </div>
                     <div className="flex items-center justify-between p-4 bg-white border border-slate-100 rounded-2xl">
                       <div className="flex items-center gap-3">
                         <div className="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center"><Clock size={16}/></div>
-                        <span className="text-xs font-black text-slate-700 uppercase">En attente (Risque)</span>
+                        <span className="text-xs font-medium text-slate-700">En attente (Risque)</span>
                       </div>
-                      <span className="text-sm font-black text-slate-700 uppercase">{retentionStats.pending}</span>
+                      <span className="text-sm font-semibold text-slate-700">{retentionStats.pending}</span>
                     </div>
                   </div>
                 </div>
 
-                <div className="p-6 bg-indigo-50 border border-indigo-100 rounded-[2.5rem] space-y-3">
+                <div className="p-6 bg-indigo-50 border border-indigo-100 rounded-2xl space-y-3">
                    <div className="flex items-center gap-2">
                      <Sparkles size={18} className="text-indigo-600" />
-                     <h4 className="text-[10px] font-black text-indigo-900 uppercase">Conseil Stratégique Vinea</h4>
+                     <h4 className="text-xs font-semibold text-indigo-800">Conseil Stratégique Vinea</h4>
                    </div>
                    <p className="text-xs text-indigo-700 font-medium leading-relaxed italic">
                      {retentionStats.rate < 40 
@@ -568,7 +568,7 @@ const Discipleship: React.FC = () => {
               <div className="p-10 border-t border-slate-100 bg-white shrink-0">
                 <button 
                   onClick={() => setIsFidelityModalOpen(false)}
-                  className="w-full py-4 bg-slate-900 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-800 transition-all shadow-xl"
+                  className="w-full py-4 bg-slate-900 text-white rounded-2xl text-xs font-medium hover:bg-slate-800 transition-all shadow-xl"
                 >
                   Fermer l'Analyse
                 </button>
@@ -582,7 +582,7 @@ const Discipleship: React.FC = () => {
       {isPairDetailsOpen && selectedPair && (
         <div className="fixed inset-0 z-[150] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity duration-300" onClick={() => setIsPairDetailsOpen(false)} />
-          <div className="relative w-full max-w-lg bg-white shadow-2xl animate-in zoom-in-95 duration-300 flex flex-col rounded-[3rem] overflow-hidden max-h-[90vh]">
+          <div className="relative w-full max-w-lg bg-white shadow-2xl animate-in zoom-in-95 duration-300 flex flex-col rounded-2xl overflow-hidden max-h-[90vh]">
               <div className="px-10 py-12 bg-indigo-600 text-white shrink-0 relative overflow-hidden">
                 <div className="absolute top-0 right-0 p-8 opacity-10">
                    <Users size={180} />
@@ -592,29 +592,29 @@ const Discipleship: React.FC = () => {
                 </button>
                 
                 <div className="relative z-10 space-y-4">
-                  <span className="px-3 py-1 bg-white/20 backdrop-blur-md rounded-full text-[10px] font-black uppercase tracking-[0.2em]">
+                  <span className="px-3 py-1 bg-white/20 backdrop-blur-md rounded-full text-xs font-medium">
                     Binôme de Mentorat
                   </span>
-                  <h3 className="text-3xl font-black leading-tight tracking-tighter">
+                  <h3 className="text-3xl font-semibold leading-tight tracking-tighter">
                     {selectedPair.discipleName} & {selectedPair.mentorName}
                   </h3>
                   <div className="flex items-center gap-2 text-indigo-100">
                     <span className={cn(
-                        "text-[10px] font-black px-2 py-0.5 rounded uppercase border border-white/20",
+                        "text-xs font-semibold px-2 py-0.5 rounded uppercase border border-white/20",
                         selectedPair.status === 'Actif' ? "bg-emerald-50/50" : "bg-amber-50/50"
                     )}>
                       {selectedPair.status}
                     </span>
                     <span className="w-1 h-1 rounded-full bg-indigo-300 mx-2"></span>
-                    <span className="text-[10px] font-bold uppercase tracking-widest">Débuté le {new Date(selectedPair.startDate).toLocaleDateString()}</span>
+                    <span className="text-xs font-bold">Débuté le {new Date(selectedPair.startDate).toLocaleDateString()}</span>
                   </div>
                 </div>
               </div>
 
               <div className="flex-1 overflow-y-auto p-10 custom-scrollbar bg-slate-50/30 space-y-8">
                 <div className="grid grid-cols-2 gap-6">
-                   <div className="bg-white p-6 rounded-[2.5rem] border border-slate-100 shadow-sm flex flex-col items-center text-center space-y-3">
-                      <div className="w-16 h-16 rounded-3xl bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600 font-black text-2xl shadow-sm overflow-hidden">
+                   <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm flex flex-col items-center text-center space-y-3">
+                      <div className="w-16 h-16 rounded-3xl bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600 font-semibold text-2xl shadow-sm overflow-hidden">
                         {getMemberInfo(selectedPair.discipleId)?.photoUrl ? (
                           <img src={getMemberInfo(selectedPair.discipleId)!.photoUrl} alt="" className="w-full h-full object-cover" />
                         ) : (
@@ -622,12 +622,12 @@ const Discipleship: React.FC = () => {
                         )}
                       </div>
                       <div>
-                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Disciple</p>
-                        <p className="text-sm font-black text-slate-800 tracking-tight">{selectedPair.discipleName}</p>
+                        <p className="text-xs font-medium text-slate-500">Disciple</p>
+                        <p className="text-sm font-semibold text-slate-800 tracking-tight">{selectedPair.discipleName}</p>
                       </div>
                    </div>
-                   <div className="bg-white p-6 rounded-[2.5rem] border border-slate-100 shadow-sm flex flex-col items-center text-center space-y-3">
-                      <div className="w-16 h-16 rounded-3xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 font-black text-2xl shadow-sm overflow-hidden">
+                   <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm flex flex-col items-center text-center space-y-3">
+                      <div className="w-16 h-16 rounded-3xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 font-semibold text-2xl shadow-sm overflow-hidden">
                         {getMemberInfo(selectedPair.mentorId)?.photoUrl ? (
                           <img src={getMemberInfo(selectedPair.mentorId)!.photoUrl} alt="" className="w-full h-full object-cover" />
                         ) : (
@@ -635,18 +635,18 @@ const Discipleship: React.FC = () => {
                         )}
                       </div>
                       <div>
-                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Mentor</p>
-                        <p className="text-sm font-black text-slate-800 tracking-tight">{selectedPair.mentorName}</p>
+                        <p className="text-xs font-medium text-slate-500">Mentor</p>
+                        <p className="text-sm font-semibold text-slate-800 tracking-tight">{selectedPair.mentorName}</p>
                       </div>
                    </div>
                 </div>
 
-                <div className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm space-y-6">
+                <div className="bg-white p-8 rounded-2xl border border-slate-100 shadow-sm space-y-6">
                    <div className="flex items-center justify-between">
-                      <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                      <h4 className="text-xs font-medium text-slate-500 flex items-center gap-2">
                         <TrendingUp size={14} className="text-indigo-600" /> État de la croissance
                       </h4>
-                      <span className="text-xl font-black text-indigo-600">{selectedPair.progress}%</span>
+                      <span className="text-xl font-semibold text-indigo-600">{selectedPair.progress}%</span>
                    </div>
                    <div className="h-4 w-full bg-slate-100 rounded-full overflow-hidden shadow-inner">
                       <div className="h-full bg-gradient-to-r from-indigo-500 to-indigo-600 transition-all duration-1000" style={{ width: `${selectedPair.progress}%` }}></div>
@@ -655,23 +655,23 @@ const Discipleship: React.FC = () => {
                       <div className="flex items-center gap-3">
                          <div className="w-8 h-8 rounded-lg bg-slate-50 flex items-center justify-center text-slate-400"><Clock size={16} /></div>
                          <div>
-                            <p className="text-[9px] font-black text-slate-400 uppercase">Dernier rdv</p>
+                            <p className="text-xs font-medium text-slate-500">Dernier rdv</p>
                             <p className="text-xs font-bold text-slate-700">{selectedPair.lastMeeting ? new Date(selectedPair.lastMeeting).toLocaleDateString() : '---'}</p>
                          </div>
                       </div>
                       <div className="flex items-center gap-3">
                          <div className="w-8 h-8 rounded-lg bg-slate-50 flex items-center justify-center text-slate-400"><CalendarIcon size={16} /></div>
                          <div>
-                            <p className="text-[9px] font-black text-slate-400 uppercase">Durée</p>
+                            <p className="text-xs font-medium text-slate-500">Durée</p>
                             <p className="text-xs font-bold text-slate-700">~ {Math.floor((new Date().getTime() - new Date(selectedPair.startDate).getTime()) / (1000 * 60 * 60 * 24 * 30))} mois</p>
                          </div>
                       </div>
                    </div>
                 </div>
 
-                <div className="p-6 bg-amber-50 border border-amber-100 rounded-[2.5rem] flex items-start gap-4">
+                <div className="p-6 bg-amber-50 border border-amber-100 rounded-2xl flex items-start gap-4">
                    <Info size={20} className="text-amber-500 shrink-0 mt-0.5" />
-                   <p className="text-[10px] text-amber-700 font-black uppercase leading-relaxed tracking-widest">
+                   <p className="text-xs text-amber-700 font-medium leading-relaxed">
                      Le mentorat est une relation sacrée de transmission. Encouragez le binôme à se rencontrer au moins une fois toutes les deux semaines.
                    </p>
                 </div>
@@ -680,13 +680,13 @@ const Discipleship: React.FC = () => {
               <div className="p-10 border-t border-slate-100 bg-white flex gap-4 shrink-0">
                 <button 
                   onClick={() => handleOpenPairModal(selectedPair)}
-                  className="flex-1 py-4 bg-indigo-50 text-indigo-600 border border-indigo-100 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-indigo-100 transition-all flex items-center justify-center gap-2"
+                  className="flex-1 py-4 bg-indigo-50 text-indigo-600 border border-indigo-100 rounded-2xl text-xs font-medium hover:bg-indigo-100 transition-all flex items-center justify-center gap-2"
                 >
                   <Edit size={16} /> Modifier le suivi
                 </button>
                 <button 
                   onClick={() => handleDeletePair(selectedPair.id)}
-                  className="px-6 py-4 bg-rose-50 text-rose-600 border border-rose-100 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-rose-100 transition-all flex items-center justify-center gap-2"
+                  className="px-6 py-4 bg-rose-50 text-rose-600 border border-rose-100 rounded-2xl text-xs font-medium hover:bg-rose-100 transition-all flex items-center justify-center gap-2"
                 >
                   <Trash2 size={18} />
                 </button>
@@ -699,15 +699,15 @@ const Discipleship: React.FC = () => {
       {isPairModalOpen && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-300" onClick={() => setIsPairModalOpen(false)} />
-          <div className="relative w-full max-w-md bg-white rounded-[2.5rem] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col">
+          <div className="relative w-full max-w-md bg-white rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col">
             <div className="bg-indigo-600 p-8 text-white relative shrink-0">
                <button onClick={() => setIsPairModalOpen(false)} className="absolute top-6 right-6 p-2 hover:bg-white/10 rounded-full transition-colors"><X size={20} /></button>
-               <h3 className="text-xl font-black uppercase tracking-tight">{editingPair ? 'Modifier le Binôme' : 'Nouveau Binôme'}</h3>
+               <h3 className="text-xl font-semibold">{editingPair ? 'Modifier le Binôme' : 'Nouveau Binôme'}</h3>
             </div>
             <form onSubmit={handleSavePair} className="flex-1 p-8 space-y-6 bg-slate-50/30 overflow-y-auto custom-scrollbar">
                <div className="space-y-5">
                   <div className="space-y-1.5 relative">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 flex items-center gap-2">
+                    <label className="text-xs font-medium text-slate-500 ml-1 flex items-center gap-2">
                       <User size={12} className="text-indigo-600" /> Mentor (Accompagnateur)
                     </label>
                     <div className="relative group">
@@ -717,7 +717,7 @@ const Discipleship: React.FC = () => {
                         placeholder="Rechercher un membre..."
                         value={mentorSearch}
                         onChange={(e) => handleUpdateMentorSearch(e.target.value)}
-                        className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-2xl outline-none text-[11px] font-black uppercase focus:ring-4 focus:ring-indigo-500/5 transition-all"
+                        className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-2xl outline-none text-sm font-normal focus:ring-4 focus:ring-indigo-500/5 transition-all"
                        />
                     </div>
                     {mentorSearch && !pairFormData.mentorId && (
@@ -726,9 +726,9 @@ const Discipleship: React.FC = () => {
                           <button 
                             key={m.id} type="button"
                             onClick={() => { setPairFormData({...pairFormData, mentorId: m.id}); setMentorSearch(`${formatFirstName(m.firstName)} ${m.lastName.toUpperCase()}`); }}
-                            className="w-full text-left px-4 py-3 text-[10px] font-black uppercase text-slate-600 hover:bg-indigo-50 hover:text-indigo-600 border-b border-slate-50 last:border-0 flex items-center gap-3"
+                            className="w-full text-left px-4 py-3 text-xs font-medium text-slate-600 hover:bg-indigo-50 hover:text-indigo-600 border-b border-slate-50 last:border-0 flex items-center gap-3"
                           >
-                            <div className="w-8 h-8 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-center text-[10px] font-black uppercase overflow-hidden">
+                            <div className="w-8 h-8 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-center text-xs font-medium overflow-hidden">
                               {m.photoUrl ? (
                                 <img src={m.photoUrl} alt="" className="w-full h-full object-cover" />
                               ) : (
@@ -743,7 +743,7 @@ const Discipleship: React.FC = () => {
                   </div>
 
                   <div className="space-y-1.5 relative">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 flex items-center gap-2">
+                    <label className="text-xs font-medium text-slate-500 ml-1 flex items-center gap-2">
                       <Zap size={12} className="text-indigo-600" /> Disciple (Fidèle accompagné)
                     </label>
                     <div className="relative group">
@@ -753,7 +753,7 @@ const Discipleship: React.FC = () => {
                         placeholder="Rechercher un fidèle..."
                         value={discipleSearch}
                         onChange={(e) => handleUpdateDiscipleSearch(e.target.value)}
-                        className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-2xl outline-none text-[11px] font-black uppercase focus:ring-4 focus:ring-indigo-500/5 transition-all"
+                        className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-2xl outline-none text-sm font-normal focus:ring-4 focus:ring-indigo-500/5 transition-all"
                        />
                     </div>
                     {discipleSearch && !pairFormData.discipleId && (
@@ -762,9 +762,9 @@ const Discipleship: React.FC = () => {
                           <button 
                             key={m.id} type="button"
                             onClick={() => { setPairFormData({...pairFormData, discipleId: m.id}); setDiscipleSearch(`${formatFirstName(m.firstName)} ${m.lastName.toUpperCase()}`); }}
-                            className="w-full text-left px-4 py-3 text-[10px] font-black uppercase text-slate-600 hover:bg-indigo-50 hover:text-indigo-600 border-b border-slate-50 last:border-0 flex items-center gap-3"
+                            className="w-full text-left px-4 py-3 text-xs font-medium text-slate-600 hover:bg-indigo-50 hover:text-indigo-600 border-b border-slate-50 last:border-0 flex items-center gap-3"
                           >
-                            <div className="w-8 h-8 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-center text-[10px] font-black uppercase overflow-hidden">
+                            <div className="w-8 h-8 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-center text-xs font-medium overflow-hidden">
                               {m.photoUrl ? (
                                 <img src={m.photoUrl} alt="" className="w-full h-full object-cover" />
                               ) : (
@@ -780,12 +780,12 @@ const Discipleship: React.FC = () => {
 
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-1.5">
-                       <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Date début</label>
-                       <input type="date" required value={pairFormData.startDate} onChange={(e) => setPairFormData({...pairFormData, startDate: e.target.value})} className="w-full px-4 py-3 bg-white border border-slate-200 rounded-2xl outline-none text-[11px] font-bold" />
+                       <label className="text-xs font-medium text-slate-500 ml-1">Date début</label>
+                       <input type="date" required value={pairFormData.startDate} onChange={(e) => setPairFormData({...pairFormData, startDate: e.target.value})} className="w-full px-4 py-3 bg-white border border-slate-200 rounded-2xl outline-none text-xs font-bold" />
                     </div>
                     <div className="space-y-1.5">
-                       <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Progression (%)</label>
-                       <input type="number" min="0" max="100" value={pairFormData.progress} onChange={(e) => setPairFormData({...pairFormData, progress: parseInt(e.target.value) || 0})} className="w-full px-4 py-3 bg-white border border-slate-200 rounded-2xl outline-none text-sm font-black text-indigo-600" />
+                       <label className="text-xs font-medium text-slate-500 ml-1">Progression (%)</label>
+                       <input type="number" min="0" max="100" value={pairFormData.progress} onChange={(e) => setPairFormData({...pairFormData, progress: parseInt(e.target.value) || 0})} className="w-full px-4 py-3 bg-white border border-slate-200 rounded-2xl outline-none text-sm font-semibold text-indigo-600" />
                     </div>
                   </div>
                </div>
@@ -796,7 +796,7 @@ const Discipleship: React.FC = () => {
                       <Trash2 size={22} />
                     </button>
                   )}
-                  <button type="submit" disabled={!pairFormData.mentorId || !pairFormData.discipleId} className="flex-1 py-4 bg-indigo-600 text-white rounded-2xl text-[11px] font-black uppercase tracking-widest shadow-xl shadow-indigo-100 hover:bg-indigo-700 transition-all">
+                  <button type="submit" disabled={!pairFormData.mentorId || !pairFormData.discipleId} className="flex-1 py-3.5 bg-indigo-600 text-white rounded-2xl text-sm font-semibold shadow-xl shadow-indigo-100 hover:bg-indigo-700 transition-all">
                      <Save size={20} className="inline mr-2" /> Enregistrer
                   </button>
                </div>
@@ -816,16 +816,16 @@ const Discipleship: React.FC = () => {
                   <ArrowLeft size={24} />
                 </button>
                 <div className="relative z-10 space-y-4">
-                  <span className="px-3 py-1 bg-white/20 backdrop-blur-md rounded-full text-[10px] font-black uppercase tracking-[0.2em]">Programme</span>
-                  <h3 className="text-3xl font-black uppercase leading-tight tracking-tighter">{selectedPathway.title}</h3>
+                  <span className="px-3 py-1 bg-white/20 backdrop-blur-md rounded-full text-xs font-medium">Programme</span>
+                  <h3 className="text-3xl font-semibold leading-tight">{selectedPathway.title}</h3>
                 </div>
               </div>
 
               <div className="p-8 bg-slate-50 border-b border-slate-100 flex items-center justify-between shrink-0">
-                <p className="text-sm font-black text-slate-900">{getPathwayParticipants(selectedPathway.id).length} inscrits</p>
+                <p className="text-sm font-semibold text-slate-900">{getPathwayParticipants(selectedPathway.id).length} inscrits</p>
                 <button 
                   onClick={() => { setEnrollmentSearch(''); setNewEnrollment({ memberId: '', progress: 0 }); setIsEnrollModalOpen(true); }}
-                  className="flex items-center gap-2 px-5 py-2.5 bg-indigo-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest"
+                  className="flex items-center gap-2 px-5 py-2.5 bg-indigo-600 text-white rounded-xl text-xs font-medium"
                 >
                   <UserPlus size={16} /> Inscrire
                 </button>
@@ -835,10 +835,10 @@ const Discipleship: React.FC = () => {
                 {getPathwayParticipants(selectedPathway.id).map(enrollment => {
                   const m = getMemberInfo(enrollment.memberId);
                   return (
-                    <div key={enrollment.id} className="bg-white p-5 rounded-[2rem] border border-slate-100 shadow-sm">
+                    <div key={enrollment.id} className="bg-white p-5 rounded-xl border border-slate-100 shadow-sm">
                       <div className="flex justify-between items-start mb-4">
                         <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center text-indigo-600 font-black text-xs overflow-hidden">
+                          <div className="w-10 h-10 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center text-indigo-600 font-semibold text-xs overflow-hidden">
                             {m?.photoUrl ? (
                               <img src={m.photoUrl} alt="" className="w-full h-full object-cover" />
                             ) : (
@@ -846,16 +846,16 @@ const Discipleship: React.FC = () => {
                             )}
                           </div>
                           <div>
-                            <p className="text-sm font-black text-slate-800 tracking-tight">
+                            <p className="text-sm font-semibold text-slate-800 tracking-tight">
                               {formatFirstName(m?.firstName || '')} <span className="uppercase">{m?.lastName}</span>
                             </p>
-                            <p className="text-[9px] font-bold text-slate-400 uppercase">Le {new Date(enrollment.startDate).toLocaleDateString()}</p>
+                            <p className="text-xs text-slate-400">Le {new Date(enrollment.startDate).toLocaleDateString()}</p>
                           </div>
                         </div>
                         <button onClick={() => handleUnenroll(enrollment.id)} className="p-2 text-slate-300 hover:text-rose-500"><Trash2 size={16} /></button>
                       </div>
                       <div className="space-y-3">
-                         <div className="flex justify-between items-center text-[10px] font-black text-slate-400">
+                         <div className="flex justify-between items-center text-xs font-semibold text-slate-400">
                             <span>Progression</span>
                             <span className="text-indigo-600">{enrollment.progress}%</span>
                          </div>
@@ -876,16 +876,16 @@ const Discipleship: React.FC = () => {
       {isEnrollModalOpen && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-300" onClick={() => setIsEnrollModalOpen(false)} />
-          <div className="relative w-full max-w-md bg-white rounded-[2.5rem] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col">
+          <div className="relative w-full max-w-md bg-white rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col">
             <div className="bg-indigo-600 p-8 text-white relative">
                <button onClick={() => setIsEnrollModalOpen(false)} className="absolute top-6 right-6 p-2 hover:bg-white/10 rounded-full transition-colors"><X size={20} /></button>
-               <h3 className="text-xl font-black uppercase tracking-tight">Inscription</h3>
-               <p className="text-[10px] font-bold text-indigo-100 mt-1 uppercase tracking-widest">{selectedPathway?.title}</p>
+               <h3 className="text-xl font-semibold">Inscription</h3>
+               <p className="text-xs font-bold text-indigo-100 mt-1">{selectedPathway?.title}</p>
             </div>
             <form onSubmit={handleAddEnrollment} className="p-8 space-y-6">
                <div className="space-y-4">
                   <div className="space-y-1.5 relative">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Fidèle</label>
+                    <label className="text-xs font-medium text-slate-500 ml-1">Fidèle</label>
                     <input 
                       type="text" placeholder="Chercher un membre..."
                       value={enrollmentSearch}
@@ -898,9 +898,9 @@ const Discipleship: React.FC = () => {
                           <button 
                             key={m.id} type="button"
                             onClick={() => { setNewEnrollment({...newEnrollment, memberId: m.id}); setEnrollmentSearch(`${formatFirstName(m.firstName)} ${m.lastName.toUpperCase()}`); }}
-                            className="w-full text-left px-4 py-3 text-[10px] font-black uppercase hover:bg-indigo-50 border-b border-slate-50 last:border-0 flex items-center gap-3"
+                            className="w-full text-left px-4 py-3 text-xs font-medium hover:bg-indigo-50 border-b border-slate-50 last:border-0 flex items-center gap-3"
                           >
-                            <div className="w-8 h-8 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-center text-[10px] font-black uppercase overflow-hidden">
+                            <div className="w-8 h-8 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-center text-xs font-medium overflow-hidden">
                               {m.photoUrl ? (
                                 <img src={m.photoUrl} alt="" className="w-full h-full object-cover" />
                               ) : (
@@ -914,11 +914,11 @@ const Discipleship: React.FC = () => {
                     )}
                   </div>
                   <div className="space-y-1.5">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Progression (%)</label>
-                    <input type="number" min="0" max="100" value={newEnrollment.progress} onChange={(e) => setNewEnrollment({...newEnrollment, progress: parseInt(e.target.value) || 0})} className="w-full px-4 py-3 bg-white border border-slate-200 rounded-2xl outline-none text-sm font-black text-indigo-600" />
+                    <label className="text-xs font-medium text-slate-500 ml-1">Progression (%)</label>
+                    <input type="number" min="0" max="100" value={newEnrollment.progress} onChange={(e) => setNewEnrollment({...newEnrollment, progress: parseInt(e.target.value) || 0})} className="w-full px-4 py-3 bg-white border border-slate-200 rounded-2xl outline-none text-sm font-semibold text-indigo-600" />
                   </div>
                </div>
-               <button type="submit" disabled={!newEnrollment.memberId} className="w-full py-4 bg-indigo-600 text-white rounded-2xl text-[11px] font-black uppercase tracking-widest shadow-xl shadow-indigo-100 hover:bg-indigo-700 transition-all">
+               <button type="submit" disabled={!newEnrollment.memberId} className="w-full py-3.5 bg-indigo-600 text-white rounded-2xl text-sm font-semibold shadow-xl shadow-indigo-100 hover:bg-indigo-700 transition-all">
                   Valider l'inscription
                </button>
             </form>
@@ -930,24 +930,24 @@ const Discipleship: React.FC = () => {
       {isDeleteConfirmOpen && (
         <div className="fixed inset-0 z-[300] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300" onClick={() => setIsDeleteConfirmOpen(false)} />
-          <div className="relative w-full max-w-sm bg-white rounded-[2.5rem] shadow-2xl p-10 text-center border border-slate-100 animate-in zoom-in-95 duration-200">
+          <div className="relative w-full max-w-sm bg-white rounded-2xl shadow-2xl p-10 text-center border border-slate-100 animate-in zoom-in-95 duration-200">
             <div className="w-20 h-20 bg-rose-50 text-rose-600 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-inner border border-rose-100/50">
               <Trash2 size={40} />
             </div>
-            <h3 className="text-2xl font-black text-slate-900 uppercase tracking-tight">Dissoudre ?</h3>
+            <h3 className="text-2xl font-semibold text-slate-900">Dissoudre ?</h3>
             <p className="text-slate-500 mt-2 text-sm font-medium leading-relaxed italic">
               Voulez-vous vraiment mettre fin à ce binôme de mentorat ? Cette action est irréversible.
             </p>
             <div className="flex flex-col gap-3 mt-8">
               <button 
                 onClick={confirmDeletePair} 
-                className="w-full py-4 bg-rose-600 text-white rounded-2xl text-[10px] font-black uppercase shadow-xl shadow-rose-200 hover:bg-rose-700 transition-all active:scale-95"
+                className="w-full py-4 bg-rose-600 text-white rounded-2xl text-xs font-medium shadow-xl shadow-rose-200 hover:bg-rose-700 transition-all active:scale-95"
               >
                 Confirmer la dissolution
               </button>
               <button 
                 onClick={() => setIsDeleteConfirmOpen(false)} 
-                className="w-full py-4 bg-slate-50 text-slate-600 rounded-2xl text-[10px] font-black uppercase border border-slate-200 hover:bg-slate-100 transition-all"
+                className="w-full py-4 bg-slate-50 text-slate-600 rounded-2xl text-xs font-medium border border-slate-200 hover:bg-slate-100 transition-all"
               >
                 Annuler
               </button>

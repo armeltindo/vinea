@@ -83,6 +83,7 @@ interface ListManagerProps {
   icon: React.ReactNode;
   items: string[];
   onUpdate: (newItems: string[]) => void;
+  onRename?: (oldValue: string, newValue: string) => void;
   placeholder: string;
   warningText: string;
 }
@@ -161,7 +162,7 @@ const TIMEZONES = [
   { value: 'Pacific/Auckland', label: '(GMT+12:00) Auckland' },
 ];
 
-const ListManager: React.FC<ListManagerProps> = ({ title, subtitle, icon, items, onUpdate, placeholder, warningText }) => {
+const ListManager: React.FC<ListManagerProps> = ({ title, subtitle, icon, items, onUpdate, onRename, placeholder, warningText }) => {
   const [newItem, setNewItem] = useState('');
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [editingValue, setEditingValue] = useState('');
@@ -184,10 +185,13 @@ const ListManager: React.FC<ListManagerProps> = ({ title, subtitle, icon, items,
   };
 
   const saveEditing = (index: number) => {
-    if (editingValue.trim()) {
+    const trimmed = editingValue.trim();
+    if (trimmed) {
+      const oldValue = items[index];
       const newList = [...items];
-      newList[index] = editingValue.trim();
+      newList[index] = trimmed;
       onUpdate(newList);
+      if (oldValue !== trimmed && onRename) onRename(oldValue, trimmed);
       setEditingIndex(null);
       setEditingValue('');
     }
@@ -353,6 +357,18 @@ const Settings: React.FC = () => {
     language: 'Français'
   });
 
+  // Renommages en attente par type de liste — propagés aux tables Supabase au save
+  const pendingRenames = useRef<{
+    departments: [string, string][];
+    memberStatuses: [string, string][];
+    memberRoles: [string, string][];
+    visitorStatuses: [string, string][];
+  }>({ departments: [], memberStatuses: [], memberRoles: [], visitorStatuses: [] });
+
+  const addRename = (type: keyof typeof pendingRenames.current, oldVal: string, newVal: string) => {
+    pendingRenames.current[type].push([oldVal, newVal]);
+  };
+
   const [pendingImport, setPendingImport] = useState<any | null>(null);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [isPurgeModalOpen, setIsPurgeModalOpen] = useState(false);
@@ -480,6 +496,43 @@ const Settings: React.FC = () => {
         permissions: matchingUser.permissions,
       });
     }
+
+    // ── Propager les renommages aux données existantes ──────────────────────
+    const renames = pendingRenames.current;
+
+    // Départements → members.departments (array) + departments_info.name
+    for (const [oldName, newName] of renames.departments) {
+      const { data: affected } = await supabase
+        .from('members')
+        .select('id, departments')
+        .contains('departments', [oldName]);
+      if (affected?.length) {
+        await Promise.all(affected.map(m =>
+          supabase.from('members').update({
+            departments: (m.departments || []).map((d: string) => d === oldName ? newName : d)
+          }).eq('id', m.id)
+        ));
+      }
+      await supabase.from('departments_info').update({ name: newName }).eq('name', oldName);
+    }
+
+    // Statuts membres → members.status
+    for (const [oldVal, newVal] of renames.memberStatuses) {
+      await supabase.from('members').update({ status: newVal }).eq('status', oldVal);
+    }
+
+    // Rôles membres → members.type
+    for (const [oldVal, newVal] of renames.memberRoles) {
+      await supabase.from('members').update({ type: newVal }).eq('type', oldVal);
+    }
+
+    // Statuts visiteurs → visitors.status
+    for (const [oldVal, newVal] of renames.visitorStatuses) {
+      await supabase.from('visitors').update({ status: newVal }).eq('status', oldVal);
+    }
+
+    // Réinitialiser les renommages en attente
+    pendingRenames.current = { departments: [], memberStatuses: [], memberRoles: [], visitorStatuses: [] };
 
     // Notifier App.tsx de recharger les settings (currency, nom, logo, couleur + notif settings)
     window.dispatchEvent(new Event('vinea_church_info_updated'));
@@ -1013,39 +1066,43 @@ const Settings: React.FC = () => {
 
           {activeSection === 'lists' && (
             <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
-              <ListManager 
+              <ListManager
                 title="Départements"
                 subtitle="Structure ministérielle de l'église"
                 icon={<Briefcase size={18} />}
                 items={departments}
                 onUpdate={setDepartments}
+                onRename={(o, n) => addRename('departments', o, n)}
                 placeholder="Nouveau département (ex: Médias)"
                 warningText="Réorganisez l'ordre par glisser-déposer pour influencer les menus de sélection."
               />
-              <ListManager 
+              <ListManager
                 title="Rôles & Types de Membres"
                 subtitle="Hiérarchie et responsabilités"
                 icon={<Shield size={18} />}
                 items={memberTypes}
                 onUpdate={setMemberTypes}
+                onRename={(o, n) => addRename('memberRoles', o, n)}
                 placeholder="Nouveau rôle (ex: Ancien)"
                 warningText="Le réordonnancement définit l'ordre d'importance dans les listes."
               />
-              <ListManager 
+              <ListManager
                 title="Statuts des Membres"
                 subtitle="Cycle de vie d'un fidèle"
                 icon={<UserCheck size={18} />}
                 items={memberStatuses}
                 onUpdate={setMemberStatuses}
+                onRename={(o, n) => addRename('memberStatuses', o, n)}
                 placeholder="Nouveau statut (ex: Membre d'Honneur)"
                 warningText="La modification des statuts affecte les filtres de la page Membres."
               />
-              <ListManager 
+              <ListManager
                 title="Parcours Visiteurs"
                 subtitle="Étapes d'intégration"
                 icon={<RotateCcw size={18} />}
                 items={visitorStatuses}
                 onUpdate={setVisitorStatuses}
+                onRename={(o, n) => addRename('visitorStatuses', o, n)}
                 placeholder="Nouvelle étape (ex: Baptisé)"
                 warningText="Les étapes sont affichées dans le pipeline du module Visiteurs."
               />

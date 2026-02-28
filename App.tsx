@@ -3,22 +3,26 @@ import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react'
 import Sidebar from './components/Sidebar';
 import LogoutModal from './components/LogoutModal';
 import QuickActionModal from './components/QuickActionModal';
+
+// Dashboard chargé en priorité (page par défaut après connexion)
 import Dashboard from './pages/Dashboard';
-import Members from './pages/Members';
-import Planning from './pages/Planning';
-import Finances from './pages/Finances';
-import Services from './pages/Services';
-import Visitors from './pages/Visitors';
-import Discipleship from './pages/Discipleship';
-import Attendance from './pages/Attendance';
-import Meditations from './pages/Meditations';
-import Meetings from './pages/Meetings';
-import Events from './pages/Events';
-import Reports from './pages/Reports';
-import Settings from './pages/Settings';
-import Admin from './pages/Admin';
-import Login from './pages/Login';
-import SpiritualGrowth from './pages/SpiritualGrowth';
+
+// Autres pages chargées à la demande (code splitting)
+const Members = React.lazy(() => import('./pages/Members'));
+const Planning = React.lazy(() => import('./pages/Planning'));
+const Finances = React.lazy(() => import('./pages/Finances'));
+const Services = React.lazy(() => import('./pages/Services'));
+const Visitors = React.lazy(() => import('./pages/Visitors'));
+const Discipleship = React.lazy(() => import('./pages/Discipleship'));
+const Attendance = React.lazy(() => import('./pages/Attendance'));
+const Meditations = React.lazy(() => import('./pages/Meditations'));
+const Meetings = React.lazy(() => import('./pages/Meetings'));
+const Events = React.lazy(() => import('./pages/Events'));
+const Reports = React.lazy(() => import('./pages/Reports'));
+const Settings = React.lazy(() => import('./pages/Settings'));
+const Admin = React.lazy(() => import('./pages/Admin'));
+const Login = React.lazy(() => import('./pages/Login'));
+const SpiritualGrowth = React.lazy(() => import('./pages/SpiritualGrowth'));
 import { supabase } from './lib/supabase';
 import { getAdminUserByEmail, getMembers, getVisitors, getAttendanceSessions, getChurchEvents, upsertNotification, getChurchSettings, getAppConfig } from './lib/db';
 import { setCurrencyCache } from './constants';
@@ -396,8 +400,18 @@ const App: React.FC = () => {
     );
   }
 
+  const pageFallback = (
+    <div className="min-h-[60vh] flex items-center justify-center">
+      <div className="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin opacity-40" />
+    </div>
+  );
+
   if (!isAuthenticated) {
-    return <Login onLogin={handleLogin} />;
+    return (
+      <React.Suspense fallback={pageFallback}>
+        <Login onLogin={handleLogin} />
+      </React.Suspense>
+    );
   }
 
   return (
@@ -553,7 +567,9 @@ const App: React.FC = () => {
         </header>
 
         <div className="p-8 max-7xl mx-auto">
-          {renderContent()}
+          <React.Suspense fallback={pageFallback}>
+            {renderContent()}
+          </React.Suspense>
         </div>
 
         <LogoutModal isOpen={showLogoutConfirm} onClose={() => setShowLogoutConfirm(false)} onConfirm={handleConfirmLogout} />

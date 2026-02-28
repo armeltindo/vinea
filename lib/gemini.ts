@@ -1,6 +1,15 @@
 import { GoogleGenAI } from "@google/genai";
 
-const getAI = () => new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY });
+const geminiApiKey = import.meta.env.VITE_GEMINI_API_KEY;
+
+if (!geminiApiKey) {
+  throw new Error(
+    'La variable VITE_GEMINI_API_KEY est manquante. ' +
+    "Vérifiez votre fichier .env.local ou les variables d'environnement Vercel."
+  );
+}
+
+const getAI = () => new GoogleGenAI({ apiKey: geminiApiKey });
 
 let _churchNameCache = 'Vinea';
 export const setChurchNameCache = (name: string) => { _churchNameCache = name; };

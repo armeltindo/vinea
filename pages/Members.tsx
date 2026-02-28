@@ -241,6 +241,32 @@ const Members: React.FC = () => {
     return result;
   }, [members, searchTerm, statusFilter, roleFilter, sortOrder]);
 
+  const stats = useMemo(() => {
+    const total = members.length;
+    const actifs = members.filter(m => (m.status as string).toLowerCase().includes('actif')).length;
+    const baptises = members.filter(m => m.baptized).length;
+    const hommes = members.filter(m => m.gender === 'Masculin').length;
+    const femmes = members.filter(m => m.gender === 'Féminin').length;
+
+    const now = new Date();
+    const thisMonth = now.getMonth() + 1;
+    const anniversaires = members.filter(m => {
+      if (!m.birthDate) return false;
+      const parts = m.birthDate.split('-');
+      return parts.length >= 2 && parseInt(parts[1]) === thisMonth;
+    }).length;
+
+    const parStatut: Record<string, number> = {};
+    members.forEach(m => { parStatut[m.status] = (parStatut[m.status] || 0) + 1; });
+
+    const parDept: Record<string, number> = {};
+    members.forEach(m => { (m.departments || []).forEach(d => { parDept[d] = (parDept[d] || 0) + 1; }); });
+    const topDepts = Object.entries(parDept).sort(([, a], [, b]) => b - a).slice(0, 6);
+    const maxDept = topDepts[0]?.[1] || 1;
+
+    return { total, actifs, baptises, hommes, femmes, anniversaires, parStatut, topDepts, maxDept };
+  }, [members]);
+
   const handleOpenDetails = (member: Member) => {
     setSelectedMember(member);
     setIsDetailsOpen(true);
@@ -565,6 +591,132 @@ const Members: React.FC = () => {
         </div>
       </div>
 
+      {/* ── Dashboard ── */}
+      {!isLoadingData && stats.total > 0 && (
+        <div className="space-y-4">
+          {/* KPI cards */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="bg-white border border-slate-100 rounded-2xl p-5 shadow-sm flex items-center gap-4 hover:shadow-md transition-shadow">
+              <div className="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center border border-indigo-100 shrink-0">
+                <Users size={22} />
+              </div>
+              <div>
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Total membres</p>
+                <p className="text-3xl font-black text-slate-900">{stats.total}</p>
+              </div>
+            </div>
+
+            <div className="bg-white border border-slate-100 rounded-2xl p-5 shadow-sm flex items-center gap-4 hover:shadow-md transition-shadow">
+              <div className="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center border border-emerald-100 shrink-0">
+                <UserCheck size={22} />
+              </div>
+              <div>
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Actifs</p>
+                <p className="text-3xl font-black text-slate-900">{stats.actifs}</p>
+                <p className="text-[9px] text-emerald-600 font-black uppercase mt-0.5">
+                  {stats.total > 0 ? Math.round((stats.actifs / stats.total) * 100) : 0}% du total
+                </p>
+              </div>
+            </div>
+
+            <div className="bg-white border border-slate-100 rounded-2xl p-5 shadow-sm flex items-center gap-4 hover:shadow-md transition-shadow">
+              <div className="w-12 h-12 bg-violet-50 text-violet-600 rounded-xl flex items-center justify-center border border-violet-100 shrink-0">
+                <ShieldCheck size={22} />
+              </div>
+              <div>
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Baptisés</p>
+                <p className="text-3xl font-black text-slate-900">{stats.baptises}</p>
+                <p className="text-[9px] text-violet-600 font-black uppercase mt-0.5">
+                  {stats.total > 0 ? Math.round((stats.baptises / stats.total) * 100) : 0}% du total
+                </p>
+              </div>
+            </div>
+
+            <div className="bg-white border border-slate-100 rounded-2xl p-5 shadow-sm flex items-center gap-4 hover:shadow-md transition-shadow">
+              <div className="w-12 h-12 bg-amber-50 text-amber-600 rounded-xl flex items-center justify-center border border-amber-100 shrink-0">
+                <PartyPopper size={22} />
+              </div>
+              <div>
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Anniversaires</p>
+                <p className="text-3xl font-black text-slate-900">{stats.anniversaires}</p>
+                <p className="text-[9px] text-amber-600 font-black uppercase mt-0.5">Ce mois-ci</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Départements + Genre */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            {/* Top départements */}
+            <div className="lg:col-span-2 bg-white border border-slate-100 rounded-2xl p-6 shadow-sm">
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-5 flex items-center gap-2">
+                <Briefcase size={12} /> Répartition par département
+              </p>
+              {stats.topDepts.length > 0 ? (
+                <div className="space-y-3">
+                  {stats.topDepts.map(([dept, count]) => (
+                    <div key={dept} className="flex items-center gap-3">
+                      <div className="w-28 shrink-0 flex items-center gap-1.5">
+                        {getDepartmentIcon(dept, 10)}
+                        <span className="text-[9px] font-black text-slate-500 uppercase tracking-tight truncate">{dept}</span>
+                      </div>
+                      <div className="flex-1 bg-slate-100 rounded-full h-2 overflow-hidden">
+                        <div
+                          className="h-2 rounded-full bg-indigo-500 transition-all duration-700"
+                          style={{ width: `${Math.round((count / stats.maxDept) * 100)}%` }}
+                        />
+                      </div>
+                      <span className="text-xs font-black text-slate-700 w-6 text-right shrink-0">{count}</span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-xs text-slate-400 italic">Aucun département assigné</p>
+              )}
+            </div>
+
+            {/* Genre + Statuts */}
+            <div className="space-y-4">
+              {/* Genre */}
+              <div className="bg-white border border-slate-100 rounded-2xl p-5 shadow-sm">
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Genre</p>
+                <div className="flex gap-3">
+                  <div className="flex-1 bg-indigo-50 border border-indigo-100 rounded-xl p-3 text-center">
+                    <p className="text-xl font-black text-indigo-700">{stats.hommes}</p>
+                    <p className="text-[9px] font-black text-indigo-400 uppercase mt-0.5">Hommes</p>
+                  </div>
+                  <div className="flex-1 bg-pink-50 border border-pink-100 rounded-xl p-3 text-center">
+                    <p className="text-xl font-black text-pink-600">{stats.femmes}</p>
+                    <p className="text-[9px] font-black text-pink-400 uppercase mt-0.5">Femmes</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Statuts */}
+              <div className="bg-white border border-slate-100 rounded-2xl p-5 shadow-sm">
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Statuts</p>
+                <div className="space-y-2">
+                  {Object.entries(stats.parStatut).sort(([, a], [, b]) => b - a).map(([statut, count]) => (
+                    <div key={statut} className="flex items-center justify-between">
+                      <span className="text-[9px] font-black text-slate-500 uppercase tracking-tight">{statut}</span>
+                      <div className="flex items-center gap-2">
+                        <div className="w-16 bg-slate-100 rounded-full h-1.5 overflow-hidden">
+                          <div
+                            className="h-1.5 rounded-full bg-indigo-400 transition-all duration-500"
+                            style={{ width: `${stats.total > 0 ? Math.round((count / stats.total) * 100) : 0}%` }}
+                          />
+                        </div>
+                        <span className="text-xs font-black text-slate-700 w-4 text-right">{count}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Filtres & Table ── */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div className="md:col-span-1">
           <div className="relative group">

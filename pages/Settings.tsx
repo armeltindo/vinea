@@ -657,7 +657,22 @@ const Settings: React.FC = () => {
 
   const handleConfirmedPurge = async () => {
     const APP_CONFIG_KEYS = ['notification_settings', 'member_statuses', 'member_roles', 'visitor_statuses', 'service_types', 'departments', 'ai_config', 'finance_categories', 'event_goals', 'event_assignments', 'attendance_assignments', 'attendance_followup_history'];
+    const TABLES_TO_PURGE = [
+      'members', 'visitors', 'financial_records', 'donation_campaigns', 'donation_promises',
+      'church_services', 'attendance_sessions', 'departments_info', 'department_activities',
+      'church_events', 'meetings', 'meditations', 'church_settings', 'spiritual_goals',
+      'spiritual_points', 'discipleship_pairs', 'discipleship_enrollments',
+      'system_notifications', 'app_config',
+    ];
+
+    // Effacer les clés app_config
     await Promise.all(APP_CONFIG_KEYS.map(key => setAppConfig(key, null)));
+
+    // Effacer toutes les lignes des tables Supabase (admin_users conservés)
+    await Promise.all(
+      TABLES_TO_PURGE.map(table => supabase.from(table).delete().not('id', 'is', null))
+    );
+
     window.dispatchEvent(new Event('vinea_data_purged'));
     setIsPurgeModalOpen(false);
     window.location.reload();

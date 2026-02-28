@@ -299,7 +299,7 @@ const Members: React.FC = () => {
     const isCsv = file.name.toLowerCase().endsWith('.csv');
     const reader = new FileReader();
     
-    reader.onload = (event) => {
+    reader.onload = async (event) => {
       try {
         const content = event.target?.result as string;
         let importedData: any[] = [];

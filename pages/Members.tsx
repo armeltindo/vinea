@@ -267,7 +267,7 @@ const Members: React.FC = () => {
     return { total, actifs, baptises, hommes, femmes, anniversaires, parStatut, topDepts, maxDept };
   }, [members]);
 
-
+  const handleOpenDetails = (member: Member) => {
     setSelectedMember(member);
     setIsDetailsOpen(true);
   };

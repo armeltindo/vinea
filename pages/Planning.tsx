@@ -57,13 +57,14 @@ import {
   Filter,
   CircleDashed,
   RefreshCw,
-  Repeat
+  Repeat,
+  Check
 } from 'lucide-react';
 import { analyzePageData } from '../lib/gemini';
 import { formatCurrency, DEPARTMENTS as CONST_DEPARTMENTS } from '../constants';
 import { DepartmentInfo, DepartmentActivity, ActivityStatus, Member, Department, ActivityRecurrence } from '../types';
 import { cn, generateId, formatFirstName, getInitials } from '../utils';
-import { getDepartmentsInfo, upsertDepartmentInfo, deleteDepartmentInfo, getDepartmentActivities, createDepartmentActivity, updateDepartmentActivity, deleteDepartmentActivity, getMembers, getChurchSettings, getAppConfig } from '../lib/db';
+import { getDepartmentsInfo, upsertDepartmentInfo, deleteDepartmentInfo, getDepartmentActivities, createDepartmentActivity, updateDepartmentActivity, deleteDepartmentActivity, getMembers, getChurchSettings, getAppConfig, syncDepartmentToMembers } from '../lib/db';
 
 const formatToUIDate = (isoDate: string | undefined) => {
   if (!isoDate) return '';
@@ -183,10 +184,12 @@ const Planning: React.FC = () => {
   const [analysis, setAnalysis] = useState<string | null>(null);
 
   const [presidentSearch, setPresidentSearch] = useState('');
+  const [assistantSearch, setAssistantSearch] = useState('');
+  const [deptMemberSearch, setDeptMemberSearch] = useState('');
   const [responsibleSearch, setResponsibleSearch] = useState('');
 
   const [deptFormData, setDeptFormData] = useState<Partial<DepartmentInfo>>({
-    name: '', description: '', presidentId: '', memberIds: [], status: 'Actif', color: '#4f46e5'
+    name: '', description: '', presidentId: '', assistantId: '', memberIds: [], status: 'Actif', color: '#4f46e5'
   });
   const [activityFormData, setActivityFormData] = useState<Partial<DepartmentActivity>>({
     title: '', deptId: '', responsibleId: '', associateName: '', cost: 0, deadline: '', status: ActivityStatus.PLANIFIEE, observations: '', recurrence: 'Ponctuelle'
@@ -351,7 +354,15 @@ const Planning: React.FC = () => {
     if (!editingDept) {
       deptData.id = generateId();
     }
+    const previousMemberIds = editingDept?.memberIds ?? [];
     await upsertDepartmentInfo(deptData);
+    // Sync : répercuter les changements de membres sur members.departments
+    await syncDepartmentToMembers(deptData.name, deptData.memberIds, previousMemberIds);
+    // Rafraîchir la liste des membres localement pour refléter la sync
+    if (deptData.memberIds !== previousMemberIds) {
+      const updatedMembers = await getMembers();
+      setMembers(updatedMembers);
+    }
     if (editingDept) {
       setDepartments(prev => prev.map(d => d.id === editingDept.id ? deptData : d));
     } else {
@@ -409,6 +420,9 @@ const Planning: React.FC = () => {
     setDeptFormData({ ...dept });
     const president = members.find(m => m.id === dept.presidentId);
     setPresidentSearch(president ? `${formatFirstName(president.firstName)} ${president.lastName.toUpperCase()}` : '');
+    const assistant = members.find(m => m.id === dept.assistantId);
+    setAssistantSearch(assistant ? `${formatFirstName(assistant.firstName)} ${assistant.lastName.toUpperCase()}` : '');
+    setDeptMemberSearch('');
     setIsDeptDetailsOpen(false);
     setIsDeptFormOpen(true);
   };
@@ -517,17 +531,23 @@ const Planning: React.FC = () => {
                       <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Responsable</span>
                       <div className="flex items-center gap-2">
                         <div className="w-6 h-6 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-center overflow-hidden shrink-0 text-[8px] font-black text-indigo-600 uppercase">
-                          {president?.photoUrl ? (
-                            <img src={president.photoUrl} alt="" className="w-full h-full object-cover" />
-                          ) : (
-                            getInitials(president?.firstName, president?.lastName)
-                          )}
+                          {president?.photoUrl ? <img src={president.photoUrl} alt="" className="w-full h-full object-cover" /> : getInitials(president?.firstName, president?.lastName)}
                         </div>
                         <p className="text-xs font-black text-slate-800 truncate uppercase">{getMemberNameFormatted(dept.presidentId)}</p>
                       </div>
                     </div>
-                    <div className="space-y-1"><span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Effectif</span><div className="flex items-center gap-2"><Users size={14} className="text-slate-400" /><span className="text-xs font-black text-slate-800">{dept.memberIds.length} fidèles</span></div></div>
+                    <div className="space-y-1">
+                      <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Effectif</span>
+                      <div className="flex items-center gap-2"><Users size={14} className="text-slate-400" /><span className="text-xs font-black text-slate-800">{dept.memberIds.length} membres</span></div>
+                    </div>
                   </div>
+                  {dept.assistantId && (() => { const assistant = members.find(m => m.id === dept.assistantId); return (
+                    <div className="flex items-center gap-2 pt-3 border-t border-slate-100">
+                      <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest shrink-0">Assistant :</span>
+                      <div className="w-5 h-5 rounded-md bg-slate-50 border border-slate-100 flex items-center justify-center overflow-hidden shrink-0 text-[7px] font-black text-slate-400 uppercase">{assistant?.photoUrl ? <img src={assistant.photoUrl} alt="" className="w-full h-full object-cover" /> : getInitials(assistant?.firstName, assistant?.lastName)}</div>
+                      <p className="text-[10px] font-black text-slate-600 truncate uppercase">{getMemberNameFormatted(dept.assistantId)}</p>
+                    </div>
+                  ); })()}
                   
                   <div className="pt-4" onClick={e => e.stopPropagation()}>
                     <button 
@@ -861,52 +881,132 @@ const Planning: React.FC = () => {
           <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity" onClick={() => !isSubmitting && setIsDeptFormOpen(false)} />
           <div className="relative w-full max-w-lg bg-white rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
             <div className="bg-indigo-600 p-8 text-white shrink-0">
-               <h3 className="text-xl font-black uppercase tracking-tight">{editingDept ? 'Modifier Département' : 'Configuration Département'}</h3>
-               <button onClick={() => setIsDeptFormOpen(false)} disabled={isSubmitting} className="absolute top-6 right-6 p-2 hover:bg-white/10 rounded-full transition-colors text-white disabled:opacity-50"><X size={20} /></button>
+              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-indigo-300 mb-1">{editingDept?.name}</p>
+              <h3 className="text-xl font-black uppercase tracking-tight">Configuration Département</h3>
+              <button onClick={() => setIsDeptFormOpen(false)} disabled={isSubmitting} className="absolute top-6 right-6 p-2 hover:bg-white/10 rounded-full transition-colors text-white disabled:opacity-50"><X size={20} /></button>
             </div>
             <form onSubmit={saveDept} className="p-8 space-y-6 bg-slate-50/30 overflow-y-auto custom-scrollbar">
-               <div className="space-y-4">
-                  <div className="space-y-1.5"><label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Mission / Vision</label><textarea rows={3} value={deptFormData.description || ''} onChange={e => setDeptFormData({...deptFormData, description: e.target.value})} className="w-full px-5 py-4 bg-white border border-slate-200 rounded-2xl outline-none text-sm font-medium resize-none shadow-sm" placeholder="Objectifs du département..." /></div>
-                  <div className="space-y-1.5 relative">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 flex items-center gap-2"><UserCheck size={12} className="text-indigo-600" /> Responsable Principal</label>
-                    <div className="relative group">
-                       <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
-                       <input 
-                          type="text" 
-                          placeholder="RECHERCHER UN MEMBRE..." 
-                          value={presidentSearch} 
-                          onChange={e => { 
-                            setPresidentSearch(e.target.value); 
-                            if (deptFormData.presidentId) setDeptFormData({...deptFormData, presidentId: ''}); 
-                          }} 
-                          className="w-full pl-12 pr-4 py-4 bg-white border border-slate-200 rounded-2xl outline-none text-xs font-black uppercase" 
-                        />
+
+              {/* Mission / Vision */}
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Mission / Vision</label>
+                <textarea rows={3} value={deptFormData.description || ''} onChange={e => setDeptFormData({...deptFormData, description: e.target.value})} className="w-full px-5 py-4 bg-white border border-slate-200 rounded-2xl outline-none text-sm font-medium resize-none shadow-sm" placeholder="Objectifs du département..." />
+              </div>
+
+              {/* Responsable + Assistant */}
+              <div className="grid grid-cols-1 gap-4">
+                {/* Responsable */}
+                <div className="space-y-1.5 relative">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 flex items-center gap-2"><UserCheck size={12} className="text-indigo-600" /> Responsable Principal</label>
+                  <div className="relative">
+                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                    <input
+                      type="text"
+                      placeholder="Rechercher un membre..."
+                      value={presidentSearch}
+                      onChange={e => { setPresidentSearch(e.target.value); if (deptFormData.presidentId) setDeptFormData({...deptFormData, presidentId: ''}); }}
+                      className="w-full pl-12 pr-4 py-3.5 bg-white border border-slate-200 rounded-2xl outline-none text-xs font-black uppercase"
+                    />
+                  </div>
+                  {presidentSearch && !deptFormData.presidentId && (
+                    <div className="absolute z-30 left-0 right-0 top-full mt-1 max-h-40 overflow-y-auto bg-white border border-slate-200 rounded-2xl shadow-xl custom-scrollbar">
+                      {members.filter(m => `${formatFirstName(m.firstName)} ${m.lastName}`.toLowerCase().includes(presidentSearch.toLowerCase())).map(m => (
+                        <button key={m.id} type="button" onClick={() => { setDeptFormData({...deptFormData, presidentId: m.id}); setPresidentSearch(`${formatFirstName(m.firstName)} ${m.lastName.toUpperCase()}`); }} className="w-full text-left px-5 py-3 text-[10px] font-black uppercase hover:bg-indigo-50 flex items-center gap-3 transition-colors border-b border-slate-50 last:border-0">
+                          <div className="w-7 h-7 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-center overflow-hidden shrink-0 text-[8px] font-black text-slate-400 uppercase">{m.photoUrl ? <img src={m.photoUrl} alt="" className="w-full h-full object-cover" /> : getInitials(m.firstName, m.lastName)}</div>
+                          <span className="text-slate-700">{formatFirstName(m.firstName)} {m.lastName.toUpperCase()}</span>
+                        </button>
+                      ))}
                     </div>
-                    {presidentSearch && !deptFormData.presidentId && (
-                      <div className="absolute z-30 left-0 right-0 top-full mt-1 max-h-40 overflow-y-auto bg-white border border-slate-200 rounded-2xl shadow-xl custom-scrollbar">
-                        {members.filter(m => `${formatFirstName(m.firstName)} ${m.lastName}`.toLowerCase().includes(presidentSearch.toLowerCase())).map(m => (
-                          <button key={m.id} type="button" onClick={() => { setDeptFormData({...deptFormData, presidentId: m.id}); setPresidentSearch(`${formatFirstName(m.firstName)} ${m.lastName.toUpperCase()}`); }} className="w-full text-left px-5 py-4 text-[10px] font-black uppercase hover:bg-indigo-50 flex items-center gap-4 transition-colors border-b border-slate-50 last:border-0 flex items-center gap-3">
-                            <div className="w-8 h-8 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-center overflow-hidden shrink-0 text-[8px] font-black text-slate-400 uppercase">
-                               {m.photoUrl ? (
-                                 <img src={m.photoUrl} alt="" className="w-full h-full object-cover" />
-                               ) : (
-                                 getInitials(m.firstName, m.lastName)
-                               )}
-                            </div>
-                            <span className="text-slate-700">{formatFirstName(m.firstName)} {m.lastName.toUpperCase()}</span>
-                          </button>
-                        ))}
-                      </div>
+                  )}
+                </div>
+
+                {/* Assistant */}
+                <div className="space-y-1.5 relative">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 flex items-center gap-2"><UserCheck size={12} className="text-slate-400" /> Assistant(e)</label>
+                  <div className="relative">
+                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                    <input
+                      type="text"
+                      placeholder="Rechercher un membre..."
+                      value={assistantSearch}
+                      onChange={e => { setAssistantSearch(e.target.value); if (deptFormData.assistantId) setDeptFormData({...deptFormData, assistantId: ''}); }}
+                      className="w-full pl-12 pr-4 py-3.5 bg-white border border-slate-200 rounded-2xl outline-none text-xs font-black uppercase"
+                    />
+                    {deptFormData.assistantId && (
+                      <button type="button" onClick={() => { setDeptFormData({...deptFormData, assistantId: ''}); setAssistantSearch(''); }} className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-rose-500 transition-colors"><X size={14} /></button>
                     )}
                   </div>
-               </div>
-               <div className="flex gap-3 pt-8 pb-4">
-                  <button type="button" onClick={() => setIsDeptFormOpen(false)} disabled={isSubmitting} className="flex-1 py-4 bg-white border border-slate-200 text-slate-500 rounded-2xl text-[11px] font-black uppercase">Annuler</button>
-                  <button type="submit" disabled={isSubmitting} className="flex-[2] py-4 bg-indigo-600 text-white rounded-2xl text-[11px] font-black uppercase tracking-widest shadow-xl flex items-center justify-center gap-2 disabled:opacity-50">
-                    {isSubmitting ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
-                    Enregistrer
-                  </button>
-               </div>
+                  {assistantSearch && !deptFormData.assistantId && (
+                    <div className="absolute z-30 left-0 right-0 top-full mt-1 max-h-40 overflow-y-auto bg-white border border-slate-200 rounded-2xl shadow-xl custom-scrollbar">
+                      {members.filter(m => `${formatFirstName(m.firstName)} ${m.lastName}`.toLowerCase().includes(assistantSearch.toLowerCase())).map(m => (
+                        <button key={m.id} type="button" onClick={() => { setDeptFormData({...deptFormData, assistantId: m.id}); setAssistantSearch(`${formatFirstName(m.firstName)} ${m.lastName.toUpperCase()}`); }} className="w-full text-left px-5 py-3 text-[10px] font-black uppercase hover:bg-slate-50 flex items-center gap-3 transition-colors border-b border-slate-50 last:border-0">
+                          <div className="w-7 h-7 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-center overflow-hidden shrink-0 text-[8px] font-black text-slate-400 uppercase">{m.photoUrl ? <img src={m.photoUrl} alt="" className="w-full h-full object-cover" /> : getInitials(m.firstName, m.lastName)}</div>
+                          <span className="text-slate-700">{formatFirstName(m.firstName)} {m.lastName.toUpperCase()}</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Membres de l'équipe */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2"><Users size={12} className="text-indigo-600" /> Membres de l'équipe</label>
+                  <span className="text-[10px] font-black text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-lg">{deptFormData.memberIds?.length ?? 0} sélectionné(s)</span>
+                </div>
+                <div className="relative">
+                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={14} />
+                  <input
+                    type="text"
+                    placeholder="Rechercher parmi les membres..."
+                    value={deptMemberSearch}
+                    onChange={e => setDeptMemberSearch(e.target.value)}
+                    className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-2xl outline-none text-xs font-bold"
+                  />
+                </div>
+                <div className="max-h-52 overflow-y-auto space-y-1 custom-scrollbar bg-white border border-slate-200 rounded-2xl p-2">
+                  {members
+                    .filter(m => `${formatFirstName(m.firstName)} ${m.lastName}`.toLowerCase().includes(deptMemberSearch.toLowerCase()))
+                    .map(m => {
+                      const selected = (deptFormData.memberIds ?? []).includes(m.id);
+                      return (
+                        <button
+                          key={m.id}
+                          type="button"
+                          onClick={() => {
+                            const ids = deptFormData.memberIds ?? [];
+                            setDeptFormData({...deptFormData, memberIds: selected ? ids.filter(id => id !== m.id) : [...ids, m.id]});
+                          }}
+                          className={cn(
+                            "w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all text-left",
+                            selected ? "bg-indigo-50 border border-indigo-200" : "hover:bg-slate-50 border border-transparent"
+                          )}
+                        >
+                          <div className="w-7 h-7 rounded-lg bg-slate-100 flex items-center justify-center overflow-hidden shrink-0 text-[8px] font-black text-slate-400 uppercase">{m.photoUrl ? <img src={m.photoUrl} alt="" className="w-full h-full object-cover" /> : getInitials(m.firstName, m.lastName)}</div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-[11px] font-black text-slate-800 uppercase truncate">{formatFirstName(m.firstName)} {m.lastName.toUpperCase()}</p>
+                            <p className="text-[9px] text-slate-400 font-bold uppercase">{m.type}</p>
+                          </div>
+                          <div className={cn("w-4 h-4 rounded-md border-2 flex items-center justify-center shrink-0 transition-all", selected ? "bg-indigo-600 border-indigo-600" : "border-slate-300")}>
+                            {selected && <Check size={10} strokeWidth={3} className="text-white" />}
+                          </div>
+                        </button>
+                      );
+                    })}
+                  {members.filter(m => `${formatFirstName(m.firstName)} ${m.lastName}`.toLowerCase().includes(deptMemberSearch.toLowerCase())).length === 0 && (
+                    <p className="text-center text-[10px] text-slate-400 py-4 font-bold uppercase">Aucun membre trouvé</p>
+                  )}
+                </div>
+              </div>
+
+              <div className="flex gap-3 pt-4 pb-4">
+                <button type="button" onClick={() => setIsDeptFormOpen(false)} disabled={isSubmitting} className="flex-1 py-4 bg-white border border-slate-200 text-slate-500 rounded-2xl text-[11px] font-black uppercase">Annuler</button>
+                <button type="submit" disabled={isSubmitting} className="flex-[2] py-4 bg-indigo-600 text-white rounded-2xl text-[11px] font-black uppercase tracking-widest shadow-xl flex items-center justify-center gap-2 disabled:opacity-50">
+                  {isSubmitting ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
+                  Enregistrer
+                </button>
+              </div>
             </form>
           </div>
         </div>
@@ -1033,18 +1133,31 @@ const Planning: React.FC = () => {
               </div>
             </div>
             <div className="flex-1 overflow-y-auto p-10 space-y-8 bg-slate-50/30">
-              <div className="bg-white p-6 rounded-[2.5rem] border border-slate-100 shadow-sm flex flex-col items-center text-center space-y-3">
-                 <div className="w-20 h-20 rounded-[2rem] bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 font-black text-2xl uppercase overflow-hidden shadow-inner">
-                  {members.find(m => m.id === selectedDeptForDetails.presidentId)?.photoUrl ? (
-                    <img src={members.find(m => m.id === selectedDeptForDetails.presidentId)?.photoUrl} alt="" className="w-full h-full object-cover" />
-                  ) : (
-                    getInitials(members.find(m => m.id === selectedDeptForDetails.presidentId)?.firstName, members.find(m => m.id === selectedDeptForDetails.presidentId)?.lastName)
-                  )}
-                 </div>
-                 <div>
-                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Responsable Principal</p>
-                    <p className="text-lg font-black text-slate-900 uppercase">{getMemberNameFormatted(selectedDeptForDetails.presidentId)}</p>
-                 </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="bg-white p-5 rounded-[2rem] border border-slate-100 shadow-sm flex flex-col items-center text-center space-y-2">
+                  <div className="w-14 h-14 rounded-[1.5rem] bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 font-black text-lg uppercase overflow-hidden shadow-inner">
+                    {members.find(m => m.id === selectedDeptForDetails.presidentId)?.photoUrl
+                      ? <img src={members.find(m => m.id === selectedDeptForDetails.presidentId)?.photoUrl} alt="" className="w-full h-full object-cover" />
+                      : getInitials(members.find(m => m.id === selectedDeptForDetails.presidentId)?.firstName, members.find(m => m.id === selectedDeptForDetails.presidentId)?.lastName)}
+                  </div>
+                  <div>
+                    <p className="text-[9px] font-black text-indigo-400 uppercase tracking-widest">Responsable</p>
+                    <p className="text-xs font-black text-slate-900 uppercase leading-tight">{getMemberNameFormatted(selectedDeptForDetails.presidentId)}</p>
+                  </div>
+                </div>
+                <div className="bg-white p-5 rounded-[2rem] border border-slate-100 shadow-sm flex flex-col items-center text-center space-y-2">
+                  <div className="w-14 h-14 rounded-[1.5rem] bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-400 font-black text-lg uppercase overflow-hidden shadow-inner">
+                    {selectedDeptForDetails.assistantId
+                      ? (members.find(m => m.id === selectedDeptForDetails.assistantId)?.photoUrl
+                          ? <img src={members.find(m => m.id === selectedDeptForDetails.assistantId)?.photoUrl} alt="" className="w-full h-full object-cover" />
+                          : getInitials(members.find(m => m.id === selectedDeptForDetails.assistantId)?.firstName, members.find(m => m.id === selectedDeptForDetails.assistantId)?.lastName))
+                      : <UserCheck size={24} className="text-slate-300" />}
+                  </div>
+                  <div>
+                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Assistant(e)</p>
+                    <p className="text-xs font-black text-slate-900 uppercase leading-tight">{selectedDeptForDetails.assistantId ? getMemberNameFormatted(selectedDeptForDetails.assistantId) : '—'}</p>
+                  </div>
+                </div>
               </div>
               <div className="space-y-4">
                 <h4 className="text-[11px] font-black text-slate-900 uppercase flex items-center gap-2"><Users size={18} className="text-indigo-500" /> Équipe ({selectedDeptForDetails.memberIds.length})</h4>

@@ -63,7 +63,7 @@ import { analyzePageData } from '../lib/gemini';
 import { formatCurrency, DEPARTMENTS as CONST_DEPARTMENTS } from '../constants';
 import { DepartmentInfo, DepartmentActivity, ActivityStatus, Member, Department, ActivityRecurrence } from '../types';
 import { cn, generateId, formatFirstName, getInitials } from '../utils';
-import { getDepartmentsInfo, upsertDepartmentInfo, deleteDepartmentInfo, getDepartmentActivities, createDepartmentActivity, updateDepartmentActivity, deleteDepartmentActivity, getMembers, getChurchSettings } from '../lib/db';
+import { getDepartmentsInfo, upsertDepartmentInfo, deleteDepartmentInfo, getDepartmentActivities, createDepartmentActivity, updateDepartmentActivity, deleteDepartmentActivity, getMembers, getChurchSettings, getAppConfig } from '../lib/db';
 
 const formatToUIDate = (isoDate: string | undefined) => {
   if (!isoDate) return '';
@@ -194,16 +194,22 @@ const Planning: React.FC = () => {
 
   useEffect(() => {
     const load = async () => {
-      const [depts, acts, mems, settings] = await Promise.all([
+      const [depts, acts, mems, settings, configNames] = await Promise.all([
         getDepartmentsInfo(),
         getDepartmentActivities(),
         getMembers(),
         getChurchSettings(),
+        getAppConfig('departments'),
       ]);
 
-      // Si aucun département en DB, initialiser depuis les constantes et persister
+      // Noms de référence : préférer la liste Settings, sinon les constantes
+      const referenceNames: string[] = (configNames && configNames.length > 0)
+        ? configNames
+        : CONST_DEPARTMENTS;
+
       if (depts.length === 0) {
-        const defaultDepts: DepartmentInfo[] = CONST_DEPARTMENTS.map(name => ({
+        // Initialisation complète depuis les noms de référence
+        const defaultDepts: DepartmentInfo[] = referenceNames.map(name => ({
           id: generateId(),
           name,
           description: 'Département à configurer.',
@@ -215,7 +221,23 @@ const Planning: React.FC = () => {
         await Promise.all(defaultDepts.map(d => upsertDepartmentInfo(d)));
         setDepartments(defaultDepts);
       } else {
-        setDepartments(depts);
+        // Synchroniser : créer les entrées manquantes pour les noms ajoutés dans Settings
+        const existingNames = new Set(depts.map(d => d.name));
+        const newEntries: DepartmentInfo[] = referenceNames
+          .filter(name => !existingNames.has(name))
+          .map(name => ({
+            id: generateId(),
+            name,
+            description: 'Département à configurer.',
+            presidentId: '',
+            memberIds: [],
+            status: 'Actif',
+            color: '#4f46e5'
+          }));
+        if (newEntries.length > 0) {
+          await Promise.all(newEntries.map(d => upsertDepartmentInfo(d)));
+        }
+        setDepartments([...depts, ...newEntries]);
       }
 
       setActivities(acts);

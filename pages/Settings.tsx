@@ -365,6 +365,9 @@ const Settings: React.FC = () => {
     visitorStatuses: [string, string][];
   }>({ departments: [], memberStatuses: [], memberRoles: [], visitorStatuses: [] });
 
+  // Guard : adminInfo n'est sauvegardé/propagé que s'il a été chargé depuis Supabase
+  const adminInfoLoaded = useRef(false);
+
   const addRename = (type: keyof typeof pendingRenames.current, oldVal: string, newVal: string) => {
     pendingRenames.current[type].push([oldVal, newVal]);
   };
@@ -439,6 +442,7 @@ const Settings: React.FC = () => {
         const me = mappedUsers.find((u: any) => u.email.toLowerCase() === currentEmail.toLowerCase());
         if (me) {
           setAdminInfo({ fullName: me.fullName, role: me.role, email: me.email, avatar: me.avatar });
+          adminInfoLoaded.current = true;
         }
       } else {
         setAdminUsers([{
@@ -482,19 +486,22 @@ const Settings: React.FC = () => {
       setAppConfig('ai_config', aiConfig),
     ]);
 
-    // Mettre à jour l'admin user courant si les infos ont changé
-    const matchingUser = adminUsers.find(u => u.email.toLowerCase() === adminInfo.email.toLowerCase());
-    if (matchingUser) {
-      await upsertAdminUser({
-        id: matchingUser.id,
-        full_name: adminInfo.fullName,
-        email: adminInfo.email,
-        role: matchingUser.role,
-        status: matchingUser.status,
-        avatar: adminInfo.avatar,
-        last_active: matchingUser.lastActive,
-        permissions: matchingUser.permissions,
-      });
+    // Mettre à jour l'admin user courant uniquement si le profil a été chargé depuis Supabase
+    // (évite d'écraser les données réelles avec les valeurs par défaut du state initial)
+    if (adminInfoLoaded.current) {
+      const matchingUser = adminUsers.find(u => u.email.toLowerCase() === adminInfo.email.toLowerCase());
+      if (matchingUser) {
+        await upsertAdminUser({
+          id: matchingUser.id,
+          full_name: adminInfo.fullName,
+          email: adminInfo.email,
+          role: matchingUser.role,
+          status: matchingUser.status,
+          avatar: adminInfo.avatar,
+          last_active: matchingUser.lastActive,
+          permissions: matchingUser.permissions,
+        });
+      }
     }
 
     // ── Propager les renommages aux données existantes ──────────────────────
@@ -537,9 +544,12 @@ const Settings: React.FC = () => {
     // Notifier App.tsx de recharger les settings (currency, nom, logo, couleur + notif settings)
     window.dispatchEvent(new Event('vinea_church_info_updated'));
     // Notifier App.tsx de mettre à jour le nom et l'avatar affichés dans le header/sidebar
-    window.dispatchEvent(new CustomEvent('vinea_profile_updated', {
-      detail: { fullName: adminInfo.fullName, avatar: adminInfo.avatar }
-    }));
+    // Seulement si adminInfo a été correctement chargé depuis Supabase (évite de propager les valeurs par défaut)
+    if (adminInfoLoaded.current) {
+      window.dispatchEvent(new CustomEvent('vinea_profile_updated', {
+        detail: { fullName: adminInfo.fullName, avatar: adminInfo.avatar }
+      }));
+    }
 
     setIsSaving(false);
     setSaveSuccess(true);

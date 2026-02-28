@@ -310,7 +310,9 @@ function departmentInfoToDb(d: Partial<DepartmentInfo>): Record<string, unknown>
   if (d.name !== undefined) db.name = d.name;
   if (d.description !== undefined) db.description = d.description;
   if (d.presidentId !== undefined) db.president_id = d.presidentId || null;
-  if (d.assistantId !== undefined) db.assistant_id = d.assistantId || null;
+  // assistant_id n'est inclus que si non vide — évite de casser les DBs sans la colonne
+  if (d.assistantId) db.assistant_id = d.assistantId;
+  else if (d.assistantId === null) db.assistant_id = null; // effacement explicite
   if (d.memberIds !== undefined) db.member_ids = d.memberIds;
   if (d.status !== undefined) db.status = d.status;
   if (d.color !== undefined) db.color = d.color;

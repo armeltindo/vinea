@@ -77,7 +77,7 @@ import { cn, generateId, formatFirstName } from '../utils';
 import { SERVICES_LIST, DEPARTMENTS as CONST_DEPARTMENTS } from '../constants';
 import { MemberStatus, VisitorStatus, MemberType, NotificationSettings } from '../types';
 import { getChurchSettings, upsertChurchSettings, getAdminUsers, upsertAdminUser, deleteAdminUser, getAppConfig, setAppConfig } from '../lib/db';
-import { supabase } from '../lib/supabase';
+import { supabase, supabaseAdmin } from '../lib/supabase';
 
 interface ListManagerProps {
   title: string;
@@ -648,14 +648,23 @@ const Settings: React.FC = () => {
       upsertAdminUser({ id: newUser.id, full_name: newUser.fullName, email: newUser.email, role: newUser.role, status: newUser.status, avatar: newUser.avatar, last_active: newUser.lastActive, permissions: encodedPerms });
 
       // Créer le compte auth avec le mot de passe par défaut
-      const { data: { session: adminSession } } = await supabase.auth.getSession();
-      await supabase.auth.signUp({ email: newUser.email, password: 'Discipolat' });
-      // Restaurer la session admin si elle a été remplacée
-      if (adminSession) {
-        await supabase.auth.setSession({
-          access_token: adminSession.access_token,
-          refresh_token: adminSession.refresh_token,
+      if (supabaseAdmin) {
+        // Clé service role disponible → compte créé directement confirmé, connexion immédiate possible
+        await supabaseAdmin.auth.admin.createUser({
+          email: newUser.email,
+          password: 'Discipolat',
+          email_confirm: true,
         });
+      } else {
+        // Fallback : signUp classique (envoi d'un email de confirmation)
+        const { data: { session: adminSession } } = await supabase.auth.getSession();
+        await supabase.auth.signUp({ email: newUser.email, password: 'Discipolat' });
+        if (adminSession) {
+          await supabase.auth.setSession({
+            access_token: adminSession.access_token,
+            refresh_token: adminSession.refresh_token,
+          });
+        }
       }
       // Montrer les identifiants au Super Admin
       setNewUserCredentials({ email: newUser.email, fullName: newUser.fullName });

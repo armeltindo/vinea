@@ -302,9 +302,18 @@ const App: React.FC = () => {
     const handleSettingsUpdated = () => { loadChurchAndNotifSettings(); };
     window.addEventListener('vinea_church_info_updated', handleSettingsUpdated);
 
+    // Mettre à jour nom/avatar dans le header et la sidebar quand le profil est modifié dans Settings
+    const handleProfileUpdated = (e: Event) => {
+      const { fullName, avatar } = (e as CustomEvent).detail ?? {};
+      if (fullName) setAdminName(fullName);
+      if (avatar) setAdminAvatar(avatar);
+    };
+    window.addEventListener('vinea_profile_updated', handleProfileUpdated);
+
     return () => {
       subscription.unsubscribe();
       window.removeEventListener('vinea_church_info_updated', handleSettingsUpdated);
+      window.removeEventListener('vinea_profile_updated', handleProfileUpdated);
     };
   }, [loadChurchAndNotifSettings]);
 

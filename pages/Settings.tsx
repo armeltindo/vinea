@@ -365,6 +365,11 @@ const Settings: React.FC = () => {
     visitorStatuses: [string, string][];
   }>({ departments: [], memberStatuses: [], memberRoles: [], visitorStatuses: [] });
 
+  // Guard : adminInfo n'est sauvegardé/propagé que s'il a été chargé depuis Supabase
+  const adminInfoLoaded = useRef(false);
+  // ID stable de l'admin courant — utilisé pour l'upsert même si l'email a été modifié dans le formulaire
+  const currentAdminId = useRef<string | null>(null);
+
   const addRename = (type: keyof typeof pendingRenames.current, oldVal: string, newVal: string) => {
     pendingRenames.current[type].push([oldVal, newVal]);
   };
@@ -439,6 +444,18 @@ const Settings: React.FC = () => {
         const me = mappedUsers.find((u: any) => u.email.toLowerCase() === currentEmail.toLowerCase());
         if (me) {
           setAdminInfo({ fullName: me.fullName, role: me.role, email: me.email, avatar: me.avatar });
+          adminInfoLoaded.current = true;
+          currentAdminId.current = me.id;
+          // Synchroniser le header et la sidebar dès le chargement de Settings
+          window.dispatchEvent(new CustomEvent('vinea_profile_updated', {
+            detail: { fullName: me.fullName, avatar: me.avatar }
+          }));
+        } else if (currentEmail) {
+          // L'utilisateur auth n'a pas encore d'entrée dans admin_users :
+          // on initialise avec son email afin que la sauvegarde puisse créer l'entrée
+          currentAdminId.current = generateId();
+          setAdminInfo(prev => ({ ...prev, email: currentEmail }));
+          adminInfoLoaded.current = true;
         }
       } else {
         setAdminUsers([{
@@ -451,6 +468,11 @@ const Settings: React.FC = () => {
           lastActive: 'Aujourd\'hui',
           permissions: AVAILABLE_MODULES.map(m => m.id),
         }]);
+        if (currentEmail) {
+          currentAdminId.current = generateId();
+          setAdminInfo(prev => ({ ...prev, email: currentEmail }));
+          adminInfoLoaded.current = true;
+        }
       }
     };
     load();
@@ -482,18 +504,19 @@ const Settings: React.FC = () => {
       setAppConfig('ai_config', aiConfig),
     ]);
 
-    // Mettre à jour l'admin user courant si les infos ont changé
-    const matchingUser = adminUsers.find(u => u.email.toLowerCase() === adminInfo.email.toLowerCase());
-    if (matchingUser) {
+    // Sauvegarder le profil admin courant si les données ont été chargées (ou initialisées)
+    // matchingUser peut être absent si c'est un nouvel utilisateur → on utilise des valeurs par défaut
+    if (adminInfoLoaded.current && currentAdminId.current) {
+      const matchingUser = adminUsers.find(u => u.id === currentAdminId.current);
       await upsertAdminUser({
-        id: matchingUser.id,
+        id: currentAdminId.current,
         full_name: adminInfo.fullName,
         email: adminInfo.email,
-        role: matchingUser.role,
-        status: matchingUser.status,
+        role: matchingUser?.role ?? 'Super Admin',
+        status: matchingUser?.status ?? 'Actif',
         avatar: adminInfo.avatar,
-        last_active: matchingUser.lastActive,
-        permissions: matchingUser.permissions,
+        last_active: matchingUser?.lastActive ?? new Date().toISOString(),
+        permissions: matchingUser?.permissions ?? AVAILABLE_MODULES.map(m => m.id),
       });
     }
 
@@ -536,6 +559,13 @@ const Settings: React.FC = () => {
 
     // Notifier App.tsx de recharger les settings (currency, nom, logo, couleur + notif settings)
     window.dispatchEvent(new Event('vinea_church_info_updated'));
+    // Notifier App.tsx de mettre à jour le nom et l'avatar affichés dans le header/sidebar
+    // Seulement si adminInfo a été correctement chargé depuis Supabase (évite de propager les valeurs par défaut)
+    if (adminInfoLoaded.current) {
+      window.dispatchEvent(new CustomEvent('vinea_profile_updated', {
+        detail: { fullName: adminInfo.fullName, avatar: adminInfo.avatar }
+      }));
+    }
 
     setIsSaving(false);
     setSaveSuccess(true);
@@ -1384,7 +1414,59 @@ const Settings: React.FC = () => {
                   <button type="submit" className="flex-1 py-4 bg-indigo-600 text-white rounded-2xl text-xs font-medium shadow-xl flex items-center justify-center gap-2">
                      <Save size={16} /> Enregistrer
                   </button>
-               </div>
+                </div>
+              </div>
+
+              {/* Section permissions */}
+              <div className="p-6 space-y-4">
+                <div className="flex items-center justify-between">
+                  <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] flex items-center gap-1.5">
+                    <Shield size={11} className="text-indigo-500" /> Modules accessibles
+                    <span className="ml-1 px-1.5 py-0.5 bg-indigo-100 text-indigo-600 rounded text-[9px] font-black">
+                      {userFormData.permissions?.length ?? 0}/{AVAILABLE_MODULES.length}
+                    </span>
+                  </p>
+                  <div className="flex items-center gap-3">
+                    <button type="button" onClick={() => setUserFormData({...userFormData, permissions: AVAILABLE_MODULES.map(m => m.id)})} className="text-[9px] font-black text-indigo-600 uppercase tracking-widest hover:underline">Tout</button>
+                    <span className="text-slate-200 text-xs">|</span>
+                    <button type="button" onClick={() => setUserFormData({...userFormData, permissions: ['dashboard']})} className="text-[9px] font-black text-rose-400 uppercase tracking-widest hover:underline">Réinitialiser</button>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                  {AVAILABLE_MODULES.map((module) => {
+                    const isSelected = userFormData.permissions?.includes(module.id);
+                    return (
+                      <button
+                        key={module.id}
+                        type="button"
+                        onClick={() => togglePermission(module.id)}
+                        className={cn(
+                          "flex items-center gap-2 p-3 rounded-xl border transition-all text-left",
+                          isSelected
+                            ? "bg-indigo-600 border-indigo-600 text-white shadow-md shadow-indigo-100"
+                            : "bg-white border-slate-100 text-slate-400 hover:border-indigo-200 hover:text-indigo-500"
+                        )}
+                      >
+                        <div className={cn("w-6 h-6 rounded-lg flex items-center justify-center shrink-0", isSelected ? "bg-white/20" : "bg-slate-50")}>
+                          <module.icon size={13} />
+                        </div>
+                        <span className="text-[9px] font-black uppercase tracking-tight leading-tight flex-1">{module.label}</span>
+                        {isSelected && <Check size={11} strokeWidth={3} className="shrink-0" />}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Footer actions */}
+              <div className="p-6 flex gap-3 shrink-0">
+                <button type="button" onClick={() => setIsUserFormOpen(false)} className="flex-1 py-3.5 bg-slate-50 border border-slate-200 text-slate-500 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-100 transition-all">
+                  Annuler
+                </button>
+                <button type="submit" className="flex-[2] py-3.5 bg-indigo-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-indigo-100 flex items-center justify-center gap-2 hover:bg-indigo-700 transition-all">
+                  <Save size={14} /> {editingUser ? 'Mettre à jour' : 'Créer le compte'}
+                </button>
+              </div>
             </form>
           </div>
         </div>

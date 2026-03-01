@@ -1,17 +1,17 @@
 import React, { useMemo, useState, useEffect } from 'react';
-import { 
-  X, 
-  Phone, 
-  Mail, 
-  MapPin, 
-  Calendar, 
-  ShieldCheck, 
-  Star, 
-  Briefcase, 
-  MessageSquare, 
-  Heart, 
-  CheckCircle2, 
-  Clock, 
+import {
+  X,
+  Phone,
+  Mail,
+  MapPin,
+  Calendar,
+  ShieldCheck,
+  Star,
+  Briefcase,
+  MessageSquare,
+  Heart,
+  CheckCircle2,
+  Clock,
   User,
   MessageCircle,
   MoreVertical,
@@ -34,12 +34,19 @@ import {
   PhoneCall,
   UserRound,
   ShieldAlert,
-  Hammer
+  Hammer,
+  Banknote,
+  CalendarX,
+  CalendarCheck,
+  TrendingUp,
+  ArrowUpRight,
+  ArrowDownRight,
+  BarChart2
 } from 'lucide-react';
-import { Member, MemberStatus, Department, DepartmentActivity, ActivityStatus } from '../types';
+import { Member, MemberStatus, Department, DepartmentActivity, ActivityStatus, FinancialRecord, AttendanceSession, OperationType } from '../types';
 import { formatPhone } from '../constants';
 import { cn, getInitials, getDisplayNickname, formatFirstName } from '../utils';
-import { getMembers, getDepartmentActivities, getDiscipleshipEnrollments } from '../lib/db';
+import { getMembers, getDepartmentActivities, getDiscipleshipEnrollments, getFinancialRecords, getAttendanceSessions } from '../lib/db';
 import Avatar from './Avatar';
 
 const getDepartmentIcon = (dept: Department, size = 14) => {
@@ -87,12 +94,16 @@ const MemberDetails: React.FC<MemberDetailsProps> = ({ member, isOpen, onClose, 
   const [allMembers, setAllMembers] = useState<Member[]>([]);
   const [activities, setActivities] = useState<DepartmentActivity[]>([]);
   const [enrollments, setEnrollments] = useState<any[]>([]);
+  const [financialRecords, setFinancialRecords] = useState<FinancialRecord[]>([]);
+  const [attendanceSessions, setAttendanceSessions] = useState<AttendanceSession[]>([]);
 
   useEffect(() => {
     if (isOpen) {
       getMembers().then(setAllMembers);
       getDepartmentActivities().then(setActivities);
       getDiscipleshipEnrollments().then(setEnrollments);
+      getFinancialRecords().then(setFinancialRecords);
+      getAttendanceSessions().then(setAttendanceSessions);
     }
   }, [isOpen]);
 
@@ -161,6 +172,36 @@ const MemberDetails: React.FC<MemberDetailsProps> = ({ member, isOpen, onClose, 
 
     return events.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   }, [member, activities, enrollments]);
+
+  // ── Contributions financières ─────────────────────────────────────────────
+  const memberFinances = useMemo(() =>
+    financialRecords
+      .filter(r => r.memberId === member.id)
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()),
+    [financialRecords, member.id]
+  );
+
+  const totalContributed = useMemo(() =>
+    memberFinances
+      .filter(r => r.type === OperationType.REVENU)
+      .reduce((sum, r) => sum + r.amount, 0),
+    [memberFinances]
+  );
+
+  // ── Présence aux cultes ────────────────────────────────────────────────────
+  const memberAbsences = useMemo(() =>
+    attendanceSessions
+      .filter(s => (s.absentMembers ?? []).includes(member.id))
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()),
+    [attendanceSessions, member.id]
+  );
+
+  const attendanceRate = useMemo(() => {
+    const total = attendanceSessions.length;
+    if (total === 0) return null;
+    const present = total - memberAbsences.length;
+    return Math.round((present / total) * 100);
+  }, [attendanceSessions, memberAbsences]);
 
   const handleCall = (num?: string) => {
     const phone = num || member.phone;
@@ -415,6 +456,143 @@ const MemberDetails: React.FC<MemberDetailsProps> = ({ member, isOpen, onClose, 
               </div>
             </div>
           )}
+
+          {/* Section: Contributions Financières */}
+          <div className="space-y-4">
+            <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+              <Banknote size={14} className="text-emerald-600" /> Contributions Financières
+            </h4>
+            {memberFinances.length === 0 ? (
+              <div className="bg-white border border-slate-100 rounded-[2rem] p-6 flex items-center gap-4 shadow-sm">
+                <div className="w-10 h-10 rounded-2xl bg-slate-50 flex items-center justify-center text-slate-300 shrink-0">
+                  <Banknote size={20} />
+                </div>
+                <p className="text-xs text-slate-400 italic font-medium">Aucune contribution enregistrée.</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {/* Stat totale */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="bg-emerald-50 border border-emerald-100 rounded-[1.5rem] p-4 space-y-1">
+                    <p className="text-[9px] font-black text-emerald-500 uppercase tracking-widest">Total donné</p>
+                    <p className="text-lg font-black text-emerald-700 leading-none">
+                      {totalContributed.toLocaleString('fr-FR')} <span className="text-xs font-bold">F CFA</span>
+                    </p>
+                  </div>
+                  <div className="bg-white border border-slate-100 rounded-[1.5rem] p-4 space-y-1 shadow-sm">
+                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Opérations</p>
+                    <p className="text-lg font-black text-slate-700 leading-none">{memberFinances.length}</p>
+                  </div>
+                </div>
+                {/* Liste des transactions */}
+                <div className="space-y-2">
+                  {memberFinances.slice(0, 5).map(r => (
+                    <div key={r.id} className="bg-white border border-slate-100 rounded-2xl px-4 py-3 flex items-center gap-3 shadow-sm">
+                      <div className={cn(
+                        "w-8 h-8 rounded-xl flex items-center justify-center shrink-0",
+                        r.type === OperationType.REVENU ? "bg-emerald-50 text-emerald-600" : "bg-rose-50 text-rose-500"
+                      )}>
+                        {r.type === OperationType.REVENU ? <ArrowUpRight size={14} strokeWidth={3} /> : <ArrowDownRight size={14} strokeWidth={3} />}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[11px] font-black text-slate-800 uppercase truncate">{r.category}</p>
+                        <p className="text-[9px] text-slate-400 font-bold uppercase">{new Date(r.date).toLocaleDateString('fr-FR')} · {r.paymentMethod}</p>
+                      </div>
+                      <span className={cn(
+                        "text-xs font-black shrink-0",
+                        r.type === OperationType.REVENU ? "text-emerald-600" : "text-rose-500"
+                      )}>
+                        {r.type === OperationType.REVENU ? '+' : '-'}{r.amount.toLocaleString('fr-FR')}
+                      </span>
+                    </div>
+                  ))}
+                  {memberFinances.length > 5 && (
+                    <p className="text-[9px] text-slate-400 font-black uppercase text-center pt-1">
+                      + {memberFinances.length - 5} autre(s) transaction(s)
+                    </p>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Section: Présence aux Cultes */}
+          <div className="space-y-4">
+            <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+              <BarChart2 size={14} className="text-indigo-600" /> Présence aux Cultes
+            </h4>
+            {attendanceSessions.length === 0 ? (
+              <div className="bg-white border border-slate-100 rounded-[2rem] p-6 flex items-center gap-4 shadow-sm">
+                <div className="w-10 h-10 rounded-2xl bg-slate-50 flex items-center justify-center text-slate-300 shrink-0">
+                  <CalendarCheck size={20} />
+                </div>
+                <p className="text-xs text-slate-400 italic font-medium">Aucun culte enregistré.</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {/* Stats présence */}
+                <div className="grid grid-cols-3 gap-3">
+                  <div className="bg-indigo-50 border border-indigo-100 rounded-[1.5rem] p-4 space-y-1">
+                    <p className="text-[9px] font-black text-indigo-400 uppercase tracking-widest">Assiduité</p>
+                    <p className="text-lg font-black text-indigo-700 leading-none">
+                      {attendanceRate !== null ? `${attendanceRate}%` : '—'}
+                    </p>
+                  </div>
+                  <div className="bg-white border border-slate-100 rounded-[1.5rem] p-4 space-y-1 shadow-sm">
+                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Présent(s)</p>
+                    <p className="text-lg font-black text-emerald-600 leading-none">
+                      {attendanceSessions.length - memberAbsences.length}
+                    </p>
+                  </div>
+                  <div className="bg-white border border-slate-100 rounded-[1.5rem] p-4 space-y-1 shadow-sm">
+                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Absent(s)</p>
+                    <p className="text-lg font-black text-rose-500 leading-none">{memberAbsences.length}</p>
+                  </div>
+                </div>
+                {/* Barre de progression assiduité */}
+                {attendanceRate !== null && (
+                  <div className="bg-white border border-slate-100 rounded-2xl p-4 shadow-sm space-y-2">
+                    <div className="flex justify-between items-center">
+                      <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Taux de présence</span>
+                      <span className={cn("text-[10px] font-black uppercase", attendanceRate >= 80 ? "text-emerald-600" : attendanceRate >= 50 ? "text-amber-500" : "text-rose-500")}>
+                        {attendanceRate >= 80 ? 'Excellent' : attendanceRate >= 50 ? 'Moyen' : 'Faible'}
+                      </span>
+                    </div>
+                    <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
+                      <div
+                        className={cn("h-full rounded-full transition-all", attendanceRate >= 80 ? "bg-emerald-500" : attendanceRate >= 50 ? "bg-amber-400" : "bg-rose-400")}
+                        style={{ width: `${attendanceRate}%` }}
+                      />
+                    </div>
+                  </div>
+                )}
+                {/* Liste des absences */}
+                {memberAbsences.length > 0 && (
+                  <div className="space-y-2">
+                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
+                      <CalendarX size={10} className="text-rose-400" /> Absences récentes
+                    </p>
+                    {memberAbsences.slice(0, 5).map(s => (
+                      <div key={s.id} className="bg-white border border-slate-100 rounded-2xl px-4 py-3 flex items-center gap-3 shadow-sm">
+                        <div className="w-8 h-8 rounded-xl bg-rose-50 text-rose-400 flex items-center justify-center shrink-0">
+                          <CalendarX size={14} />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-[11px] font-black text-slate-700 uppercase truncate">{s.service}</p>
+                          <p className="text-[9px] text-slate-400 font-bold uppercase">{new Date(s.date).toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'long', year: 'numeric' })}</p>
+                        </div>
+                      </div>
+                    ))}
+                    {memberAbsences.length > 5 && (
+                      <p className="text-[9px] text-slate-400 font-black uppercase text-center pt-1">
+                        + {memberAbsences.length - 5} autre(s) absence(s)
+                      </p>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
 
           {/* History / Timeline */}
           <div className="space-y-4">

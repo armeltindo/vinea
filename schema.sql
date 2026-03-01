@@ -195,6 +195,7 @@ CREATE TABLE departments_info (
     name TEXT NOT NULL UNIQUE,
     description TEXT,
     president_id TEXT REFERENCES members(id) ON DELETE SET NULL,
+    assistant_id TEXT REFERENCES members(id) ON DELETE SET NULL,
     member_ids TEXT[] DEFAULT '{}',
     status TEXT DEFAULT 'Actif',
     color TEXT DEFAULT '#4f46e5',

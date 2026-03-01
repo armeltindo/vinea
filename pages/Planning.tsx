@@ -57,13 +57,14 @@ import {
   Filter,
   CircleDashed,
   RefreshCw,
-  Repeat
+  Repeat,
+  Check
 } from 'lucide-react';
 import { analyzePageData } from '../lib/gemini';
 import { formatCurrency, DEPARTMENTS as CONST_DEPARTMENTS } from '../constants';
 import { DepartmentInfo, DepartmentActivity, ActivityStatus, Member, Department, ActivityRecurrence } from '../types';
 import { cn, generateId, formatFirstName, getInitials } from '../utils';
-import { getDepartmentsInfo, upsertDepartmentInfo, deleteDepartmentInfo, getDepartmentActivities, createDepartmentActivity, updateDepartmentActivity, deleteDepartmentActivity, getMembers, getChurchSettings } from '../lib/db';
+import { getDepartmentsInfo, upsertDepartmentInfo, deleteDepartmentInfo, getDepartmentActivities, createDepartmentActivity, updateDepartmentActivity, deleteDepartmentActivity, getMembers, getChurchSettings, getAppConfig, syncDepartmentToMembers } from '../lib/db';
 
 const formatToUIDate = (isoDate: string | undefined) => {
   if (!isoDate) return '';
@@ -183,10 +184,12 @@ const Planning: React.FC = () => {
   const [analysis, setAnalysis] = useState<string | null>(null);
 
   const [presidentSearch, setPresidentSearch] = useState('');
+  const [assistantSearch, setAssistantSearch] = useState('');
+  const [deptMemberSearch, setDeptMemberSearch] = useState('');
   const [responsibleSearch, setResponsibleSearch] = useState('');
 
   const [deptFormData, setDeptFormData] = useState<Partial<DepartmentInfo>>({
-    name: '', description: '', presidentId: '', memberIds: [], status: 'Actif', color: '#4f46e5'
+    name: '', description: '', presidentId: '', assistantId: '', memberIds: [], status: 'Actif', color: '#4f46e5'
   });
   const [activityFormData, setActivityFormData] = useState<Partial<DepartmentActivity>>({
     title: '', deptId: '', responsibleId: '', associateName: '', cost: 0, deadline: '', status: ActivityStatus.PLANIFIEE, observations: '', recurrence: 'Ponctuelle'
@@ -194,16 +197,22 @@ const Planning: React.FC = () => {
 
   useEffect(() => {
     const load = async () => {
-      const [depts, acts, mems, settings] = await Promise.all([
+      const [depts, acts, mems, settings, configNames] = await Promise.all([
         getDepartmentsInfo(),
         getDepartmentActivities(),
         getMembers(),
         getChurchSettings(),
+        getAppConfig('departments'),
       ]);
 
-      // Si aucun département en DB, initialiser depuis les constantes et persister
+      // Noms de référence : préférer la liste Settings, sinon les constantes
+      const referenceNames: string[] = (configNames && configNames.length > 0)
+        ? configNames
+        : CONST_DEPARTMENTS;
+
       if (depts.length === 0) {
-        const defaultDepts: DepartmentInfo[] = CONST_DEPARTMENTS.map(name => ({
+        // Initialisation complète depuis les noms de référence
+        const defaultDepts: DepartmentInfo[] = referenceNames.map(name => ({
           id: generateId(),
           name,
           description: 'Département à configurer.',
@@ -215,7 +224,23 @@ const Planning: React.FC = () => {
         await Promise.all(defaultDepts.map(d => upsertDepartmentInfo(d)));
         setDepartments(defaultDepts);
       } else {
-        setDepartments(depts);
+        // Synchroniser : créer les entrées manquantes pour les noms ajoutés dans Settings
+        const existingNames = new Set(depts.map(d => d.name));
+        const newEntries: DepartmentInfo[] = referenceNames
+          .filter(name => !existingNames.has(name))
+          .map(name => ({
+            id: generateId(),
+            name,
+            description: 'Département à configurer.',
+            presidentId: '',
+            memberIds: [],
+            status: 'Actif',
+            color: '#4f46e5'
+          }));
+        if (newEntries.length > 0) {
+          await Promise.all(newEntries.map(d => upsertDepartmentInfo(d)));
+        }
+        setDepartments([...depts, ...newEntries]);
       }
 
       setActivities(acts);
@@ -329,7 +354,15 @@ const Planning: React.FC = () => {
     if (!editingDept) {
       deptData.id = generateId();
     }
+    const previousMemberIds = editingDept?.memberIds ?? [];
     await upsertDepartmentInfo(deptData);
+    // Sync : répercuter les changements de membres sur members.departments
+    await syncDepartmentToMembers(deptData.name, deptData.memberIds, previousMemberIds);
+    // Rafraîchir la liste des membres localement pour refléter la sync
+    if (deptData.memberIds !== previousMemberIds) {
+      const updatedMembers = await getMembers();
+      setMembers(updatedMembers);
+    }
     if (editingDept) {
       setDepartments(prev => prev.map(d => d.id === editingDept.id ? deptData : d));
     } else {
@@ -387,6 +420,9 @@ const Planning: React.FC = () => {
     setDeptFormData({ ...dept });
     const president = members.find(m => m.id === dept.presidentId);
     setPresidentSearch(president ? `${formatFirstName(president.firstName)} ${president.lastName.toUpperCase()}` : '');
+    const assistant = members.find(m => m.id === dept.assistantId);
+    setAssistantSearch(assistant ? `${formatFirstName(assistant.firstName)} ${assistant.lastName.toUpperCase()}` : '');
+    setDeptMemberSearch('');
     setIsDeptDetailsOpen(false);
     setIsDeptFormOpen(true);
   };
@@ -506,6 +542,13 @@ const Planning: React.FC = () => {
                     </div>
                     <div className="space-y-1"><span className="text-xs font-medium text-slate-500">Effectif</span><div className="flex items-center gap-2"><Users size={14} className="text-slate-400" /><span className="text-xs font-semibold text-slate-800">{dept.memberIds.length} fidèles</span></div></div>
                   </div>
+                  {dept.assistantId && (() => { const assistant = members.find(m => m.id === dept.assistantId); return (
+                    <div className="flex items-center gap-2 pt-3 border-t border-slate-100">
+                      <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest shrink-0">Assistant :</span>
+                      <div className="w-5 h-5 rounded-md bg-slate-50 border border-slate-100 flex items-center justify-center overflow-hidden shrink-0 text-[7px] font-black text-slate-400 uppercase">{assistant?.photoUrl ? <img src={assistant.photoUrl} alt="" className="w-full h-full object-cover" /> : getInitials(assistant?.firstName, assistant?.lastName)}</div>
+                      <p className="text-[10px] font-black text-slate-600 truncate uppercase">{getMemberNameFormatted(dept.assistantId)}</p>
+                    </div>
+                  ); })()}
                   
                   <div className="pt-4" onClick={e => e.stopPropagation()}>
                     <button 

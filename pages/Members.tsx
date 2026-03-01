@@ -61,7 +61,7 @@ import { formatPhone, DEPARTMENTS as CONST_DEPARTMENTS } from '../constants';
 import { Member, MemberStatus, MemberType, Department } from '../types';
 import { analyzePageData } from '../lib/gemini';
 import { cn, generateId, getInitials, getDisplayNickname, formatFirstName } from '../utils';
-import { getMembers, createMember, updateMember, deleteMember, getDiscipleshipPairs, getAppConfig } from '../lib/db';
+import { getMembers, createMember, updateMember, deleteMember, getDiscipleshipPairs, getAppConfig, syncMemberToDepartments } from '../lib/db';
 
 // Helper pour convertir YYYY-MM-DD en DD-MM-YYYY
 const formatToUIDate = (isoDate: string | undefined) => {
@@ -473,9 +473,11 @@ const Members: React.FC = () => {
 
     let memberToSave: Member;
     let newMembersList: Member[] = [...members];
+    let previousDepts: string[] = [];
 
     if (editingMemberId) {
       const existing = members.find(m => m.id === editingMemberId)!;
+      previousDepts = existing.departments ?? [];
       memberToSave = { ...existing, ...formData, firstName: formattedFirstName, lastName: formattedLastName } as Member;
       newMembersList = newMembersList.map(m => m.id === editingMemberId ? memberToSave : m);
       await updateMember(editingMemberId, memberToSave);
@@ -497,6 +499,9 @@ const Members: React.FC = () => {
       newMembersList = [memberToSave, ...newMembersList];
       await createMember(memberToSave);
     }
+
+    // Sync bidirectionnel : répercuter les changements de départements du membre sur departments_info
+    await syncMemberToDepartments(memberToSave.id, memberToSave.departments ?? [], previousDepts);
 
     // Mise à jour bidirectionnelle du conjoint si identifié dans la base
     if (formData.maritalStatus === 'Marié(e)' && formData.spouseName) {

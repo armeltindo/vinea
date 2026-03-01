@@ -297,6 +297,7 @@ function dbToDepartmentInfo(row: any): DepartmentInfo {
     name: row.name,
     description: row.description ?? '',
     presidentId: row.president_id ?? '',
+    assistantId: row.assistant_id ?? '',
     memberIds: row.member_ids ?? [],
     status: row.status ?? 'Actif',
     color: row.color ?? '#4f46e5',
@@ -309,6 +310,9 @@ function departmentInfoToDb(d: Partial<DepartmentInfo>): Record<string, unknown>
   if (d.name !== undefined) db.name = d.name;
   if (d.description !== undefined) db.description = d.description;
   if (d.presidentId !== undefined) db.president_id = d.presidentId || null;
+  // assistant_id n'est inclus que si non vide — évite de casser les DBs sans la colonne
+  if (d.assistantId) db.assistant_id = d.assistantId;
+  else if (d.assistantId === null) db.assistant_id = null; // effacement explicite
   if (d.memberIds !== undefined) db.member_ids = d.memberIds;
   if (d.status !== undefined) db.status = d.status;
   if (d.color !== undefined) db.color = d.color;
@@ -677,6 +681,68 @@ export const upsertDepartmentInfo = async (d: DepartmentInfo): Promise<void> => 
 export const deleteDepartmentInfo = async (id: string): Promise<void> => {
   const { error } = await supabase.from('departments_info').delete().eq('id', id);
   if (error) console.error('deleteDepartmentInfo:', error.message);
+};
+
+/**
+ * Sync Members → Planning :
+ * Quand les départements d'un membre changent, met à jour member_ids dans departments_info.
+ */
+export const syncMemberToDepartments = async (
+  memberId: string,
+  newDeptNames: string[],
+  previousDeptNames: string[]
+): Promise<void> => {
+  const toAdd = newDeptNames.filter(n => !previousDeptNames.includes(n));
+  const toRemove = previousDeptNames.filter(n => !newDeptNames.includes(n));
+  if (toAdd.length === 0 && toRemove.length === 0) return;
+
+  const allDepts = await getDepartmentsInfo();
+  const updates: Promise<void>[] = [];
+
+  for (const name of toAdd) {
+    const dept = allDepts.find(d => d.name === name);
+    if (dept && !dept.memberIds.includes(memberId)) {
+      updates.push(upsertDepartmentInfo({ ...dept, memberIds: [...dept.memberIds, memberId] }));
+    }
+  }
+  for (const name of toRemove) {
+    const dept = allDepts.find(d => d.name === name);
+    if (dept && dept.memberIds.includes(memberId)) {
+      updates.push(upsertDepartmentInfo({ ...dept, memberIds: dept.memberIds.filter(id => id !== memberId) }));
+    }
+  }
+  await Promise.all(updates);
+};
+
+/**
+ * Sync Planning → Members :
+ * Quand les memberIds d'un département changent, met à jour members.departments.
+ */
+export const syncDepartmentToMembers = async (
+  deptName: string,
+  newMemberIds: string[],
+  previousMemberIds: string[]
+): Promise<void> => {
+  const toAdd = newMemberIds.filter(id => !previousMemberIds.includes(id));
+  const toRemove = previousMemberIds.filter(id => !newMemberIds.includes(id));
+  if (toAdd.length === 0 && toRemove.length === 0) return;
+
+  const allMembers = await getMembers();
+  const updates: Promise<void>[] = [];
+
+  for (const memberId of toAdd) {
+    const member = allMembers.find(m => m.id === memberId);
+    if (member && !member.departments.includes(deptName as any)) {
+      updates.push(updateMember(memberId, { departments: [...member.departments, deptName as any] }));
+    }
+  }
+  for (const memberId of toRemove) {
+    const member = allMembers.find(m => m.id === memberId);
+    if (member && member.departments.includes(deptName as any)) {
+      updates.push(updateMember(memberId, { departments: member.departments.filter(d => d !== deptName) }));
+    }
+  }
+  await Promise.all(updates);
 };
 
 // ─────────────────────────────────────────────

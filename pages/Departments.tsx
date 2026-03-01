@@ -30,12 +30,13 @@ import {
 } from 'lucide-react';
 import { analyzePageData } from '../lib/gemini';
 import { formatCurrency } from '../constants';
-import { DepartmentInfo, DepartmentActivity, ActivityStatus, Member, Department } from '../types';
+import { DepartmentInfo, DepartmentActivity, ActivityStatus, Member } from '../types';
 import { cn, generateId } from '../utils';
-import { getDepartmentsInfo, upsertDepartmentInfo, getDepartmentActivities, createDepartmentActivity, updateDepartmentActivity, deleteDepartmentActivity, getMembers } from '../lib/db';
+import { getDepartmentsInfo, upsertDepartmentInfo, getDepartmentActivities, createDepartmentActivity, updateDepartmentActivity, deleteDepartmentActivity, getMembers, getAppConfig } from '../lib/db';
 
 const Departments: React.FC = () => {
   const [departments, setDepartments] = useState<DepartmentInfo[]>([]);
+  const [availableDepartments, setAvailableDepartments] = useState<string[]>([]);
   const [activities, setActivities] = useState<DepartmentActivity[]>([]);
   const [members, setMembers] = useState<Member[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -59,14 +60,34 @@ const Departments: React.FC = () => {
 
   useEffect(() => {
     const load = async () => {
-      const [depts, acts, mems] = await Promise.all([
+      const [depts, acts, mems, configDepts] = await Promise.all([
         getDepartmentsInfo(),
         getDepartmentActivities(),
         getMembers(),
+        getAppConfig('departments'),
       ]);
-      setDepartments(depts);
+      const configNames: string[] = configDepts ?? [];
+      setAvailableDepartments(configNames);
       setActivities(acts);
       setMembers(mems);
+
+      // Afficher TOUS les noms configurés dans Settings, enrichis avec departments_info si disponible.
+      // Aucune écriture automatique en base (évite les échecs silencieux RLS).
+      const merged: DepartmentInfo[] = configNames.map(name => {
+        const existing = depts.find(d => d.name === name);
+        return existing ?? {
+          id: `__placeholder__${name}`,
+          name,
+          description: '',
+          presidentId: '',
+          memberIds: [],
+          status: 'Actif' as const,
+          color: '#4f46e5',
+        };
+      });
+      // Conserver aussi les fiches departments_info dont le nom n'est plus dans app_config
+      const orphaned = depts.filter(d => !configNames.includes(d.name));
+      setDepartments([...merged, ...orphaned]);
     };
     load();
   }, []);
@@ -91,11 +112,19 @@ const Departments: React.FC = () => {
 
   const saveDept = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (editingDept) {
+    const isPlaceholder = editingDept?.id.startsWith('__placeholder__');
+    if (editingDept && !isPlaceholder) {
+      // Mise à jour d'une fiche existante
       const updated = { ...editingDept, ...deptFormData } as DepartmentInfo;
       await upsertDepartmentInfo(updated);
       setDepartments(departments.map(d => d.id === editingDept.id ? updated : d));
+    } else if (editingDept && isPlaceholder) {
+      // Première sauvegarde d'un département placeholder → créer la vraie fiche
+      const newDept: DepartmentInfo = { ...deptFormData as DepartmentInfo, id: generateId() };
+      await upsertDepartmentInfo(newDept);
+      setDepartments(departments.map(d => d.id === editingDept.id ? newDept : d));
     } else {
+      // Nouveau département ajouté manuellement
       const newDept: DepartmentInfo = { ...deptFormData as DepartmentInfo, id: generateId() };
       await upsertDepartmentInfo(newDept);
       setDepartments([...departments, newDept]);
@@ -340,7 +369,7 @@ const Departments: React.FC = () => {
                     <label className="text-xs font-medium text-slate-500 ml-1">Nom du département</label>
                     <select required value={deptFormData.name} onChange={(e) => setDeptFormData({...deptFormData, name: e.target.value})} className="w-full px-5 py-3.5 bg-white border border-slate-200 rounded-2xl outline-none text-sm font-normal tracking-wide transition-all">
                        <option value="">Sélectionner un département...</option>
-                       {Object.values(Department).map(d => <option key={d} value={d}>{d}</option>)}
+                       {availableDepartments.map(d => <option key={d} value={d}>{d}</option>)}
                     </select>
                   </div>
                   <div className="space-y-1.5">

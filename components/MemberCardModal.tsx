@@ -76,17 +76,13 @@ const MemberCardModal: React.FC<Props> = ({ member, isOpen, onClose }) => {
   <meta charset="utf-8">
   <title>Carte de Membre — ${fullName}</title>
   <style>
-    @page { size: A4 portrait; margin: 20mm 15mm; }
+    @page { size: 85.6mm 54mm; margin: 0; }
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Arial, Helvetica, sans-serif; }
-    body { background: white; }
-    .page-title { text-align: center; font-size: 3.5mm; color: #94a3b8; margin-bottom: 14mm; letter-spacing: 0.8mm; text-transform: uppercase; font-weight: 500; }
-    .cards { display: flex; flex-direction: column; align-items: center; gap: 18mm; }
-    .card-wrap { display: flex; flex-direction: column; align-items: flex-start; }
-    .side-label { font-size: 2.8mm; color: #94a3b8; letter-spacing: 0.5mm; text-transform: uppercase; margin-bottom: 3mm; }
-    .card { width: 85.6mm; height: 54mm; border-radius: 3.5mm; overflow: hidden; position: relative; box-shadow: 0 2mm 10mm rgba(0,0,0,0.14); }
+    html, body { width: 85.6mm; height: 54mm; background: white; overflow: hidden; }
+    .card { width: 85.6mm; height: 54mm; overflow: hidden; position: relative; page-break-after: always; display: flex; flex-direction: column; }
 
     /* FRONT */
-    .front { background: white; display: flex; flex-direction: column; }
+    .front { background: white; }
     .front-hd { background: linear-gradient(135deg, ${pc} 0%, ${pc}bb 100%); height: 16mm; display: flex; align-items: center; padding: 0 5mm; gap: 2.5mm; position: relative; }
     .front-hd-name { color: white; font-size: 4mm; font-weight: 800; letter-spacing: 0.1mm; flex: 1; }
     .front-hd-label { font-size: 2.2mm; color: rgba(255,255,255,0.65); letter-spacing: 0.8mm; text-transform: uppercase; }
@@ -99,7 +95,7 @@ const MemberCardModal: React.FC<Props> = ({ member, isOpen, onClose }) => {
     .valid-val { font-size: 3.2mm; color: ${pc}; font-weight: 800; text-align: right; }
 
     /* BACK */
-    .back { background: white; display: flex; flex-direction: column; }
+    .back { background: white; }
     .back-hd { background: linear-gradient(135deg, ${pc} 0%, ${pc}bb 100%); height: 16mm; display: flex; align-items: center; padding: 0 5mm; gap: 2.5mm; position: relative; }
     .back-hd-name { color: white; font-size: 4mm; font-weight: 800; flex: 1; }
     .back-member { color: rgba(255,255,255,0.9); font-size: 2.8mm; font-weight: 600; text-align: right; line-height: 1.4; }
@@ -118,59 +114,50 @@ const MemberCardModal: React.FC<Props> = ({ member, isOpen, onClose }) => {
   </style>
 </head>
 <body>
-  <p class="page-title">Carte de Membre — ${churchName}</p>
-  <div class="cards">
 
-    <!-- RECTO -->
-    <div class="card-wrap">
-      <p class="side-label">Recto</p>
-      <div class="card front">
-        <div class="front-hd">
-          ${logoImg}
-          <span class="front-hd-name">${churchName.toUpperCase()}</span>
-          <span class="front-hd-label">Carte Membre</span>
-        </div>
-        <div class="front-bd">
-          <div>${photoFront}</div>
-          <div>
-            <div class="front-name">${fullName}</div>
-            <div class="front-role">${member.type}</div>
-          </div>
-        </div>
-        <div class="front-ft">
-          <span class="card-num">${cardNumber}</span>
-          <div>
-            <div class="valid-lbl">Valide jusqu'au</div>
-            <div class="valid-val">31/12/${validYear}</div>
-          </div>
-        </div>
+  <!-- PAGE 1 : RECTO -->
+  <div class="card front">
+    <div class="front-hd">
+      ${logoImg}
+      <span class="front-hd-name">${churchName.toUpperCase()}</span>
+      <span class="front-hd-label">Carte Membre</span>
+    </div>
+    <div class="front-bd">
+      <div>${photoFront}</div>
+      <div>
+        <div class="front-name">${fullName}</div>
+        <div class="front-role">${member.type}</div>
       </div>
     </div>
-
-    <!-- VERSO -->
-    <div class="card-wrap">
-      <p class="side-label">Verso</p>
-      <div class="card back">
-        <div class="back-hd">
-          ${logoImg}
-          <span class="back-hd-name">${churchName.toUpperCase()}</span>
-          <div class="back-member">
-            <div>${fullName}</div>
-            <div class="back-sub">Membre depuis ${joinYear}</div>
-          </div>
-          ${photoBack}
-        </div>
-        <div class="back-bd">
-          ${contactRows}
-          ${depts.length > 0 ? `<div class="div"></div>${deptsRow}` : ''}
-        </div>
-        <div class="back-ft">
-          <p class="ft-note">Si trouvée, merci de retourner cette carte à l'église · ${cardNumber}</p>
-        </div>
+    <div class="front-ft">
+      <span class="card-num">${cardNumber}</span>
+      <div>
+        <div class="valid-lbl">Valide jusqu'au</div>
+        <div class="valid-val">31/12/${validYear}</div>
       </div>
     </div>
-
   </div>
+
+  <!-- PAGE 2 : VERSO -->
+  <div class="card back" style="page-break-after:auto;">
+    <div class="back-hd">
+      ${logoImg}
+      <span class="back-hd-name">${churchName.toUpperCase()}</span>
+      <div class="back-member">
+        <div>${fullName}</div>
+        <div class="back-sub">Membre depuis ${joinYear}</div>
+      </div>
+      ${photoBack}
+    </div>
+    <div class="back-bd">
+      ${contactRows}
+      ${depts.length > 0 ? `<div class="div"></div>${deptsRow}` : ''}
+    </div>
+    <div class="back-ft">
+      <p class="ft-note">Si trouvée, merci de retourner cette carte à l'église · ${cardNumber}</p>
+    </div>
+  </div>
+
 </body>
 </html>`;
   };

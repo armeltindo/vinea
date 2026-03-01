@@ -69,7 +69,9 @@ import {
   ArrowDown,
   GripVertical,
   Cake,
-  UserRoundCheck
+  UserRoundCheck,
+  Copy,
+  ClipboardCheck
 } from 'lucide-react';
 import { cn, generateId, formatFirstName } from '../utils';
 import { SERVICES_LIST, DEPARTMENTS as CONST_DEPARTMENTS } from '../constants';
@@ -389,6 +391,10 @@ const Settings: React.FC = () => {
   });
 
   // moduleAccess: source de vérité pour le formulaire d'accès lecture/écriture/suppression
+  const [isCredentialsModalOpen, setIsCredentialsModalOpen] = useState(false);
+  const [newUserCredentials, setNewUserCredentials] = useState<{ email: string; fullName: string } | null>(null);
+  const [copiedField, setCopiedField] = useState<'email' | 'password' | null>(null);
+
   const [moduleAccess, setModuleAccess] = useState<Record<string, { r: boolean; w: boolean; d: boolean }>>({
     dashboard: { r: true, w: true, d: false },
     spiritual: { r: true, w: false, d: false },
@@ -651,9 +657,19 @@ const Settings: React.FC = () => {
           refresh_token: adminSession.refresh_token,
         });
       }
+      // Montrer les identifiants au Super Admin
+      setNewUserCredentials({ email: newUser.email, fullName: newUser.fullName });
+      setIsCredentialsModalOpen(true);
     }
     setIsUserFormOpen(false);
     setEditingUser(null);
+  };
+
+  const copyToClipboard = (text: string, field: 'email' | 'password') => {
+    navigator.clipboard.writeText(text).then(() => {
+      setCopiedField(field);
+      setTimeout(() => setCopiedField(null), 2000);
+    });
   };
 
   const confirmDeleteUser = () => {
@@ -1556,6 +1572,77 @@ const Settings: React.FC = () => {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {isCredentialsModalOpen && newUserCredentials && (
+        <div className="fixed inset-0 z-[300] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-slate-900/70 backdrop-blur-md" onClick={() => setIsCredentialsModalOpen(false)} />
+          <div className="relative w-full max-w-sm bg-white rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+            {/* Header */}
+            <div className="bg-gradient-to-br from-indigo-600 to-indigo-700 p-8 text-center text-white">
+              <div className="w-16 h-16 bg-white/15 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-inner">
+                <KeyRound size={32} className="text-white" />
+              </div>
+              <h3 className="text-lg font-bold">Compte créé avec succès</h3>
+              <p className="text-xs text-indigo-200 mt-1 font-medium">Communiquez ces identifiants au collaborateur</p>
+            </div>
+
+            {/* Body */}
+            <div className="p-6 space-y-4">
+              {/* Nom */}
+              <div className="flex items-center gap-3 bg-slate-50 rounded-2xl px-4 py-3 border border-slate-100">
+                <UserCircle size={18} className="text-slate-400 shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Collaborateur</p>
+                  <p className="text-sm font-bold text-slate-800 truncate">{newUserCredentials.fullName}</p>
+                </div>
+              </div>
+
+              {/* Email */}
+              <div className="flex items-center gap-3 bg-slate-50 rounded-2xl px-4 py-3 border border-slate-100">
+                <Mail size={18} className="text-slate-400 shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Email de connexion</p>
+                  <p className="text-sm font-bold text-slate-800 truncate">{newUserCredentials.email}</p>
+                </div>
+                <button
+                  onClick={() => copyToClipboard(newUserCredentials.email, 'email')}
+                  className="p-2 rounded-xl hover:bg-slate-200 transition-colors shrink-0"
+                  title="Copier l'email"
+                >
+                  {copiedField === 'email' ? <ClipboardCheck size={16} className="text-emerald-500" /> : <Copy size={16} className="text-slate-400" />}
+                </button>
+              </div>
+
+              {/* Mot de passe */}
+              <div className="flex items-center gap-3 bg-indigo-50 rounded-2xl px-4 py-3 border border-indigo-100">
+                <Lock size={18} className="text-indigo-400 shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">Mot de passe provisoire</p>
+                  <p className="text-sm font-black text-indigo-700 tracking-wider">Discipolat</p>
+                </div>
+                <button
+                  onClick={() => copyToClipboard('Discipolat', 'password')}
+                  className="p-2 rounded-xl hover:bg-indigo-100 transition-colors shrink-0"
+                  title="Copier le mot de passe"
+                >
+                  {copiedField === 'password' ? <ClipboardCheck size={16} className="text-emerald-500" /> : <Copy size={16} className="text-indigo-400" />}
+                </button>
+              </div>
+
+              <p className="text-[10px] text-slate-400 text-center font-medium leading-relaxed px-2">
+                Le collaborateur devra changer ce mot de passe lors de sa première connexion.
+              </p>
+
+              <button
+                onClick={() => setIsCredentialsModalOpen(false)}
+                className="w-full py-4 bg-indigo-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-indigo-100 hover:bg-indigo-700 transition-all"
+              >
+                J'ai bien noté les identifiants
+              </button>
+            </div>
           </div>
         </div>
       )}

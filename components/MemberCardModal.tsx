@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { X, Printer, CreditCard } from 'lucide-react';
+import { X, Download, CreditCard } from 'lucide-react';
 import { Member } from '../types';
 import { getChurchSettings } from '../lib/db';
 import { formatFirstName } from '../utils';
@@ -10,8 +10,12 @@ interface Props {
   onClose: () => void;
 }
 
+// 1 mm → px at 96 dpi
+const mm = (v: number) => Math.round(v * 3.779);
+
 const MemberCardModal: React.FC<Props> = ({ member, isOpen, onClose }) => {
   const [church, setChurch] = useState<any>(null);
+  const [downloading, setDownloading] = useState(false);
 
   useEffect(() => {
     if (isOpen) getChurchSettings().then(setChurch);
@@ -23,14 +27,14 @@ const MemberCardModal: React.FC<Props> = ({ member, isOpen, onClose }) => {
   const cardNumber = `MBR-${member.id.slice(-8, -4).toUpperCase()}-${member.id.slice(-4).toUpperCase()}`;
   const validYear = new Date().getFullYear() + 1;
 
-  const churchName  = church?.name || 'Vinea';
-  const churchPhone = church?.phone || '';
-  const churchEmail = church?.email || '';
+  const churchName   = church?.name || 'Vinea';
+  const churchPhone  = church?.phone || '';
+  const churchEmail  = church?.email || '';
   const churchAddress = church?.address || '';
-  const churchLogo  = church?.logoUrl || '';
+  const churchLogo   = church?.logoUrl || '';
   const churchSlogan = church?.slogan || '';
-  const pc   = church?.primaryColor || '#4f46e5';
-  const pc1a = `${pc}1a`;
+  const pc    = church?.primaryColor || '#4f46e5';
+  const pc1a  = `${pc}1a`;
 
   const depts = (member.departments || []).slice(0, 3);
 
@@ -39,154 +43,211 @@ const MemberCardModal: React.FC<Props> = ({ member, isOpen, onClose }) => {
     return new Date(iso).toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' });
   };
 
-  // QR code encodes card number + member name + church name
   const qrData = `${cardNumber}|${fullName}|${churchName}`;
   const qrUrl  = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&margin=2&data=${encodeURIComponent(qrData)}`;
 
-  const handlePrint = () => {
-    const w = window.open('', '_blank', 'width=900,height=800');
-    if (!w) return;
-    w.document.write(buildPrintHTML());
-    w.document.close();
-    w.focus();
-    setTimeout(() => { w.print(); }, 600);
+  // ─── helpers ────────────────────────────────────────────────────────────────
+
+  const fetchAsBase64 = async (url: string): Promise<string> => {
+    try {
+      const resp = await fetch(url);
+      const blob = await resp.blob();
+      return await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+      });
+    } catch {
+      return '';
+    }
   };
 
-  const buildPrintHTML = (): string => {
-    const logoImg = churchLogo
-      ? `<img src="${churchLogo}" style="width:8mm;height:8mm;object-fit:contain;border-radius:1mm;" />`
-      : `<div style="width:8mm;height:8mm;border-radius:50%;background:rgba(255,255,255,0.25);display:flex;align-items:center;justify-content:center;color:white;font-size:3.5mm;font-weight:700;">${churchName.charAt(0)}</div>`;
+  // Hex #rrggbb → { r, g, b }
+  const hexToRgb = (hex: string) => {
+    const h = hex.replace('#', '');
+    return { r: parseInt(h.slice(0,2),16), g: parseInt(h.slice(2,4),16), b: parseInt(h.slice(4,6),16) };
+  };
 
-    const photoFront = member.photoUrl
-      ? `<img src="${member.photoUrl}" style="width:16mm;height:16mm;border-radius:50%;object-fit:cover;border:0.6mm solid white;display:block;box-shadow:0 1mm 3mm rgba(0,0,0,0.2);" />`
-      : `<div style="width:16mm;height:16mm;border-radius:50%;background:${pc};border:0.6mm solid white;display:flex;align-items:center;justify-content:center;color:white;font-size:5.5mm;font-weight:700;box-shadow:0 1mm 3mm rgba(0,0,0,0.2);">${member.firstName.charAt(0)}${member.lastName.charAt(0)}</div>`;
+  // ─── A4 HTML builder (for html2canvas rendering) ─────────────────────────────
+  const buildA4HTML = (photoB64: string, logoB64: string, qrB64: string): string => {
+    const { r, g, b } = hexToRgb(pc);
+    const pcRgb   = `rgb(${r},${g},${b})`;
+    const pcLight = `rgba(${r},${g},${b},0.12)`;
 
-    const photoBack = member.photoUrl
-      ? `<img src="${member.photoUrl}" style="width:9mm;height:9mm;border-radius:50%;object-fit:cover;border:0.4mm solid rgba(255,255,255,0.5);flex-shrink:0;" />`
+    // Card dimensions (px @ 96dpi)
+    const cW = mm(85.6); // 323
+    const cH = mm(54);   // 204
+    const hH = mm(14);   // header height 53
+    const bH = mm(28);   // body height
+    const fH = cH - hH - bH; // footer height
+
+    // Logo element
+    const logoEl = logoB64
+      ? `<img src="${logoB64}" style="width:${mm(8)}px;height:${mm(8)}px;object-fit:contain;flex-shrink:0;" />`
+      : `<div style="width:${mm(8)}px;height:${mm(8)}px;border-radius:50%;background:rgba(255,255,255,0.25);display:flex;align-items:center;justify-content:center;color:white;font-size:${mm(3.5)}px;font-weight:700;flex-shrink:0;">${churchName.charAt(0)}</div>`;
+
+    // Photo – front
+    const photoFront = photoB64
+      ? `<img src="${photoB64}" style="width:${mm(16)}px;height:${mm(16)}px;border-radius:50%;object-fit:cover;border:2px solid white;flex-shrink:0;" />`
+      : `<div style="width:${mm(16)}px;height:${mm(16)}px;border-radius:50%;background:${pcRgb};display:flex;align-items:center;justify-content:center;color:white;font-size:${mm(5.5)}px;font-weight:700;flex-shrink:0;">${member.firstName.charAt(0)}${member.lastName.charAt(0)}</div>`;
+
+    // Photo – back (small)
+    const photoBack = photoB64
+      ? `<img src="${photoB64}" style="width:${mm(9)}px;height:${mm(9)}px;border-radius:50%;object-fit:cover;border:1px solid rgba(255,255,255,0.5);flex-shrink:0;" />`
       : '';
 
-    // Front info rows (only if field is set)
+    // Info rows (recto)
     const infoRows: string[] = [];
+    const lbl = `font-size:${mm(1.8)}px;color:#94a3b8;white-space:nowrap;`;
+    const val = `font-size:${mm(2)}px;color:#334155;font-weight:600;`;
     if (member.joinDate)
-      infoRows.push(`<div class="irow"><span class="ilbl">Membre depuis</span><span class="ival">${fmtDate(member.joinDate)}</span></div>`);
+      infoRows.push(`<div style="display:flex;gap:${mm(1.5)}px;align-items:baseline;margin-top:${mm(0.7)}px;"><span style="${lbl}">Membre depuis</span><span style="${val}">${fmtDate(member.joinDate)}</span></div>`);
     if (member.baptized && member.baptizedDate)
-      infoRows.push(`<div class="irow"><span class="ilbl">Baptisé le</span><span class="ival">${fmtDate(member.baptizedDate)}</span></div>`);
+      infoRows.push(`<div style="display:flex;gap:${mm(1.5)}px;align-items:baseline;margin-top:${mm(0.7)}px;"><span style="${lbl}">Baptise le</span><span style="${val}">${fmtDate(member.baptizedDate)}</span></div>`);
     if (member.phone)
-      infoRows.push(`<div class="irow"><span class="ilbl">Tél.</span><span class="ival">${member.phone}</span></div>`);
+      infoRows.push(`<div style="display:flex;gap:${mm(1.5)}px;align-items:baseline;margin-top:${mm(0.7)}px;"><span style="${lbl}">Tel.</span><span style="${val}">${member.phone}</span></div>`);
 
-    // Back contact rows
-    const contactRows: string[] = [];
-    if (churchAddress) contactRows.push(`<div class="cr"><span class="ci">📍</span><span class="ct">${churchAddress}</span></div>`);
-    if (churchPhone)   contactRows.push(`<div class="cr"><span class="ci">📞</span><span class="ct">${churchPhone}</span></div>`);
-    if (churchEmail)   contactRows.push(`<div class="cr"><span class="ci">✉</span><span class="ct">${churchEmail}</span></div>`);
+    // Contact rows (verso)
+    const contacts: string[] = [];
+    const ct = `font-size:${mm(2.3)}px;color:#334155;`;
+    const ci = `font-size:${mm(2.3)}px;color:#888;width:${mm(5)}px;flex-shrink:0;`;
+    if (churchAddress) contacts.push(`<div style="display:flex;gap:${mm(1.5)}px;align-items:flex-start;"><span style="${ci}">Adr</span><span style="${ct}">${churchAddress}</span></div>`);
+    if (churchPhone)   contacts.push(`<div style="display:flex;gap:${mm(1.5)}px;align-items:flex-start;"><span style="${ci}">Tel</span><span style="${ct}">${churchPhone}</span></div>`);
+    if (churchEmail)   contacts.push(`<div style="display:flex;gap:${mm(1.5)}px;align-items:flex-start;"><span style="${ci}">Email</span><span style="${ct}">${churchEmail}</span></div>`);
 
-    const deptsHTML = depts.length > 0
-      ? `<div class="cr" style="margin-top:1mm;"><span class="ci">🏛</span><span class="ct">${depts.join(' · ')}</span></div>`
+    const deptsEl = depts.length > 0
+      ? `<div style="display:flex;gap:${mm(1.5)}px;flex-wrap:wrap;margin-top:${mm(1)}px;">${depts.map(d => `<span style="padding:${mm(0.4)}px ${mm(2)}px;background:${pcLight};color:${pcRgb};border-radius:${mm(1.5)}px;font-size:${mm(2.2)}px;font-weight:600;">${d}</span>`).join('')}</div>`
       : '';
 
-    return `<!DOCTYPE html>
-<html lang="fr">
-<head>
-  <meta charset="utf-8">
-  <title>Carte de Membre — ${fullName}</title>
-  <style>
-    @page { size: 85.6mm 54mm; margin: 0; }
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Arial, Helvetica, sans-serif; }
-    html, body { width: 85.6mm; height: 54mm; background: white; overflow: hidden; }
-    .card { width: 85.6mm; height: 54mm; overflow: hidden; position: relative; page-break-after: always; display: flex; flex-direction: column; }
+    // Common styles
+    const cardBase = `width:${cW}px;height:${cH}px;background:white;overflow:hidden;display:flex;flex-direction:column;border-radius:${mm(2)}px;`;
+    const hdBase   = `height:${hH}px;background:${pcRgb};display:flex;align-items:center;padding:0 ${mm(4)}px;gap:${mm(2)}px;flex-shrink:0;`;
+    const bdBase   = `height:${bH}px;display:flex;align-items:center;padding:0 ${mm(4)}px;gap:${mm(3.5)}px;flex-shrink:0;`;
+    const ftBase   = `height:${fH}px;background:#f8fafc;display:flex;align-items:center;justify-content:space-between;padding:0 ${mm(4)}px;border-top:1px solid #e2e8f0;flex-shrink:0;`;
 
-    /* RECTO */
-    .fhd { background: linear-gradient(135deg, ${pc} 0%, ${pc}cc 100%); height: 14mm; display: flex; align-items: center; padding: 0 4mm; gap: 2mm; flex-shrink: 0; }
-    .fhd-name { color: white; font-size: 3.8mm; font-weight: 800; letter-spacing: 0.1mm; flex: 1; }
-    .fhd-lbl  { font-size: 2mm; color: rgba(255,255,255,0.65); letter-spacing: 0.8mm; text-transform: uppercase; white-space: nowrap; }
-    .fbd { flex: 1; display: flex; align-items: center; padding: 0 4mm; gap: 3.5mm; }
-    .fname { font-size: 4.6mm; font-weight: 800; color: #0f172a; line-height: 1.1; }
-    .frole { display: inline-block; margin-top: 1.5mm; margin-bottom: 1.5mm; padding: 0.4mm 2mm; background: ${pc}22; color: ${pc}; border-radius: 1.5mm; font-size: 2.5mm; font-weight: 700; }
-    .irow { display: flex; gap: 1.5mm; align-items: baseline; margin-top: 0.7mm; }
-    .ilbl { font-size: 1.8mm; color: #94a3b8; white-space: nowrap; }
-    .ival { font-size: 2mm; color: #334155; font-weight: 600; }
-    .fft { height: 12mm; background: #f8fafc; display: flex; align-items: center; justify-content: space-between; padding: 0 4mm; border-top: 0.3mm solid #e2e8f0; flex-shrink: 0; }
-    .cnum { font-size: 2.3mm; color: #64748b; font-weight: 600; letter-spacing: 0.3mm; font-family: 'Courier New', monospace; }
-    .vlbl { font-size: 1.7mm; color: #94a3b8; text-align: right; }
-    .vval { font-size: 3mm; color: ${pc}; font-weight: 800; text-align: right; }
-
-    /* VERSO */
-    .bhd { background: linear-gradient(135deg, ${pc} 0%, ${pc}cc 100%); height: 13mm; display: flex; align-items: center; padding: 0 4mm; gap: 2mm; flex-shrink: 0; }
-    .bhd-name { color: white; font-size: 3.8mm; font-weight: 800; flex: 1; }
-    .bmbr { color: rgba(255,255,255,0.95); font-size: 2.4mm; font-weight: 600; line-height: 1.3; }
-    .bsub { color: rgba(255,255,255,0.6); font-size: 1.8mm; }
-    .bbd { flex: 1; display: flex; align-items: stretch; padding: 2mm 4mm; gap: 2.5mm; }
-    .binfo { flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 1.2mm; }
-    .cr { display: flex; align-items: flex-start; gap: 1.5mm; }
-    .ci { font-size: 2.5mm; width: 3.8mm; flex-shrink: 0; margin-top: 0.2mm; }
-    .ct { font-size: 2.3mm; color: #334155; line-height: 1.3; }
-    .bqr { flex-shrink: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.5mm; }
-    .bft { height: 10mm; background: #f8fafc; display: flex; align-items: center; justify-content: space-between; padding: 0 4mm; border-top: 0.3mm solid #e2e8f0; flex-shrink: 0; }
-    .ftnote { font-size: 1.9mm; color: #94a3b8; }
-    .ftslogan { font-size: 2mm; color: ${pc}; font-style: italic; font-weight: 600; }
-
-    @media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
-  </style>
-</head>
-<body>
-
-  <!-- PAGE 1 : RECTO -->
-  <div class="card">
-    <div class="fhd">
-      ${logoImg}
-      <span class="fhd-name">${churchName.toUpperCase()}</span>
-      <span class="fhd-lbl">Carte Membre</span>
-    </div>
-    <div class="fbd">
-      <div style="flex-shrink:0;">${photoFront}</div>
-      <div style="flex:1;min-width:0;">
-        <div class="fname">${fullName}</div>
-        <div class="frole">${member.type}</div>
-        ${infoRows.join('')}
+    const RECTO = `
+    <div style="${cardBase}box-shadow:0 4px 24px rgba(0,0,0,0.12);">
+      <!-- header -->
+      <div style="${hdBase}">
+        ${logoEl}
+        <span style="color:white;font-size:${mm(3.8)}px;font-weight:800;flex:1;">${churchName.toUpperCase()}</span>
+        <span style="font-size:${mm(2)}px;color:rgba(255,255,255,0.65);letter-spacing:2px;text-transform:uppercase;white-space:nowrap;">CARTE MEMBRE</span>
       </div>
-    </div>
-    <div class="fft">
-      <span class="cnum">${cardNumber}</span>
-      <div>
-        <div class="vlbl">Valide jusqu'au</div>
-        <div class="vval">31/12/${validYear}</div>
-      </div>
-    </div>
-  </div>
-
-  <!-- PAGE 2 : VERSO -->
-  <div class="card" style="page-break-after:auto;">
-    <div class="bhd">
-      ${logoImg}
-      <span class="bhd-name">${churchName.toUpperCase()}</span>
-      <div style="display:flex;align-items:center;gap:2mm;">
-        ${photoBack}
-        <div class="bmbr">
-          <div>${fullName}</div>
-          ${member.joinDate ? `<div class="bsub">Depuis ${fmtDate(member.joinDate)}</div>` : ''}
+      <!-- body -->
+      <div style="${bdBase}">
+        ${photoFront}
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:${mm(4.6)}px;font-weight:800;color:#0f172a;line-height:1.1;">${fullName}</div>
+          <div style="display:inline-block;margin-top:${mm(1.5)}px;margin-bottom:${mm(1.5)}px;padding:${mm(0.4)}px ${mm(2)}px;background:${pcLight};color:${pcRgb};border-radius:${mm(1.5)}px;font-size:${mm(2.5)}px;font-weight:700;">${member.type}</div>
+          ${infoRows.join('')}
         </div>
       </div>
-    </div>
-    <div class="bbd">
-      <div class="binfo">
-        ${contactRows.join('')}
-        ${deptsHTML}
+      <!-- footer -->
+      <div style="${ftBase}">
+        <span style="font-size:${mm(2.3)}px;color:#64748b;font-weight:600;font-family:monospace;">${cardNumber}</span>
+        <div style="text-align:right;">
+          <div style="font-size:${mm(1.7)}px;color:#94a3b8;">Valide jusqu'au</div>
+          <div style="font-size:${mm(3)}px;color:${pcRgb};font-weight:800;">31/12/${validYear}</div>
+        </div>
       </div>
-      <div class="bqr">
-        <img src="${qrUrl}" style="width:21mm;height:21mm;display:block;" alt="QR Code" />
-        <div style="font-size:1.7mm;color:#94a3b8;">Scanner</div>
-      </div>
-    </div>
-    <div class="bft">
-      ${churchSlogan ? `<span class="ftslogan">${churchSlogan}</span>` : '<span></span>'}
-      <span class="ftnote">${cardNumber}</span>
-    </div>
-  </div>
+    </div>`;
 
-</body>
-</html>`;
+    const backHH = mm(13);
+    const backFH = mm(10);
+    const backBH = cH - backHH - backFH;
+    const bdBack = `height:${backBH}px;display:flex;align-items:stretch;padding:${mm(2)}px ${mm(4)}px;gap:${mm(2.5)}px;flex-shrink:0;`;
+    const ftBack = `height:${backFH}px;background:#f8fafc;display:flex;align-items:center;justify-content:space-between;padding:0 ${mm(4)}px;border-top:1px solid #e2e8f0;flex-shrink:0;`;
+
+    const VERSO = `
+    <div style="${cardBase}box-shadow:0 4px 24px rgba(0,0,0,0.12);">
+      <!-- header -->
+      <div style="height:${backHH}px;background:${pcRgb};display:flex;align-items:center;padding:0 ${mm(4)}px;gap:${mm(2)}px;flex-shrink:0;">
+        ${logoEl}
+        <span style="color:white;font-size:${mm(3.8)}px;font-weight:800;flex:1;">${churchName.toUpperCase()}</span>
+        <div style="display:flex;align-items:center;gap:${mm(2)}px;">
+          ${photoBack}
+          <div style="text-align:right;">
+            <div style="color:rgba(255,255,255,0.95);font-size:${mm(2.4)}px;font-weight:600;">${fullName}</div>
+            ${member.joinDate ? `<div style="color:rgba(255,255,255,0.6);font-size:${mm(1.8)}px;">Depuis ${fmtDate(member.joinDate)}</div>` : ''}
+          </div>
+        </div>
+      </div>
+      <!-- body -->
+      <div style="${bdBack}">
+        <div style="flex:1;display:flex;flex-direction:column;justify-content:center;gap:${mm(1.2)}px;">
+          ${contacts.join('')}
+          ${deptsEl}
+        </div>
+        <div style="flex-shrink:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:${mm(0.5)}px;">
+          ${qrB64 ? `<img src="${qrB64}" style="width:${mm(21)}px;height:${mm(21)}px;display:block;" />` : ''}
+          <div style="font-size:${mm(1.7)}px;color:#94a3b8;text-align:center;">Scanner</div>
+        </div>
+      </div>
+      <!-- footer -->
+      <div style="${ftBack}">
+        ${churchSlogan ? `<span style="font-size:${mm(2)}px;color:${pcRgb};font-style:italic;font-weight:600;">${churchSlogan}</span>` : '<span></span>'}
+        <span style="font-size:${mm(1.9)}px;color:#94a3b8;">${cardNumber}</span>
+      </div>
+    </div>`;
+
+    return `
+      <div style="display:flex;flex-direction:column;align-items:center;gap:${mm(15)}px;padding:${mm(20)}px 0;">
+        ${RECTO}
+        ${VERSO}
+      </div>`;
   };
 
+  // ─── Download handler ─────────────────────────────────────────────────────────
+  const handleDownload = async () => {
+    setDownloading(true);
+    try {
+      const [photoB64, logoB64, qrB64] = await Promise.all([
+        member.photoUrl ? fetchAsBase64(member.photoUrl) : Promise.resolve(''),
+        churchLogo      ? fetchAsBase64(churchLogo)      : Promise.resolve(''),
+        fetchAsBase64(qrUrl),
+      ]);
+
+      const html2canvas = (await import('html2canvas')).default;
+      const { jsPDF }   = await import('jspdf');
+
+      // Off-screen container — same width as A4 at 96dpi
+      const container = document.createElement('div');
+      container.style.cssText = `
+        position:fixed;left:-9999px;top:0;
+        width:${mm(210)}px;
+        background:white;
+        font-family:'Segoe UI',Arial,Helvetica,sans-serif;
+        box-sizing:border-box;
+      `;
+      container.innerHTML = buildA4HTML(photoB64, logoB64, qrB64);
+      document.body.appendChild(container);
+
+      const canvas = await html2canvas(container, {
+        scale: 2,
+        useCORS: false,          // all images already base64
+        backgroundColor: '#ffffff',
+        logging: false,
+      });
+      document.body.removeChild(container);
+
+      // Compute actual rendered height → map to A4 proportionally
+      const pxW = canvas.width;
+      const pxH = canvas.height;
+      const pdfW = 210; // mm
+      const pdfH = Math.round((pxH / pxW) * pdfW);
+
+      const pdf = new jsPDF({ orientation: pdfH > pdfW ? 'portrait' : 'landscape', unit: 'mm', format: [pdfW, pdfH] });
+      pdf.addImage(canvas.toDataURL('image/jpeg', 0.95), 'JPEG', 0, 0, pdfW, pdfH);
+      pdf.save(`carte-${member.lastName.toLowerCase()}-${member.firstName.toLowerCase()}.pdf`);
+    } catch (err) {
+      console.error('Erreur génération PDF:', err);
+    } finally {
+      setDownloading(false);
+    }
+  };
+
+  // ─── JSX preview ─────────────────────────────────────────────────────────────
   return (
     <div className="fixed inset-0 z-[250] flex items-center justify-center p-4 overflow-y-auto">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
@@ -215,7 +276,6 @@ const MemberCardModal: React.FC<Props> = ({ member, isOpen, onClose }) => {
           <div className="w-full">
             <p className="text-[10px] text-slate-400 text-center mb-3 uppercase tracking-[0.2em]">Recto</p>
             <div className="w-full rounded-2xl overflow-hidden shadow-xl flex flex-col" style={{ height: '168px' }}>
-              {/* Header */}
               <div className="flex-shrink-0 h-[52px] flex items-center px-5 gap-3"
                    style={{ background: `linear-gradient(135deg, ${pc}, ${pc}cc)` }}>
                 {churchLogo
@@ -224,7 +284,6 @@ const MemberCardModal: React.FC<Props> = ({ member, isOpen, onClose }) => {
                 <span className="text-white font-bold text-sm flex-1 truncate">{churchName.toUpperCase()}</span>
                 <span className="text-white/60 text-[9px] tracking-widest uppercase whitespace-nowrap">Carte Membre</span>
               </div>
-              {/* Body */}
               <div className="flex-1 flex items-center px-5 gap-4 min-h-0 bg-white">
                 {member.photoUrl
                   ? <img src={member.photoUrl} className="w-14 h-14 rounded-full object-cover border-2 border-white shadow-lg flex-shrink-0" alt="" />
@@ -256,7 +315,6 @@ const MemberCardModal: React.FC<Props> = ({ member, isOpen, onClose }) => {
                   )}
                 </div>
               </div>
-              {/* Footer */}
               <div className="flex-shrink-0 h-9 flex items-center justify-between px-5 border-t border-slate-100 bg-slate-50/80">
                 <span className="font-mono text-[9px] text-slate-500">{cardNumber}</span>
                 <div className="text-right">
@@ -271,8 +329,7 @@ const MemberCardModal: React.FC<Props> = ({ member, isOpen, onClose }) => {
           <div className="w-full">
             <p className="text-[10px] text-slate-400 text-center mb-3 uppercase tracking-[0.2em]">Verso</p>
             <div className="w-full rounded-2xl overflow-hidden shadow-xl flex flex-col" style={{ height: '168px' }}>
-              {/* Header */}
-              <div className="flex-shrink-0 h-[48px] flex items-center px-5 gap-3 relative"
+              <div className="flex-shrink-0 h-[48px] flex items-center px-5 gap-3"
                    style={{ background: `linear-gradient(135deg, ${pc}, ${pc}cc)` }}>
                 {churchLogo
                   ? <img src={churchLogo} className="w-7 h-7 object-contain rounded flex-shrink-0" alt="" />
@@ -288,7 +345,6 @@ const MemberCardModal: React.FC<Props> = ({ member, isOpen, onClose }) => {
                   </div>
                 </div>
               </div>
-              {/* Body */}
               <div className="flex-1 flex items-stretch px-5 gap-3 min-h-0 bg-white py-2">
                 <div className="flex-1 flex flex-col justify-center gap-1">
                   {churchAddress && (
@@ -319,13 +375,11 @@ const MemberCardModal: React.FC<Props> = ({ member, isOpen, onClose }) => {
                     </div>
                   )}
                 </div>
-                {/* QR Code preview */}
                 <div className="flex-shrink-0 flex flex-col items-center justify-center gap-1">
                   <img src={qrUrl} className="w-16 h-16" alt="QR" />
                   <span className="text-[8px] text-slate-400">Scanner</span>
                 </div>
               </div>
-              {/* Footer */}
               <div className="flex-shrink-0 h-8 flex items-center justify-between px-5 border-t border-slate-100 bg-slate-50/80">
                 {churchSlogan
                   ? <span className="text-[9px] italic font-semibold truncate" style={{ color: pc }}>{churchSlogan}</span>
@@ -345,12 +399,25 @@ const MemberCardModal: React.FC<Props> = ({ member, isOpen, onClose }) => {
             Fermer
           </button>
           <button
-            onClick={handlePrint}
-            className="flex-1 py-3.5 text-white rounded-xl text-xs font-semibold flex items-center justify-center gap-2 hover:opacity-90 transition-opacity shadow-lg"
+            onClick={handleDownload}
+            disabled={downloading}
+            className="flex-1 py-3.5 text-white rounded-xl text-xs font-semibold flex items-center justify-center gap-2 hover:opacity-90 transition-opacity shadow-lg disabled:opacity-60"
             style={{ background: `linear-gradient(135deg, ${pc}, ${pc}cc)` }}
           >
-            <Printer size={15} />
-            Générer PDF
+            {downloading ? (
+              <>
+                <svg className="animate-spin w-4 h-4" viewBox="0 0 24 24" fill="none">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+                </svg>
+                Génération...
+              </>
+            ) : (
+              <>
+                <Download size={15} />
+                Télécharger
+              </>
+            )}
           </button>
         </div>
       </div>

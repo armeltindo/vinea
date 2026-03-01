@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard,
   Users,
@@ -22,8 +23,6 @@ import Logo from './Logo';
 import Avatar from './Avatar';
 
 interface SidebarProps {
-  activeTab: string;
-  setActiveTab: (tab: string) => void;
   onLogout: () => void;
   userRole: string;
   userPermissions: string[];
@@ -54,8 +53,6 @@ const MENU_ITEMS = [
 ];
 
 const Sidebar: React.FC<SidebarProps> = ({
-  activeTab,
-  setActiveTab,
   onLogout,
   userRole,
   userPermissions,
@@ -67,11 +64,19 @@ const Sidebar: React.FC<SidebarProps> = ({
   isOpen = true,
   onClose,
 }) => {
+  const navigate = useNavigate();
+  const location = useLocation();
+
   const filteredMenuItems = MENU_ITEMS.filter(item => userPermissions.includes(item.id));
 
   const handleItemClick = (id: string) => {
-    setActiveTab(id);
+    navigate(id === 'dashboard' ? '/' : `/${id}`);
     onClose?.();
+  };
+
+  const isActive = (id: string) => {
+    if (id === 'dashboard') return location.pathname === '/';
+    return location.pathname === `/${id}`;
   };
 
   return (
@@ -115,25 +120,25 @@ const Sidebar: React.FC<SidebarProps> = ({
         <nav className="flex-1 overflow-y-auto p-3 space-y-0.5 no-scrollbar">
           {filteredMenuItems.map((item) => {
             const Icon = item.icon;
-            const isActive = activeTab === item.id;
+            const active = isActive(item.id);
             return (
               <button
                 key={item.id}
                 onClick={() => handleItemClick(item.id)}
                 className={cn(
                   "w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 group relative",
-                  isActive
+                  active
                     ? "text-white shadow-lg shadow-blue-900/30"
                     : "text-slate-400 hover:bg-slate-800/60 hover:text-slate-100"
                 )}
-                style={isActive ? { backgroundColor: primaryColor } : {}}
+                style={active ? { backgroundColor: primaryColor } : {}}
               >
                 <Icon size={16} className={cn(
                   "transition-colors shrink-0",
-                  isActive ? "text-white" : "text-slate-500 group-hover:text-blue-400"
+                  active ? "text-white" : "text-slate-500 group-hover:text-blue-400"
                 )} />
                 <span className="truncate">{item.label}</span>
-                {isActive && (
+                {active && (
                   <span className="absolute right-2.5 w-1 h-3 bg-white/25 rounded-full"></span>
                 )}
               </button>

@@ -1,5 +1,6 @@
 
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
+import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import Sidebar from './components/Sidebar';
 import LogoutModal from './components/LogoutModal';
 import QuickActionModal from './components/QuickActionModal';
@@ -49,8 +50,12 @@ import {
 import { cn, formatFirstName } from './utils';
 import { Notification, NotificationSettings, Member, Visitor, AttendanceSession, VisitorStatus } from './types';
 
+const tabToPath = (tab: string) => tab === 'dashboard' ? '/' : `/${tab}`;
+
 const App: React.FC = () => {
-  const [activeTab, setActiveTab] = useState('dashboard');
+  const navigate = useNavigate();
+  const location = useLocation();
+  const currentTab = location.pathname.slice(1) || 'dashboard';
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
@@ -229,7 +234,7 @@ const App: React.FC = () => {
   const handleNotificationClick = (notif: Notification) => {
     markAsRead(notif.id);
     if (notif.link) {
-      setActiveTab(notif.link);
+      navigate(tabToPath(notif.link));
       setIsNotificationsOpen(false);
     }
   };
@@ -356,7 +361,7 @@ const App: React.FC = () => {
 
   const handleQuickAction = (tabId: string) => {
     if (currentUserPermissions.includes(tabId)) {
-      setActiveTab(tabId);
+      navigate(tabToPath(tabId));
     } else {
       showAccessToast("Accès refusé : vous n'avez pas la permission d'accéder à ce module.");
     }
@@ -364,7 +369,7 @@ const App: React.FC = () => {
 
   const navigateToSettingsAccount = () => {
     if (currentUserPermissions.includes('settings')) {
-      setActiveTab('settings');
+      navigate('/settings');
       setIsProfileOpen(false);
       window.dispatchEvent(new Event('vinea_settings_nav'));
     } else {
@@ -373,33 +378,10 @@ const App: React.FC = () => {
     }
   };
 
-  const renderContent = () => {
-    const canAccess = currentUserPermissions.includes(activeTab) || 
-                     (activeTab === 'spiritual' && currentUserPermissions.includes('dashboard'));
-
-    if (!canAccess && activeTab !== 'dashboard') {
-      return <Dashboard onNavigate={setActiveTab} adminName={adminName} />;
-    }
-
-    switch (activeTab) {
-      case 'dashboard': return <Dashboard onNavigate={setActiveTab} adminName={adminName} />;
-      case 'members': return <Members />;
-      case 'planning': return <Planning />;
-      case 'visitors': return <Visitors />;
-      case 'spiritual': return <SpiritualGrowth />;
-      case 'discipleship': return <Discipleship />;
-      case 'attendance': return <Attendance />;
-      case 'finances': return <Finances />;
-      case 'services': return <Services />;
-      case 'meditations': return <Meditations />;
-      case 'meetings': return <Meetings />;
-      case 'events': return <Events />;
-      case 'reports': return <Reports />;
-      case 'settings': return <Settings />;
-      case 'admin': return <Admin />;
-      default: return <Dashboard onNavigate={setActiveTab} adminName={adminName} />;
-    }
-  };
+  const canAccessRoute = (tab: string) =>
+    currentUserPermissions.includes(tab) ||
+    (tab === 'spiritual' && currentUserPermissions.includes('dashboard')) ||
+    tab === 'dashboard';
 
   if (authLoading) {
     return (
@@ -429,8 +411,6 @@ const App: React.FC = () => {
   return (
     <div className="min-h-screen bg-slate-50 flex text-slate-900">
       <Sidebar
-        activeTab={activeTab}
-        setActiveTab={setActiveTab}
         onLogout={() => setShowLogoutConfirm(true)}
         userRole={currentUserRole}
         userPermissions={currentUserPermissions}
@@ -442,7 +422,7 @@ const App: React.FC = () => {
         isOpen={isSidebarOpen}
         onClose={() => setIsSidebarOpen(false)}
       />
-      
+
       <main className="flex-1 lg:ml-64 min-h-screen bg-slate-50 transition-all duration-300 relative">
         <header className="h-16 bg-white/90 backdrop-blur-md border-b border-slate-200 sticky top-0 z-40 px-4 lg:px-8 flex items-center justify-between shadow-sm">
           <div className="flex items-center gap-3">
@@ -458,7 +438,7 @@ const App: React.FC = () => {
             <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-50 border border-slate-100 rounded-xl">
               <Home size={13} className="text-slate-400" />
               <ChevronRight size={11} className="text-slate-300" />
-              <span className="text-xs font-semibold text-slate-700 capitalize">{activeTab === 'spiritual' ? 'Spirituel' : activeTab.replace('-', ' ')}</span>
+              <span className="text-xs font-semibold text-slate-700 capitalize">{currentTab === 'spiritual' ? 'Spirituel' : currentTab.replace('-', ' ')}</span>
             </div>
 
             <div className="hidden lg:flex items-center gap-2 text-slate-400">
@@ -537,7 +517,7 @@ const App: React.FC = () => {
                        )}
                     </div>
                     <div className="p-4 border-t border-slate-100 bg-white text-center">
-                       <button onClick={() => { setActiveTab('reports'); setIsNotificationsOpen(false); }} className="text-xs font-medium text-slate-400 hover:text-indigo-600 transition-colors">Voir les rapports complets</button>
+                       <button onClick={() => { navigate('/reports'); setIsNotificationsOpen(false); }} className="text-xs font-medium text-slate-400 hover:text-indigo-600 transition-colors">Voir les rapports complets</button>
                     </div>
                  </div>
                )}
@@ -580,7 +560,7 @@ const App: React.FC = () => {
                     </button>
                   )}
                   {currentUserPermissions.includes('settings') && (
-                    <button onClick={() => { setActiveTab('settings'); setIsProfileOpen(false); }} className="w-full text-left px-5 py-3 text-sm font-medium text-slate-700 hover:bg-slate-50 flex items-center gap-3 transition-colors">
+                    <button onClick={() => { navigate('/settings'); setIsProfileOpen(false); }} className="w-full text-left px-5 py-3 text-sm font-medium text-slate-700 hover:bg-slate-50 flex items-center gap-3 transition-colors">
                       <div className="w-8 h-8 rounded-lg bg-slate-50 flex items-center justify-center text-slate-600"><SettingsIcon size={16} /></div>
                       Paramètres
                     </button>
@@ -598,7 +578,24 @@ const App: React.FC = () => {
 
         <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto">
           <React.Suspense fallback={pageFallback}>
-            {renderContent()}
+            <Routes>
+              <Route path="/" element={<Dashboard adminName={adminName} />} />
+              <Route path="/members" element={canAccessRoute('members') ? <Members /> : <Navigate to="/" replace />} />
+              <Route path="/visitors" element={canAccessRoute('visitors') ? <Visitors /> : <Navigate to="/" replace />} />
+              <Route path="/spiritual" element={canAccessRoute('spiritual') ? <SpiritualGrowth /> : <Navigate to="/" replace />} />
+              <Route path="/discipleship" element={canAccessRoute('discipleship') ? <Discipleship /> : <Navigate to="/" replace />} />
+              <Route path="/attendance" element={canAccessRoute('attendance') ? <Attendance /> : <Navigate to="/" replace />} />
+              <Route path="/planning" element={canAccessRoute('planning') ? <Planning /> : <Navigate to="/" replace />} />
+              <Route path="/services" element={canAccessRoute('services') ? <Services /> : <Navigate to="/" replace />} />
+              <Route path="/meetings" element={canAccessRoute('meetings') ? <Meetings /> : <Navigate to="/" replace />} />
+              <Route path="/events" element={canAccessRoute('events') ? <Events /> : <Navigate to="/" replace />} />
+              <Route path="/finances" element={canAccessRoute('finances') ? <Finances /> : <Navigate to="/" replace />} />
+              <Route path="/meditations" element={canAccessRoute('meditations') ? <Meditations /> : <Navigate to="/" replace />} />
+              <Route path="/reports" element={canAccessRoute('reports') ? <Reports /> : <Navigate to="/" replace />} />
+              <Route path="/settings" element={canAccessRoute('settings') ? <Settings /> : <Navigate to="/" replace />} />
+              <Route path="/admin" element={canAccessRoute('admin') ? <Admin /> : <Navigate to="/" replace />} />
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
           </React.Suspense>
         </div>
 

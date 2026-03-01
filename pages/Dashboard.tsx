@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Card from '../components/Card';
 import AIAnalysis from '../components/AIAnalysis';
 import {
@@ -29,7 +30,6 @@ import { cn } from '../utils';
 import { OperationType } from '../types';
 
 interface DashboardProps {
-  onNavigate: (tab: string) => void;
   adminName: string;
 }
 
@@ -119,7 +119,8 @@ const StatCard: React.FC<StatCardProps> = ({ label, value, sub, icon, theme, onC
 };
 
 // ── Composant principal ───────────────────────────────────────────────────────
-const Dashboard: React.FC<DashboardProps> = ({ onNavigate, adminName }) => {
+const Dashboard: React.FC<DashboardProps> = ({ adminName }) => {
+  const navigate = useNavigate();
   const [analysis, setAnalysis] = useState<string | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [stats, setStats] = useState({
@@ -274,7 +275,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate, adminName }) => {
             {isAnalyzing ? 'Analyse…' : 'Analyse IA'}
           </button>
           <button
-            onClick={() => onNavigate('reports')}
+            onClick={() => navigate('/reports')}
             className="px-4 py-2 bg-white border border-slate-200 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-50 hover:border-slate-300 transition-all shadow-sm active:scale-[0.98]"
           >
             Rapports
@@ -293,7 +294,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate, adminName }) => {
           sub="Base de données"
           icon={<Users size={20} />}
           theme="indigo"
-          onClick={() => onNavigate('members')}
+          onClick={() => navigate('/members')}
         />
         <StatCard
           label="Revenus du mois"
@@ -301,7 +302,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate, adminName }) => {
           sub="Entrées cumulées"
           icon={<Wallet size={20} />}
           theme="emerald"
-          onClick={() => onNavigate('finances')}
+          onClick={() => navigate('/finances')}
         />
         <StatCard
           label="Dernière Présence"
@@ -309,7 +310,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate, adminName }) => {
           sub={stats.lastAttendance === 0 ? 'Aucun relevé' : `${stats.lastAttendanceDate}`}
           icon={<UserCheck size={20} />}
           theme="sky"
-          onClick={() => onNavigate('attendance')}
+          onClick={() => navigate('/attendance')}
         />
         <StatCard
           label="Absents"
@@ -317,7 +318,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate, adminName }) => {
           sub="2 derniers dimanches"
           icon={<UserMinus size={20} />}
           theme="rose"
-          onClick={() => onNavigate('attendance')}
+          onClick={() => navigate('/attendance')}
         />
       </div>
 
@@ -403,10 +404,10 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate, adminName }) => {
               {stats.upcomingEvents.length > 0 ? stats.upcomingEvents.map((ev) => (
                 <div
                   key={ev.id}
-                  onClick={() => onNavigate(ev.target)}
+                  onClick={() => navigate('/' + ev.target)}
                   role="button"
                   tabIndex={0}
-                  onKeyDown={(e) => e.key === 'Enter' && onNavigate(ev.target)}
+                  onKeyDown={(e) => e.key === 'Enter' && navigate('/' + ev.target)}
                   className="flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 border border-transparent hover:border-slate-100 cursor-pointer group transition-all"
                 >
                   {/* Date badge */}
@@ -433,7 +434,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate, adminName }) => {
               )}
             </div>
             <button
-              onClick={() => onNavigate('planning')}
+              onClick={() => navigate('/planning')}
               className="w-full mt-4 py-2.5 text-xs font-medium text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all border border-dashed border-indigo-200 active:scale-[0.98]"
             >
               Voir le planning complet
@@ -449,7 +450,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate, adminName }) => {
         icon={<Briefcase size={16} />}
         headerAction={
           <button
-            onClick={() => onNavigate('planning')}
+            onClick={() => navigate('/planning')}
             className="text-xs font-medium text-indigo-600 hover:text-indigo-700 transition-colors px-3 py-1.5 hover:bg-indigo-50 rounded-lg"
           >
             Gérer

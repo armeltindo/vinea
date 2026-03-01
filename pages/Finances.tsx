@@ -1435,7 +1435,7 @@ const Finances: React.FC = () => {
                 <div className="bg-white p-6 rounded-xl border border-slate-100 shadow-sm">
                   <p className="text-xs font-medium text-slate-500 mb-1">Dons Réels</p>
                   <p className="text-2xl font-semibold text-emerald-600">
-                    {formatCurrency(operations.filter(op => op.campaignId === selectedCampaign.id).reduce((s,o) => s+o.amount, 0))}
+                    {formatCurrency(operations.filter(op => op.campaignId === selectedCampaign.id && op.type === OperationType.REVENU).reduce((s,o) => s+o.amount, 0))}
                   </p>
                 </div>
                 <div className="bg-white p-6 rounded-xl border border-slate-100 shadow-sm">

@@ -375,11 +375,11 @@ const Reports: React.FC = () => {
     <div className="space-y-6 animate-in fade-in duration-500 pb-20">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
-          <h2 className="text-2xl font-black text-slate-900 tracking-tight uppercase">Rapports & Analyses</h2>
+          <h2 className="text-2xl font-bold text-slate-900">Rapports & Analyses</h2>
           <p className="text-sm text-slate-500 font-medium italic">Vinea Intelligence : Pilotez votre église avec des données réelles.</p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <button onClick={handleGenerateReport} disabled={isAnalyzing} className="flex items-center gap-2 px-5 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-black hover:bg-indigo-700 transition-all shadow-lg uppercase tracking-widest disabled:opacity-50">
+          <button onClick={handleGenerateReport} disabled={isAnalyzing} className="flex items-center gap-2 px-5 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-semibold hover:bg-indigo-700 transition-all shadow-lg disabled:opacity-50">
             <Sparkles size={18} className={cn(isAnalyzing && "animate-pulse")} /> 
             {isAnalyzing ? 'Analyse...' : 'Synthèse Stratégique IA'}
           </button>
@@ -388,7 +388,7 @@ const Reports: React.FC = () => {
 
       <div className="flex gap-2 p-1 bg-white border border-slate-200 rounded-2xl w-fit shadow-sm">
         {(['mois', 'trimestre', 'année'] as const).map((p) => (
-          <button key={p} onClick={() => setPeriod(p)} className={cn("px-6 py-2 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all", period === p ? "bg-indigo-600 text-white shadow-lg" : "text-slate-400 hover:text-slate-600 hover:bg-slate-50")}>
+          <button key={p} onClick={() => setPeriod(p)} className={cn("px-6 py-2 text-xs font-medium rounded-xl transition-all", period === p ? "bg-indigo-600 text-white shadow-lg" : "text-slate-400 hover:text-slate-600 hover:bg-slate-50")}>
             {p}
           </button>
         ))}
@@ -398,18 +398,18 @@ const Reports: React.FC = () => {
         <Card title="Membres" subtitle="Évolution base" icon={<Users size={20} className="text-indigo-600" />} className="cursor-pointer hover:border-indigo-300 transition-all group shadow-sm" onClick={() => setIsMemberDetailsOpen(true)}>
           <div className="flex items-end justify-between">
             <div>
-              <span className="text-3xl font-black text-slate-900">{kpis.totalMembres}</span>
-              <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mt-1 group-hover:text-indigo-600 transition-colors">Démographie <ChevronRight size={10} className="inline" /></p>
+              <span className="text-3xl font-bold text-slate-900">{kpis.totalMembres}</span>
+              <p className="text-xs font-medium text-slate-500 mt-1 group-hover:text-indigo-600 transition-colors">Démographie <ChevronRight size={10} className="inline" /></p>
             </div>
-            <span className={cn("text-[10px] font-black px-2 py-1 rounded-lg uppercase tracking-widest", kpis.croissanceLabel.startsWith('+') ? "bg-emerald-50 text-emerald-600" : "bg-rose-50 text-rose-600")}>{kpis.croissanceLabel}</span>
+            <span className={cn("text-xs font-semibold px-2 py-1 rounded-lg", kpis.croissanceLabel.startsWith('+') ? "bg-emerald-50 text-emerald-600" : "bg-rose-50 text-rose-600")}>{kpis.croissanceLabel}</span>
           </div>
         </Card>
         
         <Card title="Croissance" subtitle="Progression spirituelle" icon={<Sparkles size={20} className="text-emerald-600" />} className="cursor-pointer hover:border-emerald-300 transition-all group shadow-sm" onClick={() => setIsGrowthDetailsOpen(true)}>
           <div className="flex items-end justify-between">
             <div>
-              <span className="text-3xl font-black text-slate-900">{kpis.croissanceSpirituelle}</span>
-              <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mt-1 group-hover:text-emerald-600 transition-colors">Maturité <ChevronRight size={10} className="inline" /></p>
+              <span className="text-3xl font-bold text-slate-900">{kpis.croissanceSpirituelle}</span>
+              <p className="text-xs font-medium text-slate-500 mt-1 group-hover:text-emerald-600 transition-colors">Maturité <ChevronRight size={10} className="inline" /></p>
             </div>
             <Award size={24} className="text-emerald-500 mb-1" />
           </div>
@@ -418,8 +418,8 @@ const Reports: React.FC = () => {
         <Card title="Rétention" subtitle="Conversion période" icon={<Target size={20} className="text-rose-500" />} className="cursor-pointer hover:border-rose-300 transition-all group shadow-sm" onClick={() => setIsRetentionDetailsOpen(true)}>
           <div className="flex items-end justify-between">
             <div>
-              <span className="text-3xl font-black text-slate-900">{kpis.retention}</span>
-              <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mt-1 group-hover:text-rose-600 transition-colors">Conversion <ChevronRight size={10} className="inline" /></p>
+              <span className="text-3xl font-bold text-slate-900">{kpis.retention}</span>
+              <p className="text-xs font-medium text-slate-500 mt-1 group-hover:text-rose-600 transition-colors">Conversion <ChevronRight size={10} className="inline" /></p>
             </div>
             <ArrowUpRight size={20} className="text-emerald-500" />
           </div>
@@ -428,10 +428,10 @@ const Reports: React.FC = () => {
         <Card title="Actions" subtitle="Succès opérationnels" icon={<FileText size={20} className="text-amber-500" />} className="cursor-pointer hover:border-amber-300 transition-all group shadow-sm" onClick={() => setIsImpactDetailsOpen(true)}>
           <div className="flex items-end justify-between">
             <div>
-              <span className="text-3xl font-black text-slate-900">{kpis.impactSocial}</span>
-              <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mt-1 group-hover:text-amber-600 transition-colors">Projets <ChevronRight size={10} className="inline" /></p>
+              <span className="text-3xl font-bold text-slate-900">{kpis.impactSocial}</span>
+              <p className="text-xs font-medium text-slate-500 mt-1 group-hover:text-amber-600 transition-colors">Projets <ChevronRight size={10} className="inline" /></p>
             </div>
-            <span className="text-[10px] font-black text-amber-600 bg-amber-50 px-2 py-1 rounded-lg uppercase tracking-widest">Fini</span>
+            <span className="text-xs font-semibold text-amber-600 bg-amber-50 px-2 py-1 rounded-lg">Fini</span>
           </div>
         </Card>
       </div>
@@ -477,9 +477,9 @@ const Reports: React.FC = () => {
                 <div key={item.name} className="flex justify-between items-center p-3 bg-slate-50 rounded-2xl border border-transparent shadow-sm">
                   <div className="flex items-center gap-3">
                     <div className="w-2.5 h-2.5 rounded-full" style={{backgroundColor: item.color}}></div>
-                    <span className="text-[10px] font-black text-slate-600 uppercase tracking-widest">{item.name}</span>
+                    <span className="text-xs font-semibold text-slate-600">{item.name}</span>
                   </div>
-                  <span className="text-xs font-black text-slate-900">{item.value}%</span>
+                  <span className="text-xs font-semibold text-slate-900">{item.value}%</span>
                 </div>
               ))}
             </div>
@@ -498,12 +498,12 @@ const Reports: React.FC = () => {
                        {dept.trend === 'up' ? <ArrowUpRight size={20} /> : <ArrowDownRight size={20} />}
                      </div>
                      <div>
-                        <span className="text-sm font-black text-slate-700 uppercase tracking-tight">{dept.name}</span>
-                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{dept.details.tasks} activités ({dept.details.completedTasks} terminées)</p>
+                        <span className="text-sm font-semibold text-slate-700">{dept.name}</span>
+                        <p className="text-xs text-slate-400">{dept.details.tasks} activités ({dept.details.completedTasks} terminées)</p>
                      </div>
                    </div>
                    <div className="text-right">
-                      <span className="text-xl font-black text-slate-900">{dept.score}%</span>
+                      <span className="text-xl font-semibold text-slate-900">{dept.score}%</span>
                       <ChevronRight size={14} className="inline ml-1 text-slate-300 group-hover:text-indigo-600" />
                    </div>
                  </div>
@@ -514,7 +514,7 @@ const Reports: React.FC = () => {
              )) : (
                <div className="py-20 text-center opacity-30">
                  <Briefcase size={48} className="mx-auto" />
-                 <p className="text-[10px] font-black uppercase mt-4">Aucun département au registre</p>
+                 <p className="text-xs font-medium mt-4">Aucun département au registre</p>
                </div>
              )}
            </div>
@@ -524,7 +524,7 @@ const Reports: React.FC = () => {
           <div className="space-y-4">
             {strategicInsights.slice(0, 2).map((insight, idx) => (
               <div key={idx} className={cn(
-                "p-5 rounded-[2.5rem] border animate-in slide-in-from-right-4 duration-500",
+                "p-5 rounded-2xl border animate-in slide-in-from-right-4 duration-500",
                 insight.type === 'danger' ? "bg-rose-50 border-rose-100" : 
                 insight.type === 'warning' ? "bg-amber-50 border-amber-100" : 
                 "bg-indigo-50 border-indigo-100"
@@ -532,7 +532,7 @@ const Reports: React.FC = () => {
                 <div className="flex items-center gap-2 mb-2">
                   {insight.icon}
                   <h5 className={cn(
-                    "text-[10px] font-black uppercase tracking-widest",
+                    "text-xs font-medium",
                     insight.type === 'danger' ? "text-rose-700" : 
                     insight.type === 'warning' ? "text-amber-700" : 
                     "text-indigo-700"
@@ -550,7 +550,7 @@ const Reports: React.FC = () => {
             ))}
             
             <div className="mt-6 pt-6 border-t border-slate-100">
-               <button onClick={() => setIsPlanOpen(true)} className="w-full py-4 bg-slate-900 text-white rounded-[1.8rem] text-[10px] font-black uppercase tracking-[0.2em] hover:bg-slate-800 transition-all flex items-center justify-center gap-3 shadow-xl active:scale-95">
+               <button onClick={() => setIsPlanOpen(true)} className="w-full py-4 bg-slate-900 text-white rounded-[1.8rem] text-xs font-medium hover:bg-slate-800 transition-all flex items-center justify-center gap-3 shadow-xl active:scale-95">
                  Revue du Plan d'Action <ChevronRight size={14} />
                </button>
             </div>
@@ -562,44 +562,44 @@ const Reports: React.FC = () => {
       {selectedDept && (
         <div className="fixed inset-0 z-[180] flex items-center justify-center p-4 overflow-hidden">
           <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity duration-300" onClick={() => setSelectedDept(null)} />
-          <div className="relative w-full max-w-lg bg-white shadow-2xl animate-in zoom-in-95 duration-300 flex flex-col rounded-[3rem] overflow-hidden max-h-[90vh]">
+          <div className="relative w-full max-w-lg bg-white shadow-2xl animate-in zoom-in-95 duration-300 flex flex-col rounded-2xl overflow-hidden max-h-[90vh]">
             <div className="px-10 py-12 text-white shrink-0 relative overflow-hidden shadow-lg" style={{ backgroundColor: selectedDept.color }}>
               <div className="absolute top-0 right-0 p-8 opacity-10 pointer-events-none"><Briefcase size={180} /></div>
               <button onClick={() => setSelectedDept(null)} className="absolute top-6 left-6 p-2 hover:bg-white/10 rounded-full text-white transition-colors"><X size={24} /></button>
               <div className="relative z-10 space-y-4">
-                <span className="px-3 py-1 bg-white/20 backdrop-blur-md rounded-full text-[10px] font-black uppercase tracking-[0.2em]">Fiche Performance</span>
-                <h3 className="text-3xl font-black uppercase leading-tight tracking-tighter">{selectedDept.name}</h3>
+                <span className="px-3 py-1 bg-white/20 backdrop-blur-md rounded-full text-xs font-medium">Fiche Performance</span>
+                <h3 className="text-3xl font-semibold leading-tight">{selectedDept.name}</h3>
                 <div className="flex items-center gap-4">
-                  <p className="text-xs text-white/80 font-bold uppercase tracking-widest">Période : {period}</p>
-                  <span className="text-lg font-black">{selectedDept.score}%</span>
+                  <p className="text-xs text-white/80 font-bold">Période : {period}</p>
+                  <span className="text-lg font-semibold">{selectedDept.score}%</span>
                 </div>
               </div>
             </div>
 
             <div className="flex-1 overflow-y-auto p-10 custom-scrollbar bg-slate-50/30 space-y-8">
               <div className="grid grid-cols-2 gap-4">
-                <div className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm flex flex-col items-center text-center space-y-2">
+                <div className="bg-white p-6 rounded-xl border border-slate-100 shadow-sm flex flex-col items-center text-center space-y-2">
                   <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600 shadow-inner">
                     <CheckCircle2 size={20} />
                   </div>
                   <div>
-                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Réalisées</p>
-                    <p className="text-2xl font-black text-slate-900">{selectedDept.details.completedTasks} / {selectedDept.details.tasks}</p>
+                    <p className="text-xs font-medium text-slate-500">Réalisées</p>
+                    <p className="text-2xl font-semibold text-slate-900">{selectedDept.details.completedTasks} / {selectedDept.details.tasks}</p>
                   </div>
                 </div>
-                <div className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm flex flex-col items-center text-center space-y-2">
+                <div className="bg-white p-6 rounded-xl border border-slate-100 shadow-sm flex flex-col items-center text-center space-y-2">
                   <div className="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center text-indigo-600 shadow-inner">
                     <DollarSign size={20} />
                   </div>
                   <div>
-                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Budget Engagé</p>
-                    <p className="text-2xl font-black text-slate-900">{formatCurrency(selectedDept.details.budget).split(' ')[0]} F</p>
+                    <p className="text-xs font-medium text-slate-500">Budget Engagé</p>
+                    <p className="text-2xl font-semibold text-slate-900">{formatCurrency(selectedDept.details.budget).split(' ')[0]} F</p>
                   </div>
                 </div>
               </div>
 
               <div className="space-y-4">
-                <h4 className="text-[11px] font-black text-slate-900 uppercase tracking-[0.2em] flex items-center gap-2">
+                <h4 className="text-xs font-medium text-slate-700 flex items-center gap-2">
                   <Award size={16} className="text-emerald-500" /> Succès de la période
                 </h4>
                 <div className="space-y-3">
@@ -609,20 +609,20 @@ const Reports: React.FC = () => {
                         <div className="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center text-emerald-600">
                            <CheckCircle2 size={16} />
                         </div>
-                        <span className="text-xs font-black text-slate-700 uppercase tracking-tight">{ach.title}</span>
+                        <span className="text-xs font-medium text-slate-700">{ach.title}</span>
                       </div>
-                      <span className="text-[9px] font-bold text-slate-400 uppercase">{new Date(ach.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}</span>
+                      <span className="text-xs text-slate-400">{new Date(ach.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}</span>
                     </div>
                   )) : (
-                    <div className="py-10 text-center bg-white/50 border border-dashed border-slate-200 rounded-[2rem] opacity-50">
-                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Aucun succès validé</p>
+                    <div className="py-10 text-center bg-white/50 border border-dashed border-slate-200 rounded-xl opacity-50">
+                      <p className="text-xs font-medium text-slate-500">Aucun succès validé</p>
                     </div>
                   )}
                 </div>
               </div>
 
               <div className="space-y-4">
-                <h4 className="text-[11px] font-black text-slate-900 uppercase tracking-[0.2em] flex items-center gap-2">
+                <h4 className="text-xs font-medium text-slate-700 flex items-center gap-2">
                   <CircleDashed size={16} className="text-amber-500" /> Objectifs restants
                 </h4>
                 <div className="space-y-3">
@@ -632,13 +632,13 @@ const Reports: React.FC = () => {
                         <div className="w-8 h-8 rounded-lg bg-amber-50 flex items-center justify-center text-amber-600">
                            <Clock size={16} />
                         </div>
-                        <span className="text-xs font-black text-slate-700 uppercase tracking-tight">{task.title}</span>
+                        <span className="text-xs font-medium text-slate-700">{task.title}</span>
                       </div>
-                      <span className="text-[9px] font-bold text-slate-400 uppercase">{new Date(task.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}</span>
+                      <span className="text-xs text-slate-400">{new Date(task.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}</span>
                     </div>
                   )) : (
-                    <div className="py-10 text-center bg-white/50 border border-dashed border-slate-200 rounded-[2rem] opacity-50">
-                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Aucune tâche en attente</p>
+                    <div className="py-10 text-center bg-white/50 border border-dashed border-slate-200 rounded-xl opacity-50">
+                      <p className="text-xs font-medium text-slate-500">Aucune tâche en attente</p>
                     </div>
                   )}
                 </div>
@@ -648,7 +648,7 @@ const Reports: React.FC = () => {
             <div className="p-10 border-t border-slate-100 bg-white shrink-0">
               <button 
                 onClick={() => setSelectedDept(null)}
-                className="w-full py-4 bg-slate-900 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-800 shadow-xl active:scale-95"
+                className="w-full py-4 bg-slate-900 text-white rounded-2xl text-xs font-medium hover:bg-slate-800 shadow-xl active:scale-95"
               >
                 Fermer l'Analyse
               </button>
@@ -661,7 +661,7 @@ const Reports: React.FC = () => {
       {isPlanOpen && (
         <div className="fixed inset-0 z-[150] overflow-hidden flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity duration-300" onClick={() => setIsPlanOpen(false)} />
-          <div className="relative w-full max-w-2xl bg-white shadow-2xl animate-in zoom-in-95 duration-300 flex flex-col rounded-[3rem] overflow-hidden max-h-[90vh]">
+          <div className="relative w-full max-w-2xl bg-white shadow-2xl animate-in zoom-in-95 duration-300 flex flex-col rounded-2xl overflow-hidden max-h-[90vh]">
             <div className="px-10 py-12 bg-slate-900 text-white shrink-0 relative overflow-hidden">
               <div className="absolute top-0 right-0 p-8 opacity-10">
                  <Target size={180} />
@@ -670,25 +670,25 @@ const Reports: React.FC = () => {
                 <X size={24} />
               </button>
               <div className="relative z-10 space-y-4 mt-4">
-                <span className="px-3 py-1 bg-indigo-600 rounded-full text-[10px] font-black uppercase tracking-[0.2em]">Soin Pastoral</span>
-                <h3 className="text-3xl font-black uppercase leading-tight tracking-tighter">Plan d'Action Stratégique</h3>
-                <p className="text-xs text-slate-400 font-bold uppercase tracking-widest">Décisions et mesures correctives basées sur l'IA</p>
+                <span className="px-3 py-1 bg-indigo-600 rounded-full text-xs font-medium">Soin Pastoral</span>
+                <h3 className="text-3xl font-semibold leading-tight">Plan d'Action Stratégique</h3>
+                <p className="text-xs text-slate-400 font-bold">Décisions et mesures correctives basées sur l'IA</p>
               </div>
             </div>
 
             <div className="flex-1 overflow-y-auto p-10 custom-scrollbar bg-slate-50/30 space-y-8">
               {!aiPlanContent && !isGeneratingPlan ? (
                 <div className="flex flex-col items-center justify-center py-20 text-center space-y-6">
-                  <div className="w-20 h-20 bg-indigo-50 rounded-[2rem] flex items-center justify-center text-indigo-300">
+                  <div className="w-20 h-20 bg-indigo-50 rounded-xl flex items-center justify-center text-indigo-300">
                     <BrainCircuit size={40} />
                   </div>
                   <div className="space-y-2">
-                    <h4 className="text-lg font-black text-slate-900 uppercase">Générer un plan d'action</h4>
+                    <h4 className="text-lg font-bold text-slate-900">Générer un plan d'action</h4>
                     <p className="text-xs text-slate-500 max-w-xs mx-auto leading-relaxed">Gemini peut analyser vos KPIs pour proposer des mesures concrètes d'amélioration.</p>
                   </div>
                   <button 
                     onClick={handleGenerateAIPlan}
-                    className="px-8 py-4 bg-indigo-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-xl shadow-indigo-200 flex items-center gap-2 hover:bg-indigo-700 transition-all"
+                    className="px-8 py-3.5 bg-indigo-600 text-white rounded-2xl text-sm font-semibold shadow-xl shadow-indigo-200 flex items-center gap-2 hover:bg-indigo-700 transition-all"
                   >
                     <Sparkles size={16} /> Lancer la génération
                   </button>
@@ -700,7 +700,7 @@ const Reports: React.FC = () => {
                 </div>
               ) : (
                 <div className="space-y-8">
-                  <div className="bg-white p-10 rounded-[3rem] border border-indigo-100 shadow-xl shadow-indigo-500/5 relative group">
+                  <div className="bg-white p-10 rounded-2xl border border-indigo-100 shadow-xl shadow-indigo-500/5 relative group">
                     <div className="absolute top-8 right-8 flex gap-2">
                       <button 
                         onClick={() => { navigator.clipboard.writeText(aiPlanContent!); alert("Plan copié !"); }}
@@ -720,7 +720,7 @@ const Reports: React.FC = () => {
             <div className="p-10 border-t border-slate-100 bg-white shrink-0">
               <button 
                 onClick={() => setIsPlanOpen(false)}
-                className="w-full py-4 bg-slate-900 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-800 shadow-xl"
+                className="w-full py-4 bg-slate-900 text-white rounded-2xl text-xs font-medium hover:bg-slate-800 shadow-xl"
               >
                 Fermer le Plan
               </button>
@@ -733,42 +733,42 @@ const Reports: React.FC = () => {
       {isGrowthDetailsOpen && (
         <div className="fixed inset-0 z-[180] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity duration-300" onClick={() => setIsGrowthDetailsOpen(false)} />
-          <div className="relative w-full max-w-lg bg-white shadow-2xl animate-in zoom-in-95 duration-300 flex flex-col rounded-[3rem] overflow-hidden max-h-[90vh]">
+          <div className="relative w-full max-w-lg bg-white shadow-2xl animate-in zoom-in-95 duration-300 flex flex-col rounded-2xl overflow-hidden max-h-[90vh]">
             <div className="px-10 py-12 bg-indigo-600 text-white shrink-0 relative overflow-hidden">
               <div className="absolute top-0 right-0 p-8 opacity-10 pointer-events-none"><Trophy size={180} /></div>
               <button onClick={() => setIsGrowthDetailsOpen(false)} className="absolute top-6 left-6 p-2 hover:bg-white/10 rounded-full text-white transition-colors"><X size={24} /></button>
               <div className="relative z-10 space-y-4 mt-4">
-                <span className="px-3 py-1 bg-white/20 backdrop-blur-md rounded-full text-[10px] font-black uppercase tracking-[0.2em]">Indicateur de Maturité</span>
-                <h3 className="text-3xl font-black uppercase leading-tight tracking-tighter">Croissance Spirituelle</h3>
-                <p className="text-xs text-indigo-100 font-bold uppercase mt-1 tracking-widest">Période : {period}</p>
+                <span className="px-3 py-1 bg-white/20 backdrop-blur-md rounded-full text-xs font-medium">Indicateur de Maturité</span>
+                <h3 className="text-3xl font-semibold leading-tight">Croissance Spirituelle</h3>
+                <p className="text-xs text-indigo-100 mt-1">Période : {period}</p>
               </div>
             </div>
             <div className="flex-1 overflow-y-auto p-10 space-y-8 bg-slate-50/30">
               <div className="grid grid-cols-1 gap-4">
-                <div className="bg-white p-6 rounded-[2.5rem] border border-slate-100 shadow-sm flex items-center justify-between">
+                <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between">
                   <div>
-                    <p className="text-[10px] font-black text-slate-400 uppercase mb-1 tracking-widest">Élèves actifs</p>
-                    <p className="text-3xl font-black text-slate-900">{kpis.enrollmentsCount}</p>
+                    <p className="text-xs font-medium text-slate-500 mb-1 tracking-wide">Élèves actifs</p>
+                    <p className="text-3xl font-bold text-slate-900">{kpis.enrollmentsCount}</p>
                   </div>
                   <GraduationCap size={32} className="text-indigo-100" />
                 </div>
-                <div className="bg-white p-6 rounded-[2.5rem] border border-slate-100 shadow-sm flex items-center justify-between">
+                <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between">
                   <div>
-                    <p className="text-[10px] font-black text-slate-400 uppercase mb-1 tracking-widest">Progression Moyenne</p>
-                    <p className="text-3xl font-black text-indigo-600">{kpis.croissanceSpirituelle}</p>
+                    <p className="text-xs font-medium text-slate-500 mb-1 tracking-wide">Progression Moyenne</p>
+                    <p className="text-3xl font-bold text-indigo-600">{kpis.croissanceSpirituelle}</p>
                   </div>
                   <TrendingUp size={32} className="text-indigo-100" />
                 </div>
               </div>
-              <div className="p-6 bg-emerald-50 border border-emerald-100 rounded-[2rem] flex items-start gap-4">
+              <div className="p-6 bg-emerald-50 border border-emerald-100 rounded-xl flex items-start gap-4">
                 <Info size={24} className="text-emerald-400 shrink-0" />
-                <p className="text-[10px] text-emerald-700 font-black uppercase leading-relaxed tracking-widest">
+                <p className="text-xs text-emerald-700 leading-relaxed">
                   Une progression spirituelle de {kpis.croissanceSpirituelle} témoigne d'un engagement profond des membres. Maintenez les séances de mentorat pour conserver cet élan.
                 </p>
               </div>
             </div>
             <div className="p-10 border-t border-slate-100 bg-white flex shrink-0">
-              <button onClick={() => setIsGrowthDetailsOpen(false)} className="w-full py-4 bg-slate-900 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-800 shadow-xl">Fermer les détails</button>
+              <button onClick={() => setIsGrowthDetailsOpen(false)} className="w-full py-4 bg-slate-900 text-white rounded-2xl text-xs font-medium hover:bg-slate-800 shadow-xl">Fermer les détails</button>
             </div>
           </div>
         </div>
@@ -777,19 +777,19 @@ const Reports: React.FC = () => {
       {isMemberDetailsOpen && (
         <div className="fixed inset-0 z-[180] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity duration-300" onClick={() => setIsMemberDetailsOpen(false)} />
-          <div className="relative w-full max-w-lg bg-white shadow-2xl animate-in zoom-in-95 duration-300 flex flex-col rounded-[3rem] overflow-hidden max-h-[90vh]">
+          <div className="relative w-full max-w-lg bg-white shadow-2xl animate-in zoom-in-95 duration-300 flex flex-col rounded-2xl overflow-hidden max-h-[90vh]">
             <div className="px-10 py-12 bg-indigo-600 text-white shrink-0 relative overflow-hidden">
               <div className="absolute top-0 right-0 p-8 opacity-10 pointer-events-none"><Users size={180} /></div>
               <button onClick={() => setIsMemberDetailsOpen(false)} className="absolute top-6 left-6 p-2 hover:bg-white/10 rounded-full text-white transition-colors"><X size={24} /></button>
               <div className="relative z-10 space-y-4">
-                <span className="px-3 py-1 bg-white/20 backdrop-blur-md rounded-full text-[10px] font-black uppercase tracking-[0.2em]">Démographie</span>
-                <h3 className="text-3xl font-black uppercase leading-tight tracking-tighter">Analyse de la Base</h3>
-                <p className="text-xs text-indigo-100 font-bold uppercase mt-1">Total membres : {kpis.totalMembres}</p>
+                <span className="px-3 py-1 bg-white/20 backdrop-blur-md rounded-full text-xs font-medium">Démographie</span>
+                <h3 className="text-3xl font-semibold leading-tight">Analyse de la Base</h3>
+                <p className="text-xs text-indigo-100 mt-1">Total membres : {kpis.totalMembres}</p>
               </div>
             </div>
             <div className="flex-1 overflow-y-auto p-10 space-y-8 bg-slate-50/30">
                <div className="space-y-4">
-                 <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Nouveaux membres sur la période</h4>
+                 <h4 className="text-xs font-medium text-slate-500">Nouveaux membres sur la période</h4>
                  {members.filter(m => {
                    if (!m.joinDate) return false;
                    const d = new Date(m.joinDate);
@@ -802,19 +802,19 @@ const Reports: React.FC = () => {
                    }).map(m => (
                      <div key={m.id} className="flex items-center justify-between p-4 bg-white border border-slate-100 rounded-2xl shadow-sm">
                         <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center text-[10px] font-black text-slate-400 uppercase">{getInitials(m.firstName, m.lastName)}</div>
-                          <span className="text-xs font-black text-slate-800 uppercase">{formatFirstName(m.firstName)} {m.lastName}</span>
+                          <div className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center text-xs font-medium text-slate-500">{getInitials(m.firstName, m.lastName)}</div>
+                          <span className="text-xs font-semibold text-slate-800">{formatFirstName(m.firstName)} {m.lastName}</span>
                         </div>
-                        <span className="text-[9px] font-bold text-slate-400 uppercase">{new Date(m.joinDate!).toLocaleDateString()}</span>
+                        <span className="text-xs text-slate-400">{new Date(m.joinDate!).toLocaleDateString()}</span>
                      </div>
                    ))
                  ) : (
-                   <div className="py-20 text-center text-slate-300 italic text-xs uppercase tracking-widest">Aucune nouvelle adhésion détectée</div>
+                   <div className="py-20 text-center text-slate-300 italic text-xs">Aucune nouvelle adhésion détectée</div>
                  )}
                </div>
             </div>
             <div className="p-8 border-t border-slate-100 bg-white flex shrink-0">
-              <button onClick={() => setIsMemberDetailsOpen(false)} className="w-full py-4 bg-slate-900 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-800 shadow-xl">Fermer les détails</button>
+              <button onClick={() => setIsMemberDetailsOpen(false)} className="w-full py-4 bg-slate-900 text-white rounded-2xl text-xs font-medium hover:bg-slate-800 shadow-xl">Fermer les détails</button>
             </div>
           </div>
         </div>
@@ -823,30 +823,30 @@ const Reports: React.FC = () => {
       {isRetentionDetailsOpen && (
         <div className="fixed inset-0 z-[180] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity duration-300" onClick={() => setIsRetentionDetailsOpen(false)} />
-          <div className="relative w-full max-w-lg bg-white shadow-2xl animate-in zoom-in-95 duration-300 flex flex-col rounded-[3rem] overflow-hidden max-h-[90vh]">
+          <div className="relative w-full max-w-lg bg-white shadow-2xl animate-in zoom-in-95 duration-300 flex flex-col rounded-2xl overflow-hidden max-h-[90vh]">
             <div className="px-10 py-12 bg-rose-600 text-white shrink-0 relative overflow-hidden">
               <div className="absolute top-0 right-0 p-8 opacity-10 pointer-events-none"><Target size={180} /></div>
               <button onClick={() => setIsRetentionDetailsOpen(false)} className="absolute top-6 left-6 p-2 hover:bg-white/10 rounded-full text-white transition-colors"><X size={24} /></button>
               <div className="relative z-10 space-y-4 mt-4">
-                <span className="px-3 py-1 bg-white/20 backdrop-blur-md rounded-full text-[10px] font-black uppercase tracking-[0.2em]">Rétention & Conversion</span>
-                <h3 className="text-3xl font-black uppercase leading-tight tracking-tighter">Indice de Conversion</h3>
-                <p className="text-xs text-rose-100 font-bold uppercase mt-1 tracking-widest">Période : {period}</p>
+                <span className="px-3 py-1 bg-white/20 backdrop-blur-md rounded-full text-xs font-medium">Rétention & Conversion</span>
+                <h3 className="text-3xl font-semibold leading-tight">Indice de Conversion</h3>
+                <p className="text-xs text-rose-100 mt-1">Période : {period}</p>
               </div>
             </div>
             <div className="flex-1 overflow-y-auto p-10 space-y-8 bg-slate-50/30">
               <div className="grid grid-cols-2 gap-4">
-                <div className="bg-white p-6 rounded-[2.5rem] border border-slate-100 shadow-sm text-center">
-                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Visiteurs arrivés</p>
-                  <p className="text-3xl font-black text-slate-900">{kpis.periodVisitorsCount}</p>
+                <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm text-center">
+                  <p className="text-xs font-medium text-slate-500 mb-1">Visiteurs arrivés</p>
+                  <p className="text-3xl font-bold text-slate-900">{kpis.periodVisitorsCount}</p>
                 </div>
-                <div className="bg-white p-6 rounded-[2.5rem] border border-slate-100 shadow-sm text-center">
-                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Convertis réels</p>
-                  <p className="text-3xl font-black text-emerald-600">{kpis.integratedCount}</p>
+                <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm text-center">
+                  <p className="text-xs font-medium text-slate-500 mb-1">Convertis réels</p>
+                  <p className="text-3xl font-bold text-emerald-600">{kpis.integratedCount}</p>
                 </div>
               </div>
             </div>
             <div className="p-10 border-t border-slate-100 bg-white flex shrink-0">
-              <button onClick={() => setIsRetentionDetailsOpen(false)} className="w-full py-4 bg-slate-900 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-800 shadow-xl">Fermer les détails</button>
+              <button onClick={() => setIsRetentionDetailsOpen(false)} className="w-full py-4 bg-slate-900 text-white rounded-2xl text-xs font-medium hover:bg-slate-800 shadow-xl">Fermer les détails</button>
             </div>
           </div>
         </div>
@@ -855,39 +855,39 @@ const Reports: React.FC = () => {
       {isImpactDetailsOpen && (
         <div className="fixed inset-0 z-[180] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity duration-300" onClick={() => setIsImpactDetailsOpen(false)} />
-          <div className="relative w-full max-w-lg bg-white shadow-2xl animate-in zoom-in-95 duration-300 flex flex-col rounded-[3rem] overflow-hidden max-h-[90vh]">
+          <div className="relative w-full max-w-lg bg-white shadow-2xl animate-in zoom-in-95 duration-300 flex flex-col rounded-2xl overflow-hidden max-h-[90vh]">
             <div className="px-10 py-12 bg-amber-500 text-white shrink-0 relative overflow-hidden">
               <div className="absolute top-0 right-0 p-8 opacity-10 pointer-events-none"><Activity size={180} /></div>
               <button onClick={() => setIsImpactDetailsOpen(false)} className="absolute top-6 left-6 p-2 hover:bg-white/10 rounded-full text-white transition-colors"><X size={24} /></button>
               <div className="relative z-10 space-y-4 mt-4">
-                <span className="px-3 py-1 bg-white/20 backdrop-blur-md rounded-full text-[10px] font-black uppercase tracking-[0.2em]">Actions & Réalisations</span>
-                <h3 className="text-3xl font-black uppercase leading-tight tracking-tighter">Impact Opérationnel</h3>
-                <p className="text-xs text-amber-100 font-bold uppercase mt-1 tracking-widest">Période : {period}</p>
+                <span className="px-3 py-1 bg-white/20 backdrop-blur-md rounded-full text-xs font-medium">Actions & Réalisations</span>
+                <h3 className="text-3xl font-semibold leading-tight">Impact Opérationnel</h3>
+                <p className="text-xs text-amber-100 mt-1">Période : {period}</p>
               </div>
             </div>
             <div className="flex-1 overflow-y-auto p-10 space-y-6 bg-slate-50/30">
               <div className="space-y-4">
-                <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Activités clôturées sur la période</h4>
+                <h4 className="text-xs font-medium text-slate-500">Activités clôturées sur la période</h4>
                 {periodActivities.filter(a => a.status === ActivityStatus.REALISEE).length > 0 ? (
                   periodActivities.filter(a => a.status === ActivityStatus.REALISEE).map(a => (
-                    <div key={a.id} className="bg-white p-5 rounded-[2rem] border border-slate-100 shadow-sm space-y-3">
+                    <div key={a.id} className="bg-white p-5 rounded-xl border border-slate-100 shadow-sm space-y-3">
                       <div className="flex justify-between items-start">
-                        <p className="text-sm font-black text-slate-800 uppercase tracking-tight">{a.title}</p>
+                        <p className="text-sm font-semibold text-slate-800">{a.title}</p>
                         <CheckCircle2 size={16} className="text-emerald-500" />
                       </div>
                       <div className="flex items-center gap-2">
-                         <span className="text-[9px] font-black text-indigo-600 bg-indigo-50 px-2 py-1 rounded">DEPT: {departments.find(d => d.id === a.deptId)?.name || '---'}</span>
-                         <span className="text-[9px] font-bold text-slate-400 tracking-widest">LE {new Date(a.deadline || a.createdAt).toLocaleDateString()}</span>
+                         <span className="text-xs font-semibold text-indigo-600 bg-indigo-50 px-2 py-1 rounded">DEPT: {departments.find(d => d.id === a.deptId)?.name || '---'}</span>
+                         <span className="text-xs font-bold text-slate-400 tracking-wide">LE {new Date(a.deadline || a.createdAt).toLocaleDateString()}</span>
                       </div>
                     </div>
                   ))
                 ) : (
-                  <div className="py-20 text-center text-slate-300 italic text-xs uppercase tracking-widest">Aucune activité terminée sur cette période</div>
+                  <div className="py-20 text-center text-slate-300 italic text-xs">Aucune activité terminée sur cette période</div>
                 )}
               </div>
             </div>
             <div className="p-8 border-t border-slate-100 bg-white flex shrink-0">
-              <button onClick={() => setIsImpactDetailsOpen(false)} className="w-full py-4 bg-slate-900 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-800 shadow-xl">Fermer les détails</button>
+              <button onClick={() => setIsImpactDetailsOpen(false)} className="w-full py-4 bg-slate-900 text-white rounded-2xl text-xs font-medium hover:bg-slate-800 shadow-xl">Fermer les détails</button>
             </div>
           </div>
         </div>

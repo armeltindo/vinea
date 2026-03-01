@@ -139,7 +139,7 @@ const VisitorDetails: React.FC<VisitorDetailsProps> = ({
       )} onClick={onClose} />
       
       <div className={cn(
-        "relative w-full max-w-lg bg-white shadow-2xl transition-all duration-300 transform flex flex-col rounded-[3rem] overflow-hidden max-h-[90vh]",
+        "relative w-full max-w-lg bg-white shadow-2xl transition-all duration-300 transform flex flex-col rounded-2xl overflow-hidden max-h-[90vh]",
         isOpen ? "scale-100 opacity-100" : "scale-95 opacity-0"
       )}>
         {/* Header */}
@@ -157,9 +157,9 @@ const VisitorDetails: React.FC<VisitorDetailsProps> = ({
               className="border-2 border-white/30 shadow-xl"
             />
             <div>
-              <h3 className="text-2xl font-black text-white leading-tight">{visitor.firstName} {visitor.lastName}</h3>
+              <h3 className="text-2xl font-semibold text-white leading-tight">{visitor.firstName} {visitor.lastName}</h3>
               <span className={cn(
-                "inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest mt-2",
+                "inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium mt-2",
                 visitor.status === VisitorStatus.EN_ATTENTE ? "bg-amber-400 text-amber-900" :
                 (visitor.status === VisitorStatus.CONTACT_1 || visitor.status === VisitorStatus.RENCONTRE) ? "bg-blue-400 text-blue-900" :
                 "bg-emerald-400 text-emerald-900"
@@ -172,7 +172,7 @@ const VisitorDetails: React.FC<VisitorDetailsProps> = ({
 
         {/* Action Quick Bar */}
         <div className="px-10 py-6 flex gap-3 border-b border-slate-50 shrink-0">
-          <a href={`tel:${visitor.phone}`} className="flex-1 py-3 bg-indigo-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-indigo-100 flex items-center justify-center gap-2 hover:bg-indigo-700 transition-all">
+          <a href={`tel:${visitor.phone}`} className="flex-1 py-3 bg-indigo-600 text-white rounded-2xl text-xs font-medium shadow-lg shadow-indigo-100 flex items-center justify-center gap-2 hover:bg-indigo-700 transition-all">
             <Phone size={14} /> Appeler
           </a>
           <button onClick={() => handleWhatsApp()} className="p-3 bg-emerald-50 text-emerald-600 rounded-2xl hover:bg-emerald-100 border border-emerald-100 transition-all">
@@ -188,12 +188,12 @@ const VisitorDetails: React.FC<VisitorDetailsProps> = ({
           
           {/* Section: Parrainage */}
           <div className="space-y-4">
-            <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+            <h4 className="text-xs font-medium text-slate-500 flex items-center gap-2">
               <ShieldCheck size={14} className="text-emerald-500" /> Accompagnement Spirituel
             </h4>
             
             {parrain ? (
-              <div className="bg-white p-6 rounded-[2.5rem] border border-emerald-100 shadow-sm space-y-5 relative overflow-hidden group">
+              <div className="bg-white p-6 rounded-2xl border border-emerald-100 shadow-sm space-y-5 relative overflow-hidden group">
                 <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:rotate-12 transition-transform">
                   <ShieldCheck size={60} className="text-emerald-600" />
                 </div>
@@ -208,8 +208,8 @@ const VisitorDetails: React.FC<VisitorDetailsProps> = ({
                       shape="card"
                     />
                     <div>
-                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Parrain désigné</p>
-                      <p className="text-sm font-black text-slate-800 uppercase tracking-tight">{parrain.firstName} {parrain.lastName}</p>
+                      <p className="text-xs font-medium text-slate-500">Parrain désigné</p>
+                      <p className="text-sm font-semibold text-slate-800">{parrain.firstName} {parrain.lastName}</p>
                     </div>
                   </div>
                   <button 
@@ -222,7 +222,7 @@ const VisitorDetails: React.FC<VisitorDetailsProps> = ({
                 </div>
 
                 <div className="space-y-2 pt-2 border-t border-slate-50">
-                  <div className="flex justify-between items-center text-[9px] font-black uppercase tracking-widest">
+                  <div className="flex justify-between items-center text-xs font-medium">
                     <span className="text-slate-400">Période d'immersion (90j)</span>
                     <span className="text-emerald-600">{accompanimentProgress.daysLeft} jours restants</span>
                   </div>
@@ -237,12 +237,12 @@ const VisitorDetails: React.FC<VisitorDetailsProps> = ({
             ) : (
               <button 
                 onClick={() => onEdit(visitor)}
-                className="w-full flex flex-col items-center justify-center gap-3 py-8 bg-slate-50 border border-dashed border-slate-200 rounded-[2.5rem] group hover:border-emerald-300 hover:bg-emerald-50/30 transition-all"
+                className="w-full flex flex-col items-center justify-center gap-3 py-8 bg-slate-50 border border-dashed border-slate-200 rounded-2xl group hover:border-emerald-300 hover:bg-emerald-50/30 transition-all"
               >
                 <div className="w-12 h-12 rounded-2xl bg-white border border-slate-100 text-slate-300 flex items-center justify-center group-hover:scale-110 group-hover:text-emerald-500 group-hover:shadow-lg transition-all">
                   <UserPlus size={24} />
                 </div>
-                <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] group-hover:text-emerald-600">Désigner un parrain</span>
+                <span className="text-xs font-medium text-slate-500 group-hover:text-emerald-600">Désigner un parrain</span>
               </button>
             )}
           </div>
@@ -250,12 +250,12 @@ const VisitorDetails: React.FC<VisitorDetailsProps> = ({
           {/* Qualification Badges */}
           {activeQualifications.length > 0 && (
             <div className="space-y-3">
-              <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+              <h4 className="text-xs font-medium text-slate-500 flex items-center gap-2">
                 <CheckCircle2 size={14} className="text-indigo-600" /> Profil qualifié
               </h4>
               <div className="flex flex-wrap gap-2">
                 {activeQualifications.map(q => (
-                  <span key={q.id} className={cn("px-3 py-1.5 rounded-xl border text-[9px] font-black uppercase flex items-center gap-2", q.color)}>
+                  <span key={q.id} className={cn("px-3 py-1.5 rounded-xl border text-xs font-medium flex items-center gap-2", q.color)}>
                     {q.icon} {q.label}
                   </span>
                 ))}
@@ -266,7 +266,7 @@ const VisitorDetails: React.FC<VisitorDetailsProps> = ({
           {/* AI Section - Welcome Assistant */}
           <div className="space-y-4">
              <div className="flex items-center justify-between">
-                <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] flex items-center gap-2">
+                <h4 className="text-xs font-medium text-slate-500 flex items-center gap-2">
                   <span role="img" aria-label="sparkles">✨</span> Assistant Premier Contact
                 </h4>
              </div>
@@ -275,18 +275,18 @@ const VisitorDetails: React.FC<VisitorDetailsProps> = ({
                 <button 
                   onClick={handleGenerateWelcome}
                   disabled={isGeneratingMessage}
-                  className="w-full flex items-center justify-center gap-2 py-4 bg-white border-2 border-dashed border-indigo-200 text-indigo-600 rounded-[2rem] text-[10px] font-black uppercase tracking-widest hover:bg-indigo-50 hover:border-indigo-300 transition-all disabled:opacity-50"
+                  className="w-full flex items-center justify-center gap-2 py-4 bg-white border-2 border-dashed border-indigo-200 text-indigo-600 rounded-xl text-xs font-medium hover:bg-indigo-50 hover:border-indigo-300 transition-all disabled:opacity-50"
                 >
                   {isGeneratingMessage ? <Loader2 size={16} className="animate-spin" /> : <MessageSquareText size={16} />}
                   {isGeneratingMessage ? 'Rédaction pastorale...' : 'Générer message de bienvenue'}
                 </button>
              ) : (
-                <div className="p-6 bg-gradient-to-br from-indigo-50 to-blue-50 border border-indigo-100 rounded-[2.5rem] animate-in zoom-in-95 duration-300 space-y-4 relative overflow-hidden group">
+                <div className="p-6 bg-gradient-to-br from-indigo-50 to-blue-50 border border-indigo-100 rounded-2xl animate-in zoom-in-95 duration-300 space-y-4 relative overflow-hidden group">
                   <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:rotate-12 transition-transform">
                     <Sparkles size={60} className="text-indigo-600" />
                   </div>
                   <div className="flex items-center gap-2 mb-1">
-                    <span className="px-2 py-0.5 bg-indigo-600 text-white rounded text-[8px] font-black uppercase">Brouillon IA</span>
+                    <span className="px-2 py-0.5 bg-indigo-600 text-white rounded text-xs font-medium">Brouillon IA</span>
                   </div>
                   <p className="text-sm text-slate-700 font-medium leading-relaxed italic">
                     {welcomeMessage}
@@ -294,14 +294,14 @@ const VisitorDetails: React.FC<VisitorDetailsProps> = ({
                   <div className="pt-4 border-t border-indigo-100 flex gap-2">
                      <button 
                       onClick={handleCopyMessage}
-                      className="flex-1 py-2.5 bg-white border border-indigo-200 text-indigo-600 rounded-xl text-[9px] font-black uppercase flex items-center justify-center gap-2 hover:bg-indigo-50 transition-all"
+                      className="flex-1 py-2.5 bg-white border border-indigo-200 text-indigo-600 rounded-xl text-xs font-medium flex items-center justify-center gap-2 hover:bg-indigo-50 transition-all"
                      >
                        {hasCopied ? <CheckCircle2 size={12} className="text-emerald-500" /> : <Copy size={12} />}
                        {hasCopied ? 'Copié !' : 'Copier'}
                      </button>
                      <button 
                       onClick={() => handleWhatsApp(undefined, welcomeMessage)}
-                      className="flex-[2] py-2.5 bg-emerald-600 text-white rounded-xl text-[9px] font-black uppercase flex items-center justify-center gap-2 hover:bg-emerald-700 shadow-lg shadow-emerald-100 transition-all"
+                      className="flex-[2] py-2.5 bg-emerald-600 text-white rounded-xl text-xs font-medium flex items-center justify-center gap-2 hover:bg-emerald-700 shadow-lg shadow-emerald-100 transition-all"
                      >
                        <MessageCircle size={14} /> Envoyer WhatsApp
                      </button>
@@ -315,7 +315,7 @@ const VisitorDetails: React.FC<VisitorDetailsProps> = ({
              <button 
                 onClick={handleGetAiSuggestion}
                 disabled={isSuggesting}
-                className="w-full flex items-center justify-center gap-2 py-3 bg-slate-50 text-slate-600 border border-slate-200 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-100 transition-all disabled:opacity-50"
+                className="w-full flex items-center justify-center gap-2 py-3 bg-slate-50 text-slate-600 border border-slate-200 rounded-2xl text-xs font-medium hover:bg-slate-100 transition-all disabled:opacity-50"
               >
                 {isSuggesting ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />}
                 Suggérer actions de suivi
@@ -325,7 +325,7 @@ const VisitorDetails: React.FC<VisitorDetailsProps> = ({
                 <div className="p-5 bg-slate-50 border border-slate-200 rounded-3xl animate-in zoom-in-95 duration-300">
                   <div className="flex items-center gap-2 mb-3">
                     <Sparkles size={14} className="text-indigo-600" />
-                    <h5 className="text-[10px] font-black text-slate-500 uppercase">Conseils Gemini</h5>
+                    <h5 className="text-xs font-semibold text-slate-500">Conseils Gemini</h5>
                   </div>
                   <p className="text-sm text-slate-600 italic leading-relaxed whitespace-pre-wrap">{aiSuggestion}</p>
                 </div>
@@ -333,32 +333,32 @@ const VisitorDetails: React.FC<VisitorDetailsProps> = ({
           </div>
 
           {/* Main Info Grid */}
-          <div className="grid grid-cols-2 gap-6 bg-slate-50 p-6 rounded-[2rem] border border-slate-100">
+          <div className="grid grid-cols-2 gap-6 bg-slate-50 p-6 rounded-xl border border-slate-100">
             <div className="space-y-1">
-              <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Première visite</p>
+              <p className="text-xs font-medium text-slate-500">Première visite</p>
               <p className="text-sm font-bold text-slate-800">{new Date(visitor.visitDate).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
             </div>
             <div className="space-y-1">
-              <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Service</p>
+              <p className="text-xs font-medium text-slate-500">Service</p>
               <p className="text-sm font-bold text-slate-800">{visitor.service}</p>
             </div>
             <div className="space-y-1 text-indigo-700">
-              <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Téléphone</p>
+              <p className="text-xs font-medium text-slate-500">Téléphone</p>
               <p className="text-sm font-bold flex items-center gap-1.5"><Phone size={12} /> {visitor.phone ? formatPhone(visitor.phone) : '---'}</p>
             </div>
             <div className="space-y-1 text-emerald-700">
-              <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">WhatsApp</p>
+              <p className="text-xs font-medium text-slate-500">WhatsApp</p>
               <p className="text-sm font-bold flex items-center gap-1.5"><MessageCircle size={12} /> {visitor.whatsappPhone ? formatPhone(visitor.whatsappPhone) : (visitor.phone ? formatPhone(visitor.phone) : '---')}</p>
             </div>
             <div className="col-span-2 space-y-1 pt-2 border-t border-slate-200/50">
-              <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Notes de visite</p>
+              <p className="text-xs font-medium text-slate-500">Notes de visite</p>
               <p className="text-sm font-medium text-slate-700 italic leading-relaxed">"{visitor.notes || 'Aucune note'}"</p>
             </div>
           </div>
 
           {/* History Timeline */}
           <div className="space-y-6">
-            <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] flex items-center gap-2">
+            <h4 className="text-xs font-medium text-slate-500 flex items-center gap-2">
               <History size={14} /> Historique du suivi
             </h4>
             
@@ -371,8 +371,8 @@ const VisitorDetails: React.FC<VisitorDetailsProps> = ({
                     </div>
                     <div className="bg-white border border-slate-100 rounded-2xl p-4 shadow-sm">
                       <div className="flex justify-between items-start mb-2">
-                        <span className="text-[10px] font-black text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded uppercase">{entry.type}</span>
-                        <span className="text-[9px] font-bold text-slate-400">{new Date(entry.date).toLocaleDateString('fr-FR')}</span>
+                        <span className="text-xs font-semibold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded uppercase">{entry.type}</span>
+                        <span className="text-xs font-bold text-slate-400">{new Date(entry.date).toLocaleDateString('fr-FR')}</span>
                       </div>
                       <p className="text-sm text-slate-700 font-medium">{entry.note}</p>
                     </div>
@@ -386,8 +386,8 @@ const VisitorDetails: React.FC<VisitorDetailsProps> = ({
             </div>
 
             {/* Add Entry Form */}
-            <div className="bg-slate-50 border border-slate-200 rounded-[2rem] p-6 space-y-4">
-              <h5 className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+            <div className="bg-slate-50 border border-slate-200 rounded-xl p-6 space-y-4">
+              <h5 className="text-xs font-medium text-slate-500 flex items-center gap-2">
                 <Plus size={14} /> Nouvelle interaction
               </h5>
               <div className="grid grid-cols-2 gap-3">
@@ -418,7 +418,7 @@ const VisitorDetails: React.FC<VisitorDetailsProps> = ({
               <button 
                 onClick={handleAddEntry}
                 disabled={!newEntry.note.trim()}
-                className="w-full py-3 bg-indigo-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-indigo-700 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                className="w-full py-3 bg-indigo-600 text-white rounded-xl text-xs font-medium hover:bg-indigo-700 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
               >
                 <Send size={14} /> Enregistrer le suivi
               </button>
@@ -431,20 +431,20 @@ const VisitorDetails: React.FC<VisitorDetailsProps> = ({
           {visitor.status !== VisitorStatus.MEMBRE && onConvertToMember && (
             <button 
               onClick={() => onConvertToMember(visitor)}
-              className="w-full mb-1 py-4 bg-emerald-600 text-white rounded-2xl text-[11px] font-black uppercase tracking-[0.2em] shadow-xl shadow-emerald-100 flex items-center justify-center gap-3 hover:bg-emerald-700 transition-all active:scale-95"
+              className="w-full mb-1 py-4 bg-emerald-600 text-white rounded-2xl text-xs font-medium shadow-xl shadow-emerald-100 flex items-center justify-center gap-3 hover:bg-emerald-700 transition-all active:scale-95"
             >
               <UserCheck size={20} /> Convertir en Membre
             </button>
           )}
           <button 
             onClick={() => onEdit(visitor)}
-            className="flex-1 py-4 bg-white border border-slate-200 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-50 transition-all flex items-center justify-center gap-2"
+            className="flex-1 py-4 bg-white border border-slate-200 rounded-2xl text-xs font-medium hover:bg-slate-50 transition-all flex items-center justify-center gap-2"
           >
             <Edit size={16} /> Modifier
           </button>
           <button 
             onClick={() => onDelete(visitor.id)}
-            className="px-6 py-4 bg-rose-50 text-rose-600 border border-rose-100 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-rose-100 transition-all flex items-center justify-center gap-2"
+            className="px-6 py-4 bg-rose-50 text-rose-600 border border-rose-100 rounded-2xl text-xs font-medium hover:bg-rose-100 transition-all flex items-center justify-center gap-2"
           >
             <Trash2 size={16} />
           </button>

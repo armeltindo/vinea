@@ -411,7 +411,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate, adminName }) => {
                 >
                   {/* Date badge */}
                   <div className="w-11 h-11 rounded-xl bg-indigo-600 flex flex-col items-center justify-center shrink-0 shadow-sm shadow-indigo-200">
-                    <span className="text-[9px] font-semibold text-indigo-200 uppercase leading-none">{ev.month}</span>
+                    <span className="text-xs text-indigo-200 leading-none">{ev.month}</span>
                     <span className="text-base font-bold text-white leading-none mt-0.5">{ev.day}</span>
                   </div>
                   <div className="flex-1 min-w-0">

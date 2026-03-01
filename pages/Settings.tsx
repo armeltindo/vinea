@@ -623,7 +623,7 @@ const Settings: React.FC = () => {
     setIsUserDeleteModalOpen(true);
   };
 
-  const handleSaveUser = (e: React.FormEvent) => {
+  const handleSaveUser = async (e: React.FormEvent) => {
     e.preventDefault();
     const encodedPerms = encodeModuleAccess(moduleAccess);
     if (editingUser) {
@@ -640,6 +640,17 @@ const Settings: React.FC = () => {
       };
       setAdminUsers([...adminUsers, newUser]);
       upsertAdminUser({ id: newUser.id, full_name: newUser.fullName, email: newUser.email, role: newUser.role, status: newUser.status, avatar: newUser.avatar, last_active: newUser.lastActive, permissions: encodedPerms });
+
+      // Créer le compte auth avec le mot de passe par défaut
+      const { data: { session: adminSession } } = await supabase.auth.getSession();
+      await supabase.auth.signUp({ email: newUser.email, password: 'Discipolat' });
+      // Restaurer la session admin si elle a été remplacée
+      if (adminSession) {
+        await supabase.auth.setSession({
+          access_token: adminSession.access_token,
+          refresh_token: adminSession.refresh_token,
+        });
+      }
     }
     setIsUserFormOpen(false);
     setEditingUser(null);

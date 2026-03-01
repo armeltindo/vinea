@@ -69,7 +69,7 @@ import { analyzePageData, generateDonationReceipt } from '../lib/gemini';
 import { cn, generateId, getInitials, formatFirstName } from '../utils';
 import { OperationType, PaymentMethod, FinancialRecord, Member, DonationCampaign, DonationPromise } from '../types';
 import { GoogleGenAI } from "@google/genai";
-import { getFinancialRecords, createFinancialRecord, updateFinancialRecord, deleteFinancialRecord, getDonationCampaigns, createDonationCampaign, updateDonationCampaign, deleteDonationCampaign, getDonationPromises, createDonationPromise, deleteDonationPromise, getMembers, getChurchSettings, getAppConfig, setAppConfig } from '../lib/db';
+import { getFinancialRecords, createFinancialRecord, updateFinancialRecord, deleteFinancialRecord, getDonationCampaigns, createDonationCampaign, updateDonationCampaign, deleteDonationCampaign, getDonationPromises, createDonationPromise, updateDonationPromise, deleteDonationPromise, getMembers, getChurchSettings, getAppConfig, setAppConfig } from '../lib/db';
 
 interface FinanceCategory {
   id: string;
@@ -498,7 +498,7 @@ const Finances: React.FC = () => {
     if (!newOp.amount || newOp.amount <= 0) return;
     setIsSubmitting(true);
 
-    const externalName = !newOp.memberId && memberSearch.trim() !== '' ? memberSearch.trim() : undefined;
+    const externalName = !newOp.memberId && memberSearch.trim() !== '' ? memberSearch.trim() : null;
 
     setTimeout(() => {
       const opData = { ...newOp, externalName };
@@ -592,7 +592,7 @@ const Finances: React.FC = () => {
     if ((!newPromise.memberId && !memberSearch.trim()) || !newPromise.amount || !newPromise.campaignId) return;
     setIsSubmitting(true);
 
-    const externalName = !newPromise.memberId && memberSearch.trim() !== '' ? memberSearch.trim() : undefined;
+    const externalName = !newPromise.memberId && memberSearch.trim() !== '' ? memberSearch.trim() : null;
 
     setTimeout(() => {
       const promiseData = {
@@ -602,7 +602,9 @@ const Finances: React.FC = () => {
       };
 
       if (editingPromiseId) {
-        setPromises(prev => prev.map(p => p.id === editingPromiseId ? { ...promiseData, id: editingPromiseId } : p));
+        const updated = { ...promiseData, id: editingPromiseId } as DonationPromise;
+        setPromises(prev => prev.map(p => p.id === editingPromiseId ? updated : p));
+        updateDonationPromise(editingPromiseId, updated);
         setIsPromiseFormOpen(false); // Fermer seulement en cas de modification
       } else {
         const promise: DonationPromise = {

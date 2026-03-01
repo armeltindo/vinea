@@ -529,6 +529,11 @@ export const createDonationPromise = async (p: DonationPromise): Promise<Donatio
   return dbToPromise(data);
 };
 
+export const updateDonationPromise = async (id: string, p: Partial<DonationPromise>): Promise<void> => {
+  const { error } = await supabase.from('donation_promises').update(promiseToDb(p)).eq('id', id);
+  if (error) console.error('updateDonationPromise:', error.message);
+};
+
 export const deleteDonationPromise = async (id: string): Promise<void> => {
   const { error } = await supabase.from('donation_promises').delete().eq('id', id);
   if (error) console.error('deleteDonationPromise:', error.message);

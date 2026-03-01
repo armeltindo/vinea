@@ -21,18 +21,27 @@ const MemberCardModal: React.FC<Props> = ({ member, isOpen, onClose }) => {
 
   const fullName = `${formatFirstName(member.firstName)} ${member.lastName.toUpperCase()}`;
   const cardNumber = `MBR-${member.id.slice(-8, -4).toUpperCase()}-${member.id.slice(-4).toUpperCase()}`;
-  const joinYear = member.joinDate ? new Date(member.joinDate).getFullYear() : new Date().getFullYear();
   const validYear = new Date().getFullYear() + 1;
 
-  const churchName = church?.name || 'Vinea';
+  const churchName  = church?.name || 'Vinea';
   const churchPhone = church?.phone || '';
   const churchEmail = church?.email || '';
   const churchAddress = church?.address || '';
-  const churchLogo = church?.logoUrl || '';
-  const pc = (church?.primaryColor || '#4f46e5');
+  const churchLogo  = church?.logoUrl || '';
+  const churchSlogan = church?.slogan || '';
+  const pc   = church?.primaryColor || '#4f46e5';
   const pc1a = `${pc}1a`;
 
   const depts = (member.departments || []).slice(0, 3);
+
+  const fmtDate = (iso?: string) => {
+    if (!iso) return '';
+    return new Date(iso).toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' });
+  };
+
+  // QR code encodes card number + member name + church name
+  const qrData = `${cardNumber}|${fullName}|${churchName}`;
+  const qrUrl  = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&margin=2&data=${encodeURIComponent(qrData)}`;
 
   const handlePrint = () => {
     const w = window.open('', '_blank', 'width=900,height=800');
@@ -49,25 +58,30 @@ const MemberCardModal: React.FC<Props> = ({ member, isOpen, onClose }) => {
       : `<div style="width:8mm;height:8mm;border-radius:50%;background:rgba(255,255,255,0.25);display:flex;align-items:center;justify-content:center;color:white;font-size:3.5mm;font-weight:700;">${churchName.charAt(0)}</div>`;
 
     const photoFront = member.photoUrl
-      ? `<img src="${member.photoUrl}" style="width:18mm;height:18mm;border-radius:50%;object-fit:cover;border:0.7mm solid white;display:block;box-shadow:0 1mm 4mm rgba(0,0,0,0.2);" />`
-      : `<div style="width:18mm;height:18mm;border-radius:50%;background:${pc};border:0.7mm solid white;display:flex;align-items:center;justify-content:center;color:white;font-size:6mm;font-weight:700;box-shadow:0 1mm 4mm rgba(0,0,0,0.2);">${member.firstName.charAt(0)}${member.lastName.charAt(0)}</div>`;
+      ? `<img src="${member.photoUrl}" style="width:16mm;height:16mm;border-radius:50%;object-fit:cover;border:0.6mm solid white;display:block;box-shadow:0 1mm 3mm rgba(0,0,0,0.2);" />`
+      : `<div style="width:16mm;height:16mm;border-radius:50%;background:${pc};border:0.6mm solid white;display:flex;align-items:center;justify-content:center;color:white;font-size:5.5mm;font-weight:700;box-shadow:0 1mm 3mm rgba(0,0,0,0.2);">${member.firstName.charAt(0)}${member.lastName.charAt(0)}</div>`;
 
     const photoBack = member.photoUrl
-      ? `<img src="${member.photoUrl}" style="position:absolute;right:5mm;top:50%;transform:translateY(-50%);width:11mm;height:11mm;border-radius:50%;object-fit:cover;border:0.5mm solid rgba(255,255,255,0.5);" />`
+      ? `<img src="${member.photoUrl}" style="width:9mm;height:9mm;border-radius:50%;object-fit:cover;border:0.4mm solid rgba(255,255,255,0.5);flex-shrink:0;" />`
       : '';
+
+    // Front info rows (only if field is set)
+    const infoRows: string[] = [];
+    if (member.joinDate)
+      infoRows.push(`<div class="irow"><span class="ilbl">Membre depuis</span><span class="ival">${fmtDate(member.joinDate)}</span></div>`);
+    if (member.baptized && member.baptizedDate)
+      infoRows.push(`<div class="irow"><span class="ilbl">Baptisé le</span><span class="ival">${fmtDate(member.baptizedDate)}</span></div>`);
+    if (member.phone)
+      infoRows.push(`<div class="irow"><span class="ilbl">Tél.</span><span class="ival">${member.phone}</span></div>`);
+
+    // Back contact rows
+    const contactRows: string[] = [];
+    if (churchAddress) contactRows.push(`<div class="cr"><span class="ci">📍</span><span class="ct">${churchAddress}</span></div>`);
+    if (churchPhone)   contactRows.push(`<div class="cr"><span class="ci">📞</span><span class="ct">${churchPhone}</span></div>`);
+    if (churchEmail)   contactRows.push(`<div class="cr"><span class="ci">✉</span><span class="ct">${churchEmail}</span></div>`);
 
     const deptsHTML = depts.length > 0
-      ? depts.map(d => `<span style="display:inline-block;padding:0.5mm 2mm;background:${pc}22;color:${pc};border-radius:1mm;font-size:2.4mm;font-weight:600;margin-right:1.5mm;">${d}</span>`).join('')
-      : '';
-
-    const contactRows = [
-      churchAddress ? `<div class="ir"><span class="ico">📍</span><span class="it">${churchAddress}</span></div>` : '',
-      churchPhone   ? `<div class="ir"><span class="ico">📞</span><span class="it">${churchPhone}</span></div>` : '',
-      churchEmail   ? `<div class="ir"><span class="ico">✉</span><span class="it">${churchEmail}</span></div>` : '',
-    ].filter(Boolean).join('');
-
-    const deptsRow = depts.length > 0
-      ? `<div style="margin-top:1.5mm;display:flex;align-items:center;gap:1.5mm;flex-wrap:wrap;"><span class="ico">🏛</span>${deptsHTML}</div>`
+      ? `<div class="cr" style="margin-top:1mm;"><span class="ci">🏛</span><span class="ct">${depts.join(' · ')}</span></div>`
       : '';
 
     return `<!DOCTYPE html>
@@ -81,80 +95,91 @@ const MemberCardModal: React.FC<Props> = ({ member, isOpen, onClose }) => {
     html, body { width: 85.6mm; height: 54mm; background: white; overflow: hidden; }
     .card { width: 85.6mm; height: 54mm; overflow: hidden; position: relative; page-break-after: always; display: flex; flex-direction: column; }
 
-    /* FRONT */
-    .front { background: white; }
-    .front-hd { background: linear-gradient(135deg, ${pc} 0%, ${pc}bb 100%); height: 16mm; display: flex; align-items: center; padding: 0 5mm; gap: 2.5mm; position: relative; }
-    .front-hd-name { color: white; font-size: 4mm; font-weight: 800; letter-spacing: 0.1mm; flex: 1; }
-    .front-hd-label { font-size: 2.2mm; color: rgba(255,255,255,0.65); letter-spacing: 0.8mm; text-transform: uppercase; }
-    .front-bd { flex: 1; display: flex; align-items: center; padding: 0 5mm; gap: 4mm; }
-    .front-name { font-size: 5.2mm; font-weight: 800; color: #0f172a; letter-spacing: -0.2mm; line-height: 1.15; }
-    .front-role { display: inline-block; margin-top: 2mm; padding: 0.8mm 2.5mm; background: ${pc1a}; color: ${pc}; border-radius: 1.5mm; font-size: 2.8mm; font-weight: 700; }
-    .front-ft { height: 12mm; background: #f8fafc; display: flex; align-items: center; justify-content: space-between; padding: 0 5mm; border-top: 0.3mm solid #e2e8f0; }
-    .card-num { font-size: 2.5mm; color: #64748b; font-weight: 600; letter-spacing: 0.4mm; font-family: 'Courier New', monospace; }
-    .valid-lbl { font-size: 1.9mm; color: #94a3b8; text-align: right; }
-    .valid-val { font-size: 3.2mm; color: ${pc}; font-weight: 800; text-align: right; }
+    /* RECTO */
+    .fhd { background: linear-gradient(135deg, ${pc} 0%, ${pc}cc 100%); height: 14mm; display: flex; align-items: center; padding: 0 4mm; gap: 2mm; flex-shrink: 0; }
+    .fhd-name { color: white; font-size: 3.8mm; font-weight: 800; letter-spacing: 0.1mm; flex: 1; }
+    .fhd-lbl  { font-size: 2mm; color: rgba(255,255,255,0.65); letter-spacing: 0.8mm; text-transform: uppercase; white-space: nowrap; }
+    .fbd { flex: 1; display: flex; align-items: center; padding: 0 4mm; gap: 3.5mm; }
+    .fname { font-size: 4.6mm; font-weight: 800; color: #0f172a; line-height: 1.1; }
+    .frole { display: inline-block; margin-top: 1.5mm; margin-bottom: 1.5mm; padding: 0.4mm 2mm; background: ${pc}22; color: ${pc}; border-radius: 1.5mm; font-size: 2.5mm; font-weight: 700; }
+    .irow { display: flex; gap: 1.5mm; align-items: baseline; margin-top: 0.7mm; }
+    .ilbl { font-size: 1.8mm; color: #94a3b8; white-space: nowrap; }
+    .ival { font-size: 2mm; color: #334155; font-weight: 600; }
+    .fft { height: 12mm; background: #f8fafc; display: flex; align-items: center; justify-content: space-between; padding: 0 4mm; border-top: 0.3mm solid #e2e8f0; flex-shrink: 0; }
+    .cnum { font-size: 2.3mm; color: #64748b; font-weight: 600; letter-spacing: 0.3mm; font-family: 'Courier New', monospace; }
+    .vlbl { font-size: 1.7mm; color: #94a3b8; text-align: right; }
+    .vval { font-size: 3mm; color: ${pc}; font-weight: 800; text-align: right; }
 
-    /* BACK */
-    .back { background: white; }
-    .back-hd { background: linear-gradient(135deg, ${pc} 0%, ${pc}bb 100%); height: 16mm; display: flex; align-items: center; padding: 0 5mm; gap: 2.5mm; position: relative; }
-    .back-hd-name { color: white; font-size: 4mm; font-weight: 800; flex: 1; }
-    .back-member { color: rgba(255,255,255,0.9); font-size: 2.8mm; font-weight: 600; text-align: right; line-height: 1.4; }
-    .back-sub { color: rgba(255,255,255,0.6); font-size: 2.2mm; }
-    .back-bd { flex: 1; display: flex; flex-direction: column; justify-content: center; padding: 0 5mm; gap: 1.8mm; }
-    .ir { display: flex; align-items: center; gap: 2mm; }
-    .ico { font-size: 3mm; width: 4.5mm; flex-shrink: 0; }
-    .it { font-size: 2.7mm; color: #334155; }
-    .div { height: 0.2mm; background: #e2e8f0; margin: 1mm 0; }
-    .back-ft { height: 10mm; background: #f8fafc; display: flex; align-items: center; justify-content: center; padding: 0 5mm; border-top: 0.3mm solid #e2e8f0; }
-    .ft-note { font-size: 2.2mm; color: #94a3b8; text-align: center; }
+    /* VERSO */
+    .bhd { background: linear-gradient(135deg, ${pc} 0%, ${pc}cc 100%); height: 13mm; display: flex; align-items: center; padding: 0 4mm; gap: 2mm; flex-shrink: 0; }
+    .bhd-name { color: white; font-size: 3.8mm; font-weight: 800; flex: 1; }
+    .bmbr { color: rgba(255,255,255,0.95); font-size: 2.4mm; font-weight: 600; line-height: 1.3; }
+    .bsub { color: rgba(255,255,255,0.6); font-size: 1.8mm; }
+    .bbd { flex: 1; display: flex; align-items: stretch; padding: 2mm 4mm; gap: 2.5mm; }
+    .binfo { flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 1.2mm; }
+    .cr { display: flex; align-items: flex-start; gap: 1.5mm; }
+    .ci { font-size: 2.5mm; width: 3.8mm; flex-shrink: 0; margin-top: 0.2mm; }
+    .ct { font-size: 2.3mm; color: #334155; line-height: 1.3; }
+    .bqr { flex-shrink: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.5mm; }
+    .bft { height: 10mm; background: #f8fafc; display: flex; align-items: center; justify-content: space-between; padding: 0 4mm; border-top: 0.3mm solid #e2e8f0; flex-shrink: 0; }
+    .ftnote { font-size: 1.9mm; color: #94a3b8; }
+    .ftslogan { font-size: 2mm; color: ${pc}; font-style: italic; font-weight: 600; }
 
-    @media print {
-      body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-    }
+    @media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
   </style>
 </head>
 <body>
 
   <!-- PAGE 1 : RECTO -->
-  <div class="card front">
-    <div class="front-hd">
+  <div class="card">
+    <div class="fhd">
       ${logoImg}
-      <span class="front-hd-name">${churchName.toUpperCase()}</span>
-      <span class="front-hd-label">Carte Membre</span>
+      <span class="fhd-name">${churchName.toUpperCase()}</span>
+      <span class="fhd-lbl">Carte Membre</span>
     </div>
-    <div class="front-bd">
-      <div>${photoFront}</div>
-      <div>
-        <div class="front-name">${fullName}</div>
-        <div class="front-role">${member.type}</div>
+    <div class="fbd">
+      <div style="flex-shrink:0;">${photoFront}</div>
+      <div style="flex:1;min-width:0;">
+        <div class="fname">${fullName}</div>
+        <div class="frole">${member.type}</div>
+        ${infoRows.join('')}
       </div>
     </div>
-    <div class="front-ft">
-      <span class="card-num">${cardNumber}</span>
+    <div class="fft">
+      <span class="cnum">${cardNumber}</span>
       <div>
-        <div class="valid-lbl">Valide jusqu'au</div>
-        <div class="valid-val">31/12/${validYear}</div>
+        <div class="vlbl">Valide jusqu'au</div>
+        <div class="vval">31/12/${validYear}</div>
       </div>
     </div>
   </div>
 
   <!-- PAGE 2 : VERSO -->
-  <div class="card back" style="page-break-after:auto;">
-    <div class="back-hd">
+  <div class="card" style="page-break-after:auto;">
+    <div class="bhd">
       ${logoImg}
-      <span class="back-hd-name">${churchName.toUpperCase()}</span>
-      <div class="back-member">
-        <div>${fullName}</div>
-        <div class="back-sub">Membre depuis ${joinYear}</div>
+      <span class="bhd-name">${churchName.toUpperCase()}</span>
+      <div style="display:flex;align-items:center;gap:2mm;">
+        ${photoBack}
+        <div class="bmbr">
+          <div>${fullName}</div>
+          ${member.joinDate ? `<div class="bsub">Depuis ${fmtDate(member.joinDate)}</div>` : ''}
+        </div>
       </div>
-      ${photoBack}
     </div>
-    <div class="back-bd">
-      ${contactRows}
-      ${depts.length > 0 ? `<div class="div"></div>${deptsRow}` : ''}
+    <div class="bbd">
+      <div class="binfo">
+        ${contactRows.join('')}
+        ${deptsHTML}
+      </div>
+      <div class="bqr">
+        <img src="${qrUrl}" style="width:21mm;height:21mm;display:block;" alt="QR Code" />
+        <div style="font-size:1.7mm;color:#94a3b8;">Scanner</div>
+      </div>
     </div>
-    <div class="back-ft">
-      <p class="ft-note">Si trouvée, merci de retourner cette carte à l'église · ${cardNumber}</p>
+    <div class="bft">
+      ${churchSlogan ? `<span class="ftslogan">${churchSlogan}</span>` : '<span></span>'}
+      <span class="ftnote">${cardNumber}</span>
     </div>
   </div>
 
@@ -165,12 +190,12 @@ const MemberCardModal: React.FC<Props> = ({ member, isOpen, onClose }) => {
   return (
     <div className="fixed inset-0 z-[250] flex items-center justify-center p-4 overflow-y-auto">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative w-full max-w-[460px] bg-white rounded-2xl shadow-2xl overflow-hidden my-auto">
+      <div className="relative w-full max-w-[480px] bg-white rounded-2xl shadow-2xl overflow-hidden my-auto">
 
         {/* Header */}
         <div className="flex items-center justify-between px-7 py-5 border-b border-slate-100">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: `${pc}1a` }}>
+            <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: pc1a }}>
               <CreditCard size={18} style={{ color: pc }} />
             </div>
             <div>
@@ -183,103 +208,129 @@ const MemberCardModal: React.FC<Props> = ({ member, isOpen, onClose }) => {
           </button>
         </div>
 
-        {/* Preview area */}
+        {/* Preview */}
         <div className="bg-slate-50 px-6 py-8 flex flex-col items-center gap-8">
 
-          {/* FRONT PREVIEW */}
+          {/* RECTO */}
           <div className="w-full">
             <p className="text-[10px] text-slate-400 text-center mb-3 uppercase tracking-[0.2em]">Recto</p>
-            <div className="w-full rounded-2xl overflow-hidden shadow-xl flex flex-col" style={{ height: '160px', background: 'white' }}>
+            <div className="w-full rounded-2xl overflow-hidden shadow-xl flex flex-col" style={{ height: '168px' }}>
               {/* Header */}
-              <div className="h-[50px] flex items-center px-5 gap-3 flex-shrink-0"
-                   style={{ background: `linear-gradient(135deg, ${pc}, ${pc}bb)` }}>
+              <div className="flex-shrink-0 h-[52px] flex items-center px-5 gap-3"
+                   style={{ background: `linear-gradient(135deg, ${pc}, ${pc}cc)` }}>
                 {churchLogo
                   ? <img src={churchLogo} className="w-8 h-8 object-contain rounded flex-shrink-0" alt="" />
-                  : <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center text-white font-bold text-sm flex-shrink-0">{churchName.charAt(0)}</div>
-                }
-                <span className="text-white font-bold text-sm tracking-wide flex-1 truncate">{churchName.toUpperCase()}</span>
+                  : <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center text-white font-bold text-sm flex-shrink-0">{churchName.charAt(0)}</div>}
+                <span className="text-white font-bold text-sm flex-1 truncate">{churchName.toUpperCase()}</span>
                 <span className="text-white/60 text-[9px] tracking-widest uppercase whitespace-nowrap">Carte Membre</span>
               </div>
               {/* Body */}
-              <div className="flex-1 flex items-center px-5 gap-4 min-h-0">
+              <div className="flex-1 flex items-center px-5 gap-4 min-h-0 bg-white">
                 {member.photoUrl
-                  ? <img src={member.photoUrl} className="w-[60px] h-[60px] rounded-full object-cover border-2 border-white shadow-lg flex-shrink-0" alt="" />
-                  : <div className="w-[60px] h-[60px] rounded-full flex-shrink-0 flex items-center justify-center text-white text-xl font-bold shadow-lg border-2 border-white"
+                  ? <img src={member.photoUrl} className="w-14 h-14 rounded-full object-cover border-2 border-white shadow-lg flex-shrink-0" alt="" />
+                  : <div className="w-14 h-14 rounded-full flex-shrink-0 flex items-center justify-center text-white text-xl font-bold shadow-lg border-2 border-white"
                          style={{ background: pc }}>
                       {member.firstName.charAt(0)}{member.lastName.charAt(0)}
+                    </div>}
+                <div className="min-w-0 flex-1">
+                  <div className="text-slate-900 font-extrabold text-base leading-tight truncate">{fullName}</div>
+                  <div className="inline-block mt-1 px-2 py-0.5 rounded-md text-[10px] font-semibold mb-1"
+                       style={{ background: pc1a, color: pc }}>{member.type}</div>
+                  {member.joinDate && (
+                    <div className="flex gap-1.5 items-baseline">
+                      <span className="text-[9px] text-slate-400">Membre depuis</span>
+                      <span className="text-[10px] text-slate-600 font-semibold">{fmtDate(member.joinDate)}</span>
                     </div>
-                }
-                <div>
-                  <div className="text-slate-900 font-extrabold text-lg leading-tight truncate">{fullName}</div>
-                  <div className="inline-block mt-1.5 px-2.5 py-0.5 rounded-lg text-[11px] font-semibold"
-                       style={{ background: `${pc}1a`, color: pc }}>{member.type}</div>
+                  )}
+                  {member.baptized && member.baptizedDate && (
+                    <div className="flex gap-1.5 items-baseline">
+                      <span className="text-[9px] text-slate-400">Baptisé le</span>
+                      <span className="text-[10px] text-slate-600 font-semibold">{fmtDate(member.baptizedDate)}</span>
+                    </div>
+                  )}
+                  {member.phone && (
+                    <div className="flex gap-1.5 items-baseline">
+                      <span className="text-[9px] text-slate-400">Tél.</span>
+                      <span className="text-[10px] text-slate-600 font-semibold">{member.phone}</span>
+                    </div>
+                  )}
                 </div>
               </div>
               {/* Footer */}
-              <div className="h-[37px] flex items-center justify-between px-5 border-t border-slate-100 flex-shrink-0"
-                   style={{ background: '#f8fafc' }}>
-                <span className="font-mono text-[10px] text-slate-500">{cardNumber}</span>
+              <div className="flex-shrink-0 h-9 flex items-center justify-between px-5 border-t border-slate-100 bg-slate-50/80">
+                <span className="font-mono text-[9px] text-slate-500">{cardNumber}</span>
                 <div className="text-right">
-                  <div className="text-[8px] text-slate-400">Valide jusqu'au</div>
-                  <div className="text-xs font-bold" style={{ color: pc }}>31/12/{validYear}</div>
+                  <div className="text-[7px] text-slate-400">Valide jusqu'au</div>
+                  <div className="text-[11px] font-bold" style={{ color: pc }}>31/12/{validYear}</div>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* BACK PREVIEW */}
+          {/* VERSO */}
           <div className="w-full">
             <p className="text-[10px] text-slate-400 text-center mb-3 uppercase tracking-[0.2em]">Verso</p>
-            <div className="w-full rounded-2xl overflow-hidden shadow-xl flex flex-col" style={{ height: '160px', background: 'white' }}>
+            <div className="w-full rounded-2xl overflow-hidden shadow-xl flex flex-col" style={{ height: '168px' }}>
               {/* Header */}
-              <div className="h-[50px] flex items-center px-5 gap-3 flex-shrink-0 relative"
-                   style={{ background: `linear-gradient(135deg, ${pc}, ${pc}bb)` }}>
+              <div className="flex-shrink-0 h-[48px] flex items-center px-5 gap-3 relative"
+                   style={{ background: `linear-gradient(135deg, ${pc}, ${pc}cc)` }}>
                 {churchLogo
-                  ? <img src={churchLogo} className="w-8 h-8 object-contain rounded flex-shrink-0" alt="" />
-                  : <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center text-white font-bold text-sm flex-shrink-0">{churchName.charAt(0)}</div>
-                }
-                <span className="text-white font-bold text-sm tracking-wide flex-1 truncate">{churchName.toUpperCase()}</span>
-                <div className="text-right text-white/90 text-xs">
-                  <div className="font-semibold">{fullName}</div>
-                  <div className="text-white/60 text-[9px]">Depuis {joinYear}</div>
+                  ? <img src={churchLogo} className="w-7 h-7 object-contain rounded flex-shrink-0" alt="" />
+                  : <div className="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center text-white font-bold text-sm flex-shrink-0">{churchName.charAt(0)}</div>}
+                <span className="text-white font-bold text-sm flex-1 truncate">{churchName.toUpperCase()}</span>
+                <div className="flex items-center gap-2">
+                  {member.photoUrl && (
+                    <img src={member.photoUrl} className="w-8 h-8 rounded-full object-cover border border-white/50 flex-shrink-0" alt="" />
+                  )}
+                  <div className="text-right text-white/90">
+                    <div className="font-semibold text-xs">{fullName}</div>
+                    {member.joinDate && <div className="text-white/60 text-[9px]">Depuis {fmtDate(member.joinDate)}</div>}
+                  </div>
                 </div>
               </div>
               {/* Body */}
-              <div className="flex-1 flex flex-col justify-center px-5 gap-1.5 min-h-0">
-                {churchAddress && (
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs">📍</span>
-                    <span className="text-[11px] text-slate-600 truncate">{churchAddress}</span>
-                  </div>
-                )}
-                {churchPhone && (
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs">📞</span>
-                    <span className="text-[11px] text-slate-600">{churchPhone}</span>
-                  </div>
-                )}
-                {churchEmail && (
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs">✉</span>
-                    <span className="text-[11px] text-slate-600">{churchEmail}</span>
-                  </div>
-                )}
-                {depts.length > 0 && (
-                  <div className="flex items-center gap-1.5 flex-wrap mt-0.5">
-                    <span className="text-xs">🏛</span>
-                    {depts.map(d => (
-                      <span key={d} className="px-1.5 py-0.5 rounded text-[9px] font-semibold"
-                            style={{ background: `${pc}1a`, color: pc }}>{d}</span>
-                    ))}
-                  </div>
-                )}
+              <div className="flex-1 flex items-stretch px-5 gap-3 min-h-0 bg-white py-2">
+                <div className="flex-1 flex flex-col justify-center gap-1">
+                  {churchAddress && (
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-[10px]">📍</span>
+                      <span className="text-[10px] text-slate-600 truncate">{churchAddress}</span>
+                    </div>
+                  )}
+                  {churchPhone && (
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-[10px]">📞</span>
+                      <span className="text-[10px] text-slate-600">{churchPhone}</span>
+                    </div>
+                  )}
+                  {churchEmail && (
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-[10px]">✉</span>
+                      <span className="text-[10px] text-slate-600 truncate">{churchEmail}</span>
+                    </div>
+                  )}
+                  {depts.length > 0 && (
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <span className="text-[10px]">🏛</span>
+                      {depts.map(d => (
+                        <span key={d} className="px-1.5 py-0.5 rounded text-[8px] font-semibold"
+                              style={{ background: pc1a, color: pc }}>{d}</span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                {/* QR Code preview */}
+                <div className="flex-shrink-0 flex flex-col items-center justify-center gap-1">
+                  <img src={qrUrl} className="w-16 h-16" alt="QR" />
+                  <span className="text-[8px] text-slate-400">Scanner</span>
+                </div>
               </div>
               {/* Footer */}
-              <div className="h-[32px] flex items-center justify-center px-5 border-t border-slate-100 flex-shrink-0"
-                   style={{ background: '#f8fafc' }}>
-                <p className="text-[8px] text-slate-400 text-center">
-                  Si trouvée, merci de retourner cette carte à l'église · {cardNumber}
-                </p>
+              <div className="flex-shrink-0 h-8 flex items-center justify-between px-5 border-t border-slate-100 bg-slate-50/80">
+                {churchSlogan
+                  ? <span className="text-[9px] italic font-semibold truncate" style={{ color: pc }}>{churchSlogan}</span>
+                  : <span />}
+                <span className="text-[8px] text-slate-400 flex-shrink-0">{cardNumber}</span>
               </div>
             </div>
           </div>
@@ -296,7 +347,7 @@ const MemberCardModal: React.FC<Props> = ({ member, isOpen, onClose }) => {
           <button
             onClick={handlePrint}
             className="flex-1 py-3.5 text-white rounded-xl text-xs font-semibold flex items-center justify-center gap-2 hover:opacity-90 transition-opacity shadow-lg"
-            style={{ background: `linear-gradient(135deg, ${pc}, ${pc}bb)` }}
+            style={{ background: `linear-gradient(135deg, ${pc}, ${pc}cc)` }}
           >
             <Printer size={15} />
             Générer PDF

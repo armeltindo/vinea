@@ -1437,75 +1437,84 @@ const Settings: React.FC = () => {
                       const all: Record<string, { r: boolean; w: boolean; d: boolean }> = {};
                       AVAILABLE_MODULES.forEach(m => { all[m.id] = { r: true, w: true, d: true }; });
                       setModuleAccess(all);
-                    }} className="text-[9px] font-black text-indigo-600 uppercase tracking-widest hover:underline">Tout L+É+S</button>
+                    }} className="text-[9px] font-black text-rose-500 uppercase tracking-widest hover:underline">Tout LES</button>
                     <span className="text-slate-200 text-xs">|</span>
                     <button type="button" onClick={() => {
                       const all: Record<string, { r: boolean; w: boolean; d: boolean }> = {};
                       AVAILABLE_MODULES.forEach(m => { all[m.id] = { r: true, w: true, d: false }; });
                       setModuleAccess(all);
-                    }} className="text-[9px] font-black text-emerald-600 uppercase tracking-widest hover:underline">Tout L+É</button>
+                    }} className="text-[9px] font-black text-emerald-600 uppercase tracking-widest hover:underline">Tout LE</button>
+                    <span className="text-slate-200 text-xs">|</span>
+                    <button type="button" onClick={() => {
+                      const all: Record<string, { r: boolean; w: boolean; d: boolean }> = {};
+                      AVAILABLE_MODULES.forEach(m => { all[m.id] = { r: true, w: false, d: false }; });
+                      setModuleAccess(all);
+                    }} className="text-[9px] font-black text-indigo-600 uppercase tracking-widest hover:underline">Tout L</button>
                     <span className="text-slate-200 text-xs">|</span>
                     <button type="button" onClick={() => {
                       const reset: Record<string, { r: boolean; w: boolean; d: boolean }> = {};
                       AVAILABLE_MODULES.forEach(m => { reset[m.id] = { r: false, w: false, d: false }; });
                       reset['dashboard'] = { r: true, w: false, d: false };
                       setModuleAccess(reset);
-                    }} className="text-[9px] font-black text-rose-400 uppercase tracking-widest hover:underline">Réinitialiser</button>
+                    }} className="text-[9px] font-black text-slate-400 uppercase tracking-widest hover:underline">Réinitialiser</button>
                   </div>
                 </div>
 
                 {/* En-tête du tableau */}
-                <div className="grid grid-cols-[1fr_64px_64px_80px] items-center gap-x-2 px-3 pb-1 border-b border-slate-100">
+                <div className="grid grid-cols-[1fr_180px] items-center gap-x-2 px-3 pb-1 border-b border-slate-100">
                   <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Module</span>
-                  <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest text-center">Lecture</span>
-                  <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest text-center">Écriture</span>
-                  <span className="text-[9px] font-black text-rose-400 uppercase tracking-widest text-center">Supprimer</span>
+                  <div className="grid grid-cols-3 gap-1">
+                    <span className="text-[9px] font-black text-indigo-500 uppercase tracking-widest text-center">L</span>
+                    <span className="text-[9px] font-black text-emerald-600 uppercase tracking-widest text-center">L+É</span>
+                    <span className="text-[9px] font-black text-rose-500 uppercase tracking-widest text-center">L+É+S</span>
+                  </div>
                 </div>
 
                 {/* Lignes du tableau */}
                 <div className="divide-y divide-slate-50 rounded-xl overflow-hidden border border-slate-100">
                   {AVAILABLE_MODULES.map((mod, idx) => {
                     const access = moduleAccess[mod.id] ?? { r: false, w: false, d: false };
+                    const level = access.d ? 'les' : access.w ? 'le' : access.r ? 'l' : 'none';
+                    const setLevel = (next: 'l' | 'le' | 'les' | 'none') => {
+                      const map = {
+                        none: { r: false, w: false, d: false },
+                        l:    { r: true,  w: false, d: false },
+                        le:   { r: true,  w: true,  d: false },
+                        les:  { r: true,  w: true,  d: true  },
+                      };
+                      setModuleAccess(prev => ({ ...prev, [mod.id]: map[next] }));
+                    };
                     return (
-                      <div key={mod.id} className={cn('grid grid-cols-[1fr_64px_64px_80px] items-center gap-x-2 px-3 py-2.5 transition-colors', idx % 2 === 0 ? 'bg-white' : 'bg-slate-50/50', access.r ? '' : 'opacity-50')}>
+                      <div key={mod.id} className={cn('grid grid-cols-[1fr_180px] items-center gap-x-2 px-3 py-2 transition-colors', idx % 2 === 0 ? 'bg-white' : 'bg-slate-50/50', level === 'none' ? 'opacity-50' : '')}>
                         {/* Nom du module */}
                         <div className="flex items-center gap-2 min-w-0">
-                          <div className={cn('w-6 h-6 rounded-lg flex items-center justify-center shrink-0', access.r ? 'bg-indigo-50 text-indigo-500' : 'bg-slate-100 text-slate-400')}>
+                          <div className={cn('w-6 h-6 rounded-lg flex items-center justify-center shrink-0', level !== 'none' ? 'bg-indigo-50 text-indigo-500' : 'bg-slate-100 text-slate-400')}>
                             <mod.icon size={12} />
                           </div>
                           <span className="text-xs font-semibold text-slate-700 truncate">{mod.label}</span>
                         </div>
 
-                        {/* Lecture */}
-                        <div className="flex justify-center">
-                          <button type="button" onClick={() => {
-                            const cur = moduleAccess[mod.id] ?? { r: false, w: false, d: false };
-                            const newR = !cur.r;
-                            setModuleAccess(prev => ({ ...prev, [mod.id]: { r: newR, w: newR ? cur.w : false, d: newR ? cur.d : false } }));
-                          }} className={cn('w-6 h-6 rounded-md border-2 flex items-center justify-center transition-all', access.r ? 'bg-indigo-600 border-indigo-600 text-white' : 'bg-white border-slate-200 hover:border-indigo-300')}>
-                            {access.r && <Check size={11} strokeWidth={3} />}
-                          </button>
-                        </div>
-
-                        {/* Écriture */}
-                        <div className="flex justify-center">
-                          <button type="button" disabled={!access.r} onClick={() => {
-                            const cur = moduleAccess[mod.id] ?? { r: false, w: false, d: false };
-                            const newW = !cur.w;
-                            setModuleAccess(prev => ({ ...prev, [mod.id]: { ...cur, w: newW, d: newW ? cur.d : false } }));
-                          }} className={cn('w-6 h-6 rounded-md border-2 flex items-center justify-center transition-all', !access.r && 'cursor-not-allowed opacity-30', access.w ? 'bg-emerald-500 border-emerald-500 text-white' : 'bg-white border-slate-200 hover:border-emerald-300')}>
-                            {access.w && <Check size={11} strokeWidth={3} />}
-                          </button>
-                        </div>
-
-                        {/* Suppression */}
-                        <div className="flex justify-center">
-                          <button type="button" disabled={!access.w} onClick={() => {
-                            const cur = moduleAccess[mod.id] ?? { r: false, w: false, d: false };
-                            setModuleAccess(prev => ({ ...prev, [mod.id]: { ...cur, d: !cur.d } }));
-                          }} className={cn('w-6 h-6 rounded-md border-2 flex items-center justify-center transition-all', !access.w && 'cursor-not-allowed opacity-30', access.d ? 'bg-rose-500 border-rose-500 text-white' : 'bg-white border-slate-200 hover:border-rose-300')}>
-                            {access.d && <Check size={11} strokeWidth={3} />}
-                          </button>
+                        {/* Options L / L+É / L+É+S */}
+                        <div className="grid grid-cols-3 gap-1">
+                          {(['l', 'le', 'les'] as const).map(opt => {
+                            const active = level === opt;
+                            const colors = {
+                              l:   active ? 'bg-indigo-600 border-indigo-600 text-white' : 'bg-white border-slate-200 text-slate-400 hover:border-indigo-300 hover:text-indigo-500',
+                              le:  active ? 'bg-emerald-500 border-emerald-500 text-white' : 'bg-white border-slate-200 text-slate-400 hover:border-emerald-300 hover:text-emerald-500',
+                              les: active ? 'bg-rose-500 border-rose-500 text-white' : 'bg-white border-slate-200 text-slate-400 hover:border-rose-300 hover:text-rose-500',
+                            };
+                            const labels = { l: 'L', le: 'L+É', les: 'L+É+S' };
+                            return (
+                              <button
+                                key={opt}
+                                type="button"
+                                onClick={() => setLevel(active ? 'none' : opt)}
+                                className={cn('rounded-md border text-[9px] font-black py-1 px-1 text-center transition-all', colors[opt])}
+                              >
+                                {labels[opt]}
+                              </button>
+                            );
+                          })}
                         </div>
                       </div>
                     );
@@ -1515,13 +1524,13 @@ const Settings: React.FC = () => {
                 {/* Légende */}
                 <div className="flex items-center gap-4 pt-1 px-1 flex-wrap">
                   <div className="flex items-center gap-1.5 text-[9px] text-slate-400 font-medium">
-                    <div className="w-3 h-3 rounded bg-indigo-600" /> Lecture — consulter
+                    <div className="w-3 h-3 rounded bg-indigo-600" /> L — consulter
                   </div>
                   <div className="flex items-center gap-1.5 text-[9px] text-slate-400 font-medium">
-                    <div className="w-3 h-3 rounded bg-emerald-500" /> Écriture — créer, modifier
+                    <div className="w-3 h-3 rounded bg-emerald-500" /> L+É — créer, modifier
                   </div>
                   <div className="flex items-center gap-1.5 text-[9px] text-slate-400 font-medium">
-                    <div className="w-3 h-3 rounded bg-rose-500" /> Supprimer — supprimer des données
+                    <div className="w-3 h-3 rounded bg-rose-500" /> L+É+S — créer, modifier, supprimer
                   </div>
                 </div>
               </div>

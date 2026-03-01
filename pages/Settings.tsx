@@ -388,35 +388,40 @@ const Settings: React.FC = () => {
     fullName: '', email: '', role: 'Administrateur', status: 'Actif', permissions: ['dashboard:rw'],
   });
 
-  // moduleAccess: source de vérité pour le formulaire d'accès lecture/écriture
-  const [moduleAccess, setModuleAccess] = useState<Record<string, { r: boolean; w: boolean }>>({
-    dashboard: { r: true, w: true },
-    spiritual: { r: true, w: false },
+  // moduleAccess: source de vérité pour le formulaire d'accès lecture/écriture/suppression
+  const [moduleAccess, setModuleAccess] = useState<Record<string, { r: boolean; w: boolean; d: boolean }>>({
+    dashboard: { r: true, w: true, d: false },
+    spiritual: { r: true, w: false, d: false },
   });
 
-  /** 'members:rw' | 'members:r' | 'members' → { r, w } par module */
-  const parseModuleAccess = (perms: string[]): Record<string, { r: boolean; w: boolean }> => {
-    const result: Record<string, { r: boolean; w: boolean }> = {};
+  /** 'members:rwd' | 'members:rw' | 'members:r' | 'members' → { r, w, d } par module */
+  const parseModuleAccess = (perms: string[]): Record<string, { r: boolean; w: boolean; d: boolean }> => {
+    const result: Record<string, { r: boolean; w: boolean; d: boolean }> = {};
     for (const p of perms) {
       if (p.includes(':')) {
         const [mod, acc] = p.split(':');
-        result[mod] = { r: acc.includes('r'), w: acc.includes('w') };
+        result[mod] = { r: acc.includes('r'), w: acc.includes('w'), d: acc.includes('d') };
       } else if (p) {
-        result[p] = { r: true, w: true }; // ancien format → accès complet
+        result[p] = { r: true, w: true, d: false }; // ancien format → accès complet sans suppression
       }
     }
     return result;
   };
 
-  /** { r, w } par module → ['members:rw', 'finances:r', …] */
-  const encodeModuleAccess = (access: Record<string, { r: boolean; w: boolean }>): string[] =>
+  /** { r, w, d } par module → ['members:rwd', 'finances:rw', 'reports:r', …] */
+  const encodeModuleAccess = (access: Record<string, { r: boolean; w: boolean; d: boolean }>): string[] =>
     Object.entries(access)
       .filter(([, v]) => v.r)
-      .map(([mod, v]) => (v.w ? `${mod}:rw` : `${mod}:r`));
+      .map(([mod, v]) => {
+        if (v.d) return `${mod}:rwd`;
+        if (v.w) return `${mod}:rw`;
+        return `${mod}:r`;
+      });
 
-  /** Extrait l'ID de module depuis un token ('members:rw' → 'members') */
+  /** Extrait l'ID de module depuis un token ('members:rwd' → 'members') */
   const modIdOf = (token: string) => (token.includes(':') ? token.split(':')[0] : token);
-  const isWriteToken = (token: string) => !token.includes(':') || token.endsWith(':rw');
+  const isWriteToken  = (token: string) => !token.includes(':') || token.endsWith(':rw') || token.endsWith(':rwd');
+  const isDeleteToken = (token: string) => token.endsWith(':rwd');
 
   useEffect(() => {
     const load = async () => {
@@ -906,7 +911,7 @@ const Settings: React.FC = () => {
                   <p className="text-xs text-slate-500 font-medium">Définissez précisément les droits de chaque collaborateur.</p>
                 </div>
                 <button 
-                  onClick={() => { setEditingUser(null); setUserFormData({ fullName: '', email: '', role: 'Administrateur', status: 'Actif', permissions: ['dashboard:rw', 'spiritual:r'] }); setModuleAccess({ dashboard: { r: true, w: true }, spiritual: { r: true, w: false } }); setIsUserFormOpen(true); }}
+                  onClick={() => { setEditingUser(null); setUserFormData({ fullName: '', email: '', role: 'Administrateur', status: 'Actif', permissions: ['dashboard:rw', 'spiritual:r'] }); setModuleAccess({ dashboard: { r: true, w: true, d: false }, spiritual: { r: true, w: false, d: false } }); setIsUserFormOpen(true); }}
                   className="flex items-center gap-2 px-4 py-2.5 bg-indigo-600 text-white rounded-xl text-xs font-medium shadow-lg shadow-indigo-200"
                 >
                   <UserPlus size={16} /> Ajouter Collaborateur
@@ -955,13 +960,14 @@ const Settings: React.FC = () => {
                                   user.permissions.slice(0, 3).map(token => {
                                     const id = modIdOf(token);
                                     const canW = isWriteToken(token);
+                                    const canD = isDeleteToken(token);
                                     const mod = AVAILABLE_MODULES.find(m => m.id === id);
                                     if (!mod) return null;
                                     return (
                                       <span key={token} className="flex items-center gap-1 px-1.5 py-0.5 bg-slate-50 text-slate-600 rounded text-[10px] font-medium border border-slate-200">
                                         {mod.label}
-                                        <span className={cn('text-[8px] font-bold px-0.5 rounded', canW ? 'text-emerald-600 bg-emerald-50' : 'text-amber-600 bg-amber-50')}>
-                                          {canW ? 'L+É' : 'L'}
+                                        <span className={cn('text-[8px] font-bold px-0.5 rounded', canD ? 'text-rose-600 bg-rose-50' : canW ? 'text-emerald-600 bg-emerald-50' : 'text-amber-600 bg-amber-50')}>
+                                          {canD ? 'L+É+S' : canW ? 'L+É' : 'L'}
                                         </span>
                                       </span>
                                     );
@@ -1428,33 +1434,40 @@ const Settings: React.FC = () => {
                   </p>
                   <div className="flex items-center gap-3">
                     <button type="button" onClick={() => {
-                      const all: Record<string, { r: boolean; w: boolean }> = {};
-                      AVAILABLE_MODULES.forEach(m => { all[m.id] = { r: true, w: true }; });
+                      const all: Record<string, { r: boolean; w: boolean; d: boolean }> = {};
+                      AVAILABLE_MODULES.forEach(m => { all[m.id] = { r: true, w: true, d: true }; });
                       setModuleAccess(all);
-                    }} className="text-[9px] font-black text-indigo-600 uppercase tracking-widest hover:underline">Tout L+É</button>
+                    }} className="text-[9px] font-black text-indigo-600 uppercase tracking-widest hover:underline">Tout L+É+S</button>
                     <span className="text-slate-200 text-xs">|</span>
                     <button type="button" onClick={() => {
-                      const reset: Record<string, { r: boolean; w: boolean }> = {};
-                      AVAILABLE_MODULES.forEach(m => { reset[m.id] = { r: false, w: false }; });
-                      reset['dashboard'] = { r: true, w: false };
+                      const all: Record<string, { r: boolean; w: boolean; d: boolean }> = {};
+                      AVAILABLE_MODULES.forEach(m => { all[m.id] = { r: true, w: true, d: false }; });
+                      setModuleAccess(all);
+                    }} className="text-[9px] font-black text-emerald-600 uppercase tracking-widest hover:underline">Tout L+É</button>
+                    <span className="text-slate-200 text-xs">|</span>
+                    <button type="button" onClick={() => {
+                      const reset: Record<string, { r: boolean; w: boolean; d: boolean }> = {};
+                      AVAILABLE_MODULES.forEach(m => { reset[m.id] = { r: false, w: false, d: false }; });
+                      reset['dashboard'] = { r: true, w: false, d: false };
                       setModuleAccess(reset);
                     }} className="text-[9px] font-black text-rose-400 uppercase tracking-widest hover:underline">Réinitialiser</button>
                   </div>
                 </div>
 
                 {/* En-tête du tableau */}
-                <div className="grid grid-cols-[1fr_72px_72px] items-center gap-x-2 px-3 pb-1 border-b border-slate-100">
+                <div className="grid grid-cols-[1fr_64px_64px_80px] items-center gap-x-2 px-3 pb-1 border-b border-slate-100">
                   <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Module</span>
                   <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest text-center">Lecture</span>
                   <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest text-center">Écriture</span>
+                  <span className="text-[9px] font-black text-rose-400 uppercase tracking-widest text-center">Supprimer</span>
                 </div>
 
                 {/* Lignes du tableau */}
                 <div className="divide-y divide-slate-50 rounded-xl overflow-hidden border border-slate-100">
                   {AVAILABLE_MODULES.map((mod, idx) => {
-                    const access = moduleAccess[mod.id] ?? { r: false, w: false };
+                    const access = moduleAccess[mod.id] ?? { r: false, w: false, d: false };
                     return (
-                      <div key={mod.id} className={cn('grid grid-cols-[1fr_72px_72px] items-center gap-x-2 px-3 py-2.5 transition-colors', idx % 2 === 0 ? 'bg-white' : 'bg-slate-50/50', access.r ? '' : 'opacity-50')}>
+                      <div key={mod.id} className={cn('grid grid-cols-[1fr_64px_64px_80px] items-center gap-x-2 px-3 py-2.5 transition-colors', idx % 2 === 0 ? 'bg-white' : 'bg-slate-50/50', access.r ? '' : 'opacity-50')}>
                         {/* Nom du module */}
                         <div className="flex items-center gap-2 min-w-0">
                           <div className={cn('w-6 h-6 rounded-lg flex items-center justify-center shrink-0', access.r ? 'bg-indigo-50 text-indigo-500' : 'bg-slate-100 text-slate-400')}>
@@ -1466,9 +1479,9 @@ const Settings: React.FC = () => {
                         {/* Lecture */}
                         <div className="flex justify-center">
                           <button type="button" onClick={() => {
-                            const cur = moduleAccess[mod.id] ?? { r: false, w: false };
+                            const cur = moduleAccess[mod.id] ?? { r: false, w: false, d: false };
                             const newR = !cur.r;
-                            setModuleAccess(prev => ({ ...prev, [mod.id]: { r: newR, w: newR ? cur.w : false } }));
+                            setModuleAccess(prev => ({ ...prev, [mod.id]: { r: newR, w: newR ? cur.w : false, d: newR ? cur.d : false } }));
                           }} className={cn('w-6 h-6 rounded-md border-2 flex items-center justify-center transition-all', access.r ? 'bg-indigo-600 border-indigo-600 text-white' : 'bg-white border-slate-200 hover:border-indigo-300')}>
                             {access.r && <Check size={11} strokeWidth={3} />}
                           </button>
@@ -1477,10 +1490,21 @@ const Settings: React.FC = () => {
                         {/* Écriture */}
                         <div className="flex justify-center">
                           <button type="button" disabled={!access.r} onClick={() => {
-                            const cur = moduleAccess[mod.id] ?? { r: false, w: false };
-                            setModuleAccess(prev => ({ ...prev, [mod.id]: { ...cur, w: !cur.w } }));
+                            const cur = moduleAccess[mod.id] ?? { r: false, w: false, d: false };
+                            const newW = !cur.w;
+                            setModuleAccess(prev => ({ ...prev, [mod.id]: { ...cur, w: newW, d: newW ? cur.d : false } }));
                           }} className={cn('w-6 h-6 rounded-md border-2 flex items-center justify-center transition-all', !access.r && 'cursor-not-allowed opacity-30', access.w ? 'bg-emerald-500 border-emerald-500 text-white' : 'bg-white border-slate-200 hover:border-emerald-300')}>
                             {access.w && <Check size={11} strokeWidth={3} />}
+                          </button>
+                        </div>
+
+                        {/* Suppression */}
+                        <div className="flex justify-center">
+                          <button type="button" disabled={!access.w} onClick={() => {
+                            const cur = moduleAccess[mod.id] ?? { r: false, w: false, d: false };
+                            setModuleAccess(prev => ({ ...prev, [mod.id]: { ...cur, d: !cur.d } }));
+                          }} className={cn('w-6 h-6 rounded-md border-2 flex items-center justify-center transition-all', !access.w && 'cursor-not-allowed opacity-30', access.d ? 'bg-rose-500 border-rose-500 text-white' : 'bg-white border-slate-200 hover:border-rose-300')}>
+                            {access.d && <Check size={11} strokeWidth={3} />}
                           </button>
                         </div>
                       </div>
@@ -1489,12 +1513,15 @@ const Settings: React.FC = () => {
                 </div>
 
                 {/* Légende */}
-                <div className="flex items-center gap-4 pt-1 px-1">
+                <div className="flex items-center gap-4 pt-1 px-1 flex-wrap">
                   <div className="flex items-center gap-1.5 text-[9px] text-slate-400 font-medium">
-                    <div className="w-3 h-3 rounded bg-indigo-600" /> Lecture — peut consulter
+                    <div className="w-3 h-3 rounded bg-indigo-600" /> Lecture — consulter
                   </div>
                   <div className="flex items-center gap-1.5 text-[9px] text-slate-400 font-medium">
-                    <div className="w-3 h-3 rounded bg-emerald-500" /> Écriture — peut créer, modifier, supprimer
+                    <div className="w-3 h-3 rounded bg-emerald-500" /> Écriture — créer, modifier
+                  </div>
+                  <div className="flex items-center gap-1.5 text-[9px] text-slate-400 font-medium">
+                    <div className="w-3 h-3 rounded bg-rose-500" /> Supprimer — supprimer des données
                   </div>
                 </div>
               </div>

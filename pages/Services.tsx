@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Card from '../components/Card';
 import { 
   Plus, 
@@ -132,13 +133,21 @@ const getServiceIcon = (type: string, size = 14) => {
 };
 
 const Services: React.FC = () => {
+  const navigate = useNavigate();
   const [services, setServices] = useState<ChurchService[]>([]);
 
   const currentYearStr = new Date().getFullYear().toString();
   const [availableServiceTypes] = useState(SERVICES_LIST);
 
   useEffect(() => {
-    getChurchServices().then(setServices);
+    getChurchServices().then(s => {
+      setServices(s);
+      const detailId = new URLSearchParams(window.location.search).get('detail');
+      if (detailId) {
+        const found = s.find((x: ChurchService) => x.id === detailId);
+        if (found) { setSelectedService(found); setIsDetailsOpen(true); }
+      }
+    });
   }, []);
   const [selectedType, setSelectedType] = useState<string | null>(null);
   const [selectedSeries, setSelectedSeries] = useState<string | null>(null);
@@ -332,6 +341,7 @@ const Services: React.FC = () => {
     if (serviceToDeleteId) {
       setServices(services.filter(s => s.id !== serviceToDeleteId));
       setIsDetailsOpen(false);
+      navigate('', { replace: true });
       setSelectedService(null);
       await deleteChurchService(serviceToDeleteId);
       setServiceToDeleteId(null);
@@ -505,7 +515,7 @@ const Services: React.FC = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 print:hidden">
         {filteredServices.length > 0 ? filteredServices.map((service) => (
-          <div key={service.id} onClick={() => { setSelectedService(service); setIsDetailsOpen(true); setIsThemeExpanded(false); }} className="group relative flex flex-col bg-white border border-slate-200 rounded-2xl shadow-sm hover:border-indigo-400 hover:shadow-xl transition-all duration-300 overflow-hidden cursor-pointer active:scale-[0.98]">
+          <div key={service.id} onClick={() => { setSelectedService(service); setIsDetailsOpen(true); setIsThemeExpanded(false); navigate(`?detail=${service.id}`, { replace: true }); }} className="group relative flex flex-col bg-white border border-slate-200 rounded-2xl shadow-sm hover:border-indigo-400 hover:shadow-xl transition-all duration-300 overflow-hidden cursor-pointer active:scale-[0.98]">
             <div className="h-1.5 w-full bg-slate-100 group-hover:bg-indigo-500 transition-colors" />
             <div className="p-8 space-y-6 flex-1 flex flex-col">
               <div className="flex justify-between items-start"><div className="flex items-center gap-2 px-3 py-1.5 bg-slate-50 border border-slate-100 rounded-2xl group-hover:bg-indigo-50 group-hover:border-indigo-100 transition-colors">{getServiceIcon(service.serviceType, 12)}<span className="text-xs font-medium text-slate-500 group-hover:text-indigo-600">{service.serviceType}</span></div><div className="px-3 py-1.5 bg-slate-50 rounded-2xl text-xs text-slate-400">{new Date(service.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' })}</div></div>
@@ -520,14 +530,14 @@ const Services: React.FC = () => {
 
       {isDetailsOpen && selectedService && (
         <div className="fixed inset-0 z-[150] overflow-hidden flex items-center justify-center p-4 print:static print:z-0">
-          <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity print:hidden" onClick={() => setIsDetailsOpen(false)} />
+          <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity print:hidden" onClick={() => { setIsDetailsOpen(false); navigate('', { replace: true }); }} />
           <div className="relative w-full max-w-5xl bg-white shadow-2xl animate-in zoom-in-95 duration-300 flex flex-col rounded-2xl overflow-hidden max-h-[90vh] print:rounded-none print:shadow-none print:w-full print:max-w-none print:max-h-none">
 
             {/* ─── Header ─── */}
             <div className="px-10 py-10 bg-slate-900 text-white shrink-0 relative overflow-hidden print:bg-white print:text-slate-900 print:py-8 print:border-b-2 print:border-slate-100">
               <div className="absolute top-0 right-0 p-8 opacity-10 print:hidden pointer-events-none"><Church size={220} /></div>
               <div className="absolute -top-24 -left-24 w-64 h-64 bg-indigo-600/20 rounded-full blur-[80px] pointer-events-none"></div>
-              <button onClick={() => setIsDetailsOpen(false)} className="absolute top-6 left-6 p-2 bg-white/10 hover:bg-white/20 rounded-full text-white transition-colors print:hidden z-20"><ArrowLeft size={24} /></button>
+              <button onClick={() => { setIsDetailsOpen(false); navigate('', { replace: true }); }} className="absolute top-6 left-6 p-2 bg-white/10 hover:bg-white/20 rounded-full text-white transition-colors print:hidden z-20"><ArrowLeft size={24} /></button>
 
               <div className="relative z-10 space-y-5">
                 {/* Type + Série */}
@@ -750,7 +760,7 @@ const Services: React.FC = () => {
             <div className="p-8 border-t border-slate-100 bg-white flex flex-wrap items-center gap-3 shrink-0 print:hidden shadow-[0_-20px_40px_-20px_rgba(0,0,0,0.05)]">
               <button onClick={handlePrint} className="px-6 py-3.5 bg-slate-900 text-white rounded-2xl text-xs font-medium hover:bg-slate-800 transition-all flex items-center justify-center gap-2 shadow-lg"><Printer size={16} /> Imprimer</button>
               <div className="flex-1"></div>
-              <button onClick={() => { setEditingId(selectedService.id); setFormData(selectedService); setIsDetailsOpen(false); setIsFormOpen(true); }} className="px-5 py-3.5 bg-indigo-50 text-indigo-600 border border-indigo-100 rounded-2xl text-xs font-medium hover:bg-indigo-100 transition-all flex items-center justify-center gap-2"><Edit size={15} /> Modifier</button>
+              <button onClick={() => { setEditingId(selectedService.id); setFormData(selectedService); setIsDetailsOpen(false); navigate('', { replace: true }); setIsFormOpen(true); }} className="px-5 py-3.5 bg-indigo-50 text-indigo-600 border border-indigo-100 rounded-2xl text-xs font-medium hover:bg-indigo-100 transition-all flex items-center justify-center gap-2"><Edit size={15} /> Modifier</button>
               <button onClick={() => { setServiceToDeleteId(selectedService.id); }} className="px-5 py-3.5 bg-rose-50 text-rose-600 border border-rose-100 rounded-2xl text-xs font-medium hover:bg-rose-100 transition-all flex items-center justify-center gap-2"><Trash2 size={15} /></button>
             </div>
           </div>

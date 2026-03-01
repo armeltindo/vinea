@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Card from '../components/Card';
 import AIAnalysis from '../components/AIAnalysis';
 import { 
@@ -41,6 +42,7 @@ interface Meeting {
 const CATEGORIES = ['Conseil', 'Département', 'Ouvriers', 'Jeunesse', 'Finances', 'Social'];
 
 const Meetings: React.FC = () => {
+  const navigate = useNavigate();
   const [meetings, setMeetings] = useState<Meeting[]>([]);
   const [members, setMembers] = useState<Member[]>([]);
 
@@ -51,6 +53,11 @@ const Meetings: React.FC = () => {
     ]).then(([mtgs, mbrs]) => {
       setMeetings(mtgs as any);
       setMembers(mbrs);
+      const detailId = new URLSearchParams(window.location.search).get('detail');
+      if (detailId) {
+        const found = (mtgs as any[]).find(x => x.id === detailId);
+        if (found) setSelectedMeeting(found);
+      }
     });
   }, []);
 
@@ -390,7 +397,7 @@ const Meetings: React.FC = () => {
 
           <div className="space-y-4">
             {filteredMeetings.length > 0 ? filteredMeetings.map((meeting) => (
-              <div key={meeting.id} onClick={() => setSelectedMeeting(meeting)} className="bg-white border border-slate-200 rounded-xl overflow-hidden flex flex-col md:flex-row hover:border-indigo-300 transition-all group shadow-sm cursor-pointer active:scale-[0.99]">
+              <div key={meeting.id} onClick={() => { setSelectedMeeting(meeting); navigate(`?detail=${meeting.id}`, { replace: true }); }} className="bg-white border border-slate-200 rounded-xl overflow-hidden flex flex-col md:flex-row hover:border-indigo-300 transition-all group shadow-sm cursor-pointer active:scale-[0.99]">
                 <div className={cn("md:w-32 p-6 flex flex-col items-center justify-center border-b md:border-b-0 md:border-r border-slate-100 shrink-0", meeting.status === 'Terminé' ? "bg-slate-50" : "bg-indigo-50/30")}>
                   <span className="text-xs font-medium text-slate-500">{new Date(meeting.date).toLocaleDateString('fr-FR', { month: 'short' }).toUpperCase()}</span>
                   <span className="text-3xl font-semibold text-slate-800 leading-none my-1">{new Date(meeting.date).getDate()}</span>
@@ -450,7 +457,7 @@ const Meetings: React.FC = () => {
                     <p className="text-xs font-semibold text-slate-800er truncate">{decision.label}</p>
                     <p className="text-xs text-slate-400 mt-1">Réunion : {decision.meetingTitle}</p>
                   </div>
-                  <button onClick={(e) => { e.stopPropagation(); setSelectedMeeting(meetings.find(m => m.id === decision.meetingId) || null); }} className="text-indigo-600 hover:text-indigo-800"><ChevronRight size={14}/></button>
+                  <button onClick={(e) => { e.stopPropagation(); const mtg = meetings.find(m => m.id === decision.meetingId) || null; setSelectedMeeting(mtg); if (mtg) navigate(`?detail=${mtg.id}`, { replace: true }); }} className="text-indigo-600 hover:text-indigo-800"><ChevronRight size={14}/></button>
                 </div>
               ))}
               {pendingDecisions.length === 0 && (
@@ -626,11 +633,11 @@ const Meetings: React.FC = () => {
       {/* Modal: Détails Réunion - Centré */}
       {selectedMeeting && (
         <div className="fixed inset-0 z-[150] overflow-hidden flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity" onClick={() => setSelectedMeeting(null)} />
+          <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity" onClick={() => { setSelectedMeeting(null); navigate('', { replace: true }); }} />
           <div className="relative w-full max-w-3xl bg-white shadow-2xl animate-in zoom-in-95 duration-300 flex flex-col rounded-2xl overflow-hidden max-h-[90vh]">
             <div className="px-10 py-12 bg-indigo-600 text-white rounded-t-[3rem] shrink-0 relative overflow-hidden">
               <div className="absolute top-0 right-0 p-8 opacity-10"><UsersRound size={180} /></div>
-              <button onClick={() => setSelectedMeeting(null)} className="absolute top-6 left-6 p-2 hover:bg-white/10 rounded-full text-white transition-colors"><ArrowLeft size={24} /></button>
+              <button onClick={() => { setSelectedMeeting(null); navigate('', { replace: true }); }} className="absolute top-6 left-6 p-2 hover:bg-white/10 rounded-full text-white transition-colors"><ArrowLeft size={24} /></button>
               <div className="relative z-10 space-y-4">
                 <div className="flex gap-2">
                   <span className="px-3 py-1 bg-white/20 backdrop-blur-md rounded-full text-xs font-medium">{selectedMeeting.category}</span>

@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Card from '../components/Card';
 import AIAnalysis from '../components/AIAnalysis';
 import { 
@@ -80,6 +81,7 @@ const PATHWAYS: Pathway[] = [
 ];
 
 const Discipleship: React.FC = () => {
+  const navigate = useNavigate();
   const [analysis, setAnalysis] = useState<string | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
 
@@ -93,7 +95,7 @@ const Discipleship: React.FC = () => {
     Promise.all([getMembers(), getVisitors(), getDiscipleshipPairs(), getDiscipleshipEnrollments()]).then(([mbrs, vis, pairs, enrolls]) => {
       setMembers(mbrs);
       setVisitors(vis);
-      setActivePairs(pairs.map((p: any) => {
+      const mappedPairs = pairs.map((p: any) => {
         const mentor = mbrs.find(m => m.id === p.mentorId);
         const disciple = mbrs.find(m => m.id === p.discipleId);
         return {
@@ -101,8 +103,14 @@ const Discipleship: React.FC = () => {
           mentorName: mentor ? `${formatFirstName(mentor.firstName)} ${mentor.lastName.toUpperCase()}` : p.mentorId,
           discipleName: disciple ? `${formatFirstName(disciple.firstName)} ${disciple.lastName.toUpperCase()}` : p.discipleId,
         };
-      }));
+      });
+      setActivePairs(mappedPairs as any);
       setEnrollments(enrolls as Enrollment[]);
+      const detailId = new URLSearchParams(window.location.search).get('detail');
+      if (detailId) {
+        const found = mappedPairs.find((x: any) => x.id === detailId);
+        if (found) { setSelectedPair(found as any); setIsPairDetailsOpen(true); }
+      }
     });
   }, []);
 
@@ -184,10 +192,12 @@ const Discipleship: React.FC = () => {
   const handleOpenPairDetails = (pair: DiscipleshipPair) => {
     setSelectedPair(pair);
     setIsPairDetailsOpen(true);
+    navigate(`?detail=${pair.id}`, { replace: true });
   };
 
   const handleOpenPairModal = (pair: DiscipleshipPair | null = null) => {
     setIsPairDetailsOpen(false);
+    navigate('', { replace: true });
     if (pair) {
       setEditingPair(pair);
       setPairFormData(pair);
@@ -264,6 +274,7 @@ const Discipleship: React.FC = () => {
       setActivePairs(prev => prev.filter(p => p.id !== pairToDeleteId));
       setIsPairModalOpen(false);
       setIsPairDetailsOpen(false);
+      navigate('', { replace: true });
       setIsDeleteConfirmOpen(false);
       setEditingPair(null);
       setSelectedPair(null);
@@ -581,13 +592,13 @@ const Discipleship: React.FC = () => {
       {/* Modal: Détails du Binôme */}
       {isPairDetailsOpen && selectedPair && (
         <div className="fixed inset-0 z-[150] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity duration-300" onClick={() => setIsPairDetailsOpen(false)} />
+          <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity duration-300" onClick={() => { setIsPairDetailsOpen(false); navigate('', { replace: true }); }} />
           <div className="relative w-full max-w-lg bg-white shadow-2xl animate-in zoom-in-95 duration-300 flex flex-col rounded-2xl overflow-hidden max-h-[90vh]">
               <div className="px-10 py-12 bg-indigo-600 text-white shrink-0 relative overflow-hidden">
                 <div className="absolute top-0 right-0 p-8 opacity-10">
                    <Users size={180} />
                 </div>
-                <button onClick={() => setIsPairDetailsOpen(false)} className="absolute top-6 left-6 p-2 hover:bg-white/10 rounded-full text-white transition-colors">
+                <button onClick={() => { setIsPairDetailsOpen(false); navigate('', { replace: true }); }} className="absolute top-6 left-6 p-2 hover:bg-white/10 rounded-full text-white transition-colors">
                   <ArrowLeft size={24} />
                 </button>
                 

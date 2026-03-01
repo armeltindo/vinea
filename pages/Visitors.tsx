@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Card from '../components/Card';
 import AIAnalysis from '../components/AIAnalysis';
 import Avatar from '../components/Avatar';
@@ -64,6 +65,7 @@ const formatToUIDate = (isoDate: string | undefined) => {
 };
 
 const Visitors: React.FC = () => {
+  const navigate = useNavigate();
   const [availableStatuses] = useState<string[]>(Object.values(VisitorStatus));
   const [statusFilter, setStatusFilter] = useState<string>('Tous les statuts');
   const [availableServices] = useState<string[]>(SERVICES_LIST);
@@ -80,6 +82,11 @@ const Visitors: React.FC = () => {
       setMembers(m);
       setVisitors(v);
       setIsLoadingData(false);
+      const detailId = new URLSearchParams(window.location.search).get('detail');
+      if (detailId) {
+        const found = v.find((x: any) => x.id === detailId);
+        if (found) { setSelectedVisitor(found); setIsDetailsOpen(true); }
+      }
     };
     load();
   }, []);
@@ -171,10 +178,12 @@ const Visitors: React.FC = () => {
   const handleOpenDetails = (visitor: Visitor) => {
     setSelectedVisitor(visitor);
     setIsDetailsOpen(true);
+    navigate(`?detail=${visitor.id}`, { replace: true });
   };
 
   const handleOpenForm = (visitor: Visitor | null = null) => {
     setIsDetailsOpen(false);
+    navigate('', { replace: true });
     if (visitor) {
       setEditingVisitor(visitor);
       setFormData({ 
@@ -225,6 +234,7 @@ const Visitors: React.FC = () => {
     setVisitorToDeleteId(null);
     setIsDeleteConfirmOpen(false);
     setIsDetailsOpen(false);
+    navigate('', { replace: true });
     await deleteVisitor(id);
     setVisitors(prev => prev.filter(v => v.id !== id));
   };
@@ -277,6 +287,7 @@ const Visitors: React.FC = () => {
     setIsConvertModalOpen(false);
     setVisitorToConvert(null);
     setIsDetailsOpen(false);
+    navigate('', { replace: true });
     setSelectedVisitor(null);
     setIsSubmitting(false);
 
@@ -578,7 +589,7 @@ const Visitors: React.FC = () => {
       <VisitorDetails 
         visitor={selectedVisitor} 
         isOpen={isDetailsOpen} 
-        onClose={() => setIsDetailsOpen(false)} 
+        onClose={() => { setIsDetailsOpen(false); navigate('', { replace: true }); }}
         onEdit={(v) => handleOpenForm(v)} 
         onDelete={(id) => { setVisitorToDeleteId(id); setIsDeleteConfirmOpen(true); }} 
         onConvertToMember={handleOpenConvertModal}

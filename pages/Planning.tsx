@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Card from '../components/Card';
 import AIAnalysis from '../components/AIAnalysis';
 import { 
@@ -150,6 +151,7 @@ const RECURRENCE_OPTIONS: ActivityRecurrence[] = [
 ];
 
 const Planning: React.FC = () => {
+  const navigate = useNavigate();
   const [churchName, setChurchName] = useState('Vinea');
   const [departments, setDepartments] = useState<DepartmentInfo[]>([]);
   const [activities, setActivities] = useState<DepartmentActivity[]>([]);
@@ -246,6 +248,18 @@ const Planning: React.FC = () => {
       setActivities(acts);
       setMembers(mems);
       if (settings?.name) setChurchName(settings.name);
+      const params = new URLSearchParams(window.location.search);
+      const activityId = params.get('activity');
+      const deptId = params.get('dept');
+      if (activityId) {
+        const found = acts.find((x: any) => x.id === activityId);
+        if (found) { setSelectedActivityForDetails(found); setIsActivityDetailsOpen(true); }
+      }
+      if (deptId) {
+        const allDepts = depts.length > 0 ? depts : [];
+        const found = allDepts.find((x: any) => x.id === deptId);
+        if (found) { setSelectedDeptForDetails(found); setIsDeptDetailsOpen(true); }
+      }
     };
     load();
   }, []);
@@ -393,6 +407,7 @@ const Planning: React.FC = () => {
       setActivities(prev => prev.filter(a => a.id !== id));
       if (selectedActivityForDetails?.id === id) {
         setIsActivityDetailsOpen(false);
+        navigate('', { replace: true });
         setSelectedActivityForDetails(null);
       }
     }
@@ -424,6 +439,7 @@ const Planning: React.FC = () => {
     setAssistantSearch(assistant ? `${formatFirstName(assistant.firstName)} ${assistant.lastName.toUpperCase()}` : '');
     setDeptMemberSearch('');
     setIsDeptDetailsOpen(false);
+    navigate('', { replace: true });
     setIsDeptFormOpen(true);
   };
 
@@ -433,12 +449,14 @@ const Planning: React.FC = () => {
     const resp = members.find(m => m.id === activity.responsibleId);
     setResponsibleSearch(resp ? `${formatFirstName(resp.firstName)} ${resp.lastName.toUpperCase()}` : activity.responsibleId);
     setIsActivityDetailsOpen(false);
+    navigate('', { replace: true });
     setIsActivityFormOpen(true);
   };
 
   const handleOpenActivityDetails = (activity: DepartmentActivity) => {
     setSelectedActivityForDetails(activity);
     setIsActivityDetailsOpen(true);
+    navigate(`?activity=${activity.id}`, { replace: true });
   };
 
   const filteredDepts = useMemo(() => {
@@ -509,7 +527,7 @@ const Planning: React.FC = () => {
           {filteredDepts.map(dept => {
             const president = members.find(m => m.id === dept.presidentId);
             return (
-              <Card key={dept.id} onClick={() => { setSelectedDeptForDetails(dept); setIsDeptDetailsOpen(true); setIsDeptDescExpanded(false); }} className="group hover:border-indigo-400 border-2 transition-all p-0 overflow-hidden cursor-pointer rounded-2xl">
+              <Card key={dept.id} onClick={() => { setSelectedDeptForDetails(dept); setIsDeptDetailsOpen(true); setIsDeptDescExpanded(false); navigate(`?dept=${dept.id}`, { replace: true }); }} className="group hover:border-indigo-400 border-2 transition-all p-0 overflow-hidden cursor-pointer rounded-2xl">
                 <div className="p-8 space-y-6">
                   <div className="flex justify-between items-start gap-4">
                     <div className="w-12 h-12 rounded-2xl bg-indigo-50 flex items-center justify-center text-indigo-600 shadow-sm shrink-0">
@@ -763,13 +781,13 @@ const Planning: React.FC = () => {
       {/* Modale Détails Activité */}
       {isActivityDetailsOpen && selectedActivityForDetails && (
         <div className="fixed inset-0 z-[150] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity duration-300" onClick={() => setIsActivityDetailsOpen(false)} />
+          <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity duration-300" onClick={() => { setIsActivityDetailsOpen(false); navigate('', { replace: true }); }} />
           <div className="relative w-full max-w-lg bg-white shadow-2xl animate-in zoom-in-95 duration-300 flex flex-col rounded-2xl overflow-hidden max-h-[90vh]">
             <div className="px-10 py-8 text-white shrink-0 relative overflow-hidden bg-amber-500">
               <div className="absolute top-0 right-0 p-8 opacity-10">
                  <Target size={180} />
               </div>
-              <button onClick={() => setIsActivityDetailsOpen(false)} className="absolute top-4 left-4 p-2 bg-white/10 hover:bg-white/20 rounded-full text-white transition-all"><ChevronLeft size={24} /></button>
+              <button onClick={() => { setIsActivityDetailsOpen(false); navigate('', { replace: true }); }} className="absolute top-4 left-4 p-2 bg-white/10 hover:bg-white/20 rounded-full text-white transition-all"><ChevronLeft size={24} /></button>
               <div className="relative z-10 space-y-2 mt-4">
                 <span className="px-3 py-1 bg-white/20 backdrop-blur-md rounded-full text-xs font-medium">Détail Activité</span>
                 <h3 className="text-2xl font-semibolder leading-tight">{selectedActivityForDetails.title}</h3>
@@ -1012,13 +1030,13 @@ const Planning: React.FC = () => {
       {/* Détails Département */}
       {isDeptDetailsOpen && selectedDeptForDetails && (
         <div className="fixed inset-0 z-[150] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity duration-300" onClick={() => setIsDeptDetailsOpen(false)} />
+          <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity duration-300" onClick={() => { setIsDeptDetailsOpen(false); navigate('', { replace: true }); }} />
           <div className="relative w-full max-w-lg bg-white shadow-2xl animate-in zoom-in-95 duration-300 flex flex-col rounded-2xl overflow-hidden max-h-[90vh]">
             <div className="px-10 py-8 text-white shrink-0 relative overflow-hidden bg-indigo-600">
               <div className="absolute top-0 right-0 p-8 opacity-10">
                  {getDepartmentIcon(selectedDeptForDetails.name, 180)}
               </div>
-              <button onClick={() => setIsDeptDetailsOpen(false)} className="absolute top-4 left-4 p-2 bg-white/10 hover:bg-white/20 rounded-full text-white transition-all"><ChevronLeft size={24} /></button>
+              <button onClick={() => { setIsDeptDetailsOpen(false); navigate('', { replace: true }); }} className="absolute top-4 left-4 p-2 bg-white/10 hover:bg-white/20 rounded-full text-white transition-all"><ChevronLeft size={24} /></button>
               <div className="relative z-10 space-y-2">
                 <h3 className="text-2xl font-semibolder leading-none">{selectedDeptForDetails.name}</h3>
                 <div className="text-sm font-bold text-white/90 leading-relaxed">
@@ -1092,7 +1110,7 @@ const Planning: React.FC = () => {
               </div>
             </div>
             <div className="p-10 border-t border-slate-100 bg-white flex flex-col gap-3 shrink-0">
-              <button onClick={() => { setIsDeptDetailsOpen(false); setSelectedDeptId(selectedDeptForDetails.id); setActiveView('planning'); }} className="w-full py-4 bg-slate-900 text-white rounded-2xl text-xs font-medium">Voir planning</button>
+              <button onClick={() => { setIsDeptDetailsOpen(false); navigate('', { replace: true }); setSelectedDeptId(selectedDeptForDetails.id); setActiveView('planning'); }} className="w-full py-4 bg-slate-900 text-white rounded-2xl text-xs font-medium">Voir planning</button>
               <button onClick={() => handleEditDept(selectedDeptForDetails)} className="w-full py-4 bg-indigo-50 text-indigo-600 border border-indigo-100 rounded-2xl text-xs font-medium">Modifier</button>
             </div>
           </div>

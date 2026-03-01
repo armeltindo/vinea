@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Card from '../components/Card';
 import AIAnalysis from '../components/AIAnalysis';
 import { 
@@ -102,10 +103,18 @@ const parseCSV = (text: string) => {
 };
 
 const Meditations: React.FC = () => {
+  const navigate = useNavigate();
   const [meditations, setMeditations] = useState<any[]>([]);
 
   useEffect(() => {
-    getMeditations().then(setMeditations);
+    getMeditations().then(m => {
+      setMeditations(m);
+      const detailId = new URLSearchParams(window.location.search).get('detail');
+      if (detailId) {
+        const found = m.find((x: any) => x.id === detailId);
+        if (found) { setReadingMeditation(found); setIsThemeExpandedDetail(false); }
+      }
+    });
   }, []);
 
   const currentYearStr = new Date().getFullYear().toString();
@@ -291,6 +300,7 @@ const Meditations: React.FC = () => {
       setMeditations(prev => prev.filter(m => m.id !== meditationToDeleteId));
       setIsDeleteConfirmOpen(false);
       setReadingMeditation(null);
+      navigate('', { replace: true });
       await deleteMeditation(meditationToDeleteId);
       setMeditationToDeleteId(null);
     }
@@ -332,7 +342,7 @@ const Meditations: React.FC = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         {filteredMeditations.length > 0 ? filteredMeditations.map((med) => (
-          <div key={med.id} onClick={() => { setReadingMeditation(med); setIsThemeExpandedDetail(false); if(!med.isRead) { setMeditations(prev => prev.map(m => m.id === med.id ? {...m, isRead: true} : m)); updateMeditation(med.id, { isRead: true }); } }} className={cn("group relative flex flex-col bg-white border-2 rounded-2xl shadow-sm hover:shadow-xl transition-all cursor-pointer overflow-hidden min-h-[480px]", med.isRead ? "border-emerald-100" : "border-slate-100 hover:border-indigo-400")}>
+          <div key={med.id} onClick={() => { setReadingMeditation(med); setIsThemeExpandedDetail(false); navigate(`?detail=${med.id}`, { replace: true }); if(!med.isRead) { setMeditations(prev => prev.map(m => m.id === med.id ? {...m, isRead: true} : m)); updateMeditation(med.id, { isRead: true }); } }} className={cn("group relative flex flex-col bg-white border-2 rounded-2xl shadow-sm hover:shadow-xl transition-all cursor-pointer overflow-hidden min-h-[480px]", med.isRead ? "border-emerald-100" : "border-slate-100 hover:border-indigo-400")}>
             <div className={cn("h-1.5 w-full", med.isRead ? "bg-emerald-500" : "bg-slate-100 group-hover:bg-indigo-500")} />
             <div className="p-8 flex flex-col h-full space-y-6">
               <div className="flex justify-between items-start">
@@ -432,7 +442,7 @@ const Meditations: React.FC = () => {
 
       {readingMeditation && (
         <div className="fixed inset-0 z-[150] overflow-hidden flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity duration-500" onClick={() => setReadingMeditation(null)} />
+          <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity duration-500" onClick={() => { setReadingMeditation(null); navigate('', { replace: true }); }} />
           <div className="relative w-full max-w-4xl bg-white shadow-2xl animate-in zoom-in-95 duration-500 flex flex-col rounded-2xl overflow-hidden max-h-[90vh]">
             
             {/* Reading Progress Top Bar */}
@@ -446,7 +456,7 @@ const Meditations: React.FC = () => {
                 <Leaf size={240} className="rotate-45 text-indigo-400" />
               </div>
               <button 
-                onClick={() => setReadingMeditation(null)} 
+                onClick={() => { setReadingMeditation(null); navigate('', { replace: true }); }}
                 className="absolute top-8 left-8 p-3 bg-white/10 hover:bg-white/20 rounded-full text-white backdrop-blur-md z-10 transition-all hover:scale-110 active:scale-95"
               >
                 <ArrowLeft size={20} />

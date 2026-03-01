@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Card from '../components/Card';
 import AIAnalysis from '../components/AIAnalysis';
 import { 
@@ -107,6 +108,7 @@ const renderActiveShape = (props: any) => {
 };
 
 const Finances: React.FC = () => {
+  const navigate = useNavigate();
   const [operations, setOperations] = useState<FinancialRecord[]>([]);
   const [campaigns, setCampaigns] = useState<DonationCampaign[]>([]);
   const [promises, setPromises] = useState<DonationPromise[]>([]);
@@ -201,6 +203,17 @@ const Finances: React.FC = () => {
       setMembers(mems);
       if (settings?.name) setChurchName(settings.name);
       if (savedCats) setCategories(savedCats);
+      const params = new URLSearchParams(window.location.search);
+      const detailId = params.get('detail');
+      const campaignId = params.get('campaign');
+      if (detailId) {
+        const found = ops.find((x: any) => x.id === detailId);
+        if (found) { setSelectedOperation(found); setIsOpDetailsOpen(true); }
+      }
+      if (campaignId) {
+        const found = camps.find((x: any) => x.id === campaignId);
+        if (found) { setSelectedCampaign(found); setIsCampaignDetailsOpen(true); }
+      }
     };
     load();
   }, []);
@@ -530,6 +543,7 @@ const Finances: React.FC = () => {
       : (op.externalName || '')
     );
     setIsOpDetailsOpen(false);
+    navigate('', { replace: true });
     setIsOpFormOpen(true);
   };
 
@@ -662,6 +676,7 @@ const Finances: React.FC = () => {
       deleteDonationCampaign(campaignToDeleteId);
       setIsDeleteCampaignConfirmOpen(false);
       setIsCampaignDetailsOpen(false);
+      navigate('', { replace: true });
       setCampaignToDeleteId(null);
     }
   };
@@ -833,7 +848,7 @@ const Finances: React.FC = () => {
                 return (
                   <div 
                     key={op.id} 
-                    onClick={() => { setSelectedOperation(op); setIsOpDetailsOpen(true); setGeneratedReceipt(null); }}
+                    onClick={() => { setSelectedOperation(op); setIsOpDetailsOpen(true); setGeneratedReceipt(null); navigate(`?detail=${op.id}`, { replace: true }); }}
                     className={cn(
                       "group flex items-center justify-between p-5 bg-white border rounded-xl hover:border-indigo-300 transition-all shadow-sm cursor-pointer",
                       op.type === OperationType.DEPENSE ? "border-rose-100" : "border-slate-100",
@@ -918,7 +933,7 @@ const Finances: React.FC = () => {
           ) : view === 'campaigns' ? (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-in slide-in-from-bottom-4 duration-500">
               {campaignsWithStats.length > 0 ? campaignsWithStats.map(camp => (
-                <Card key={camp.id} onClick={() => { setSelectedCampaign(camp); setIsCampaignDetailsOpen(true); }} className="group hover:border-indigo-400 border-2 transition-all p-0 overflow-hidden shadow-sm hover:shadow-xl cursor-pointer active:scale-[0.98]">
+                <Card key={camp.id} onClick={() => { setSelectedCampaign(camp); setIsCampaignDetailsOpen(true); navigate(`?campaign=${camp.id}`, { replace: true }); }} className="group hover:border-indigo-400 border-2 transition-all p-0 overflow-hidden shadow-sm hover:shadow-xl cursor-pointer active:scale-[0.98]">
                   <div className="p-6 space-y-6">
                     <div className="flex justify-between items-start">
                       <div className="space-y-1">
@@ -1415,11 +1430,11 @@ const Finances: React.FC = () => {
 
       {isCampaignDetailsOpen && selectedCampaign && (
         <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 overflow-hidden">
-          <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity" onClick={() => setIsCampaignDetailsOpen(false)} />
+          <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity" onClick={() => { setIsCampaignDetailsOpen(false); navigate('', { replace: true }); }} />
           <div className="relative w-full max-w-4xl bg-white shadow-2xl animate-in zoom-in-95 duration-300 flex flex-col rounded-2xl overflow-hidden max-h-[90vh]">
             <div className="px-10 py-12 bg-indigo-600 text-white shrink-0 relative overflow-hidden">
               <div className="absolute top-0 right-0 p-8 opacity-10"><Flag size={180} /></div>
-              <button onClick={() => setIsCampaignDetailsOpen(false)} className="absolute top-6 left-6 p-2 hover:bg-white/10 rounded-full text-white transition-colors text-white"><ArrowLeft size={24} /></button>
+              <button onClick={() => { setIsCampaignDetailsOpen(false); navigate('', { replace: true }); }} className="absolute top-6 left-6 p-2 hover:bg-white/10 rounded-full text-white transition-colors text-white"><ArrowLeft size={24} /></button>
               <div className="relative z-10 space-y-4">
                 <div className="flex gap-2">
                   <span className="px-3 py-1 bg-white/20 backdrop-blur-md rounded-full text-xs font-medium">Dossier Campagne</span>
@@ -1867,14 +1882,14 @@ const Finances: React.FC = () => {
 
       {isOpDetailsOpen && selectedOperation && (
         <div className="fixed inset-0 z-[180] flex items-center justify-center p-4 overflow-hidden">
-          <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity duration-300" onClick={() => setIsOpDetailsOpen(false)} />
+          <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity duration-300" onClick={() => { setIsOpDetailsOpen(false); navigate('', { replace: true }); }} />
           <div className="relative w-full max-w-md bg-white shadow-2xl animate-in zoom-in-95 duration-300 flex flex-col rounded-2xl overflow-hidden max-h-[90vh]">
             <div className={cn(
               "px-10 py-12 text-white rounded-t-[2.5rem] shrink-0 relative overflow-hidden",
               selectedOperation.type === OperationType.DEPENSE ? "bg-rose-600" : "bg-emerald-600"
             )}>
               <div className="absolute top-0 right-0 p-8 opacity-10"><Receipt size={180} /></div>
-              <button onClick={() => setIsOpDetailsOpen(false)} className="absolute top-6 left-6 p-2 hover:bg-white/10 rounded-full text-white transition-colors text-white"><X size={24} /></button>
+              <button onClick={() => { setIsOpDetailsOpen(false); navigate('', { replace: true }); }} className="absolute top-6 left-6 p-2 hover:bg-white/10 rounded-full text-white transition-colors text-white"><X size={24} /></button>
               <div className="relative z-10 space-y-4">
                 <span className="px-3 py-1 bg-white/20 backdrop-blur-md rounded-full text-xs font-medium">Fiche Transaction</span>
                 <h3 className="text-4xl font-bold leading-tight">{formatCurrency(selectedOperation.amount)}</h3>
@@ -1984,7 +1999,7 @@ const Finances: React.FC = () => {
             <h3 className="text-2xl font-bold text-slate-900">Supprimer ?</h3>
             <p className="text-slate-500 mt-2 text-sm font-medium leading-relaxed italic">Cette action retirera définitivement ce relevé de l'historique.</p>
             <div className="flex flex-col gap-3 mt-8">
-              <button onClick={() => { if(opToDeleteId) { setOperations(prev => prev.filter(h => h.id !== opToDeleteId)); deleteFinancialRecord(opToDeleteId); setOpToDeleteId(null); setIsDeleteConfirmOpen(false); setIsOpDetailsOpen(false); } }} className="w-full py-4 bg-rose-600 text-white rounded-2xl text-xs font-medium shadow-xl shadow-rose-200 hover:bg-rose-700 transition-all active:scale-95">Confirmer</button>
+              <button onClick={() => { if(opToDeleteId) { setOperations(prev => prev.filter(h => h.id !== opToDeleteId)); deleteFinancialRecord(opToDeleteId); setOpToDeleteId(null); setIsDeleteConfirmOpen(false); setIsOpDetailsOpen(false); navigate('', { replace: true }); } }} className="w-full py-4 bg-rose-600 text-white rounded-2xl text-xs font-medium shadow-xl shadow-rose-200 hover:bg-rose-700 transition-all active:scale-95">Confirmer</button>
               <button onClick={() => setIsDeleteConfirmOpen(false)} className="w-full py-4 bg-slate-50 text-slate-600 rounded-2xl text-xs font-medium border border-slate-200 hover:bg-slate-100 transition-all">Annuler</button>
             </div>
           </div>

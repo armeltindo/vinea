@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import Card from '../components/Card';
 import AIAnalysis from '../components/AIAnalysis';
 import Avatar from '../components/Avatar';
@@ -144,6 +145,8 @@ const getDepartmentIcon = (dept: string, size = 10) => {
 };
 
 const Members: React.FC = () => {
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [members, setMembers] = useState<Member[]>([]);
   const [discipleshipPairs, setDiscipleshipPairs] = useState<any[]>([]);
   const [isLoadingData, setIsLoadingData] = useState(true);
@@ -165,6 +168,11 @@ const Members: React.FC = () => {
       setMembers(m);
       setDiscipleshipPairs(p);
       setIsLoadingData(false);
+      const detailId = new URLSearchParams(window.location.search).get('detail');
+      if (detailId) {
+        const found = m.find(x => x.id === detailId);
+        if (found) { setSelectedMember(found); setIsDetailsOpen(true); }
+      }
     };
     load();
   }, []);
@@ -271,6 +279,7 @@ const Members: React.FC = () => {
   const handleOpenDetails = (member: Member) => {
     setSelectedMember(member);
     setIsDetailsOpen(true);
+    navigate(`?detail=${member.id}`, { replace: true });
   };
 
   const handleEditClick = (member: Member) => {
@@ -278,6 +287,7 @@ const Members: React.FC = () => {
     setFormData({ ...member });
     setSpouseSearch(member.spouseName || '');
     setIsDetailsOpen(false);
+    navigate('', { replace: true });
     setIsFormOpen(true);
   };
 
@@ -292,6 +302,7 @@ const Members: React.FC = () => {
       setMemberToDeleteId(null);
       setIsDeleteConfirmOpen(false);
       setIsDetailsOpen(false);
+      navigate('', { replace: true });
       await deleteMember(idToDelete);
       setMembers(members.filter(m => m.id !== idToDelete));
     }
@@ -988,7 +999,7 @@ const Members: React.FC = () => {
       <MemberDetails 
         member={selectedMember} 
         isOpen={isDetailsOpen} 
-        onClose={() => setIsDetailsOpen(false)} 
+        onClose={() => { setIsDetailsOpen(false); navigate('', { replace: true }); }}
         onEdit={handleEditClick}
         onDelete={handleDeleteClick}
         onPreviewPhoto={(url) => setPreviewImageUrl(url)}

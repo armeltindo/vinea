@@ -394,8 +394,8 @@ const VERSES = [
 
 const Login: React.FC<LoginProps> = ({ onLogin }) => {
   const [view, setView] = useState<ViewState>('login');
-  const [email, setEmail] = useState('admin@vinea.org');
-  const [password, setPassword] = useState('password');
+  const [email, setEmail] = useState(() => sessionStorage.getItem('lastLoginEmail') ?? '');
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -455,6 +455,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
 
       if (!adminUser) {
         // Super Admin par défaut si aucun enregistrement admin_users
+        sessionStorage.setItem('lastLoginEmail', email);
         onLogin(email, 'Super Admin', ALL_PERMISSIONS, data.user.email ?? 'Admin');
         return;
       }
@@ -470,6 +471,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
       const perms: string[] = (adminUser.role === 'Super Admin' || !adminUser.permissions || adminUser.permissions.length <= 2)
         ? ALL_PERMISSIONS
         : adminUser.permissions;
+      sessionStorage.setItem('lastLoginEmail', email);
       onLogin(email, adminUser.role ?? 'Administrateur', perms, adminUser.full_name);
 
     } catch (err) {

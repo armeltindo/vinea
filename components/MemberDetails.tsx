@@ -234,7 +234,7 @@ const MemberDetails: React.FC<MemberDetailsProps> = ({ member, isOpen, onClose, 
       />
       
       <div className={cn(
-        "relative w-full max-w-xl bg-white shadow-2xl transition-all duration-300 transform flex flex-col rounded-[3rem] overflow-hidden max-h-[90vh]",
+        "relative w-full max-w-xl bg-white shadow-2xl transition-all duration-300 transform flex flex-col rounded-2xl overflow-hidden max-h-[90vh]",
         isOpen ? "scale-100 opacity-100" : "scale-95 opacity-0"
       )}>
         {/* Fixed Header Section */}
@@ -263,15 +263,15 @@ const MemberDetails: React.FC<MemberDetailsProps> = ({ member, isOpen, onClose, 
               />
             </div>
             <div className="min-w-0">
-              <h3 className="text-xl sm:text-2xl font-black text-white leading-tight uppercase tracking-tight truncate">
+              <h3 className="text-xl sm:text-2xl font-semibold text-white leading-tight truncate">
                 {formatFirstName(member.firstName)} {member.lastName.toUpperCase()}
               </h3>
               <div className="flex flex-wrap items-center gap-2 mt-2">
-                <span className="px-2 py-0.5 bg-white/20 backdrop-blur-md rounded-lg text-[9px] font-black text-white uppercase tracking-widest border border-white/10">
+                <span className="px-2 py-0.5 bg-white/20 backdrop-blur-md rounded-lg text-xs font-semibold text-white border border-white/10">
                   {member.type}
                 </span>
                 <span className="w-1 h-1 rounded-full bg-indigo-300 opacity-50"></span>
-                <span className="text-[10px] font-black text-indigo-100 uppercase tracking-widest">
+                <span className="text-xs text-indigo-200">
                   {member.status}
                 </span>
               </div>
@@ -284,25 +284,25 @@ const MemberDetails: React.FC<MemberDetailsProps> = ({ member, isOpen, onClose, 
           
           {/* Section: Identité Civile */}
           <div className="space-y-4">
-            <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+            <h4 className="text-xs font-medium text-slate-500 flex items-center gap-2">
               <User size={14} className="text-indigo-600" /> Identité & État Civil
             </h4>
             <div className="grid grid-cols-2 gap-4">
               <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm space-y-1">
-                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Surnom / Petit nom</p>
-                <p className="text-xs font-bold text-slate-800 uppercase">{getDisplayNickname(member.firstName, member.nickname, member.gender)}</p>
+                <p className="text-xs font-medium text-slate-500">Surnom / Petit nom</p>
+                <p className="text-xs font-medium text-slate-800">{getDisplayNickname(member.firstName, member.nickname, member.gender)}</p>
               </div>
               <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm space-y-1">
-                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Sexe</p>
-                <p className="text-xs font-bold text-slate-800 uppercase">{member.gender}</p>
+                <p className="text-xs font-medium text-slate-500">Sexe</p>
+                <p className="text-xs font-medium text-slate-800">{member.gender}</p>
               </div>
               <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm space-y-1">
-                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Date de naissance</p>
+                <p className="text-xs font-medium text-slate-500">Date de naissance</p>
                 <p className="text-xs font-bold text-slate-800">{member.birthDate ? new Date(member.birthDate).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }) : '---'}</p>
               </div>
               <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm space-y-1">
-                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">État Civil</p>
-                <p className="text-xs font-bold text-slate-800 uppercase">{member.maritalStatus}</p>
+                <p className="text-xs font-medium text-slate-500">État Civil</p>
+                <p className="text-xs font-medium text-slate-800">{member.maritalStatus}</p>
               </div>
               {(member.maritalStatus.includes('Marié') || member.spouseName) && (
                 <div className="col-span-2 bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-4">
@@ -320,10 +320,10 @@ const MemberDetails: React.FC<MemberDetailsProps> = ({ member, isOpen, onClose, 
                     </div>
                   )}
                   <div className="flex-1">
-                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Conjoint(e)</p>
-                    <p className="text-xs font-bold text-slate-800 uppercase">{member.spouseName || 'Non spécifié'}</p>
+                    <p className="text-xs font-medium text-slate-500">Conjoint(e)</p>
+                    <p className="text-xs font-medium text-slate-800">{member.spouseName || 'Non spécifié'}</p>
                     {member.weddingDate && (
-                      <p className="text-[9px] text-slate-400 font-bold uppercase mt-0.5">Mariés le {new Date(member.weddingDate).toLocaleDateString()}</p>
+                      <p className="text-xs text-slate-400 mt-0.5">Mariés le {new Date(member.weddingDate).toLocaleDateString()}</p>
                     )}
                   </div>
                 </div>
@@ -333,29 +333,29 @@ const MemberDetails: React.FC<MemberDetailsProps> = ({ member, isOpen, onClose, 
 
           {/* Section: Profession & Talents */}
           <div className="space-y-4">
-            <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+            <h4 className="text-xs font-medium text-slate-500 flex items-center gap-2">
               <Briefcase size={14} className="text-amber-500" /> Profil Professionnel
             </h4>
             <div className="grid grid-cols-2 gap-4">
-              <div className="col-span-2 bg-white p-5 rounded-[2rem] border border-slate-100 shadow-sm flex items-center gap-5">
+              <div className="col-span-2 bg-white p-5 rounded-xl border border-slate-100 shadow-sm flex items-center gap-5">
                 <div className="w-12 h-12 rounded-2xl bg-amber-50 flex items-center justify-center text-amber-600 shadow-inner">
                   <Hammer size={24} />
                 </div>
                 <div>
-                  <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Métier / Profession</p>
-                  <p className="text-sm font-black text-slate-800 uppercase tracking-tight leading-none mt-1">
+                  <p className="text-xs font-medium text-slate-500">Métier / Profession</p>
+                  <p className="text-sm font-semibold text-slate-800 leading-none mt-1">
                     {member.profession || 'Non renseigné'}
                   </p>
                 </div>
               </div>
               {member.skills && (
-                <div className="col-span-2 bg-white p-5 rounded-[2rem] border border-slate-100 shadow-sm space-y-2">
-                  <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                <div className="col-span-2 bg-white p-5 rounded-xl border border-slate-100 shadow-sm space-y-2">
+                  <p className="text-xs font-medium text-slate-500 flex items-center gap-2">
                     <Zap size={10} className="text-amber-500" /> Talents & Compétences
                   </p>
                   <div className="flex flex-wrap gap-2">
                     {member.skills.split(',').map((skill, idx) => (
-                      <span key={idx} className="px-3 py-1 bg-amber-50 text-amber-700 rounded-lg text-[10px] font-black uppercase tracking-tighter">
+                      <span key={idx} className="px-3 py-1 bg-amber-50 text-amber-700 rounded-lg text-xs font-semibolder">
                         {skill.trim()}
                       </span>
                     ))}
@@ -367,21 +367,21 @@ const MemberDetails: React.FC<MemberDetailsProps> = ({ member, isOpen, onClose, 
 
           {/* Section: Coordonnées & Localisation */}
           <div className="space-y-4">
-            <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+            <h4 className="text-xs font-medium text-slate-500 flex items-center gap-2">
               <PhoneCall size={14} className="text-emerald-500" /> Contact & Localisation
             </h4>
-            <div className="bg-white p-6 rounded-[2.5rem] border border-slate-100 shadow-sm space-y-6">
+            <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm space-y-6">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 <div className="space-y-3">
                   <div>
-                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Téléphone Principal</p>
-                    <button onClick={() => handleCall()} className="flex items-center gap-2 text-sm font-black text-indigo-600 hover:scale-105 transition-transform text-left">
+                    <p className="text-xs font-medium text-slate-500 mb-1">Téléphone Principal</p>
+                    <button onClick={() => handleCall()} className="flex items-center gap-2 text-sm font-semibold text-indigo-600 hover:scale-105 transition-transform text-left">
                       <Phone size={14} /> {member.phone ? formatPhone(member.phone) : '---'}
                     </button>
                   </div>
                   {member.secondaryPhone && (
                     <div>
-                      <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Téléphone Secondaire</p>
+                      <p className="text-xs font-medium text-slate-500 mb-1">Téléphone Secondaire</p>
                       <button onClick={() => handleCall(member.secondaryPhone)} className="flex items-center gap-2 text-sm font-bold text-slate-700 hover:scale-105 transition-transform text-left">
                         <Phone size={14} /> {formatPhone(member.secondaryPhone)}
                       </button>
@@ -390,14 +390,14 @@ const MemberDetails: React.FC<MemberDetailsProps> = ({ member, isOpen, onClose, 
                 </div>
                 <div className="space-y-3">
                   <div>
-                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">WhatsApp</p>
-                    <button onClick={handleWhatsApp} className="flex items-center gap-2 text-sm font-black text-emerald-600 hover:scale-105 transition-transform text-left">
+                    <p className="text-xs font-medium text-slate-500 mb-1">WhatsApp</p>
+                    <button onClick={handleWhatsApp} className="flex items-center gap-2 text-sm font-semibold text-emerald-600 hover:scale-105 transition-transform text-left">
                       <MessageCircle size={14} /> {member.whatsappPhone ? formatPhone(member.whatsappPhone) : (member.phone ? formatPhone(member.phone) : '---')}
                     </button>
                   </div>
                   {member.email && (
                     <div>
-                      <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Email</p>
+                      <p className="text-xs font-medium text-slate-500 mb-1">Email</p>
                       <button onClick={handleEmail} className="flex items-center gap-2 text-sm font-bold text-blue-600 hover:scale-105 transition-transform truncate max-w-full text-left">
                         <Mail size={14} /> {member.email}
                       </button>
@@ -411,7 +411,7 @@ const MemberDetails: React.FC<MemberDetailsProps> = ({ member, isOpen, onClose, 
                   <MapPin size={20} />
                 </div>
                 <div className="flex-1">
-                  <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Adresse Physique</p>
+                  <p className="text-xs font-medium text-slate-500">Adresse Physique</p>
                   <p className="text-sm font-medium text-slate-700 leading-relaxed italic">
                     {member.address || 'Aucune adresse renseignée.'}
                   </p>
@@ -423,16 +423,16 @@ const MemberDetails: React.FC<MemberDetailsProps> = ({ member, isOpen, onClose, 
           {/* Section: Contact d'Urgence */}
           {member.emergencyContact && (member.emergencyContact.name || member.emergencyContact.phone) && (
             <div className="space-y-4">
-              <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+              <h4 className="text-xs font-medium text-slate-500 flex items-center gap-2">
                 <ShieldAlert size={14} className="text-rose-500" /> Contact d'Urgence
               </h4>
-              <div className="bg-rose-50/50 border border-rose-100 p-5 rounded-[2rem] flex items-center gap-5">
+              <div className="bg-rose-50/50 border border-rose-100 p-5 rounded-xl flex items-center gap-5">
                 <div className="w-12 h-12 rounded-2xl bg-rose-500 text-white flex items-center justify-center shadow-lg shadow-rose-200">
                   <UserRound size={24} />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-[10px] font-black text-rose-500 uppercase tracking-widest">{member.emergencyContact.relation || 'Contact'}</p>
-                  <p className="text-sm font-black text-slate-800 uppercase truncate">{member.emergencyContact.name}</p>
+                  <p className="text-xs font-semibold text-rose-500">{member.emergencyContact.relation || 'Contact'}</p>
+                  <p className="text-sm font-semibold text-slate-800 truncate">{member.emergencyContact.name}</p>
                   <button onClick={() => handleCall(member.emergencyContact.phone)} className="text-xs font-bold text-rose-600 mt-0.5 flex items-center gap-1">
                     <Phone size={10} /> {formatPhone(member.emergencyContact.phone)}
                   </button>
@@ -444,12 +444,12 @@ const MemberDetails: React.FC<MemberDetailsProps> = ({ member, isOpen, onClose, 
           {/* Section: Ministères */}
           {member.departments.length > 0 && (
             <div className="space-y-3">
-              <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+              <h4 className="text-xs font-medium text-slate-500 flex items-center gap-2">
                 <ShieldCheck size={14} className="text-indigo-600" /> Ministères & Départements
               </h4>
               <div className="flex flex-wrap gap-2">
                 {member.departments.map(dept => (
-                  <span key={dept} className={cn("px-3 py-1.5 rounded-xl border text-[9px] font-black uppercase flex items-center gap-2", getDepartmentColor(dept))}>
+                  <span key={dept} className={cn("px-3 py-1.5 rounded-xl border text-xs font-medium flex items-center gap-2", getDepartmentColor(dept))}>
                     {getDepartmentIcon(dept)} {dept}
                   </span>
                 ))}
@@ -596,7 +596,7 @@ const MemberDetails: React.FC<MemberDetailsProps> = ({ member, isOpen, onClose, 
 
           {/* History / Timeline */}
           <div className="space-y-4">
-            <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] flex items-center gap-2">
+            <h4 className="text-xs font-medium text-slate-500 flex items-center gap-2">
               <HistoryIcon size={14} /> Parcours Spirituel
             </h4>
             <div className="space-y-3">
@@ -609,7 +609,7 @@ const MemberDetails: React.FC<MemberDetailsProps> = ({ member, isOpen, onClose, 
                     <div className="flex-1 w-px bg-slate-100 my-1 group-last:hidden"></div>
                   </div>
                   <div className="pb-4">
-                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{event.type} • {new Date(event.date).toLocaleDateString()}</p>
+                    <p className="text-xs font-medium text-slate-500">{event.type} • {new Date(event.date).toLocaleDateString()}</p>
                     <p className="text-sm font-bold text-slate-700 mt-0.5">{event.label}</p>
                   </div>
                 </div>
@@ -622,10 +622,10 @@ const MemberDetails: React.FC<MemberDetailsProps> = ({ member, isOpen, onClose, 
           {/* Notes */}
           {member.notes && (
              <div className="space-y-2">
-                <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                <h4 className="text-xs font-medium text-slate-500 flex items-center gap-2">
                   <StickyNote size={14} className="text-indigo-600" /> Observations Pastorales
                 </h4>
-                <div className="p-5 bg-white border border-slate-100 rounded-[2rem] text-sm text-slate-600 font-medium italic leading-relaxed shadow-sm">
+                <div className="p-5 bg-white border border-slate-100 rounded-xl text-sm text-slate-600 font-medium italic leading-relaxed shadow-sm">
                   "{member.notes}"
                 </div>
              </div>
@@ -636,13 +636,13 @@ const MemberDetails: React.FC<MemberDetailsProps> = ({ member, isOpen, onClose, 
         <div className="p-8 border-t border-slate-100 bg-white/80 backdrop-blur-md flex gap-3 shrink-0 z-20">
           <button 
             onClick={() => onEdit(member)}
-            className="flex-1 py-4 bg-indigo-50 text-indigo-600 border border-indigo-100 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-indigo-100 transition-all flex items-center justify-center gap-2"
+            className="flex-1 py-4 bg-indigo-50 text-indigo-600 border border-indigo-100 rounded-2xl text-xs font-medium hover:bg-indigo-100 transition-all flex items-center justify-center gap-2"
           >
             <Edit size={16} /> Modifier Fiche
           </button>
           <button 
             onClick={() => onDelete(member.id)}
-            className="px-6 py-4 bg-rose-50 text-rose-600 border border-rose-100 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-rose-100 transition-all flex items-center justify-center gap-2"
+            className="px-6 py-4 bg-rose-50 text-rose-600 border border-rose-100 rounded-2xl text-xs font-medium hover:bg-rose-100 transition-all flex items-center justify-center gap-2"
           >
             <Trash2 size={16} />
           </button>

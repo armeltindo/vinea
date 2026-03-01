@@ -491,216 +491,220 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
   };
 
   return (
-    <div className="min-h-screen w-full flex items-center justify-center bg-[#f8fafc] relative overflow-hidden font-sans text-slate-900 selection:bg-indigo-500/30">
-      
-      {/* Decorative blurred elements */}
-      <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-indigo-200/40 rounded-full blur-[120px] pointer-events-none animate-pulse"></div>
-      <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-blue-100/50 rounded-full blur-[120px] pointer-events-none"></div>
+    <div className="min-h-screen w-full flex flex-col md:flex-row font-sans text-slate-900 selection:bg-indigo-500/30">
 
-      {/* Background Texture Overlay */}
-      <div className="absolute inset-0 z-[1] opacity-[0.03] pointer-events-none bg-[url('https://grainy-gradients.vercel.app/noise.svg')]"></div>
+      {/* ─── Left Panel: Branding ─── */}
+      <div className="relative md:w-[45%] bg-gradient-to-br from-indigo-600 via-indigo-700 to-violet-800 flex flex-col items-center justify-between px-10 py-12 md:px-14 md:py-16 overflow-hidden">
 
-      <div className="relative z-10 w-full max-w-[440px] px-6 py-12 animate-in fade-in zoom-in-95 duration-1000">
-        
-        {/* Branding Area */}
-        <div className="flex flex-col items-center mb-10">
-          <div className="relative group">
-            <div className="absolute -inset-6 bg-indigo-500/10 rounded-full blur-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-1000"></div>
-            <div className="relative w-20 h-20 flex items-center justify-center transition-all duration-700 group-hover:scale-110 active:scale-95 shadow-2xl rounded-[1.8rem] ring-8 ring-white/50 overflow-hidden">
-              <Logo className="w-full h-full" />
-            </div>
+        {/* Decorative blobs */}
+        <div className="absolute top-[-20%] left-[-20%] w-[70%] h-[70%] bg-white/10 rounded-full blur-[100px] pointer-events-none"></div>
+        <div className="absolute bottom-[-20%] right-[-20%] w-[60%] h-[60%] bg-violet-900/30 rounded-full blur-[80px] pointer-events-none"></div>
+        <div className="absolute inset-0 opacity-[0.04] pointer-events-none bg-[url('https://grainy-gradients.vercel.app/noise.svg')]"></div>
+
+        {/* Logo + Brand */}
+        <div className="relative z-10 flex flex-col items-center text-center">
+          <div className="w-20 h-20 flex items-center justify-center shadow-2xl rounded-[1.8rem] ring-8 ring-white/20 overflow-hidden mb-5">
+            <Logo className="w-full h-full" />
           </div>
-          <div className="mt-6 text-center">
-            <h1 className="text-xl font-black text-slate-900 uppercase tracking-[0.4em] drop-shadow-sm">Vinea</h1>
-            <div className="h-0.5 w-8 bg-indigo-600 mx-auto mt-1 rounded-full opacity-40"></div>
+          <h1 className="text-2xl font-bold text-white tracking-widest drop-shadow-sm">Vinea</h1>
+          <p className="text-indigo-200 text-sm mt-1 font-medium">Gestion d'Église</p>
+        </div>
+
+        {/* Verse of the day */}
+        <div className="relative z-10 w-full max-w-xs text-center hidden md:block">
+          <div className="w-8 h-px bg-white/25 mx-auto mb-7"></div>
+          <div className="flex items-center justify-center gap-2 mb-4">
+            <Sparkles size={13} className="text-amber-300" />
+            <span className="text-xs font-medium text-indigo-200 tracking-wide">Méditation du jour</span>
+          </div>
+          <Quote size={28} className="text-white/10 mx-auto mb-2" />
+          <p className="text-white/85 text-sm leading-relaxed italic">
+            « {selectedVerse.text} »
+          </p>
+          <div className="flex items-center justify-center gap-3 mt-4">
+            <div className="h-px w-6 bg-white/20"></div>
+            <p className="text-xs font-medium text-indigo-200">{selectedVerse.ref}</p>
+            <div className="h-px w-6 bg-white/20"></div>
           </div>
         </div>
 
-        {/* Main Authentication Card */}
-        <div className="relative bg-white border border-slate-200/60 rounded-[3rem] shadow-[0_32px_64px_-16px_rgba(0,0,0,0.06)] p-8 md:p-10 flex flex-col justify-center overflow-hidden backdrop-blur-sm">
-          
-          {view === 'login' ? (
-            <div className="relative z-10 animate-in fade-in slide-in-from-bottom-2 duration-700">
-              <div className="mb-8">
-                <h2 className="text-2xl font-black text-slate-900 tracking-tight leading-tight">{welcomeGreeting}</h2>
-              </div>
+        {/* Date + Copyright */}
+        <div className="relative z-10 text-center hidden md:block">
+          <p className="text-xs text-indigo-300/80 mb-1 capitalize">
+            {new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+          </p>
+          <p className="text-xs text-indigo-300/50">© {currentYear} Vinea</p>
+        </div>
+      </div>
 
-              <form onSubmit={handleSubmit} className="space-y-5">
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-3">Adresse Email</label>
-                  <div className="relative group">
-                    <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-indigo-500 transition-colors" size={18} />
-                    <input 
-                      type="email" 
-                      autoFocus
-                      autoComplete="username"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      placeholder="admin@vinea.org"
-                      className="w-full pl-12 pr-4 py-4 bg-slate-50/50 border border-slate-200 rounded-2xl focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/5 outline-none text-sm font-bold shadow-sm transition-all"
-                      required
-                    />
-                  </div>
+      {/* ─── Right Panel: Form ─── */}
+      <div className="relative md:w-[55%] flex items-center justify-center bg-[#f8fafc] px-6 py-10 md:px-14 md:py-16 overflow-hidden">
+
+        {/* Subtle background */}
+        <div className="absolute inset-0 z-[1] opacity-[0.03] pointer-events-none bg-[url('https://grainy-gradients.vercel.app/noise.svg')]"></div>
+        <div className="absolute top-[-10%] right-[-10%] w-[40%] h-[40%] bg-indigo-100/40 rounded-full blur-[100px] pointer-events-none"></div>
+
+        <div className="relative z-10 w-full max-w-[400px] animate-in fade-in zoom-in-95 duration-1000">
+
+          {/* Main Authentication Card */}
+          <div className="relative bg-white border border-slate-200/60 rounded-2xl shadow-[0_32px_64px_-16px_rgba(0,0,0,0.06)] p-7 md:p-9 flex flex-col justify-center overflow-hidden backdrop-blur-sm">
+
+            {view === 'login' ? (
+              <div className="relative z-10 animate-in fade-in slide-in-from-bottom-2 duration-700">
+                <div className="mb-8">
+                  <h2 className="text-xl font-bold text-slate-900 tracking-tight leading-tight">{welcomeGreeting}</h2>
                 </div>
 
-                <div className="space-y-1.5">
-                  <div className="flex justify-between items-center px-3">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Mot de passe</label>
-                    <button 
-                      type="button" 
-                      onClick={() => setView('forgot-password')}
-                      className="text-[9px] font-black text-indigo-600 uppercase hover:text-indigo-700 tracking-widest transition-colors"
-                    >
-                      Mot de passe oublié ?
-                    </button>
-                  </div>
-                  <div className="relative group">
-                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-indigo-500 transition-colors" size={18} />
-                    <input 
-                      type={showPassword ? "text" : "password"} 
-                      autoComplete="current-password"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      onKeyUp={checkCapsLock}
-                      placeholder="••••••••"
-                      className="w-full pl-12 pr-14 py-4 bg-slate-50/50 border border-slate-200 rounded-2xl focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/5 outline-none text-sm font-bold shadow-sm transition-all"
-                      required
-                    />
-                    <button 
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-300 hover:text-indigo-500 transition-colors"
-                    >
-                      {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                    </button>
-                  </div>
-                  {isCapsLock && (
-                    <div className="flex items-center gap-2 px-3 py-2 bg-amber-50 border border-amber-100 text-amber-700 rounded-xl text-[9px] font-black uppercase tracking-widest mt-2 animate-pulse">
-                      <AlertCircle size={12} /> VERROUILLAGE MAJUSCULES ACTIF
-                    </div>
-                  )}
-                </div>
-
-                <div className="flex items-center justify-between px-2 pt-1">
-                  <label className="flex items-center gap-2.5 cursor-pointer group">
-                    <div className="relative">
-                      <input 
-                        type="checkbox" 
-                        checked={rememberMe}
-                        onChange={(e) => setRememberMe(e.target.checked)}
-                        className="peer sr-only" 
+                <form onSubmit={handleSubmit} className="space-y-5">
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-medium text-slate-500 ml-1">Adresse e-mail</label>
+                    <div className="relative group">
+                      <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-indigo-500 transition-colors" size={18} />
+                      <input
+                        type="email"
+                        autoFocus
+                        autoComplete="username"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        placeholder="admin@vinea.org"
+                        className="w-full pl-12 pr-4 py-3.5 bg-slate-50/50 border border-slate-200 rounded-xl focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/5 outline-none text-sm shadow-sm transition-all"
+                        required
                       />
-                      <div className="w-5 h-5 bg-slate-100 border border-slate-200 rounded-lg peer-checked:bg-indigo-600 peer-checked:border-indigo-600 transition-all shadow-inner"></div>
-                      <CheckCircle2 className="absolute inset-0 text-white opacity-0 peer-checked:opacity-100 transition-opacity p-0.5" />
                     </div>
-                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest group-hover:text-slate-600 transition-colors">Se souvenir de moi</span>
-                  </label>
-                </div>
-
-                {error && (
-                  <div className="p-4 bg-rose-50 border border-rose-100 rounded-2xl flex items-start gap-3 animate-in shake duration-500">
-                    <ShieldAlert className="text-rose-500 shrink-0 mt-0.5" size={16} />
-                    <p className="text-xs font-bold text-rose-700 uppercase tracking-tight">{error}</p>
                   </div>
-                )}
 
-                <button 
-                  ref={buttonRef}
-                  type="submit" 
-                  disabled={isLoading}
-                  onMouseMove={handleButtonMagnetic}
-                  onMouseLeave={resetButtonMagnetic}
-                  className="group relative w-full py-5 bg-indigo-600 text-white rounded-[1.6rem] text-xs font-black uppercase tracking-[0.25em] shadow-[0_20px_40px_-12px_rgba(79,70,229,0.3)] hover:bg-indigo-700 transition-all flex items-center justify-center gap-3 disabled:opacity-70 overflow-hidden active:scale-95"
-                >
-                  {isLoading ? (
-                    <>
-                      <Loader2 className="animate-spin" size={18} />
-                      Authentification...
-                    </>
-                  ) : (
-                    <>
-                      Ouvrir la session
-                      <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
-                    </>
+                  <div className="space-y-1.5">
+                    <div className="flex justify-between items-center px-3">
+                      <label className="text-xs font-medium text-slate-500 ml-1">Mot de passe</label>
+                      <button
+                        type="button"
+                        onClick={() => setView('forgot-password')}
+                        className="text-xs font-medium text-indigo-600 hover:text-indigo-700 transition-colors"
+                      >
+                        Mot de passe oublié ?
+                      </button>
+                    </div>
+                    <div className="relative group">
+                      <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-indigo-500 transition-colors" size={18} />
+                      <input
+                        type={showPassword ? "text" : "password"}
+                        autoComplete="current-password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        onKeyUp={checkCapsLock}
+                        placeholder="••••••••"
+                        className="w-full pl-12 pr-14 py-3.5 bg-slate-50/50 border border-slate-200 rounded-xl focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/5 outline-none text-sm shadow-sm transition-all"
+                        required
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-300 hover:text-indigo-500 transition-colors"
+                      >
+                        {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                      </button>
+                    </div>
+                    {isCapsLock && (
+                      <div className="flex items-center gap-2 px-3 py-2 bg-amber-50 border border-amber-100 text-amber-700 rounded-xl text-xs font-medium mt-2">
+                        <AlertCircle size={12} /> Verrouillage majuscules actif
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="flex items-center justify-between px-2 pt-1">
+                    <label className="flex items-center gap-2.5 cursor-pointer group">
+                      <div className="relative">
+                        <input
+                          type="checkbox"
+                          checked={rememberMe}
+                          onChange={(e) => setRememberMe(e.target.checked)}
+                          className="peer sr-only"
+                        />
+                        <div className="w-5 h-5 bg-slate-100 border border-slate-200 rounded-lg peer-checked:bg-indigo-600 peer-checked:border-indigo-600 transition-all shadow-inner"></div>
+                        <CheckCircle2 className="absolute inset-0 text-white opacity-0 peer-checked:opacity-100 transition-opacity p-0.5" />
+                      </div>
+                      <span className="text-xs font-medium text-slate-400 group-hover:text-slate-600 transition-colors">Se souvenir de moi</span>
+                    </label>
+                  </div>
+
+                  {error && (
+                    <div className="p-4 bg-rose-50 border border-rose-100 rounded-2xl flex items-start gap-3 animate-in shake duration-500">
+                      <ShieldAlert className="text-rose-500 shrink-0 mt-0.5" size={16} />
+                      <p className="text-xs font-medium text-rose-700">{error}</p>
+                    </div>
                   )}
+
+                  <button
+                    ref={buttonRef}
+                    type="submit"
+                    disabled={isLoading}
+                    onMouseMove={handleButtonMagnetic}
+                    onMouseLeave={resetButtonMagnetic}
+                    className="group relative w-full py-4 bg-indigo-600 text-white rounded-xl text-sm font-semibold shadow-[0_20px_40px_-12px_rgba(79,70,229,0.3)] hover:bg-indigo-700 transition-all flex items-center justify-center gap-3 disabled:opacity-70 overflow-hidden active:scale-[0.98]"
+                  >
+                    {isLoading ? (
+                      <>
+                        <Loader2 className="animate-spin" size={18} />
+                        Authentification...
+                      </>
+                    ) : (
+                      <>
+                        Ouvrir la session
+                        <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
+                      </>
+                    )}
+                  </button>
+                </form>
+              </div>
+            ) : view === 'forgot-password' ? (
+              <div className="relative z-10 animate-in fade-in slide-in-from-right-2 duration-500">
+                <button onClick={() => setView('login')} className="flex items-center gap-2 text-xs font-medium text-slate-400 hover:text-indigo-600 transition-colors mb-7 group">
+                  <ChevronLeft size={14} className="group-hover:-translate-x-1 transition-transform" /> Retour à la connexion
                 </button>
-              </form>
-            </div>
-          ) : view === 'forgot-password' ? (
-            <div className="relative z-10 animate-in fade-in slide-in-from-right-2 duration-500">
-               <button onClick={() => setView('login')} className="flex items-center gap-2 text-[10px] font-black text-slate-400 uppercase tracking-widest hover:text-indigo-600 transition-colors mb-8 group">
-                 <ChevronLeft size={16} className="group-hover:-translate-x-1 transition-transform" /> Retour à l'accueil
-               </button>
-               <h2 className="text-2xl font-black text-slate-900 tracking-tight mb-2">Réinitialisation</h2>
-               <p className="text-sm text-slate-500 font-medium mb-8 leading-relaxed">Entrez votre email pour recevoir les instructions de récupération de compte.</p>
-               <form onSubmit={async (e) => {
-                 e.preventDefault();
-                 const resetEmail = (e.currentTarget.querySelector('input[type="email"]') as HTMLInputElement)?.value;
-                 if (!resetEmail) return;
-                 setIsLoading(true);
-                 const { error: resetError } = await supabase.auth.resetPasswordForEmail(resetEmail, {
-                   redirectTo: window.location.origin,
-                 });
-                 setIsLoading(false);
-                 if (!resetError) setView('success');
-                 else setError('Erreur lors de l\'envoi. Vérifiez l\'adresse email.');
-               }} className="space-y-6">
-                 <div className="space-y-1.5">
-                   <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-3">Email Administrateur</label>
-                   <input
-                     type="email"
-                     className="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:border-indigo-500 outline-none text-sm font-bold shadow-sm"
-                     placeholder="admin@vinea.org"
-                     required
-                   />
-                 </div>
-                 <button 
-                  type="submit" 
-                  disabled={isLoading}
-                  className="w-full py-5 bg-slate-900 text-white rounded-[1.6rem] text-xs font-black uppercase tracking-widest shadow-xl hover:bg-slate-800 disabled:opacity-70 transition-all active:scale-95"
-                 >
-                   Envoyer le lien de secours
-                 </button>
-               </form>
-            </div>
-          ) : (
-            <div className="relative z-10 text-center animate-in zoom-in-95 duration-500 py-6">
-               <div className="w-20 h-20 bg-emerald-500 text-white rounded-[1.8rem] flex items-center justify-center mx-auto mb-6 shadow-[0_20px_40px_-12px_rgba(16,185,129,0.3)] border-4 border-white animate-bounce">
-                 <CheckCircle2 size={32} strokeWidth={3} />
-               </div>
-               <h2 className="text-2xl font-black text-slate-900 tracking-tight">Vérifiez vos mails</h2>
-               <p className="text-sm text-slate-500 mt-4 font-medium leading-relaxed italic px-4">Si l'adresse existe, un lien magique de connexion vient d'être envoyé.</p>
-               <button onClick={() => view === 'success' && setView('login')} className="mt-10 px-8 py-4 bg-indigo-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-indigo-700 active:scale-95 shadow-lg shadow-indigo-100">
-                 Retour au portail
-               </button>
-            </div>
-          )}
-
-          {/* Verse of the day section */}
-          <div className="relative z-10 mt-10 pt-8 border-t border-slate-100 text-center">
-            <div className="bg-slate-50/80 p-5 rounded-[2rem] border border-slate-100 shadow-inner group relative overflow-hidden">
-                <div className="absolute top-[-10px] right-[-10px] opacity-5">
-                    <Quote size={80} className="text-indigo-600 rotate-12" />
+                <h2 className="text-xl font-bold text-slate-900 tracking-tight mb-2">Réinitialisation</h2>
+                <p className="text-sm text-slate-500 font-medium mb-8 leading-relaxed">Entrez votre email pour recevoir les instructions de récupération de compte.</p>
+                <form onSubmit={async (e) => {
+                  e.preventDefault();
+                  const resetEmail = (e.currentTarget.querySelector('input[type="email"]') as HTMLInputElement)?.value;
+                  if (!resetEmail) return;
+                  setIsLoading(true);
+                  const { error: resetError } = await supabase.auth.resetPasswordForEmail(resetEmail, {
+                    redirectTo: window.location.origin,
+                  });
+                  setIsLoading(false);
+                  if (!resetError) setView('success');
+                  else setError('Erreur lors de l\'envoi. Vérifiez l\'adresse email.');
+                }} className="space-y-6">
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-medium text-slate-500 ml-1">Email Administrateur</label>
+                    <input
+                      type="email"
+                      className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/5 outline-none text-sm shadow-sm transition-all"
+                      placeholder="admin@vinea.org"
+                      required
+                    />
+                  </div>
+                  <button
+                    type="submit"
+                    disabled={isLoading}
+                    className="w-full py-4 bg-slate-900 text-white rounded-xl text-sm font-semibold shadow-xl hover:bg-slate-800 disabled:opacity-70 transition-all active:scale-[0.98]"
+                  >
+                    Envoyer le lien de secours
+                  </button>
+                </form>
+              </div>
+            ) : (
+              <div className="relative z-10 text-center animate-in zoom-in-95 duration-500 py-6">
+                <div className="w-20 h-20 bg-emerald-500 text-white rounded-[1.8rem] flex items-center justify-center mx-auto mb-6 shadow-[0_20px_40px_-12px_rgba(16,185,129,0.3)] border-4 border-white animate-bounce">
+                  <CheckCircle2 size={32} strokeWidth={3} />
                 </div>
-                <div className="flex items-center justify-center gap-2 mb-3">
-                  <Sparkles size={14} className="text-amber-500" />
-                  <h4 className="text-[9px] font-black text-slate-400 uppercase tracking-[0.3em]">Méditation du Jour</h4>
-                </div>
-                <p className="text-[13px] font-bold text-slate-700 leading-relaxed italic px-2">
-                  "{selectedVerse.text}"
-                </p>
-                <div className="flex items-center justify-center gap-3 mt-4">
-                  <div className="h-px w-4 bg-slate-200"></div>
-                  <p className="text-[10px] font-black text-indigo-600 uppercase tracking-[0.15em]">
-                    {selectedVerse.ref}
-                  </p>
-                  <div className="h-px w-4 bg-slate-200"></div>
-                </div>
-            </div>
-
-            <div className="mt-6 flex items-center justify-center gap-2 text-slate-300">
-              <p className="text-[8px] font-black uppercase tracking-[0.2em]">© {currentYear} Vinea • Tous droits réservés</p>
-            </div>
+                <h2 className="text-xl font-bold text-slate-900 tracking-tight">Vérifiez vos mails</h2>
+                <p className="text-sm text-slate-500 mt-3 leading-relaxed px-4">Si l'adresse existe, un lien de réinitialisation vient d'être envoyé.</p>
+                <button onClick={() => view === 'success' && setView('login')} className="mt-8 px-8 py-3 bg-indigo-600 text-white rounded-xl text-sm font-semibold hover:bg-indigo-700 active:scale-[0.98] shadow-md shadow-indigo-200">
+                  Retour au portail
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -711,15 +715,8 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
           25% { transform: translateX(-5px); }
           75% { transform: translateX(5px); }
         }
-        .shake {
-          animation: shake 0.5s ease-in-out;
-        }
-        input::placeholder {
-          text-transform: uppercase;
-          letter-spacing: 0.1em;
-          font-size: 0.7rem;
-          color: #cbd5e1;
-        }
+        .shake { animation: shake 0.5s ease-in-out; }
+        input::placeholder { color: #cbd5e1; font-size: 0.875rem; }
       `}</style>
     </div>
   );

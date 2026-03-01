@@ -502,8 +502,8 @@ const App: React.FC = () => {
                           key={n.id} 
                           onClick={() => handleNotificationClick(n)}
                           className={cn(
-                            "p-4 rounded-2xl transition-all cursor-pointer border group relative",
-                            n.isRead ? "bg-white border-transparent grayscale-[0.3] opacity-70" : "bg-white border-indigo-100 shadow-sm ring-1 ring-indigo-500/5 hover:border-indigo-300"
+                            "p-4 rounded-xl transition-all cursor-pointer border group",
+                            n.isRead ? "bg-white/60 border-transparent opacity-60 hover:opacity-80" : "bg-white border-indigo-100 shadow-sm hover:border-indigo-300"
                           )}
                          >
                             <div className="flex items-start gap-4">
@@ -523,8 +523,8 @@ const App: React.FC = () => {
                                   </div>
                                   <p className="text-xs text-slate-500 leading-relaxed mt-1">{n.message}</p>
                                   <div className="mt-2 flex items-center justify-between">
-                                     <span className="text-[10px] text-slate-400">{n.date}</span>
-                                     <span className="text-[10px] font-medium text-indigo-600 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">Voir <ArrowRight size={10}/></span>
+                                     <span className="text-xs text-slate-400">{n.date}</span>
+                                     <span className="text-xs font-medium text-indigo-600 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">Voir <ArrowRight size={10}/></span>
                                   </div>
                                </div>
                             </div>

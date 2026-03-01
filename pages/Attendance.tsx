@@ -446,14 +446,14 @@ const Attendance: React.FC = () => {
     <div className="space-y-6 animate-in fade-in duration-500 pb-10">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-black text-slate-900 tracking-tight uppercase">Gestion des Présences</h2>
+          <h2 className="text-2xl font-bold text-slate-900">Gestion des Présences</h2>
           <p className="text-sm text-slate-500 font-medium italic">{churchName} : Identifiez les fidèles fragiles et restaurez leur zèle.</p>
         </div>
         <div className="flex gap-2">
-          <button onClick={handleAnalyze} disabled={isAnalyzing || history.length === 0} className="flex items-center gap-2 px-4 py-2 bg-indigo-50 text-indigo-700 border border-indigo-100 rounded-xl text-xs font-black uppercase tracking-widest disabled:opacity-50 transition-all hover:bg-indigo-100">
+          <button onClick={handleAnalyze} disabled={isAnalyzing || history.length === 0} className="flex items-center gap-2 px-4 py-2 bg-indigo-50 text-indigo-700 border border-indigo-100 rounded-xl text-xs font-medium disabled:opacity-50 transition-all hover:bg-indigo-100">
             <Sparkles size={16} /> {isAnalyzing ? '...' : 'Analyse Stratégique'}
           </button>
-          <button onClick={() => { setEditingRecordId(null); setIsFormOpen(true); }} className="flex items-center gap-2 px-5 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-black hover:bg-indigo-700 transition-all uppercase tracking-widest shadow-lg active:scale-95">
+          <button onClick={() => { setEditingRecordId(null); setIsFormOpen(true); }} className="flex items-center gap-2 px-5 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-semibold hover:bg-indigo-700 transition-all shadow-lg active:scale-95">
             <Plus size={18} /> Faire le Relevé
           </button>
         </div>
@@ -462,10 +462,10 @@ const Attendance: React.FC = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <Card title="Dernière Présence" subtitle={lastService.date === 'Aucun relevé' ? 'Aucune donnée' : new Date(lastService.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })} icon={<Users size={20} className="text-indigo-600" />}>
           <div className="flex items-end justify-between">
-            <span className="text-3xl font-black text-slate-900">{lastService.total}</span>
+            <span className="text-3xl font-bold text-slate-900">{lastService.total}</span>
             {attendanceTrend && (
                <span className={cn(
-                "text-[10px] font-black px-2 py-1 rounded-lg uppercase tracking-widest",
+                "text-xs font-semibold px-2 py-1 rounded-lg",
                 attendanceTrend.isUp ? "text-emerald-600 bg-emerald-50" : "text-rose-600 bg-rose-50"
               )}>
                 {attendanceTrend.isUp ? '+' : '-'}{attendanceTrend.percent}%
@@ -476,7 +476,7 @@ const Attendance: React.FC = () => {
 
         <Card title="Absences Critiques" subtitle="2+ absences de suite" icon={<HeartPulse size={20} className="text-rose-600" />} className="cursor-pointer border-rose-100 hover:border-rose-300 transition-all group" onClick={() => setIsAbsentsModalOpen(true)}>
           <div className="flex items-end justify-between">
-            <span className="text-3xl font-black text-rose-600">{allAbsentsList.filter(a => a.consecutiveAbsences >= 2).length}</span>
+            <span className="text-3xl font-bold text-rose-600">{allAbsentsList.filter(a => a.consecutiveAbsences >= 2).length}</span>
             <div className="w-10 h-10 bg-rose-50 rounded-xl flex items-center justify-center text-rose-500 group-hover:animate-pulse">
                <AlertTriangle size={20} />
             </div>
@@ -485,7 +485,7 @@ const Attendance: React.FC = () => {
 
         <Card title="Relance IA" subtitle="Messages suggérés" icon={<BrainCircuit size={20} className="text-indigo-600" />} className="cursor-pointer border-indigo-100 hover:border-indigo-300 transition-all group" onClick={() => setIsAbsentsModalOpen(true)}>
           <div className="flex items-end justify-between">
-            <span className="text-3xl font-black text-indigo-600">{allAbsentsList.length}</span>
+            <span className="text-3xl font-bold text-indigo-600">{allAbsentsList.length}</span>
             <div className="w-10 h-10 bg-indigo-50 rounded-xl flex items-center justify-center text-indigo-500 group-hover:scale-110 transition-transform">
                <ArrowRight size={20} />
             </div>
@@ -494,7 +494,7 @@ const Attendance: React.FC = () => {
 
         <Card title="Total Relances" subtitle="Période en cours" icon={<MessageSquareQuote size={20} className="text-emerald-600" />}>
           <div className="flex items-end justify-between">
-            <span className="text-3xl font-black text-emerald-600">{Object.values(followUpHistory).flat().length}</span>
+            <span className="text-3xl font-bold text-emerald-600">{Object.values(followUpHistory).flat().length}</span>
             <div className="w-10 h-10 bg-emerald-50 rounded-xl flex items-center justify-center text-emerald-500">
                <CheckCircle2 size={20} />
             </div>
@@ -510,15 +510,15 @@ const Attendance: React.FC = () => {
              <div className="flex items-center gap-4">
                 <div className="flex items-center gap-2">
                    <div className="w-2.5 h-2.5 rounded-full bg-indigo-600"></div>
-                   <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Hommes</span>
+                   <span className="text-xs font-medium text-slate-500">Hommes</span>
                 </div>
                 <div className="flex items-center gap-2">
                    <div className="w-2.5 h-2.5 rounded-full bg-indigo-400"></div>
-                   <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Femmes</span>
+                   <span className="text-xs font-medium text-slate-500">Femmes</span>
                 </div>
                 <div className="flex items-center gap-2">
                    <div className="w-2.5 h-2.5 rounded-full bg-indigo-100"></div>
-                   <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Enfants</span>
+                   <span className="text-xs font-medium text-slate-500">Enfants</span>
                 </div>
              </div>
              
@@ -530,7 +530,7 @@ const Attendance: React.FC = () => {
                   <select 
                     value={chartServiceFilter}
                     onChange={(e) => setChartServiceFilter(e.target.value)}
-                    className="pl-8 pr-4 py-2 bg-white border border-slate-200 rounded-xl text-[10px] font-black uppercase tracking-widest outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm appearance-none cursor-pointer hover:bg-slate-50 transition-all min-w-[180px]"
+                    className="pl-8 pr-4 py-2 bg-white border border-slate-200 rounded-xl text-sm font-normal outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm appearance-none cursor-pointer hover:bg-slate-50 transition-all min-w-[180px]"
                   >
                     <option value="Tous les services">Tous les services</option>
                     {availableServices.map(s => <option key={s} value={s}>{s}</option>)}
@@ -546,7 +546,7 @@ const Attendance: React.FC = () => {
                       key={val} 
                       onClick={() => setChartRange(val)} 
                       className={cn(
-                        "px-3 py-1 text-[9px] font-black uppercase rounded-lg transition-all", 
+                        "px-3 py-1 text-xs font-medium rounded-lg transition-all", 
                         chartRange === val ? "bg-white text-indigo-600 shadow-sm" : "text-slate-400 hover:text-slate-600"
                       )}
                     >
@@ -572,7 +572,7 @@ const Attendance: React.FC = () => {
                 </ComposedChart>
               </ResponsiveContainer>
             ) : (
-              <div className="h-full flex flex-col items-center justify-center opacity-20"><BarChartIcon size={64} /><p className="text-xs font-black uppercase mt-4">Aucune donnée historique</p></div>
+              <div className="h-full flex flex-col items-center justify-center opacity-20"><BarChartIcon size={64} /><p className="text-xs font-medium mt-4">Aucune donnée historique</p></div>
             )}
           </div>
         </Card>
@@ -585,7 +585,7 @@ const Attendance: React.FC = () => {
                 placeholder="Réchercher un absent..." 
                 value={absentSearchTerm} 
                 onChange={(e) => setAbsentSearchTerm(e.target.value)} 
-                className="w-full pl-9 pr-3 py-2 bg-white text-slate-900 text-[10px] font-black uppercase tracking-widest border border-slate-200 rounded-xl outline-none focus:ring-4 focus:ring-indigo-500/5 focus:border-indigo-300 transition-all shadow-sm" 
+                className="w-full pl-9 pr-3 py-2 bg-white text-slate-900 text-xs font-medium border border-slate-200 rounded-xl outline-none focus:ring-4 focus:ring-indigo-500/5 focus:border-indigo-300 transition-all shadow-sm" 
               />
            </div>
            
@@ -601,7 +601,7 @@ const Attendance: React.FC = () => {
                  <div key={`${person.id}-${idx}`} onClick={() => handleOpenFollowUp(person, entry.serviceDate)} className={cn("flex flex-col p-4 bg-white border rounded-2xl transition-all group cursor-pointer even:bg-slate-50/30 hover:border-indigo-300", isHighlyCritical ? "border-rose-100" : "border-slate-100", hasReport && "opacity-75 grayscale-[0.5]")}>
                     <div className="flex items-center justify-between mb-2">
                        <div className="flex items-center gap-3">
-                          <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center text-[10px] font-black uppercase border transition-transform group-hover:scale-105 overflow-hidden", isHighlyCritical ? "bg-rose-50 border-rose-200 text-rose-600" : "bg-slate-50 border-slate-100 text-slate-400")}>
+                          <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center text-xs font-medium border transition-transform group-hover:scale-105 overflow-hidden", isHighlyCritical ? "bg-rose-50 border-rose-200 text-rose-600" : "bg-slate-50 border-slate-100 text-slate-400")}>
                             {isHighlyCritical ? (
                               <AlertTriangle size={18}/>
                             ) : (person as Member).photoUrl ? (
@@ -611,14 +611,14 @@ const Attendance: React.FC = () => {
                             )}
                           </div>
                           <div className="min-w-0">
-                            <p className="text-sm font-black text-slate-900 group-hover:text-indigo-600 transition-colors truncate max-w-[120px] leading-tight">
+                            <p className="text-sm font-semibold text-slate-900 group-hover:text-indigo-600 transition-colors truncate max-w-[120px] leading-tight">
                               {formatFirstName(person.firstName)} <span className="uppercase">{person.lastName}</span>
                             </p>
-                            <p className="text-[9px] font-bold text-slate-400 uppercase truncate">Dernier : {new Date(entry.serviceDate).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}</p>
+                            <p className="text-xs text-slate-400 truncate">Dernier : {new Date(entry.serviceDate).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}</p>
                           </div>
                        </div>
                        <div className="flex flex-col items-end gap-1">
-                          <span className={cn("text-[8px] font-black px-1.5 py-0.5 rounded uppercase tracking-widest", entry.consecutiveAbsences >= 2 ? "bg-rose-600 text-white" : "bg-slate-100 text-slate-500")}>
+                          <span className={cn("text-xs font-semibold px-1.5 py-0.5 rounded", entry.consecutiveAbsences >= 2 ? "bg-rose-600 text-white" : "bg-slate-100 text-slate-500")}>
                             {entry.consecutiveAbsences}X Conséc.
                           </span>
                        </div>
@@ -627,11 +627,11 @@ const Attendance: React.FC = () => {
                     <div className="flex items-center justify-between mt-1 pt-2 border-t border-slate-50">
                        <div className="flex items-center gap-1.5 min-w-0">
                           {assignedStaff ? (
-                            <span className="text-[9px] font-black text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded flex items-center gap-1"><ShieldCheck size={10}/> {formatFirstName(assignedStaff.firstName)}</span>
+                            <span className="text-xs font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded flex items-center gap-1"><ShieldCheck size={10}/> {formatFirstName(assignedStaff.firstName)}</span>
                           ) : (
-                            <span className="text-[9px] font-black text-rose-400 flex items-center gap-1 italic"><UserPlus size={10}/> Non affecté</span>
+                            <span className="text-xs font-semibold text-rose-400 flex items-center gap-1 italic"><UserPlus size={10}/> Non affecté</span>
                           )}
-                          {hasReport && <span className="text-[9px] font-black text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded flex items-center gap-1"><StickyNote size={10}/> Rapport</span>}
+                          {hasReport && <span className="text-xs font-semibold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded flex items-center gap-1"><StickyNote size={10}/> Rapport</span>}
                        </div>
                        <div className="flex gap-1">
                           <button onClick={(e) => { e.stopPropagation(); window.open(`tel:${person.phone}`); }} className="p-1.5 bg-slate-50 text-slate-400 rounded-lg hover:bg-rose-600 hover:text-white transition-all"><Phone size={12}/></button>
@@ -643,11 +643,11 @@ const Attendance: React.FC = () => {
              }) : (
                <div className="py-20 text-center opacity-30">
                  <UserCheck size={48} className="mx-auto" />
-                 <p className="text-[11px] font-black uppercase mt-2">Aucun absent trouvé</p>
+                 <p className="text-xs font-medium mt-2">Aucun absent trouvé</p>
                </div>
              )}
            </div>
-           <button onClick={() => setIsAbsentsModalOpen(true)} className="w-full mt-4 py-3 bg-slate-900 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-800 transition-all shadow-md">Voir tout le registre</button>
+           <button onClick={() => setIsAbsentsModalOpen(true)} className="w-full mt-4 py-3 bg-slate-900 text-white rounded-xl text-xs font-medium hover:bg-slate-800 transition-all shadow-md">Voir tout le registre</button>
         </Card>
       </div>
 
@@ -661,30 +661,30 @@ const Attendance: React.FC = () => {
                 placeholder="RECHERCHER PAR CULTE OU DATE..." 
                 value={historySearchTerm} 
                 onChange={(e) => setHistorySearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none text-[10px] font-black uppercase tracking-widest focus:bg-white focus:border-indigo-400 transition-all shadow-sm"
+                className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none text-sm font-normal tracking-wide focus:bg-white focus:border-indigo-400 transition-all shadow-sm"
               />
            </div>
            <div className="flex gap-2">
-              <button onClick={() => handleSort('date')} className={cn("px-4 py-2 bg-white border border-slate-200 rounded-xl text-[9px] font-black uppercase transition-all flex items-center gap-2", sortConfig.key === 'date' ? "text-indigo-600 border-indigo-200" : "text-slate-400")}>
+              <button onClick={() => handleSort('date')} className={cn("px-4 py-2 bg-white border border-slate-200 rounded-xl text-xs font-medium transition-all flex items-center gap-2", sortConfig.key === 'date' ? "text-indigo-600 border-indigo-200" : "text-slate-400")}>
                 <Calendar size={14} /> Date {sortConfig.key === 'date' && (sortConfig.direction === 'asc' ? <ArrowUp size={12}/> : <ArrowDown size={12}/>)}
               </button>
-              <button onClick={() => handleSort('total')} className={cn("px-4 py-2 bg-white border border-slate-200 rounded-xl text-[9px] font-black uppercase transition-all flex items-center gap-2", sortConfig.key === 'total' ? "text-indigo-600 border-indigo-200" : "text-slate-400")}>
+              <button onClick={() => handleSort('total')} className={cn("px-4 py-2 bg-white border border-slate-200 rounded-xl text-xs font-medium transition-all flex items-center gap-2", sortConfig.key === 'total' ? "text-indigo-600 border-indigo-200" : "text-slate-400")}>
                 <Users size={14} /> Total {sortConfig.key === 'total' && (sortConfig.direction === 'asc' ? <ArrowUp size={12}/> : <ArrowDown size={12}/>)}
               </button>
            </div>
         </div>
 
-        <div className="overflow-x-auto custom-scrollbar border border-slate-100 rounded-[2rem]">
+        <div className="overflow-x-auto custom-scrollbar border border-slate-100 rounded-xl">
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-slate-50/80 border-b border-slate-100">
-                <th className="px-8 py-4 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Date</th>
-                <th className="px-8 py-4 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Service</th>
-                <th className="px-4 py-4 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] text-center">H</th>
-                <th className="px-4 py-4 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] text-center">F</th>
-                <th className="px-4 py-4 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] text-center">E</th>
-                <th className="px-8 py-4 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] text-right">Total</th>
-                <th className="px-8 py-4 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] text-right">Actions</th>
+                <th className="px-8 py-4 text-xs font-medium text-slate-500">Date</th>
+                <th className="px-8 py-4 text-xs font-medium text-slate-500">Service</th>
+                <th className="px-4 py-4 text-xs font-medium text-slate-500 text-center">H</th>
+                <th className="px-4 py-4 text-xs font-medium text-slate-500 text-center">F</th>
+                <th className="px-4 py-4 text-xs font-medium text-slate-500 text-center">E</th>
+                <th className="px-8 py-4 text-xs font-medium text-slate-500 text-right">Total</th>
+                <th className="px-8 py-4 text-xs font-medium text-slate-500 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50">
@@ -695,19 +695,19 @@ const Attendance: React.FC = () => {
                   className="hover:bg-indigo-50/20 transition-all group cursor-pointer active:scale-[0.998]"
                 >
                   <td className="px-8 py-5">
-                    <span className="text-xs font-black text-slate-700 uppercase">{new Date(record.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
+                    <span className="text-xs font-medium text-slate-700">{new Date(record.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
                   </td>
                   <td className="px-8 py-5">
                     <div className="flex items-center gap-2">
                        <div className="w-1.5 h-1.5 rounded-full bg-indigo-500"></div>
-                       <span className="text-[10px] font-black text-slate-800 uppercase tracking-tighter">{record.service}</span>
+                       <span className="text-xs font-semibold text-slate-800er">{record.service}</span>
                     </div>
                   </td>
                   <td className="px-4 py-5 text-center text-xs font-bold text-blue-600">{record.men || 0}</td>
                   <td className="px-4 py-5 text-center text-xs font-bold text-pink-600">{record.women || 0}</td>
                   <td className="px-4 py-5 text-center text-xs font-bold text-amber-600">{record.children || 0}</td>
                   <td className="px-8 py-5 text-right">
-                    <span className="text-sm font-black text-slate-900">{record.total}</span>
+                    <span className="text-sm font-semibold text-slate-900">{record.total}</span>
                   </td>
                   <td className="px-8 py-5 text-right">
                     <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-all" onClick={e => e.stopPropagation()}>
@@ -720,7 +720,7 @@ const Attendance: React.FC = () => {
                 <tr>
                   <td colSpan={7} className="px-8 py-20 text-center opacity-30">
                     <ClipboardList size={40} className="mx-auto mb-2" />
-                    <p className="text-[10px] font-black uppercase tracking-widest">Aucun relevé enregistré</p>
+                    <p className="text-xs font-medium">Aucun relevé enregistré</p>
                   </td>
                 </tr>
               )}
@@ -733,43 +733,43 @@ const Attendance: React.FC = () => {
       {isRecordModalOpen && selectedRecord && (
         <div className="fixed inset-0 z-[180] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity duration-300" onClick={() => setIsRecordModalOpen(false)} />
-          <div className="relative w-full max-w-lg bg-white shadow-2xl animate-in zoom-in-95 duration-300 flex flex-col rounded-[2.5rem] overflow-hidden max-h-[90vh]">
+          <div className="relative w-full max-w-lg bg-white shadow-2xl animate-in zoom-in-95 duration-300 flex flex-col rounded-2xl overflow-hidden max-h-[90vh]">
             <div className="px-10 py-10 bg-indigo-600 text-white shrink-0 relative overflow-hidden">
               <div className="absolute top-0 right-0 p-8 opacity-10"><Users size={180} /></div>
               <button onClick={() => setIsRecordModalOpen(false)} className="absolute top-6 left-6 p-2 hover:bg-white/10 rounded-full text-white transition-colors text-white"><X size={20} /></button>
               <div className="relative z-10 space-3 mt-4">
-                <span className="px-3 py-1 bg-white/20 backdrop-blur-md rounded-full text-[10px] font-black uppercase tracking-[0.2em]">Fiche de Séance</span>
-                <h3 className="text-2xl font-black uppercase leading-tight tracking-tighter">{selectedRecord.service}</h3>
+                <span className="px-3 py-1 bg-white/20 backdrop-blur-md rounded-full text-xs font-medium">Fiche de Séance</span>
+                <h3 className="text-2xl font-semibold leading-tight">{selectedRecord.service}</h3>
                 <div className="flex items-center gap-3 text-indigo-100">
                   <Calendar size={14} />
-                  <span className="text-xs font-bold uppercase tracking-widest">{new Date(selectedRecord.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
+                  <span className="text-xs font-bold">{new Date(selectedRecord.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
                 </div>
               </div>
             </div>
 
             <div className="flex-1 overflow-y-auto p-10 custom-scrollbar bg-slate-50/30 space-y-8">
               <div className="grid grid-cols-2 gap-4">
-                <div className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm text-center">
-                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Hommes</p>
-                  <p className="text-2xl font-black text-blue-600">{selectedRecord.men || 0}</p>
+                <div className="bg-white p-6 rounded-xl border border-slate-100 shadow-sm text-center">
+                  <p className="text-xs font-medium text-slate-500 mb-1">Hommes</p>
+                  <p className="text-2xl font-semibold text-blue-600">{selectedRecord.men || 0}</p>
                 </div>
-                <div className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm text-center">
-                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Femmes</p>
-                  <p className="text-2xl font-black text-pink-600">{selectedRecord.women || 0}</p>
+                <div className="bg-white p-6 rounded-xl border border-slate-100 shadow-sm text-center">
+                  <p className="text-xs font-medium text-slate-500 mb-1">Femmes</p>
+                  <p className="text-2xl font-semibold text-pink-600">{selectedRecord.women || 0}</p>
                 </div>
-                <div className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm text-center">
-                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Enfants</p>
-                  <p className="text-2xl font-black text-amber-500">{selectedRecord.children || 0}</p>
+                <div className="bg-white p-6 rounded-xl border border-slate-100 shadow-sm text-center">
+                  <p className="text-xs font-medium text-slate-500 mb-1">Enfants</p>
+                  <p className="text-2xl font-semibold text-amber-500">{selectedRecord.children || 0}</p>
                 </div>
-                <div className="bg-white p-6 rounded-[2rem] border border-indigo-100 shadow-sm text-center bg-indigo-50/30">
-                  <p className="text-[10px] font-black text-indigo-600 uppercase tracking-widest mb-1">Total</p>
-                  <p className="text-2xl font-black text-indigo-700">{selectedRecord.total}</p>
+                <div className="bg-white p-6 rounded-xl border border-indigo-100 shadow-sm text-center bg-indigo-50/30">
+                  <p className="text-xs font-semibold text-indigo-600 mb-1">Total</p>
+                  <p className="text-2xl font-semibold text-indigo-700">{selectedRecord.total}</p>
                 </div>
               </div>
 
               {selectedRecord.notes && (
-                <div className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm space-y-2">
-                  <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                <div className="bg-white p-6 rounded-xl border border-slate-100 shadow-sm space-y-2">
+                  <h4 className="text-xs font-medium text-slate-500 flex items-center gap-2">
                     <StickyNote size={14} className="text-indigo-500" /> Notes de séance
                   </h4>
                   <p className="text-xs text-slate-700 font-medium italic whitespace-pre-wrap">
@@ -779,7 +779,7 @@ const Attendance: React.FC = () => {
               )}
 
               <div className="space-y-4">
-                <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                <h4 className="text-xs font-medium text-slate-500 flex items-center gap-2">
                   <UserX size={14} className="text-rose-500" /> Absences Nominatives ({selectedRecord.absentMembers?.length || 0})
                 </h4>
                 <div className="grid grid-cols-1 gap-2">
@@ -796,8 +796,8 @@ const Attendance: React.FC = () => {
                              )}
                           </div>
                           <div>
-                             <p className="text-xs font-black text-slate-800 uppercase tracking-tight">{person ? `${formatFirstName(person.firstName)} ${person.lastName.toUpperCase()}` : 'Inconnu'}</p>
-                             <p className="text-[8px] font-bold text-slate-400 uppercase">{person?.type || 'Membre'}</p>
+                             <p className="text-xs font-semibold text-slate-800">{person ? `${formatFirstName(person.firstName)} ${person.lastName.toUpperCase()}` : 'Inconnu'}</p>
+                             <p className="text-xs text-slate-400">{person?.type || 'Membre'}</p>
                           </div>
                         </div>
                         <button onClick={() => person && handleOpenFollowUp(person, selectedRecord.date)} className="p-2 bg-slate-50 text-slate-400 rounded-lg hover:bg-rose-600 hover:text-white transition-all opacity-0 group-hover:opacity-100">
@@ -806,9 +806,9 @@ const Attendance: React.FC = () => {
                       </div>
                     );
                   }) : (
-                    <div className="py-8 text-center bg-white/50 border border-dashed border-slate-200 rounded-[2rem] opacity-40">
+                    <div className="py-8 text-center bg-white/50 border border-dashed border-slate-200 rounded-xl opacity-40">
                        <CheckCircle2 size={24} className="mx-auto mb-2 text-emerald-500" />
-                       <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Aucune absence signalée</p>
+                       <p className="text-xs font-medium text-slate-500">Aucune absence signalée</p>
                     </div>
                   )}
                 </div>
@@ -818,13 +818,13 @@ const Attendance: React.FC = () => {
             <div className="p-8 border-t border-slate-100 bg-white flex gap-3 shrink-0">
               <button 
                 onClick={() => handleEditRecord(selectedRecord)}
-                className="flex-[2] py-3.5 bg-indigo-50 text-indigo-600 border border-indigo-100 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-indigo-100 transition-all flex items-center justify-center gap-2"
+                className="flex-[2] py-3.5 bg-indigo-50 text-indigo-600 border border-indigo-100 rounded-2xl text-xs font-medium hover:bg-indigo-100 transition-all flex items-center justify-center gap-2"
               >
                 <Edit size={16} /> Modifier
               </button>
               <button 
                 onClick={() => { setRecordToDeleteId(selectedRecord.id); setIsDeleteConfirmOpen(true); }}
-                className="flex-1 py-3.5 bg-rose-50 text-rose-600 border border-rose-100 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-rose-100 transition-all flex items-center justify-center gap-2"
+                className="flex-1 py-3.5 bg-rose-50 text-rose-600 border border-rose-100 rounded-2xl text-xs font-medium hover:bg-rose-100 transition-all flex items-center justify-center gap-2"
               >
                 <Trash2 size={16} />
               </button>
@@ -837,14 +837,14 @@ const Attendance: React.FC = () => {
       {isAbsentsModalOpen && (
         <div className="fixed inset-0 z-[180] flex items-center justify-center p-4 overflow-hidden">
           <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity duration-300" onClick={() => setIsAbsentsModalOpen(false)} />
-          <div className="relative w-full max-w-2xl bg-white shadow-2xl animate-in zoom-in-95 duration-300 flex flex-col rounded-[3rem] overflow-hidden max-h-[90vh]">
+          <div className="relative w-full max-w-2xl bg-white shadow-2xl animate-in zoom-in-95 duration-300 flex flex-col rounded-2xl overflow-hidden max-h-[90vh]">
               <div className="px-10 py-12 bg-rose-600 text-white shrink-0 relative overflow-hidden">
                 <div className="absolute top-0 right-0 p-8 opacity-10"><UserX size={180} /></div>
                 <button onClick={() => setIsAbsentsModalOpen(false)} className="absolute top-6 left-6 p-2 hover:bg-white/10 rounded-full text-white transition-colors text-white"><ChevronLeft size={24} /></button>
                 <div className="relative z-10 space-y-4">
-                  <span className="px-3 py-1 bg-white/20 backdrop-blur-md rounded-full text-[10px] font-black uppercase tracking-[0.2em]">Soin Pastoral</span>
-                  <h3 className="text-4xl font-black uppercase leading-tight tracking-tighter">Registre des Absences</h3>
-                  <p className="text-xs font-bold text-rose-100 uppercase tracking-widest">{allAbsentsList.length} absences nominatives à traiter</p>
+                  <span className="px-3 py-1 bg-white/20 backdrop-blur-md rounded-full text-xs font-medium">Soin Pastoral</span>
+                  <h3 className="text-4xl font-bold leading-tight">Registre des Absences</h3>
+                  <p className="text-xs font-bold text-rose-100">{allAbsentsList.length} absences nominatives à traiter</p>
                 </div>
               </div>
               <div className="p-8 bg-slate-50 border-b border-slate-100 shrink-0">
@@ -863,10 +863,10 @@ const Attendance: React.FC = () => {
                    const hasReport = followUpHistory[person.id]?.some(h => h.serviceDate === entry.serviceDate);
                    
                    return (
-                    <div key={`${person.id}-${idx}`} className={cn("bg-white p-6 rounded-[2.5rem] border shadow-sm space-y-5 group transition-all even:bg-slate-50/50", isCritical ? "border-rose-200" : "border-slate-100 hover:border-rose-200", hasReport && "opacity-75")}>
+                    <div key={`${person.id}-${idx}`} className={cn("bg-white p-6 rounded-2xl border shadow-sm space-y-5 group transition-all even:bg-slate-50/50", isCritical ? "border-rose-200" : "border-slate-100 hover:border-rose-200", hasReport && "opacity-75")}>
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-4">
-                            <div className={cn("w-12 h-12 rounded-2xl border flex items-center justify-center text-lg font-black uppercase transition-all shadow-sm shrink-0 overflow-hidden", isCritical ? "bg-rose-50 border-rose-100 text-rose-600" : "bg-slate-50 border-slate-100 text-slate-400 group-hover:text-rose-600")}>
+                            <div className={cn("w-12 h-12 rounded-2xl border flex items-center justify-center text-lg font-semibold uppercase transition-all shadow-sm shrink-0 overflow-hidden", isCritical ? "bg-rose-50 border-rose-100 text-rose-600" : "bg-slate-50 border-slate-100 text-slate-400 group-hover:text-rose-600")}>
                                 {isCritical ? (
                                   <AlertTriangle size={24} />
                                 ) : (person as Member).photoUrl ? (
@@ -876,14 +876,14 @@ const Attendance: React.FC = () => {
                                 )}
                             </div>
                             <div className="min-w-0">
-                              <p className="text-sm font-black text-slate-900 tracking-tight truncate">
+                              <p className="text-sm font-semibold text-slate-900 tracking-tight truncate">
                                 {formatFirstName(person.firstName)} <span className="uppercase">{person.lastName}</span>
                               </p>
                               <div className="flex flex-wrap items-center gap-2 mt-0.5">
-                                 <p className="text-[9px] font-bold text-rose-500 uppercase tracking-widest flex items-center gap-1.5 shrink-0">
+                                 <p className="text-xs font-bold text-rose-500 flex items-center gap-1.5 shrink-0">
                                     <Calendar size={10} /> {new Date(entry.serviceDate).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}
                                  </p>
-                                 <span className={cn("text-[8px] font-black px-1.5 py-0.5 rounded-full uppercase tracking-tighter", isCritical ? "bg-rose-600 text-white" : "bg-rose-50 text-rose-600")}>
+                                 <span className={cn("text-xs font-semibold px-1.5 py-0.5 rounded-fuller", isCritical ? "bg-rose-600 text-white" : "bg-rose-50 text-rose-600")}>
                                     {entry.consecutiveAbsences} Dimanches
                                  </span>
                               </div>
@@ -899,10 +899,10 @@ const Attendance: React.FC = () => {
 
                         <div className="pt-4 border-t border-slate-50">
                            <div className="flex items-center justify-between mb-3">
-                             <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                             <label className="text-xs font-medium text-slate-500 flex items-center gap-2">
                                <UserRound size={12} className="text-indigo-500" /> Affecté à
                              </label>
-                             {assignedId && <span className="text-[9px] font-black text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded uppercase tracking-tighter">Assigné</span>}
+                             {assignedId && <span className="text-xs font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 roundeder">Assigné</span>}
                            </div>
                            
                            <button 
@@ -920,7 +920,7 @@ const Attendance: React.FC = () => {
                                    <UserPlus size={16} />
                                  )}
                                </div>
-                               <span className="text-xs font-black uppercase tracking-tight">
+                               <span className="text-xs font-semibold">
                                  {assignedStaff ? `${formatFirstName(assignedStaff.firstName)} ${assignedStaff.lastName.toUpperCase()}` : "Choisir un responsable..."}
                                </span>
                              </div>
@@ -930,7 +930,7 @@ const Attendance: React.FC = () => {
                     </div>
                   );
                 }) : (
-                  <div className="py-20 text-center opacity-30"><UserCheck size={48} className="mx-auto" /><p className="text-xs font-black uppercase">Aucun absent trouvé</p></div>
+                  <div className="py-20 text-center opacity-30"><UserCheck size={48} className="mx-auto" /><p className="text-xs font-medium">Aucun absent trouvé</p></div>
                 )}
               </div>
           </div>
@@ -941,16 +941,16 @@ const Attendance: React.FC = () => {
       {followUpMember && (
         <div className="fixed inset-0 z-[280] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300" onClick={() => !isSubmittingFollowUp && setFollowUpMember(null)} />
-          <div className="relative w-full max-w-2xl bg-white rounded-[2.5rem] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
+          <div className="relative w-full max-w-2xl bg-white rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
             <div className="bg-indigo-600 p-8 text-white shrink-0 relative">
               <div className="absolute top-0 right-0 p-10 opacity-10">
                 <ShieldCheck size={140} />
               </div>
               <div className="flex justify-between items-start mb-2 relative z-10">
-                <h3 className="text-xl font-black uppercase tracking-tight">Relance des Absents</h3>
+                <h3 className="text-xl font-semibold">Relance des Absents</h3>
                 <button onClick={() => setFollowUpMember(null)} className="p-2 hover:bg-white/10 rounded-full transition-colors text-white"><X size={20} /></button>
               </div>
-              <p className="text-[10px] font-bold text-indigo-100 uppercase tracking-widest relative z-10">
+              <p className="text-xs text-indigo-200 relative z-10">
                 Fidèle : {formatFirstName(followUpMember.firstName)} {followUpMember.lastName.toUpperCase()} • Absence du {new Date(followUpDate).toLocaleDateString()}
               </p>
             </div>
@@ -958,7 +958,7 @@ const Attendance: React.FC = () => {
             <div className="flex-1 overflow-y-auto p-8 space-y-10 custom-scrollbar bg-slate-50/30">
                {followUpHistory[followUpMember.id] && followUpHistory[followUpMember.id].length > 0 && (
                  <div className="space-y-4">
-                    <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] flex items-center gap-2">
+                    <h4 className="text-xs font-medium text-slate-500 flex items-center gap-2">
                        <HistoryIcon size={12} className="text-indigo-500" /> Historique des Échanges
                     </h4>
                     <div className="space-y-3">
@@ -966,10 +966,10 @@ const Attendance: React.FC = () => {
                          <div key={report.id} className="p-4 bg-white border border-slate-100 rounded-2xl shadow-sm space-y-2 group hover:border-indigo-200 transition-all">
                             <div className="flex justify-between items-center border-b border-slate-50 pb-1.5">
                                <div className="flex items-center gap-2">
-                                  <span className="text-[9px] font-black text-indigo-600 uppercase">Le {new Date(report.date).toLocaleDateString()}</span>
-                                  {report.serviceDate === followUpDate && <span className="text-[7px] font-black bg-rose-50 text-rose-500 px-1 rounded uppercase tracking-tighter border border-rose-100">Ciblée</span>}
+                                  <span className="text-xs font-medium text-indigo-600">Le {new Date(report.date).toLocaleDateString()}</span>
+                                  {report.serviceDate === followUpDate && <span className="text-xs font-semibold bg-rose-50 text-rose-500 px-1 roundeder border border-rose-100">Ciblée</span>}
                                </div>
-                               <span className="text-[8px] font-bold text-slate-400 uppercase">Par : {report.author}</span>
+                               <span className="text-xs text-slate-400">Par : {report.author}</span>
                             </div>
                             <p className="text-xs text-slate-600 font-medium italic leading-relaxed">"{report.note}"</p>
                          </div>
@@ -979,16 +979,16 @@ const Attendance: React.FC = () => {
                )}
 
                <div className="space-y-4">
-                  <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] flex items-center gap-2">
+                  <h4 className="text-xs font-medium text-slate-500 flex items-center gap-2">
                     <Shield size={12} className="text-indigo-500" /> Affectation Pastorale
                   </h4>
                   <div className="bg-white p-5 rounded-3xl border border-slate-100 shadow-sm space-y-4">
                     <div className="flex items-center justify-between">
-                       <label className="text-[10px] font-black text-slate-400 uppercase">Responsable du suivi</label>
+                       <label className="text-xs font-medium text-slate-500">Responsable du suivi</label>
                        {assignments[`${followUpMember.id}_${followUpDate}`] ? (
-                         <span className="text-[8px] font-black bg-emerald-50 text-emerald-600 px-2 py-0.5 rounded uppercase">Assigné</span>
+                         <span className="text-xs font-medium bg-emerald-50 text-emerald-600 px-2 py-0.5 rounded">Assigné</span>
                        ) : (
-                         <span className="text-[8px] font-black bg-rose-50 text-rose-600 px-2 py-0.5 rounded uppercase flex items-center gap-1">
+                         <span className="text-xs font-medium bg-rose-50 text-rose-600 px-2 py-0.5 rounded flex items-center gap-1">
                            <AlertCircle size={8}/> Non affecté
                          </span>
                        )}
@@ -1008,7 +1008,7 @@ const Attendance: React.FC = () => {
                           setIsFollowUpStaffDropdownOpen(true);
                         }}
                         className={cn(
-                          "w-full pl-12 pr-4 py-3.5 border rounded-2xl outline-none text-xs font-black uppercase tracking-tight transition-all",
+                          "w-full pl-12 pr-4 py-3.5 border rounded-2xl outline-none text-sm font-normal transition-all",
                           assignments[`${followUpMember.id}_${followUpDate}`] ? "bg-indigo-50 border-indigo-100 text-indigo-700" : "bg-white border-rose-200 text-rose-600"
                         )}
                       />
@@ -1024,9 +1024,9 @@ const Attendance: React.FC = () => {
                                 setFollowUpStaffSearch(`${formatFirstName(staff.firstName)} ${staff.lastName.toUpperCase()}`);
                                 setIsFollowUpStaffDropdownOpen(false);
                               }}
-                              className="w-full text-left px-4 py-3 text-[10px] font-black uppercase hover:bg-indigo-50 border-b border-slate-50 last:border-0 flex items-center gap-3"
+                              className="w-full text-left px-4 py-3 text-xs font-medium hover:bg-indigo-50 border-b border-slate-50 last:border-0 flex items-center gap-3"
                             >
-                               <div className="w-6 h-6 rounded-lg bg-slate-100 flex items-center justify-center overflow-hidden shrink-0 text-[8px] font-black text-slate-500 uppercase">
+                               <div className="w-6 h-6 rounded-lg bg-slate-100 flex items-center justify-center overflow-hidden shrink-0 text-xs font-semibold text-slate-500 uppercase">
                                   {staff.photoUrl ? (
                                     <img src={staff.photoUrl} alt="" className="w-full h-full object-cover" />
                                   ) : (
@@ -1039,7 +1039,7 @@ const Attendance: React.FC = () => {
                           {staffMembers.filter(s => 
                             `${s.firstName} ${s.lastName}`.toLowerCase().includes(followUpStaffSearch.toLowerCase())
                           ).length === 0 && (
-                            <div className="p-4 text-center text-[10px] font-bold text-slate-400 uppercase italic">Aucun résultat</div>
+                            <div className="p-4 text-center text-xs text-slate-400 italic">Aucun résultat</div>
                           )}
                         </div>
                       )}
@@ -1049,13 +1049,13 @@ const Attendance: React.FC = () => {
 
                <div className="space-y-4">
                   <div className="flex items-center justify-between">
-                    <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] flex items-center gap-2">
+                    <h4 className="text-xs font-medium text-slate-500 flex items-center gap-2">
                       <MessageSquareText size={12} className="text-emerald-500" /> Générateur de relance IA
                     </h4>
                     <button 
                       onClick={() => handleGenerateRelanceMessage(followUpMember, getConsecutiveAbsences(followUpMember.id))}
                       disabled={isGeneratingMessage}
-                      className="text-[9px] font-black text-indigo-600 uppercase hover:underline flex items-center gap-1"
+                      className="text-xs font-semibold text-indigo-600 hover:underline flex items-center gap-1"
                     >
                       {isGeneratingMessage ? <Loader2 size={10} className="animate-spin" /> : <RefreshCw size={10} />}
                       {generatedMessage ? 'Régénérer' : 'Générer un brouillon'}
@@ -1069,7 +1069,7 @@ const Attendance: React.FC = () => {
                           const url = `https://wa.me/${followUpMember.phone?.replace(/\D/g, '')}?text=${encodeURIComponent(generatedMessage)}`;
                           window.open(url, '_blank');
                         }}
-                        className="mt-3 flex items-center gap-1.5 text-[9px] font-black text-emerald-600 uppercase hover:text-emerald-800"
+                        className="mt-3 flex items-center gap-1.5 text-xs font-medium text-emerald-600 hover:text-emerald-800"
                       >
                         <Send size={10} /> Envoyer via WhatsApp
                       </button>
@@ -1077,13 +1077,13 @@ const Attendance: React.FC = () => {
                   ) : (
                     <div onClick={() => handleGenerateRelanceMessage(followUpMember, getConsecutiveAbsences(followUpMember.id))} className="p-5 bg-slate-50 border border-dashed border-slate-200 rounded-3xl flex flex-col items-center justify-center cursor-pointer hover:bg-slate-100 transition-all">
                       <BrainCircuit size={24} className="text-slate-300 mb-2" />
-                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Générer un message personnalisé avec Gemini</p>
+                      <p className="text-xs font-medium text-slate-500 text-center">Générer un message personnalisé avec Gemini</p>
                     </div>
                   )}
                </div>
 
                <div className="pt-6 border-t border-slate-200">
-                  <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
+                  <h4 className="text-xs font-medium text-slate-500 mb-4 flex items-center gap-2">
                     <Plus size={12} className="text-indigo-600" /> Nouveau Rapport de Suivi
                   </h4>
                   <div className="space-y-4">
@@ -1094,12 +1094,12 @@ const Attendance: React.FC = () => {
                       className="w-full px-5 py-4 bg-white border border-slate-200 rounded-3xl outline-none text-sm font-medium resize-none focus:ring-4 focus:ring-indigo-500/5 focus:border-indigo-300 transition-all shadow-sm disabled:opacity-50" 
                     />
                     <div className="flex gap-3">
-                      <button onClick={() => setFollowUpMember(null)} className="flex-1 py-4 bg-white border border-slate-200 text-slate-500 rounded-2xl text-[10px] font-black uppercase tracking-widest">Fermer</button>
+                      <button onClick={() => setFollowUpMember(null)} className="flex-1 py-3.5 bg-white border border-slate-200 text-slate-500 rounded-2xl text-sm font-medium">Fermer</button>
                       <button 
                         onClick={submitFollowUp} 
                         disabled={isSubmittingFollowUp || !currentNote.trim() || followUpSuccess} 
                         className={cn(
-                          "flex-1 py-4 rounded-2xl text-[10px] font-black uppercase shadow-xl flex items-center justify-center gap-2 transition-all tracking-widest",
+                          "flex-1 py-4 rounded-2xl text-xs font-medium shadow-xl flex items-center justify-center gap-2 transition-all tracking-wide",
                           followUpSuccess ? "bg-emerald-600 text-white shadow-emerald-200" : "bg-indigo-600 text-white shadow-indigo-100 disabled:opacity-50"
                         )}
                       >
@@ -1118,11 +1118,11 @@ const Attendance: React.FC = () => {
       {isAssignmentActionModalOpen && assignmentTarget && (
         <div className="fixed inset-0 z-[300] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-md" onClick={() => setIsAssignmentActionModalOpen(false)} />
-          <div className="relative w-full max-w-md bg-white rounded-[2.5rem] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col max-h-[70vh]">
+          <div className="relative w-full max-w-md bg-white rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col max-h-[70vh]">
             <div className="bg-slate-900 p-8 text-white shrink-0 relative">
               <button onClick={() => setIsAssignmentActionModalOpen(false)} className="absolute top-6 right-6 p-2 hover:bg-white/10 rounded-full transition-colors text-white"><X size={20} /></button>
-              <h3 className="text-xl font-black uppercase tracking-tight">Affectation Suivi</h3>
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+              <h3 className="text-xl font-semibold">Affectation Suivi</h3>
+              <p className="text-xs text-slate-400">
                 {formatFirstName(assignmentTarget.person.firstName)} {assignmentTarget.person.lastName.toUpperCase()}
               </p>
             </div>
@@ -1136,14 +1136,14 @@ const Attendance: React.FC = () => {
                {filteredStaff.map(staff => (
                  <button key={staff.id} onClick={() => handleAssignStaffFromModal(staff.id)} className="w-full flex items-center justify-between p-4 bg-white border border-slate-100 rounded-2xl hover:border-indigo-200 group transition-all shadow-sm">
                    <div className="flex items-center gap-3">
-                     <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center text-[10px] font-black text-slate-400 uppercase overflow-hidden">
+                     <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center text-xs font-medium text-slate-500 overflow-hidden">
                         {staff.photoUrl ? (
                           <img src={staff.photoUrl} alt="" className="w-full h-full object-cover" />
                         ) : (
                           getInitials(staff.firstName, staff.lastName)
                         )}
                      </div>
-                     <span className="text-xs font-black text-slate-900">
+                     <span className="text-xs font-semibold text-slate-900">
                         {formatFirstName(staff.firstName)} <span className="uppercase">{staff.lastName}</span>
                      </span>
                    </div>
@@ -1151,7 +1151,7 @@ const Attendance: React.FC = () => {
                  </button>
                ))}
                {filteredStaff.length === 0 && (
-                 <div className="py-8 text-center text-slate-300 italic text-xs uppercase tracking-widest">Aucun membre du personnel trouvé</div>
+                 <div className="py-8 text-center text-slate-300 italic text-xs">Aucun membre du personnel trouvé</div>
                )}
             </div>
           </div>
@@ -1162,65 +1162,65 @@ const Attendance: React.FC = () => {
       {isFormOpen && (
         <div className="fixed inset-0 z-[180] flex items-center justify-center p-4 overflow-hidden">
            <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity" onClick={() => !isSubmittingAttendance && setIsFormOpen(false)} />
-           <div className="relative w-full max-w-lg bg-white shadow-2xl animate-in zoom-in-95 duration-300 flex flex-col rounded-[2.5rem] overflow-hidden max-h-[90vh]">
+           <div className="relative w-full max-w-lg bg-white shadow-2xl animate-in zoom-in-95 duration-300 flex flex-col rounded-2xl overflow-hidden max-h-[90vh]">
                  <div className="px-8 py-8 border-b border-slate-100 flex items-center justify-between bg-indigo-600 text-white shrink-0 relative overflow-hidden">
                     <div className="absolute top-0 right-0 p-6 opacity-10"><ClipboardList size={160} /></div>
                     <div className="relative z-10">
-                       <h3 className="text-xl font-black tracking-tighter uppercase">{editingRecordId ? 'Modification Relevé' : 'Saisie Présence'}</h3>
-                       <p className="text-[10px] font-black text-indigo-100 uppercase tracking-widest mt-1 opacity-80">Statistiques {churchName}</p>
+                       <h3 className="text-xl font-semibold tracking-tight">{editingRecordId ? 'Modification Relevé' : 'Saisie Présence'}</h3>
+                       <p className="text-xs text-indigo-200 mt-1 opacity-80">Statistiques {churchName}</p>
                     </div>
                     <button onClick={() => setIsFormOpen(false)} className="relative z-10 p-2 hover:bg-white/10 rounded-full transition-colors"><X size={24} /></button>
                  </div>
                  
                  <form onSubmit={handleAttendanceSubmit} className="flex-1 overflow-y-auto p-8 space-y-8 custom-scrollbar bg-slate-50/30 pb-10">
-                    <div className="bg-white p-6 rounded-[2rem] border border-slate-200 shadow-sm space-y-5">
-                       <div className="flex items-center gap-2 mb-1"><div className="w-1.5 h-4 bg-indigo-600 rounded-full"></div><h4 className="text-[10px] font-black text-slate-900 uppercase tracking-widest">Informations Service</h4></div>
+                    <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-5">
+                       <div className="flex items-center gap-2 mb-1"><div className="w-1.5 h-4 bg-indigo-600 rounded-full"></div><h4 className="text-xs font-medium text-slate-700">Informations Service</h4></div>
                        <div className="space-y-4">
-                          <div className="space-y-1.5"><label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Culte / Réunion</label><select value={attendanceForm.service} onChange={e => setAttendanceForm({...attendanceForm, service: e.target.value})} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none text-[10px] font-black uppercase shadow-inner">{availableServices.map(s => <option key={s} value={s}>{s}</option>)}</select></div>
-                          <div className="space-y-1.5"><label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Date du relevé</label><input type="date" required value={attendanceForm.date} onChange={e => setAttendanceForm({...attendanceForm, date: e.target.value})} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none text-xs font-black shadow-inner" /></div>
+                          <div className="space-y-1.5"><label className="text-xs font-medium text-slate-500 ml-1">Culte / Réunion</label><select value={attendanceForm.service} onChange={e => setAttendanceForm({...attendanceForm, service: e.target.value})} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none text-sm font-normal shadow-inner">{availableServices.map(s => <option key={s} value={s}>{s}</option>)}</select></div>
+                          <div className="space-y-1.5"><label className="text-xs font-medium text-slate-500 ml-1">Date du relevé</label><input type="date" required value={attendanceForm.date} onChange={e => setAttendanceForm({...attendanceForm, date: e.target.value})} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none text-sm font-normal shadow-inner" /></div>
                        </div>
                     </div>
 
-                    <div className="bg-white p-6 rounded-[2rem] border border-slate-200 shadow-sm space-y-5">
-                       <div className="flex items-center gap-2 mb-1"><div className="w-1.5 h-4 bg-emerald-500 rounded-full"></div><h4 className="text-[10px] font-black text-slate-900 uppercase tracking-widest">Chiffres Globaux</h4></div>
+                    <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-5">
+                       <div className="flex items-center gap-2 mb-1"><div className="w-1.5 h-4 bg-emerald-500 rounded-full"></div><h4 className="text-xs font-medium text-slate-700">Chiffres Globaux</h4></div>
                        <div className="grid grid-cols-3 gap-4">
                           <div className="space-y-1.5">
-                            <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Hommes</label>
+                            <label className="text-xs font-medium text-slate-500 ml-1">Hommes</label>
                             <input 
                               type="number" min="0" value={attendanceForm.men || ''} 
                               onChange={e => setAttendanceForm({...attendanceForm, men: parseInt(e.target.value) || 0})} 
-                              className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-black text-blue-600 text-center [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" 
+                              className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold text-blue-600 text-center [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" 
                             />
                           </div>
                           <div className="space-y-1.5">
-                            <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Femmes</label>
+                            <label className="text-xs font-medium text-slate-500 ml-1">Femmes</label>
                             <input 
                               type="number" min="0" value={attendanceForm.women || ''} 
                               onChange={e => setAttendanceForm({...attendanceForm, women: parseInt(e.target.value) || 0})} 
-                              className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-black text-pink-600 text-center [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" 
+                              className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold text-pink-600 text-center [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" 
                             />
                           </div>
                           <div className="space-y-1.5">
-                            <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Enfants</label>
+                            <label className="text-xs font-medium text-slate-500 ml-1">Enfants</label>
                             <input 
                               type="number" min="0" value={attendanceForm.children || ''} 
                               onChange={e => setAttendanceForm({...attendanceForm, children: parseInt(e.target.value) || 0})} 
-                              className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-black text-amber-600 text-center [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" 
+                              className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold text-amber-600 text-center [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" 
                             />
                           </div>
                        </div>
                        <div className="pt-4 border-t border-slate-50 flex justify-between items-center">
-                          <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Total calculé :</span>
-                          <span className="text-2xl font-black text-slate-900">{(Number(attendanceForm.men) || 0) + (Number(attendanceForm.women) || 0) + (Number(attendanceForm.children) || 0)}</span>
+                          <span className="text-xs font-medium text-slate-500">Total calculé :</span>
+                          <span className="text-2xl font-semibold text-slate-900">{(Number(attendanceForm.men) || 0) + (Number(attendanceForm.women) || 0) + (Number(attendanceForm.children) || 0)}</span>
                        </div>
                     </div>
 
-                    <div className="bg-white p-6 rounded-[2.5rem] border border-rose-100 shadow-sm space-y-5">
-                       <div className="flex items-center gap-2 mb-1"><div className="w-1.5 h-4 bg-rose-500 rounded-full"></div><h4 className="text-[10px] font-black text-slate-900 uppercase tracking-widest">Liste d'Absents Nominatifs</h4></div>
-                       <p className="text-[10px] text-slate-400 italic">Inclut les membres et les visiteurs.</p>
+                    <div className="bg-white p-6 rounded-2xl border border-rose-100 shadow-sm space-y-5">
+                       <div className="flex items-center gap-2 mb-1"><div className="w-1.5 h-4 bg-rose-500 rounded-full"></div><h4 className="text-xs font-medium text-slate-700">Liste d'Absents Nominatifs</h4></div>
+                       <p className="text-xs text-slate-400 italic">Inclut les membres et les visiteurs.</p>
                        <div className="relative group">
                           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
-                          <input type="text" placeholder="Réchercher pour cocher..." value={formMemberSearch} onChange={e => setFormMemberSearch(e.target.value)} className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none text-[10px] font-black uppercase shadow-inner transition-all focus:bg-white" />
+                          <input type="text" placeholder="Réchercher pour cocher..." value={formMemberSearch} onChange={e => setFormMemberSearch(e.target.value)} className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none text-sm font-normal shadow-inner transition-all focus:bg-white" />
                        </div>
                        <div className="max-h-64 overflow-y-auto custom-scrollbar space-y-1 pr-1">
                           {allPeople.filter(p => `${p.firstName} ${p.lastName}`.toLowerCase().includes(formMemberSearch.toLowerCase())).map(p => (
@@ -1230,7 +1230,7 @@ const Attendance: React.FC = () => {
                               className={cn("flex items-center justify-between p-3 rounded-xl cursor-pointer transition-all border", attendanceForm.absentMembers.includes(p.id) ? "bg-rose-50 border-rose-200" : "bg-white border-slate-100 hover:border-rose-100")}
                             >
                                <div className="flex items-center gap-3">
-                                  <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center text-[9px] font-black uppercase shadow-sm overflow-hidden", attendanceForm.absentMembers.includes(p.id) ? "bg-rose-600 text-white" : "bg-slate-100 text-slate-400")}>
+                                  <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center text-xs font-medium shadow-sm overflow-hidden", attendanceForm.absentMembers.includes(p.id) ? "bg-rose-600 text-white" : "bg-slate-100 text-slate-400")}>
                                      {(p as Member).photoUrl ? (
                                        <img src={(p as Member).photoUrl} alt="" className="w-full h-full object-cover" />
                                      ) : (
@@ -1238,8 +1238,8 @@ const Attendance: React.FC = () => {
                                      )}
                                   </div>
                                   <div className="flex flex-col">
-                                    <span className={cn("text-[10px] font-black uppercase tracking-tighter", attendanceForm.absentMembers.includes(p.id) ? "text-rose-700" : "text-slate-600")}>{p.firstName} {p.lastName}</span>
-                                    {p.isVisitor && <span className="text-[8px] font-black text-rose-400 uppercase tracking-widest">Visiteur</span>}
+                                    <span className={cn("text-xs font-semibolder", attendanceForm.absentMembers.includes(p.id) ? "text-rose-700" : "text-slate-600")}>{p.firstName} {p.lastName}</span>
+                                    {p.isVisitor && <span className="text-xs font-semibold text-rose-400">Visiteur</span>}
                                   </div>
                                </div>
                                <div className={cn("w-5 h-5 rounded-lg border-2 flex items-center justify-center transition-all", attendanceForm.absentMembers.includes(p.id) ? "bg-rose-600 border-rose-600 text-white shadow-sm shadow-rose-200" : "border-slate-200 bg-white")}>
@@ -1251,8 +1251,8 @@ const Attendance: React.FC = () => {
                     </div>
 
                     <div className="flex gap-3">
-                       <button type="button" onClick={() => setIsFormOpen(false)} className="flex-1 py-4 bg-white border border-slate-200 text-slate-500 rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-sm">Annuler</button>
-                       <button type="submit" disabled={isSubmittingAttendance} className="flex-[2] py-4 bg-indigo-600 text-white rounded-2xl text-[10px] font-black uppercase shadow-xl flex items-center justify-center gap-2 hover:bg-indigo-700 transition-all shadow-indigo-200">
+                       <button type="button" onClick={() => setIsFormOpen(false)} className="flex-1 py-3.5 bg-white border border-slate-200 text-slate-500 rounded-2xl text-sm font-medium shadow-sm">Annuler</button>
+                       <button type="submit" disabled={isSubmittingAttendance} className="flex-[2] py-4 bg-indigo-600 text-white rounded-2xl text-xs font-medium shadow-xl flex items-center justify-center gap-2 hover:bg-indigo-700 transition-all shadow-indigo-200">
                           {isSubmittingAttendance ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />} Valider Relevé
                        </button>
                     </div>
@@ -1265,15 +1265,15 @@ const Attendance: React.FC = () => {
       {isDeleteConfirmOpen && (
         <div className="fixed inset-0 z-[300] flex items-center justify-center p-4">
            <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity" onClick={() => setIsDeleteConfirmOpen(false)} />
-           <div className="relative w-full max-w-sm bg-white rounded-[2.5rem] shadow-2xl p-10 text-center border border-slate-100 animate-in zoom-in-95 duration-200">
+           <div className="relative w-full max-w-sm bg-white rounded-2xl shadow-2xl p-10 text-center border border-slate-100 animate-in zoom-in-95 duration-200">
               <div className="w-20 h-20 bg-rose-50 text-rose-600 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-inner border border-rose-100/50">
                  <Trash2 size={40} />
               </div>
-              <h3 className="text-2xl font-black text-slate-900 uppercase">Supprimer ?</h3>
+              <h3 className="text-2xl font-bold text-slate-900">Supprimer ?</h3>
               <p className="text-slate-500 mt-2 text-sm font-medium leading-relaxed italic">Cette action retirera définitivement ce relevé de l'historique.</p>
               <div className="flex flex-col gap-3 mt-8">
-                 <button onClick={() => { if(recordToDeleteId) { setHistory(prev => prev.filter(h => h.id !== recordToDeleteId)); deleteAttendanceSession(recordToDeleteId); setRecordToDeleteId(null); setIsDeleteConfirmOpen(false); setIsRecordModalOpen(false); } }} className="w-full py-4 bg-rose-600 text-white rounded-2xl text-[10px] font-black uppercase shadow-xl shadow-rose-200 hover:bg-rose-700 transition-all active:scale-95">Confirmer</button>
-                 <button onClick={() => setIsDeleteConfirmOpen(false)} className="w-full py-4 bg-slate-50 text-slate-600 rounded-2xl text-[10px] font-black uppercase border border-slate-200 hover:bg-slate-100 transition-all">Annuler</button>
+                 <button onClick={() => { if(recordToDeleteId) { setHistory(prev => prev.filter(h => h.id !== recordToDeleteId)); deleteAttendanceSession(recordToDeleteId); setRecordToDeleteId(null); setIsDeleteConfirmOpen(false); setIsRecordModalOpen(false); } }} className="w-full py-4 bg-rose-600 text-white rounded-2xl text-xs font-medium shadow-xl shadow-rose-200 hover:bg-rose-700 transition-all active:scale-95">Confirmer</button>
+                 <button onClick={() => setIsDeleteConfirmOpen(false)} className="w-full py-4 bg-slate-50 text-slate-600 rounded-2xl text-xs font-medium border border-slate-200 hover:bg-slate-100 transition-all">Annuler</button>
               </div>
            </div>
         </div>

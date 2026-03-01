@@ -232,13 +232,13 @@ const ListManager: React.FC<ListManagerProps> = ({ title, subtitle, icon, items,
           />
           <button 
             onClick={handleAdd}
-            className="px-6 py-3 bg-indigo-600 text-white rounded-xl text-xs font-black uppercase tracking-widest hover:bg-indigo-700 transition-all flex items-center gap-2 shrink-0 shadow-lg shadow-indigo-100"
+            className="px-6 py-3 bg-indigo-600 text-white rounded-xl text-xs font-medium hover:bg-indigo-700 transition-all flex items-center gap-2 shrink-0 shadow-lg shadow-indigo-100"
           >
             <Plus size={16} /> Ajouter
           </button>
         </div>
 
-        <div className="bg-slate-50 rounded-[2.5rem] border border-slate-100 overflow-hidden">
+        <div className="bg-slate-50 rounded-2xl border border-slate-100 overflow-hidden">
           <div className="divide-y divide-slate-100">
             {items.length > 0 ? items.map((item, index) => (
               <div 
@@ -279,7 +279,7 @@ const ListManager: React.FC<ListManagerProps> = ({ title, subtitle, icon, items,
                       <div className="w-8 h-8 rounded-lg bg-white border border-slate-100 flex items-center justify-center text-indigo-600 shadow-sm">
                         <CheckCircle2 size={16} />
                       </div>
-                      <span className="text-sm font-black text-slate-700 uppercase tracking-tight">{item}</span>
+                      <span className="text-sm font-semibold text-slate-700">{item}</span>
                     </div>
                     <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                       <button onClick={() => startEditing(index, item)} className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors">
@@ -293,7 +293,7 @@ const ListManager: React.FC<ListManagerProps> = ({ title, subtitle, icon, items,
                 )}
               </div>
             )) : (
-              <div className="p-12 text-center text-slate-400 italic text-[10px] font-black uppercase tracking-[0.2em] opacity-50">
+              <div className="p-12 text-center text-slate-400 italic text-xs font-medium opacity-50">
                 La liste est vide
               </div>
             )}
@@ -302,7 +302,7 @@ const ListManager: React.FC<ListManagerProps> = ({ title, subtitle, icon, items,
         
         <div className="p-4 bg-indigo-50 border border-indigo-100 rounded-2xl flex items-start gap-3">
           <Info size={18} className="text-indigo-500 shrink-0 mt-0.5" />
-          <p className="text-[10px] text-indigo-700 leading-relaxed font-black uppercase tracking-widest">{warningText}</p>
+          <p className="text-xs text-indigo-700 leading-relaxed font-semibold">{warningText}</p>
         </div>
       </div>
     </Card>
@@ -775,13 +775,13 @@ const Settings: React.FC = () => {
     <div className="space-y-6 animate-in fade-in duration-500 pb-12">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-black text-slate-900 uppercase tracking-tight">Paramètres Vinea</h2>
+          <h2 className="text-2xl font-semibold text-slate-900">Paramètres Vinea</h2>
           <p className="text-sm text-slate-500 font-medium italic">Configurez votre environnement de gestion ecclésiale.</p>
         </div>
         <button 
           onClick={handleSave}
           disabled={isSaving}
-          className="flex items-center gap-2 px-6 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-black hover:bg-indigo-700 transition-all shadow-lg uppercase tracking-widest"
+          className="flex items-center gap-2 px-6 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-semibold hover:bg-indigo-700 transition-all shadow-lg"
         >
           {isSaving ? <Loader2 size={18} className="animate-spin" /> : saveSuccess ? <Check size={18} /> : <Save size={18} />}
           {isSaving ? 'Sauvegarde...' : saveSuccess ? 'Enregistré' : 'Enregistrer tout'}
@@ -797,7 +797,7 @@ const Settings: React.FC = () => {
                 key={section.id}
                 onClick={() => setActiveSection(section.id)}
                 className={cn(
-                  "w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all border",
+                  "w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-medium transition-all border",
                   activeSection === section.id 
                     ? "bg-white text-indigo-600 shadow-md border-slate-200" 
                     : "text-slate-400 border-transparent hover:bg-slate-100 hover:text-slate-600"
@@ -816,7 +816,7 @@ const Settings: React.FC = () => {
               <Card title="Identité de l'Église" subtitle="Informations publiques et branding" icon={<Church size={18} />}>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                   <div className="space-y-6">
-                    <div className="flex flex-col items-center p-6 bg-slate-50 border border-slate-100 rounded-[2rem] text-center">
+                    <div className="flex flex-col items-center p-6 bg-slate-50 border border-slate-100 rounded-xl text-center">
                        <div className="w-24 h-24 rounded-3xl bg-white border-2 border-dashed border-slate-200 flex items-center justify-center overflow-hidden mb-4 shadow-inner group relative cursor-pointer" onClick={() => logoInputRef.current?.click()}>
                           {churchInfo.logo ? (
                             <img src={churchInfo.logo} alt="Logo" className="w-full h-full object-cover" />
@@ -826,39 +826,39 @@ const Settings: React.FC = () => {
                           <div className="absolute inset-0 bg-indigo-600/0 group-hover:bg-indigo-600/10 transition-colors" />
                        </div>
                        <input type="file" ref={logoInputRef} className="hidden" accept="image/*" onChange={handleLogoUpload} />
-                       <h4 className="text-xs font-black text-slate-800 uppercase">Logo Officiel</h4>
-                       <p className="text-[10px] text-slate-400 font-bold mt-1 uppercase">PNG ou JPG (Format carré recommandé)</p>
+                       <h4 className="text-xs font-semibold text-slate-800">Logo Officiel</h4>
+                       <p className="text-xs text-slate-400 mt-1">PNG ou JPG (Format carré recommandé)</p>
                     </div>
                     <div className="space-y-4">
                        <div className="space-y-1.5">
-                          <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Couleur de la marque</label>
+                          <label className="text-xs font-medium text-slate-500 ml-1">Couleur de la marque</label>
                           <div className="flex gap-4 items-center">
                              <input type="color" value={churchInfo.primaryColor} onChange={(e) => setChurchInfo({...churchInfo, primaryColor: e.target.value})} className="w-12 h-12 rounded-xl border-none p-1 bg-white shadow-sm cursor-pointer" />
                              <input type="text" value={churchInfo.primaryColor} onChange={(e) => setChurchInfo({...churchInfo, primaryColor: e.target.value})} className="flex-1 px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold font-mono" />
                           </div>
                        </div>
                        <div className="space-y-1.5">
-                          <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 flex items-center gap-2"><Clock3 size={12}/> Fuseau horaire de l'application</label>
+                          <label className="text-xs font-medium text-slate-500 ml-1 flex items-center gap-2"><Clock3 size={12}/> Fuseau horaire de l'application</label>
                           <select 
                             value={churchInfo.timezone} 
                             onChange={(e) => setChurchInfo({...churchInfo, timezone: e.target.value})} 
-                            className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-[10px] font-black uppercase shadow-sm outline-none focus:border-indigo-300"
+                            className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-xs font-medium shadow-sm outline-none focus:border-indigo-300"
                           >
                              {TIMEZONES.map(tz => <option key={tz.value} value={tz.value}>{tz.label}</option>)}
                           </select>
-                          <p className="text-[9px] text-slate-400 font-medium italic mt-1 ml-1">* Influence le calcul des échéances et les notifications.</p>
+                          <p className="text-xs text-slate-400 font-medium italic mt-1 ml-1">* Influence le calcul des échéances et les notifications.</p>
                        </div>
                     </div>
                   </div>
                   <div className="space-y-4">
-                    <div className="space-y-1.5"><label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Nom de l'Église / Communauté</label><input type="text" value={churchInfo.name} onChange={(e) => setChurchInfo({...churchInfo, name: e.target.value})} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:border-indigo-300 outline-none text-sm font-bold" /></div>
-                    <div className="space-y-1.5"><label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Slogan / Vision</label><input type="text" value={churchInfo.slogan} onChange={(e) => setChurchInfo({...churchInfo, slogan: e.target.value})} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:border-indigo-300 outline-none text-sm font-bold" /></div>
+                    <div className="space-y-1.5"><label className="text-xs font-medium text-slate-500 ml-1">Nom de l'Église / Communauté</label><input type="text" value={churchInfo.name} onChange={(e) => setChurchInfo({...churchInfo, name: e.target.value})} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:border-indigo-300 outline-none text-sm font-bold" /></div>
+                    <div className="space-y-1.5"><label className="text-xs font-medium text-slate-500 ml-1">Slogan / Vision</label><input type="text" value={churchInfo.slogan} onChange={(e) => setChurchInfo({...churchInfo, slogan: e.target.value})} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:border-indigo-300 outline-none text-sm font-bold" /></div>
                     <div className="grid grid-cols-2 gap-4">
-                       <div className="space-y-1.5"><label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Devise monétaire</label><input type="text" value={churchInfo.currency} onChange={(e) => setChurchInfo({...churchInfo, currency: e.target.value})} className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-xs font-black text-indigo-600 uppercase" /></div>
-                       <div className="space-y-1.5"><label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Langue par défaut</label><select value={churchInfo.language} onChange={(e) => setChurchInfo({...churchInfo, language: e.target.value})} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-black uppercase"><option>Français</option><option>Anglais</option></select></div>
+                       <div className="space-y-1.5"><label className="text-xs font-medium text-slate-500 ml-1">Devise monétaire</label><input type="text" value={churchInfo.currency} onChange={(e) => setChurchInfo({...churchInfo, currency: e.target.value})} className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-indigo-600 uppercase" /></div>
+                       <div className="space-y-1.5"><label className="text-xs font-medium text-slate-500 ml-1">Langue par défaut</label><select value={churchInfo.language} onChange={(e) => setChurchInfo({...churchInfo, language: e.target.value})} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium"><option>Français</option><option>Anglais</option></select></div>
                     </div>
-                    <div className="space-y-1.5"><label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Email de contact</label><input type="email" value={churchInfo.email} onChange={(e) => setChurchInfo({...churchInfo, email: e.target.value})} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold" /></div>
-                    <div className="space-y-1.5"><label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Adresse physique</label><input type="text" value={churchInfo.address} onChange={(e) => setChurchInfo({...churchInfo, address: e.target.value})} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold" /></div>
+                    <div className="space-y-1.5"><label className="text-xs font-medium text-slate-500 ml-1">Email de contact</label><input type="email" value={churchInfo.email} onChange={(e) => setChurchInfo({...churchInfo, email: e.target.value})} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold" /></div>
+                    <div className="space-y-1.5"><label className="text-xs font-medium text-slate-500 ml-1">Adresse physique</label><input type="text" value={churchInfo.address} onChange={(e) => setChurchInfo({...churchInfo, address: e.target.value})} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold" /></div>
                   </div>
                 </div>
               </Card>
@@ -869,12 +869,12 @@ const Settings: React.FC = () => {
             <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="text-xl font-black text-slate-900 uppercase tracking-tight">Utilisateurs & Accès</h3>
+                  <h3 className="text-xl font-semibold text-slate-900">Utilisateurs & Accès</h3>
                   <p className="text-xs text-slate-500 font-medium">Définissez précisément les droits de chaque collaborateur.</p>
                 </div>
                 <button 
                   onClick={() => { setEditingUser(null); setUserFormData({ fullName: '', email: '', role: 'Administrateur', status: 'Actif', permissions: ['dashboard', 'spiritual'] }); setIsUserFormOpen(true); }}
-                  className="flex items-center gap-2 px-4 py-2.5 bg-indigo-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-indigo-200"
+                  className="flex items-center gap-2 px-4 py-2.5 bg-indigo-600 text-white rounded-xl text-xs font-medium shadow-lg shadow-indigo-200"
                 >
                   <UserPlus size={16} /> Ajouter Collaborateur
                 </button>
@@ -885,10 +885,10 @@ const Settings: React.FC = () => {
                   <table className="w-full text-left border-collapse">
                     <thead>
                       <tr className="bg-slate-50/50 border-b border-slate-100">
-                        <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Utilisateur</th>
-                        <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Rôle</th>
-                        <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Modules Accessibles</th>
-                        <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Actions</th>
+                        <th className="px-6 py-4 text-xs font-medium text-slate-500">Utilisateur</th>
+                        <th className="px-6 py-4 text-xs font-medium text-slate-500">Rôle</th>
+                        <th className="px-6 py-4 text-xs font-medium text-slate-500">Modules Accessibles</th>
+                        <th className="px-6 py-4 text-xs font-medium text-slate-500 text-right">Actions</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
@@ -900,14 +900,14 @@ const Settings: React.FC = () => {
                                 <img src={user.avatar} alt={user.fullName} className="w-full h-full object-cover" />
                               </div>
                               <div className="min-w-0">
-                                <p className="text-sm font-black text-slate-800 uppercase tracking-tight truncate">{user.fullName}</p>
-                                <p className="text-[10px] text-slate-400 font-bold lowercase truncate">{user.email}</p>
+                                <p className="text-sm font-semibold text-slate-800 truncate">{user.fullName}</p>
+                                <p className="text-xs text-slate-400 font-bold lowercase truncate">{user.email}</p>
                               </div>
                             </div>
                           </td>
                           <td className="px-6 py-4">
                             <span className={cn(
-                              "px-2 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-widest border",
+                              "px-2 py-0.5 rounded-lg text-xs font-medium border",
                               user.role === 'Super Admin' ? "bg-indigo-50 text-indigo-700 border-indigo-100" :
                               "bg-slate-50 text-slate-600 border-slate-200"
                             )}>
@@ -917,16 +917,16 @@ const Settings: React.FC = () => {
                           <td className="px-6 py-4">
                              <div className="flex flex-wrap gap-1 max-w-[200px]">
                                 {user.permissions.length === AVAILABLE_MODULES.length ? (
-                                  <span className="text-[8px] font-black text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-100 uppercase">Tout l'ERP</span>
+                                  <span className="text-xs font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-100 uppercase">Tout l'ERP</span>
                                 ) : (
                                   user.permissions.slice(0, 3).map(pId => (
-                                    <span key={pId} className="px-1.5 py-0.5 bg-slate-100 text-slate-500 rounded text-[8px] font-black uppercase border border-slate-200">
+                                    <span key={pId} className="px-1.5 py-0.5 bg-slate-100 text-slate-500 rounded text-xs font-medium border border-slate-200">
                                       {AVAILABLE_MODULES.find(m => m.id === pId)?.label}
                                     </span>
                                   ))
                                 )}
                                 {user.permissions.length > 3 && user.permissions.length !== AVAILABLE_MODULES.length && (
-                                  <span className="text-[8px] font-black text-slate-400 px-1.5 py-0.5">+{user.permissions.length - 3}</span>
+                                  <span className="text-xs font-semibold text-slate-400 px-1.5 py-0.5">+{user.permissions.length - 3}</span>
                                 )}
                              </div>
                           </td>
@@ -949,12 +949,12 @@ const Settings: React.FC = () => {
             <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
                <Card title="Gestion des Alertes" subtitle="Configurez les rappels automatiques" icon={<Bell size={18} />}>
                   <div className="space-y-6">
-                    <div className="flex items-center justify-between p-5 bg-white border border-slate-100 rounded-[2rem] shadow-sm">
+                    <div className="flex items-center justify-between p-5 bg-white border border-slate-100 rounded-xl shadow-sm">
                       <div className="flex items-center gap-4">
                         <div className="w-12 h-12 rounded-2xl bg-pink-50 text-pink-500 flex items-center justify-center shadow-inner border border-pink-100"><Cake size={24}/></div>
                         <div>
-                          <h4 className="text-sm font-black text-slate-800 uppercase">Anniversaires</h4>
-                          <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">Alerte le jour même du membre.</p>
+                          <h4 className="text-sm font-semibold text-slate-800">Anniversaires</h4>
+                          <p className="text-xs text-slate-400 font-bold mt-0.5">Alerte le jour même du membre.</p>
                         </div>
                       </div>
                       <button onClick={() => setNotificationSettings({...notificationSettings, enableBirthdays: !notificationSettings.enableBirthdays})} className={cn("w-12 h-7 rounded-full transition-all relative", notificationSettings.enableBirthdays ? "bg-indigo-600" : "bg-slate-200")}>
@@ -962,12 +962,12 @@ const Settings: React.FC = () => {
                       </button>
                     </div>
 
-                    <div className="flex items-center justify-between p-5 bg-white border border-slate-100 rounded-[2rem] shadow-sm">
+                    <div className="flex items-center justify-between p-5 bg-white border border-slate-100 rounded-xl shadow-sm">
                       <div className="flex items-center gap-4">
                         <div className="w-12 h-12 rounded-2xl bg-amber-50 text-amber-500 flex items-center justify-center shadow-inner border border-amber-100"><CalendarDays size={24}/></div>
                         <div>
-                          <h4 className="text-sm font-black text-slate-800 uppercase">Événements Proches</h4>
-                          <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">Rappel quelques jours avant.</p>
+                          <h4 className="text-sm font-semibold text-slate-800">Événements Proches</h4>
+                          <p className="text-xs text-slate-400 font-bold mt-0.5">Rappel quelques jours avant.</p>
                         </div>
                       </div>
                       <button onClick={() => setNotificationSettings({...notificationSettings, enableEvents: !notificationSettings.enableEvents})} className={cn("w-12 h-7 rounded-full transition-all relative", notificationSettings.enableEvents ? "bg-indigo-600" : "bg-slate-200")}>
@@ -977,7 +977,7 @@ const Settings: React.FC = () => {
 
                     {notificationSettings.enableEvents && (
                       <div className="px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl animate-in slide-in-from-top-2">
-                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 mb-2 block">Délai d'anticipation (jours)</label>
+                        <label className="text-xs font-medium text-slate-500 ml-1 mb-2 block">Délai d'anticipation (jours)</label>
                         <div className="flex items-center gap-4">
                           <input 
                             type="range" min="1" max="14" step="1"
@@ -985,17 +985,17 @@ const Settings: React.FC = () => {
                             onChange={(e) => setNotificationSettings({...notificationSettings, daysBeforeEvent: parseInt(e.target.value)})}
                             className="flex-1 h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-indigo-600"
                           />
-                          <span className="w-10 text-center text-sm font-black text-indigo-600">{notificationSettings.daysBeforeEvent}j</span>
+                          <span className="w-10 text-center text-sm font-semibold text-indigo-600">{notificationSettings.daysBeforeEvent}j</span>
                         </div>
                       </div>
                     )}
 
-                    <div className="flex items-center justify-between p-5 bg-white border border-slate-100 rounded-[2rem] shadow-sm">
+                    <div className="flex items-center justify-between p-5 bg-white border border-slate-100 rounded-xl shadow-sm">
                       <div className="flex items-center gap-4">
                         <div className="w-12 h-12 rounded-2xl bg-blue-50 text-blue-500 flex items-center justify-center shadow-inner border border-blue-100"><UserCheck size={24}/></div>
                         <div>
-                          <h4 className="text-sm font-black text-slate-800 uppercase">Alertes de Suivi</h4>
-                          <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">Absences répétées et tâches visiteurs.</p>
+                          <h4 className="text-sm font-semibold text-slate-800">Alertes de Suivi</h4>
+                          <p className="text-xs text-slate-400 font-bold mt-0.5">Absences répétées et tâches visiteurs.</p>
                         </div>
                       </div>
                       <button onClick={() => setNotificationSettings({...notificationSettings, enableFollowUps: !notificationSettings.enableFollowUps})} className={cn("w-12 h-7 rounded-full transition-all relative", notificationSettings.enableFollowUps ? "bg-indigo-600" : "bg-slate-200")}>
@@ -1013,8 +1013,8 @@ const Settings: React.FC = () => {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                      <div className="space-y-4">
                         <div className="space-y-1.5">
-                           <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Tempérament de l'IA</label>
-                           <select value={aiConfig.tone} onChange={(e) => setAiConfig({...aiConfig, tone: e.target.value})} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-black uppercase">
+                           <label className="text-xs font-medium text-slate-500 ml-1">Tempérament de l'IA</label>
+                           <select value={aiConfig.tone} onChange={(e) => setAiConfig({...aiConfig, tone: e.target.value})} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium">
                               <option>Chaleureux & Pastoral</option>
                               <option>Administratif & Formel</option>
                               <option>Direct & Strategique</option>
@@ -1024,7 +1024,7 @@ const Settings: React.FC = () => {
                         <div className="flex items-center justify-between p-4 bg-indigo-50 border border-indigo-100 rounded-2xl">
                            <div className="flex items-center gap-3">
                               <div className="w-8 h-8 bg-indigo-600 text-white rounded-lg flex items-center justify-center"><Zap size={16}/></div>
-                              <span className="text-xs font-black text-indigo-700 uppercase">Auto-Suggestions</span>
+                              <span className="text-xs font-semibold text-indigo-700">Auto-Suggestions</span>
                            </div>
                            <button onClick={() => setAiConfig({...aiConfig, autoSuggest: !aiConfig.autoSuggest})} className={cn("w-10 h-6 rounded-full transition-all relative", aiConfig.autoSuggest ? "bg-indigo-600" : "bg-slate-300")}>
                               <div className={cn("absolute top-1 w-4 h-4 bg-white rounded-full transition-all", aiConfig.autoSuggest ? "left-5" : "left-1")}></div>
@@ -1033,7 +1033,7 @@ const Settings: React.FC = () => {
                      </div>
                      <div className="p-6 bg-slate-50 border border-slate-100 rounded-3xl flex items-start gap-4">
                         <Info size={24} className="text-indigo-400 shrink-0" />
-                        <p className="text-[10px] text-slate-500 font-bold uppercase leading-relaxed tracking-widest">
+                        <p className="text-xs text-slate-500 font-medium leading-relaxed">
                           Ces réglages influencent la rédaction automatique des PV de réunions, des messages de bienvenue et des analyses financières.
                         </p>
                      </div>
@@ -1046,15 +1046,15 @@ const Settings: React.FC = () => {
                         <div className="flex items-center gap-4">
                            <div className="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center shadow-inner border border-emerald-100"><FileJson size={24}/></div>
                            <div>
-                              <h4 className="text-sm font-black text-slate-800 uppercase">Gestion de la Base (Vinea JSON)</h4>
-                              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">Exporte ou importe l'intégralité des données.</p>
+                              <h4 className="text-sm font-semibold text-slate-800">Gestion de la Base (Vinea JSON)</h4>
+                              <p className="text-xs text-slate-400 font-bold mt-0.5">Exporte ou importe l'intégralité des données.</p>
                            </div>
                         </div>
                         <div className="flex flex-wrap gap-3">
-                           <button onClick={handleExportFullData} className="px-6 py-3 bg-white border border-slate-200 text-slate-700 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 hover:bg-slate-50 transition-all shadow-sm active:scale-95">
+                           <button onClick={handleExportFullData} className="px-6 py-3 bg-white border border-slate-200 text-slate-700 rounded-xl text-xs font-medium flex items-center gap-2 hover:bg-slate-50 transition-all shadow-sm active:scale-95">
                               <Download size={16}/> Exporter
                            </button>
-                           <button onClick={() => importBaseInputRef.current?.click()} className="px-6 py-3 bg-slate-900 text-white rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 hover:bg-slate-800 transition-all shadow-lg active:scale-95">
+                           <button onClick={() => importBaseInputRef.current?.click()} className="px-6 py-3 bg-slate-900 text-white rounded-xl text-xs font-medium flex items-center gap-2 hover:bg-slate-800 transition-all shadow-lg active:scale-95">
                               <Upload size={16}/> Importer la base
                            </button>
                            <input type="file" ref={importBaseInputRef} className="hidden" accept=".json" onChange={handleImportFullData} />
@@ -1073,7 +1073,7 @@ const Settings: React.FC = () => {
                         <div className="flex items-start gap-4">
                            <div className="p-3 bg-rose-50 text-rose-600 rounded-2xl shadow-inner border border-rose-100"><ShieldAlert size={24}/></div>
                            <div>
-                              <h4 className="text-sm font-black text-slate-800 uppercase">Réinitialisation Globale</h4>
+                              <h4 className="text-sm font-semibold text-slate-800">Réinitialisation Globale</h4>
                               <p className="text-xs text-slate-500 font-medium italic mt-1 leading-relaxed">
                                 Efface tous les enregistrements (membres, finances, planning). 
                                 Les comptes administrateurs seront les seuls rescapés pour permettre une nouvelle configuration propre.
@@ -1083,7 +1083,7 @@ const Settings: React.FC = () => {
                         <div className="flex justify-end pt-4 border-t border-rose-50">
                            <button 
                              onClick={() => setIsPurgeModalOpen(true)}
-                             className="px-6 py-3 bg-rose-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-rose-700 transition-all shadow-xl shadow-rose-200"
+                             className="px-6 py-3 bg-rose-600 text-white rounded-xl text-xs font-medium hover:bg-rose-700 transition-all shadow-xl shadow-rose-200"
                            >
                               Purger toutes les données
                            </button>
@@ -1153,7 +1153,7 @@ const Settings: React.FC = () => {
               <Card title="Mon Profil Administrateur" subtitle="Informations personnelles de session" icon={<UserCircle size={18} />}>
                 <div className="flex flex-col md:flex-row gap-10 items-start">
                    <div className="relative group self-center md:self-start">
-                      <div className="w-32 h-32 rounded-[2.5rem] bg-slate-100 overflow-hidden border-2 border-indigo-200 p-1 shadow-xl relative">
+                      <div className="w-32 h-32 rounded-2xl bg-slate-100 overflow-hidden border-2 border-indigo-200 p-1 shadow-xl relative">
                          <img src={adminInfo.avatar} alt="Me" className="w-full h-full object-cover rounded-[2.2rem]" />
                          <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
                             <Edit2 size={24} className="text-white" />
@@ -1170,22 +1170,22 @@ const Settings: React.FC = () => {
                    </div>
                    <div className="flex-1 w-full space-y-6">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                         <div className="space-y-1.5"><label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Nom Complet</label><input type="text" value={adminInfo.fullName} onChange={(e) => setAdminInfo({...adminInfo, fullName: e.target.value})} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold focus:bg-white transition-all shadow-sm" /></div>
-                         <div className="space-y-1.5"><label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Adresse Email</label><input type="email" value={adminInfo.email} onChange={(e) => setAdminInfo({...adminInfo, email: e.target.value})} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold focus:bg-white transition-all shadow-sm" /></div>
+                         <div className="space-y-1.5"><label className="text-xs font-medium text-slate-500 ml-1">Nom Complet</label><input type="text" value={adminInfo.fullName} onChange={(e) => setAdminInfo({...adminInfo, fullName: e.target.value})} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold focus:bg-white transition-all shadow-sm" /></div>
+                         <div className="space-y-1.5"><label className="text-xs font-medium text-slate-500 ml-1">Adresse Email</label><input type="email" value={adminInfo.email} onChange={(e) => setAdminInfo({...adminInfo, email: e.target.value})} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold focus:bg-white transition-all shadow-sm" /></div>
                       </div>
                       <div className="p-4 bg-indigo-50 border border-indigo-100 rounded-2xl flex items-center justify-between shadow-sm">
                          <div className="flex items-center gap-3">
                            <ShieldCheck size={20} className="text-indigo-600" />
                            <div>
-                              <p className="text-xs font-black text-indigo-700 uppercase">Rôle : {adminInfo.role}</p>
-                              <p className="text-[9px] text-indigo-400 font-bold uppercase tracking-tighter">Privilèges maximum activés</p>
+                              <p className="text-xs font-semibold text-indigo-700">Rôle : {adminInfo.role}</p>
+                              <p className="text-xs text-indigo-400 font-bolder">Privilèges maximum activés</p>
                            </div>
                          </div>
                          <div className="flex gap-2">
                            {AVAILABLE_MODULES.slice(0, 5).map(m => (
                              <div key={m.id} className="w-6 h-6 rounded-lg bg-white flex items-center justify-center text-indigo-600 shadow-sm"><m.icon size={12}/></div>
                            ))}
-                           <span className="text-[9px] font-black text-indigo-400 flex items-center">+</span>
+                           <span className="text-xs font-semibold text-indigo-400 flex items-center">+</span>
                          </div>
                       </div>
                    </div>
@@ -1194,7 +1194,7 @@ const Settings: React.FC = () => {
                 <div className="mt-12 pt-8 border-t border-slate-100 space-y-6">
                    <div className="flex items-center gap-2">
                       <Palette size={18} className="text-indigo-600" />
-                      <h4 className="text-[10px] font-black text-slate-900 uppercase tracking-[0.2em]">Galerie d'Avatars Vinea</h4>
+                      <h4 className="text-xs font-medium text-slate-700">Galerie d'Avatars Vinea</h4>
                    </div>
                    <p className="text-xs text-slate-500 font-medium italic">Choisissez une illustration prédéfinie pour votre profil si vous ne souhaitez pas utiliser de photo.</p>
                    
@@ -1226,11 +1226,11 @@ const Settings: React.FC = () => {
                 </div>
               </Card>
 
-              <div className="bg-slate-900 rounded-[2.5rem] p-8 text-white relative overflow-hidden group shadow-xl">
+              <div className="bg-slate-900 rounded-2xl p-8 text-white relative overflow-hidden group shadow-xl">
                  <div className="absolute top-0 right-0 p-6 opacity-10 group-hover:rotate-12 transition-transform"><UserRoundCheck size={80} className="text-indigo-400"/></div>
-                 <p className="text-[10px] font-black uppercase tracking-[0.2em] text-indigo-400">Identité Visuelle</p>
-                 <h3 className="text-xl font-black mt-2">Prêt pour le service, {adminInfo.fullName.split(' ')[0]}.</h3>
-                 <p className="text-[9px] font-bold text-slate-500 mt-4 uppercase tracking-widest leading-relaxed max-w-xs">Votre avatar est visible dans le journal d'activité et sur tous les rapports officiels de l'application.</p>
+                 <p className="text-xs font-medium text-indigo-400">Identité Visuelle</p>
+                 <h3 className="text-xl font-semibold mt-2">Prêt pour le service, {adminInfo.fullName.split(' ')[0]}.</h3>
+                 <p className="text-xs font-bold text-slate-500 mt-4 leading-relaxed max-w-xs">Votre avatar est visible dans le journal d'activité et sur tous les rapports officiels de l'application.</p>
               </div>
             </div>
           )}
@@ -1240,66 +1240,66 @@ const Settings: React.FC = () => {
       {isImportModalOpen && (
         <div className="fixed inset-0 z-[300] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-md" onClick={() => setIsImportModalOpen(false)} />
-          <div className="relative w-full max-w-lg bg-white rounded-[3rem] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300 flex flex-col border border-slate-200">
+          <div className="relative w-full max-w-lg bg-white rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300 flex flex-col border border-slate-200">
             <div className="bg-emerald-600 p-8 text-white shrink-0 relative overflow-hidden">
                <div className="absolute top-0 right-0 p-8 opacity-10"><DatabaseBackup size={180} /></div>
                <div className="relative z-10">
-                 <h3 className="text-2xl font-black uppercase tracking-tight">Restauration de la Base</h3>
-                 <p className="text-xs font-bold text-emerald-100 uppercase tracking-widest mt-1">Viez valider les données importées</p>
+                 <h3 className="text-2xl font-semibold">Restauration de la Base</h3>
+                 <p className="text-xs font-bold text-emerald-100 mt-1">Viez valider les données importées</p>
                </div>
             </div>
             <div className="p-8 space-y-8 flex-1 overflow-y-auto custom-scrollbar bg-slate-50/30">
-               <div className="p-5 bg-white border border-slate-200 rounded-[2rem] shadow-sm flex items-center gap-5">
+               <div className="p-5 bg-white border border-slate-200 rounded-xl shadow-sm flex items-center gap-5">
                   <div className="w-14 h-14 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center shrink-0 border border-emerald-100">
                      <Church size={32}/>
                   </div>
                   <div>
-                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Église détectée</p>
-                    <p className="text-xl font-black text-slate-900 uppercase">{importSummary.churchName}</p>
+                    <p className="text-xs font-medium text-slate-500">Église détectée</p>
+                    <p className="text-xl font-bold text-slate-900">{importSummary.churchName}</p>
                   </div>
                </div>
                <div className="grid grid-cols-2 gap-4">
-                  <div className="bg-white p-5 rounded-[2rem] border border-slate-100 shadow-sm space-y-2">
+                  <div className="bg-white p-5 rounded-xl border border-slate-100 shadow-sm space-y-2">
                      <div className="flex items-center gap-2">
                         <UsersIcon size={14} className="text-indigo-600" />
-                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Membres</span>
+                        <span className="text-xs font-medium text-slate-500">Membres</span>
                      </div>
-                     <p className="text-2xl font-black text-slate-900">{importSummary.membersCount}</p>
+                     <p className="text-2xl font-semibold text-slate-900">{importSummary.membersCount}</p>
                   </div>
-                  <div className="bg-white p-5 rounded-[2rem] border border-slate-100 shadow-sm space-y-2">
+                  <div className="bg-white p-5 rounded-xl border border-slate-100 shadow-sm space-y-2">
                      <div className="flex items-center gap-2">
                         <Wallet size={14} className="text-emerald-600" />
-                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Finances</span>
+                        <span className="text-xs font-medium text-slate-500">Finances</span>
                      </div>
-                     <p className="text-2xl font-black text-slate-900">{importSummary.financesCount}</p>
+                     <p className="text-2xl font-semibold text-slate-900">{importSummary.financesCount}</p>
                   </div>
-                  <div className="bg-white p-5 rounded-[2rem] border border-slate-100 shadow-sm space-y-2">
+                  <div className="bg-white p-5 rounded-xl border border-slate-100 shadow-sm space-y-2">
                      <div className="flex items-center gap-2">
                         <BookOpen size={14} className="text-amber-600" />
-                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Cultes</span>
+                        <span className="text-xs font-medium text-slate-500">Cultes</span>
                      </div>
-                     <p className="text-2xl font-black text-slate-900">{importSummary.servicesCount}</p>
+                     <p className="text-2xl font-semibold text-slate-900">{importSummary.servicesCount}</p>
                   </div>
-                  <div className="bg-white p-5 rounded-[2rem] border border-slate-100 shadow-sm space-y-2">
+                  <div className="bg-white p-5 rounded-xl border border-slate-100 shadow-sm space-y-2">
                      <div className="flex items-center gap-2">
                         <UserPlus size={14} className="text-rose-600" />
-                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Visiteurs</span>
+                        <span className="text-xs font-medium text-slate-500">Visiteurs</span>
                      </div>
-                     <p className="text-2xl font-black text-slate-900">{importSummary.visitorsCount}</p>
+                     <p className="text-2xl font-semibold text-slate-900">{importSummary.visitorsCount}</p>
                   </div>
                </div>
-               <div className="p-6 bg-rose-50 border border-rose-100 rounded-[2.5rem] flex items-start gap-4 shadow-sm">
+               <div className="p-6 bg-rose-50 border border-rose-100 rounded-2xl flex items-start gap-4 shadow-sm">
                   <AlertCircle size={24} className="text-rose-600 shrink-0 mt-0.5" />
-                  <p className="text-[10px] text-rose-800 font-black uppercase leading-relaxed tracking-widest">
+                  <p className="text-xs text-rose-700 font-medium leading-relaxed">
                     ATTENTION : En acceptant cette validation, TOUTES vos données actuelles seront remplacées par celles du fichier. Cette action est irréversible.
                   </p>
                </div>
             </div>
             <div className="p-8 bg-white border-t border-slate-100 flex gap-4 shrink-0">
-               <button onClick={() => setIsImportModalOpen(false)} className="flex-1 py-4 bg-slate-50 text-slate-500 rounded-2xl text-[10px] font-black uppercase hover:bg-slate-100 border border-slate-200">
+               <button onClick={() => setIsImportModalOpen(false)} className="flex-1 py-4 bg-slate-50 text-slate-500 rounded-2xl text-xs font-medium hover:bg-slate-100 border border-slate-200">
                   Annuler
                </button>
-               <button onClick={applyImport} className="flex-[2] py-4 bg-emerald-600 text-white rounded-2xl text-[10px] font-black uppercase hover:bg-emerald-700 shadow-xl shadow-emerald-200 flex items-center justify-center gap-2">
+               <button onClick={applyImport} className="flex-[2] py-4 bg-emerald-600 text-white rounded-2xl text-xs font-medium hover:bg-emerald-700 shadow-xl shadow-emerald-200 flex items-center justify-center gap-2">
                   <CheckCircle2 size={16} /> Confirmer l'Importation
                </button>
             </div>
@@ -1310,18 +1310,18 @@ const Settings: React.FC = () => {
       {isImportSuccessModalOpen && (
         <div className="fixed inset-0 z-[400] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-slate-900/80 backdrop-blur-xl animate-in fade-in duration-500" />
-          <div className="relative w-full max-w-sm bg-white rounded-[3rem] shadow-[0_32px_64px_-12px_rgba(0,0,0,0.2)] p-10 text-center animate-in zoom-in-95 duration-300">
-            <div className="w-24 h-24 bg-emerald-500 text-white rounded-[2.5rem] flex items-center justify-center mx-auto mb-8 shadow-2xl border-4 border-white/50 animate-bounce">
+          <div className="relative w-full max-w-sm bg-white rounded-2xl shadow-[0_32px_64px_-12px_rgba(0,0,0,0.2)] p-10 text-center animate-in zoom-in-95 duration-300">
+            <div className="w-24 h-24 bg-emerald-500 text-white rounded-2xl flex items-center justify-center mx-auto mb-8 shadow-2xl border-4 border-white/50 animate-bounce">
               <CheckCircle2 size={48} strokeWidth={2.5} />
             </div>
-            <h3 className="text-2xl font-black text-slate-900 uppercase tracking-tight">Restauration Terminée</h3>
+            <h3 className="text-2xl font-semibold text-slate-900">Restauration Terminée</h3>
             <p className="text-slate-500 mt-4 text-sm font-medium leading-relaxed italic">
               Les données ont été injectées avec succès. L'application doit maintenant redémarrer pour appliquer les changements.
             </p>
             <div className="mt-10">
               <button 
                 onClick={() => window.location.reload()} 
-                className="w-full py-5 bg-indigo-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] shadow-xl hover:bg-indigo-700 transition-all active:scale-95"
+                className="w-full py-5 bg-indigo-600 text-white rounded-2xl text-xs font-medium shadow-xl hover:bg-indigo-700 transition-all active:scale-95"
               >
                 Redémarrer l'application
               </button>
@@ -1333,11 +1333,11 @@ const Settings: React.FC = () => {
       {isPurgeModalOpen && (
         <div className="fixed inset-0 z-[400] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-md transition-opacity duration-300" onClick={() => setIsPurgeModalOpen(false)} />
-          <div className="relative w-full max-w-sm bg-white rounded-[2.5rem] shadow-2xl p-10 text-center border border-slate-100 animate-in zoom-in-95 duration-200">
+          <div className="relative w-full max-w-sm bg-white rounded-2xl shadow-2xl p-10 text-center border border-slate-100 animate-in zoom-in-95 duration-200">
             <div className="w-20 h-20 bg-rose-50 text-rose-600 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-inner border border-rose-100/50">
                <AlertTriangle size={40} />
             </div>
-            <h3 className="text-2xl font-black text-slate-900 uppercase tracking-tight">Tout effacer ?</h3>
+            <h3 className="text-2xl font-semibold text-slate-900">Tout effacer ?</h3>
             <p className="text-slate-500 mt-4 text-sm font-medium leading-relaxed italic">
               Cette action supprimera <strong>définitivement</strong> tous les membres, les finances et le planning.
               Seuls vos comptes administrateurs seront conservés.
@@ -1345,13 +1345,13 @@ const Settings: React.FC = () => {
             <div className="flex flex-col gap-3 mt-8">
               <button 
                 onClick={handleConfirmedPurge} 
-                className="w-full py-4 bg-rose-600 text-white rounded-2xl text-[10px] font-black uppercase shadow-xl shadow-rose-200 hover:bg-rose-700 transition-all active:scale-95"
+                className="w-full py-4 bg-rose-600 text-white rounded-2xl text-xs font-medium shadow-xl shadow-rose-200 hover:bg-rose-700 transition-all active:scale-95"
               >
                 Confirmer la purge totale
               </button>
               <button 
                 onClick={() => setIsPurgeModalOpen(false)} 
-                className="w-full py-4 bg-slate-50 text-slate-600 rounded-2xl text-[10px] font-black uppercase border border-slate-200 hover:bg-slate-100 transition-all"
+                className="w-full py-4 bg-slate-50 text-slate-600 rounded-2xl text-xs font-medium border border-slate-200 hover:bg-slate-100 transition-all"
               >
                 Annuler
               </button>
@@ -1363,80 +1363,56 @@ const Settings: React.FC = () => {
       {isUserFormOpen && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity" onClick={() => setIsUserFormOpen(false)} />
-          <div className="relative w-full max-w-xl bg-white rounded-[2.5rem] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
-
-            {/* Header avec aperçu dynamique */}
-            <div className="bg-gradient-to-br from-indigo-600 to-indigo-800 p-7 text-white shrink-0 relative">
-              <button onClick={() => setIsUserFormOpen(false)} className="absolute top-5 right-5 p-2 hover:bg-white/10 rounded-full transition-colors"><X size={18} /></button>
-              <div className="flex items-center gap-4">
-                <div className="w-14 h-14 rounded-2xl bg-white/20 border border-white/30 flex items-center justify-center text-xl font-black shrink-0">
-                  {userFormData.fullName?.[0]?.toUpperCase() || <UserCog size={24} />}
-                </div>
-                <div className="min-w-0">
-                  <h3 className="text-base font-black uppercase tracking-tight leading-tight">
-                    {editingUser ? 'Modifier le collaborateur' : 'Nouveau collaborateur'}
-                  </h3>
-                  <p className="text-indigo-200 text-xs mt-0.5 font-medium truncate">
-                    {userFormData.fullName || 'Nom du collaborateur'}{userFormData.role ? ` · ${userFormData.role}` : ''}
-                  </p>
-                </div>
-              </div>
+          <div className="relative w-full max-w-2xl bg-white rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
+            <div className="bg-indigo-600 p-8 text-white shrink-0 relative">
+               <button onClick={() => setIsUserFormOpen(false)} className="absolute top-6 right-6 p-2 hover:bg-white/10 rounded-full transition-colors"><X size={20} /></button>
+               <h3 className="text-xl font-semibold">{editingUser ? 'Modifier Collaborateur' : 'Nouveau Collaborateur'}</h3>
+               <p className="text-xs text-indigo-200 mt-1">Gestion des droits d'accès</p>
             </div>
-
-            <form onSubmit={handleSaveUser} className="flex-1 overflow-y-auto custom-scrollbar divide-y divide-slate-100">
-
-              {/* Section identité */}
-              <div className="p-6 space-y-4">
-                <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] flex items-center gap-1.5">
-                  <UserCircle size={11} /> Identité
-                </p>
-                <div className="space-y-3">
-                  <div className="space-y-1.5">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Nom complet *</label>
-                    <input
-                      type="text" required
-                      value={userFormData.fullName ?? ''}
-                      onChange={(e) => setUserFormData({...userFormData, fullName: e.target.value})}
-                      placeholder="Ex : Jean-Baptiste Dupont"
-                      className="w-full px-4 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl outline-none text-sm font-bold focus:border-indigo-400 focus:ring-2 focus:ring-indigo-50 transition-all placeholder:font-normal placeholder:text-slate-300"
-                    />
-                  </div>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="space-y-1.5">
-                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Email *</label>
-                      <input
-                        type="email" required
-                        value={userFormData.email ?? ''}
-                        onChange={(e) => setUserFormData({...userFormData, email: e.target.value})}
-                        placeholder="email@exemple.com"
-                        className="w-full px-4 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl outline-none text-sm font-bold focus:border-indigo-400 focus:ring-2 focus:ring-indigo-50 transition-all placeholder:font-normal placeholder:text-slate-300"
-                      />
-                    </div>
-                    <div className="space-y-1.5">
-                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Fonction</label>
-                      <input
-                        type="text"
-                        value={userFormData.role ?? ''}
-                        onChange={(e) => setUserFormData({...userFormData, role: e.target.value})}
-                        placeholder="Ex : Secrétaire"
-                        className="w-full px-4 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl outline-none text-sm font-bold focus:border-indigo-400 focus:ring-2 focus:ring-indigo-50 transition-all placeholder:font-normal placeholder:text-slate-300"
-                      />
+            <form onSubmit={handleSaveUser} className="flex-1 overflow-y-auto p-8 space-y-8 custom-scrollbar bg-slate-50/30">
+               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-1.5"><label className="text-xs font-medium text-slate-500 ml-1">Nom complet</label><input type="text" required value={userFormData.fullName} onChange={(e) => setUserFormData({...userFormData, fullName: e.target.value})} className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl outline-none text-sm font-bold shadow-sm" /></div>
+                  <div className="space-y-1.5"><label className="text-xs font-medium text-slate-500 ml-1">Email professionnel</label><input type="email" required value={userFormData.email} onChange={(e) => setUserFormData({...userFormData, email: e.target.value})} className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl outline-none text-sm font-bold shadow-sm" /></div>
+               </div>
+               <div className="space-y-4">
+                  <div className="flex items-center justify-between border-b border-slate-200 pb-2">
+                    <h4 className="text-xs font-medium text-slate-700 flex items-center gap-2">
+                      <Shield size={14} className="text-indigo-600" /> Matrice des Permissions
+                    </h4>
+                    <div className="flex gap-2">
+                      <button type="button" onClick={() => setUserFormData({...userFormData, permissions: AVAILABLE_MODULES.map(m => m.id)})} className="text-xs font-semibold text-indigo-600 hover:underline">Tout activer</button>
+                      <button type="button" onClick={() => setUserFormData({...userFormData, permissions: ['dashboard', 'spiritual']})} className="text-xs font-semibold text-rose-500 hover:underline">Vider</button>
                     </div>
                   </div>
-                </div>
-
-                {/* Toggle statut */}
-                <div className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-100 mt-2">
-                  <div>
-                    <p className="text-sm font-black text-slate-700">Accès actif</p>
-                    <p className="text-[10px] text-slate-400 font-medium mt-0.5">Ce collaborateur peut se connecter</p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {AVAILABLE_MODULES.map((module) => {
+                      const isSelected = userFormData.permissions?.includes(module.id);
+                      return (
+                        <button
+                          key={module.id}
+                          type="button"
+                          onClick={() => togglePermission(module.id)}
+                          className={cn(
+                            "flex items-center justify-between p-4 rounded-2xl border transition-all text-left group",
+                            isSelected ? "bg-indigo-600 border-indigo-600 text-white shadow-lg shadow-indigo-100" : "bg-white border-slate-100 text-slate-500 hover:border-indigo-200"
+                          )}
+                        >
+                          <div className="flex items-center gap-3">
+                             <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center transition-colors", isSelected ? "bg-white/20" : "bg-slate-50 text-slate-400 group-hover:text-indigo-600")}>
+                                <module.icon size={16} />
+                             </div>
+                             <span className="text-xs font-semibold">{module.label}</span>
+                          </div>
+                          {isSelected && <Check size={14} strokeWidth={4} />}
+                        </button>
+                      );
+                    })}
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => setUserFormData({...userFormData, status: userFormData.status === 'Actif' ? 'Inactif' : 'Actif'})}
-                    className={cn("w-12 h-6 rounded-full transition-all relative shrink-0", userFormData.status === 'Actif' ? "bg-emerald-500" : "bg-slate-200")}
-                  >
-                    <span className={cn("absolute top-1 w-4 h-4 bg-white rounded-full shadow-sm transition-all", userFormData.status === 'Actif' ? "left-7" : "left-1")} />
+               </div>
+               <div className="flex gap-3 pt-4">
+                  <button type="button" onClick={() => setIsUserFormOpen(false)} className="flex-1 py-4 bg-white border border-slate-200 text-slate-500 rounded-2xl text-xs font-medium">Annuler</button>
+                  <button type="submit" className="flex-1 py-4 bg-indigo-600 text-white rounded-2xl text-xs font-medium shadow-xl flex items-center justify-center gap-2">
+                     <Save size={16} /> Enregistrer
                   </button>
                 </div>
               </div>
@@ -1499,17 +1475,17 @@ const Settings: React.FC = () => {
       {isUserDeleteModalOpen && (
         <div className="fixed inset-0 z-[250] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setIsUserDeleteModalOpen(false)} />
-          <div className="relative w-full max-w-sm bg-white rounded-[2.5rem] shadow-2xl p-10 text-center border border-slate-100 animate-in zoom-in-95 duration-200">
+          <div className="relative w-full max-w-sm bg-white rounded-2xl shadow-2xl p-10 text-center border border-slate-100 animate-in zoom-in-95 duration-200">
             <div className="w-20 h-20 bg-rose-50 text-rose-600 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-inner border border-rose-100/50">
                <Trash2 size={40} />
             </div>
-            <h3 className="text-2xl font-black text-slate-900 uppercase">Révoquer l'accès ?</h3>
+            <h3 className="text-2xl font-bold text-slate-900">Révoquer l'accès ?</h3>
             <p className="text-slate-500 mt-3 text-sm font-medium leading-relaxed italic">
               L'utilisateur {userToDelete?.fullName} ne pourra plus se connecter à la plateforme.
             </p>
             <div className="flex flex-col gap-3 mt-8">
-              <button onClick={confirmDeleteUser} className="w-full py-4 bg-rose-600 text-white rounded-2xl text-[10px] font-black uppercase shadow-xl shadow-rose-200">Confirmer la révocation</button>
-              <button onClick={() => setIsUserDeleteModalOpen(false)} className="w-full py-4 bg-slate-50 text-slate-600 rounded-2xl text-[10px] font-black uppercase border border-slate-200">Annuler</button>
+              <button onClick={confirmDeleteUser} className="w-full py-4 bg-rose-600 text-white rounded-2xl text-xs font-medium shadow-xl shadow-rose-200">Confirmer la révocation</button>
+              <button onClick={() => setIsUserDeleteModalOpen(false)} className="w-full py-4 bg-slate-50 text-slate-600 rounded-2xl text-xs font-medium border border-slate-200">Annuler</button>
             </div>
           </div>
         </div>

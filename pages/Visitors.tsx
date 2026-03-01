@@ -362,20 +362,20 @@ const Visitors: React.FC = () => {
       
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
-          <h2 className="text-2xl font-black text-slate-900 tracking-tight uppercase">Registre des Visiteurs</h2>
-          <p className="text-sm text-slate-500 font-bold uppercase tracking-widest opacity-60">Suivi d'Intégration & Accueil Vinea</p>
+          <h2 className="text-2xl font-bold text-slate-900">Registre des Visiteurs</h2>
+          <p className="text-sm text-slate-500 opacity-60">Suivi d'Intégration & Accueil Vinea</p>
         </div>
         <div className="flex flex-wrap items-center gap-3">
           <button 
             onClick={handleAnalyze}
             disabled={isAnalyzing}
-            className="flex items-center gap-2 px-5 py-2.5 bg-indigo-50 text-indigo-700 border border-indigo-100 rounded-xl text-xs font-black hover:bg-indigo-100 transition-all uppercase tracking-widest"
+            className="flex items-center gap-2 px-5 py-2.5 bg-indigo-50 text-indigo-700 border border-indigo-100 rounded-xl text-xs font-medium hover:bg-indigo-100 transition-all"
           >
             <Sparkles size={18} className={cn(isAnalyzing && "animate-pulse")} /> {isAnalyzing ? 'Analyse...' : 'Analyse IA'}
           </button>
           <button 
             onClick={() => handleOpenForm()}
-            className="flex items-center gap-2 px-6 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-black hover:bg-indigo-700 transition-all shadow-lg uppercase tracking-widest active:scale-95"
+            className="flex items-center gap-2 px-6 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-semibold hover:bg-indigo-700 transition-all shadow-lg active:scale-95"
           >
             <Plus size={20} strokeWidth={3} /> Nouveau Visiteur
           </button>
@@ -392,7 +392,7 @@ const Visitors: React.FC = () => {
         >
           <Card title="Visiteurs" subtitle="Volume global" className="group-hover:border-indigo-300">
             <div className="flex items-end justify-between">
-              <span className="text-3xl font-black text-slate-900">{stats.total}</span>
+              <span className="text-3xl font-bold text-slate-900">{stats.total}</span>
               <div className="w-12 h-12 rounded-2xl bg-indigo-50 flex items-center justify-center text-indigo-600 shadow-inner border border-indigo-100 group-hover:scale-110 transition-transform">
                 <Users size={24} />
               </div>
@@ -409,7 +409,7 @@ const Visitors: React.FC = () => {
         >
           <Card title="En Attente" subtitle="Alerte accueil" className="group-hover:border-amber-300">
             <div className="flex items-end justify-between">
-              <span className="text-3xl font-black text-amber-600">{stats.pending}</span>
+              <span className="text-3xl font-bold text-amber-600">{stats.pending}</span>
               <div className="w-12 h-12 rounded-2xl bg-amber-50 flex items-center justify-center text-amber-600 shadow-inner border border-amber-100 group-hover:scale-110 transition-transform">
                 <Clock size={24} />
               </div>
@@ -426,7 +426,7 @@ const Visitors: React.FC = () => {
         >
           <Card title="Suivi Actif" subtitle="Immersion Vinea" className="group-hover:border-blue-300">
             <div className="flex items-end justify-between">
-              <span className="text-3xl font-black text-blue-600">{stats.activeFollowUp}</span>
+              <span className="text-3xl font-bold text-blue-600">{stats.activeFollowUp}</span>
               <div className="w-12 h-12 rounded-2xl bg-blue-50 flex items-center justify-center text-blue-600 shadow-inner border border-blue-100 group-hover:scale-110 transition-transform">
                 <Activity size={24} />
               </div>
@@ -444,8 +444,8 @@ const Visitors: React.FC = () => {
           <Card title="Rétention" subtitle="Conversion finale" className="group-hover:border-emerald-300">
             <div className="flex items-end justify-between">
               <div className="flex flex-col">
-                <span className="text-3xl font-black text-emerald-600">{stats.membersCount}</span>
-                <span className="text-[10px] font-black text-emerald-600 uppercase mt-1">Taux : {stats.retentionRate}%</span>
+                <span className="text-3xl font-bold text-emerald-600">{stats.membersCount}</span>
+                <span className="text-xs font-semibold text-emerald-600 uppercase mt-1">Taux : {stats.retentionRate}%</span>
               </div>
               <div className="w-12 h-12 rounded-2xl bg-emerald-50 flex items-center justify-center text-emerald-600 shadow-inner border border-emerald-100 group-hover:scale-110 transition-transform">
                 <UserCheck size={24} />
@@ -462,7 +462,7 @@ const Visitors: React.FC = () => {
             <input 
               type="text" 
               placeholder="RECHERCHER UN VISITEUR..." 
-              className="w-full pl-12 pr-4 py-3 bg-white border border-slate-200 rounded-xl focus:ring-4 focus:ring-indigo-500/5 focus:border-indigo-300 outline-none text-xs font-black transition-all shadow-sm placeholder:text-slate-400/60 uppercase tracking-widest"
+              className="w-full pl-12 pr-4 py-3 bg-white border border-slate-200 rounded-xl focus:ring-4 focus:ring-indigo-500/5 focus:border-indigo-300 outline-none text-sm font-normal transition-all shadow-sm placeholder:text-slate-400/60"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
@@ -472,16 +472,16 @@ const Visitors: React.FC = () => {
           <select 
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="bg-white border border-slate-200 rounded-xl px-4 py-3 text-[10px] font-black text-slate-700 outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm uppercase tracking-widest appearance-none min-w-[160px] cursor-pointer hover:bg-slate-50 transition-all"
+            className="bg-white border border-slate-200 rounded-xl px-4 py-3 text-xs font-medium text-slate-700 outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm appearance-none min-w-[160px] cursor-pointer hover:bg-slate-50 transition-all"
           >
             <option value="Tous les statuts">Tous les statuts</option>
             <option value="Suivi Actif">Suivi Actif (Combo)</option>
             {availableStatuses.map(s => <option key={s} value={s}>{s}</option>)}
           </select>
           
-          <button onClick={() => { setSearchTerm(''); setStatusFilter('Tous les statuts'); setSortOrder('none'); }} className="flex items-center gap-2 px-4 py-3 bg-white border border-slate-200 rounded-xl text-[10px] font-black text-slate-500 hover:text-rose-500 transition-all shadow-sm uppercase tracking-widest active:scale-90" title="Réinitialiser"><RotateCcw size={18} /></button>
+          <button onClick={() => { setSearchTerm(''); setStatusFilter('Tous les statuts'); setSortOrder('none'); }} className="flex items-center gap-2 px-4 py-3 bg-white border border-slate-200 rounded-xl text-xs font-medium text-slate-500 hover:text-rose-500 transition-all shadow-sm active:scale-90" title="Réinitialiser"><RotateCcw size={18} /></button>
           <div className="h-6 w-px bg-slate-200 mx-1 hidden lg:block"></div>
-          <button onClick={handleExportVisitors} className="flex items-center gap-2 px-4 py-3 bg-white border border-slate-200 rounded-xl text-[10px] font-black text-slate-600 hover:bg-slate-50 shadow-sm uppercase tracking-widest transition-all group">
+          <button onClick={handleExportVisitors} className="flex items-center gap-2 px-4 py-3 bg-white border border-slate-200 rounded-xl text-xs font-medium text-slate-600 hover:bg-slate-50 shadow-sm transition-all group">
             <Download size={18} className="group-hover:translate-y-0.5 transition-transform" /> Exporter
           </button>
         </div>
@@ -489,13 +489,13 @@ const Visitors: React.FC = () => {
 
       <AIAnalysis analysis={analysis} isLoading={isAnalyzing} />
 
-      <Card className="p-0 overflow-hidden border-slate-200 shadow-sm rounded-[2.5rem]">
+      <Card className="p-0 overflow-hidden border-slate-200 shadow-sm rounded-2xl">
         <div className="overflow-x-auto custom-scrollbar">
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-slate-50/50 border-b border-slate-100">
                 <th 
-                  className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] cursor-pointer hover:text-indigo-600 transition-colors group"
+                  className="px-8 py-5 text-xs font-medium text-slate-500 cursor-pointer hover:text-indigo-600 transition-colors group"
                   onClick={toggleSort}
                 >
                   <div className="flex items-center gap-2">
@@ -505,10 +505,10 @@ const Visitors: React.FC = () => {
                     {sortOrder === 'none' && <ArrowUpDown size={12} className="opacity-0 group-hover:opacity-100" />}
                   </div>
                 </th>
-                <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.3em]">Passage</th>
-                <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.3em]">Statut Suivi</th>
-                <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.3em]">Contact</th>
-                <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] text-right">Actions</th>
+                <th className="px-8 py-5 text-xs font-medium text-slate-500">Passage</th>
+                <th className="px-8 py-5 text-xs font-medium text-slate-500">Statut Suivi</th>
+                <th className="px-8 py-5 text-xs font-medium text-slate-500">Contact</th>
+                <th className="px-8 py-5 text-xs font-medium text-slate-500 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -524,25 +524,25 @@ const Visitors: React.FC = () => {
                         className="group-hover:scale-105 transition-transform shadow-sm border border-white/60"
                       />
                       <div className="min-w-0">
-                        <p className="text-sm font-black text-slate-900 group-hover:text-indigo-600 transition-colors truncate tracking-tight">
+                        <p className="text-sm font-semibold text-slate-900 group-hover:text-indigo-600 transition-colors truncate tracking-tight">
                           {formatFirstName(visitor.firstName)} <span className="uppercase">{visitor.lastName}</span>
                         </p>
                         <div className="flex items-center gap-2 mt-0.5">
-                          <span className="text-[10px] text-slate-400 font-bold uppercase tracking-[0.2em]">{visitor.source}</span>
-                          {visitor.parrainId && <span className="text-[8px] font-black text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-100 flex items-center gap-1"><ShieldCheck size={10}/> Parrainé</span>}
+                          <span className="text-xs text-slate-400 font-bold">{visitor.source}</span>
+                          {visitor.parrainId && <span className="text-xs font-semibold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-100 flex items-center gap-1"><ShieldCheck size={10}/> Parrainé</span>}
                         </div>
                       </div>
                     </div>
                   </td>
                   <td className="px-8 py-5">
                      <div className="space-y-0.5">
-                        <p className="text-xs font-black text-slate-700 uppercase">{new Date(visitor.visitDate).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' })}</p>
-                        <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest truncate max-w-[150px]">{visitor.service}</p>
+                        <p className="text-xs font-medium text-slate-700">{new Date(visitor.visitDate).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' })}</p>
+                        <p className="text-xs text-slate-400 truncate max-w-[150px]">{visitor.service}</p>
                      </div>
                   </td>
                   <td className="px-8 py-5">
                     <span className={cn(
-                      "inline-flex items-center gap-1.5 text-[9px] font-black px-2.5 py-1 rounded-lg uppercase tracking-widest shadow-sm border",
+                      "inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-lg shadow-sm border",
                       visitor.status === VisitorStatus.EN_ATTENTE ? "bg-amber-50 text-amber-600 border-amber-100" : 
                       visitor.status === VisitorStatus.MEMBRE ? "bg-emerald-50 text-emerald-600 border-emerald-100" : 
                       "bg-indigo-50 text-indigo-600 border-indigo-100"
@@ -552,8 +552,8 @@ const Visitors: React.FC = () => {
                   </td>
                   <td className="px-8 py-5">
                     <div className="space-y-1">
-                      <div className="flex items-center gap-2 text-xs font-black text-slate-700"><Phone size={12} className="text-slate-300" /><span>{visitor.phone ? formatPhone(visitor.phone) : '---'}</span></div>
-                      {visitor.whatsappPhone && <div className="flex items-center gap-2 text-xs font-bold text-emerald-600"><Zap size={12} className="text-emerald-300" /><span>{formatPhone(visitor.whatsappPhone)}</span></div>}
+                      <div className="flex items-center gap-2 text-xs font-medium text-slate-700"><Phone size={12} className="text-slate-300" /><span>{visitor.phone ? formatPhone(visitor.phone) : '---'}</span></div>
+                      {visitor.whatsappPhone && <div className="flex items-center gap-2 text-xs font-medium text-emerald-600"><Zap size={12} className="text-emerald-300" /><span>{formatPhone(visitor.whatsappPhone)}</span></div>}
                     </div>
                   </td>
                   <td className="px-8 py-5 text-right">
@@ -566,7 +566,7 @@ const Visitors: React.FC = () => {
               )) : (
                 <tr>
                   <td colSpan={5} className="px-8 py-24 text-center">
-                    <div className="flex flex-col items-center gap-3 text-slate-400 opacity-30"><UserPlus size={48} /><p className="text-sm font-black uppercase tracking-widest">Aucun Visiteur Enregistré</p></div>
+                    <div className="flex flex-col items-center gap-3 text-slate-400 opacity-30"><UserPlus size={48} /><p className="text-sm font-medium">Aucun Visiteur Enregistré</p></div>
                   </td>
                 </tr>
               )}
@@ -596,48 +596,48 @@ const Visitors: React.FC = () => {
       {isFormOpen && (
         <div className="fixed inset-0 z-[180] flex items-center justify-center p-4 overflow-hidden">
           <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity" onClick={() => setIsFormOpen(false)}></div>
-          <div className="relative w-full max-w-lg bg-white shadow-2xl animate-in zoom-in-95 duration-300 flex flex-col rounded-[3rem] overflow-hidden max-h-[90vh]">
+          <div className="relative w-full max-w-lg bg-white shadow-2xl animate-in zoom-in-95 duration-300 flex flex-col rounded-2xl overflow-hidden max-h-[90vh]">
             <div className="px-8 py-8 border-b border-slate-100 flex items-center justify-between bg-indigo-600 text-white shrink-0 relative overflow-hidden">
               <div className="absolute top-0 right-0 p-6 opacity-10"><UserPlus size={160} /></div>
               <div className="relative z-10">
-                <h3 className="text-xl font-black tracking-tighter uppercase">{editingVisitor ? 'Mise à jour' : 'Accueil Visiteur'}</h3>
-                <p className="text-[10px] font-black text-indigo-100 uppercase tracking-widest mt-1 opacity-80">Cycle d'Intégration Vinea</p>
+                <h3 className="text-xl font-semibold tracking-tight">{editingVisitor ? 'Mise à jour' : 'Accueil Visiteur'}</h3>
+                <p className="text-xs text-indigo-200 mt-1 opacity-80">Cycle d'Intégration Vinea</p>
               </div>
               <button onClick={() => setIsFormOpen(false)} className="relative z-10 p-2 hover:bg-white/10 rounded-full transition-colors"><X size={24} /></button>
             </div>
             
             <form onSubmit={handleSaveVisitor} className="flex-1 overflow-y-auto p-8 space-y-6 custom-scrollbar bg-slate-50/30">
-              <div className="bg-white p-6 rounded-[2rem] border border-slate-200 shadow-sm space-y-5">
-                <div className="flex items-center gap-2 mb-1"><div className="w-1.5 h-4 bg-indigo-600 rounded-full"></div><h4 className="text-[10px] font-black text-slate-900 uppercase tracking-widest">Identité Civile</h4></div>
+              <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-5">
+                <div className="flex items-center gap-2 mb-1"><div className="w-1.5 h-4 bg-indigo-600 rounded-full"></div><h4 className="text-xs font-medium text-slate-700">Identité Civile</h4></div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="space-y-1.5"><label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Prénoms</label><input type="text" required value={formData.firstName} onChange={(e) => setFormData({...formData, firstName: formatFirstName(e.target.value)})} placeholder="Prénoms" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:border-indigo-400 outline-none text-xs font-black transition-all" /></div>
-                  <div className="space-y-1.5"><label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Nom</label><input type="text" required value={formData.lastName} onChange={(e) => setFormData({...formData, lastName: e.target.value.toUpperCase()})} placeholder="NOM DE FAMILLE" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:border-indigo-400 outline-none text-xs font-black uppercase transition-all" /></div>
+                  <div className="space-y-1.5"><label className="text-xs font-medium text-slate-500 ml-1">Prénoms</label><input type="text" required value={formData.firstName} onChange={(e) => setFormData({...formData, firstName: formatFirstName(e.target.value)})} placeholder="Prénoms" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:border-indigo-400 outline-none text-sm font-normal transition-all" /></div>
+                  <div className="space-y-1.5"><label className="text-xs font-medium text-slate-500 ml-1">Nom</label><input type="text" required value={formData.lastName} onChange={(e) => setFormData({...formData, lastName: e.target.value.toUpperCase()})} placeholder="NOM DE FAMILLE" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:border-indigo-400 outline-none text-sm font-normal transition-all" /></div>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-1.5"><label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Sexe</label><select value={formData.gender} onChange={(e) => setFormData({...formData, gender: e.target.value as any})} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none text-xs font-black uppercase cursor-pointer"><option value="Masculin">Masculin</option><option value="Féminin">Féminin</option></select></div>
-                  <div className="space-y-1.5"><label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Parcours</label><select value={formData.status} onChange={(e) => setFormData({...formData, status: e.target.value as VisitorStatus})} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none text-[9px] font-black uppercase cursor-pointer">{availableStatuses.map(stat => <option key={stat} value={stat}>{stat}</option>)}</select></div>
+                  <div className="space-y-1.5"><label className="text-xs font-medium text-slate-500 ml-1">Sexe</label><select value={formData.gender} onChange={(e) => setFormData({...formData, gender: e.target.value as any})} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none text-sm font-normal cursor-pointer"><option value="Masculin">Masculin</option><option value="Féminin">Féminin</option></select></div>
+                  <div className="space-y-1.5"><label className="text-xs font-medium text-slate-500 ml-1">Parcours</label><select value={formData.status} onChange={(e) => setFormData({...formData, status: e.target.value as VisitorStatus})} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none text-sm font-normal cursor-pointer">{availableStatuses.map(stat => <option key={stat} value={stat}>{stat}</option>)}</select></div>
                 </div>
               </div>
 
-              <div className="bg-white p-6 rounded-[2rem] border border-slate-200 shadow-sm space-y-5">
-                <div className="flex items-center gap-2 mb-1"><div className="w-1.5 h-4 bg-emerald-500 rounded-full"></div><h4 className="text-[10px] font-black text-slate-900 uppercase tracking-widest">Parrainage</h4></div>
+              <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-5">
+                <div className="flex items-center gap-2 mb-1"><div className="w-1.5 h-4 bg-emerald-500 rounded-full"></div><h4 className="text-xs font-medium text-slate-700">Parrainage</h4></div>
                 <div className="relative">
-                  <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1 mb-1 block">Désigner un Mentor</label>
+                  <label className="text-xs font-medium text-slate-500 ml-1 mb-1 block">Désigner un Mentor</label>
                   <div className="relative group">
                     <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
-                    <input type="text" value={parrainSearch} onChange={(e) => { setParrainSearch(e.target.value); if (!e.target.value) setFormData({...formData, parrainId: ''}); }} placeholder="RECHERCHER UN MEMBRE..." className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:border-indigo-300 outline-none text-[10px] font-black uppercase transition-all" />
+                    <input type="text" value={parrainSearch} onChange={(e) => { setParrainSearch(e.target.value); if (!e.target.value) setFormData({...formData, parrainId: ''}); }} placeholder="RECHERCHER UN MEMBRE..." className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:border-indigo-300 outline-none text-sm font-normal transition-all" />
                     {parrainSearch && !formData.parrainId && (
                       <div className="absolute z-20 left-0 right-0 top-full mt-1 bg-white border border-slate-200 rounded-xl shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 max-h-40 overflow-y-auto">
                         {filteredMembersForParrain.map(m => (
-                          <button key={m.id} type="button" onClick={() => { setFormData({...formData, parrainId: m.id}); setParrainSearch(`${m.firstName} ${m.lastName}`); }} className="w-full text-left px-4 py-3 text-[10px] font-black uppercase hover:bg-indigo-50 border-b border-slate-50 last:border-0 flex items-center gap-3 transition-colors">
-                            <div className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center text-[9px] font-black text-slate-400 uppercase overflow-hidden">
+                          <button key={m.id} type="button" onClick={() => { setFormData({...formData, parrainId: m.id}); setParrainSearch(`${m.firstName} ${m.lastName}`); }} className="w-full text-left px-4 py-3 text-xs font-medium hover:bg-indigo-50 border-b border-slate-50 last:border-0 flex items-center gap-3 transition-colors">
+                            <div className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center text-xs font-medium text-slate-500 overflow-hidden">
                               {m.photoUrl ? (
                                 <img src={m.photoUrl} alt="" className="w-full h-full object-cover" />
                               ) : (
                                 getInitials(m.firstName, m.lastName)
                               )}
                             </div>
-                            <span className="text-[10px] font-black text-slate-700 uppercase">{m.firstName} {m.lastName}</span>
+                            <span className="text-xs font-medium text-slate-700">{m.firstName} {m.lastName}</span>
                           </button>
                         ))}
                       </div>
@@ -646,30 +646,30 @@ const Visitors: React.FC = () => {
                 </div>
               </div>
 
-              <div className="bg-white p-6 rounded-[2.5rem] border border-slate-200 shadow-sm space-y-5">
-                <div className="flex items-center gap-2 mb-1"><div className="w-1.5 h-4 bg-amber-500 rounded-full"></div><h4 className="text-[10px] font-black text-slate-900 uppercase tracking-widest">Profil de Qualification</h4></div>
+              <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-5">
+                <div className="flex items-center gap-2 mb-1"><div className="w-1.5 h-4 bg-amber-500 rounded-full"></div><h4 className="text-xs font-medium text-slate-700">Profil de Qualification</h4></div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {QUALIFICATION_ITEMS.map(item => {
                     const isSelected = !!(formData.qualification as any)?.[item.id];
-                    return (<button key={item.id} type="button" onClick={() => toggleQualification(item.id as keyof VisitorQualification)} className={cn("flex items-center justify-between px-3 py-2.5 rounded-xl border text-[9px] font-black uppercase transition-all text-left", isSelected ? "bg-indigo-600 border-indigo-600 text-white shadow-md shadow-indigo-100" : "bg-slate-50 border-slate-200 text-slate-400 hover:border-indigo-300")}><div className="flex items-center gap-2"><span className={cn(isSelected ? "text-white" : "text-slate-400")}>{item.icon}</span>{item.label}</div>{isSelected && <CheckCircle2 size={14} strokeWidth={3} />}</button>);
+                    return (<button key={item.id} type="button" onClick={() => toggleQualification(item.id as keyof VisitorQualification)} className={cn("flex items-center justify-between px-3 py-2.5 rounded-xl border text-xs font-medium transition-all text-left", isSelected ? "bg-indigo-600 border-indigo-600 text-white shadow-md shadow-indigo-100" : "bg-slate-50 border-slate-200 text-slate-400 hover:border-indigo-300")}><div className="flex items-center gap-2"><span className={cn(isSelected ? "text-white" : "text-slate-400")}>{item.icon}</span>{item.label}</div>{isSelected && <CheckCircle2 size={14} strokeWidth={3} />}</button>);
                   })}
                 </div>
               </div>
 
-              <div className="bg-white p-6 rounded-[2rem] border border-slate-200 shadow-sm space-y-5">
-                <div className="flex items-center gap-2 mb-1"><div className="w-1.5 h-4 bg-rose-500 rounded-full"></div><h4 className="text-[10px] font-black text-slate-900 uppercase tracking-widest">Détails Visite & Contact</h4></div>
+              <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-5">
+                <div className="flex items-center gap-2 mb-1"><div className="w-1.5 h-4 bg-rose-500 rounded-full"></div><h4 className="text-xs font-medium text-slate-700">Détails Visite & Contact</h4></div>
                 <div className="space-y-4">
-                  <div className="space-y-1.5"><label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Service visité</label><select value={formData.service} onChange={(e) => setFormData({...formData, service: e.target.value})} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none text-[9px] font-black uppercase shadow-inner">{availableServices.map(s => <option key={s} value={s}>{s}</option>)}</select></div>
+                  <div className="space-y-1.5"><label className="text-xs font-medium text-slate-500 ml-1">Service visité</label><select value={formData.service} onChange={(e) => setFormData({...formData, service: e.target.value})} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none text-sm font-normal shadow-inner">{availableServices.map(s => <option key={s} value={s}>{s}</option>)}</select></div>
                   <div className="grid grid-cols-2 gap-4">
-                     <div className="space-y-1.5"><label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Date</label><input type="date" value={formData.visitDate} onChange={(e) => setFormData({...formData, visitDate: e.target.value})} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none text-xs font-black shadow-inner" /></div>
-                     <div className="space-y-1.5"><label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Mobile</label><input type="tel" value={formData.phone} onChange={(e) => setFormData({...formData, phone: e.target.value})} placeholder="00 00 00 00 00" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none text-xs font-black shadow-inner" /></div>
+                     <div className="space-y-1.5"><label className="text-xs font-medium text-slate-500 ml-1">Date</label><input type="date" value={formData.visitDate} onChange={(e) => setFormData({...formData, visitDate: e.target.value})} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none text-sm font-normal shadow-inner" /></div>
+                     <div className="space-y-1.5"><label className="text-xs font-medium text-slate-500 ml-1">Mobile</label><input type="tel" value={formData.phone} onChange={(e) => setFormData({...formData, phone: e.target.value})} placeholder="00 00 00 00 00" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none text-sm font-normal shadow-inner" /></div>
                   </div>
                 </div>
               </div>
 
               <div className="pt-2 flex gap-3 pb-8">
-                <button type="button" onClick={() => setIsFormOpen(false)} className="flex-1 py-4 bg-white border border-slate-200 text-slate-500 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-50 transition-all">Annuler</button>
-                <button type="submit" disabled={isSubmitting} className="flex-1 py-4 bg-indigo-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-xl shadow-indigo-100 flex items-center justify-center gap-2">
+                <button type="button" onClick={() => setIsFormOpen(false)} className="flex-1 py-3.5 bg-white border border-slate-200 text-slate-500 rounded-2xl text-sm font-medium hover:bg-slate-50 transition-all">Annuler</button>
+                <button type="submit" disabled={isSubmitting} className="flex-1 py-3.5 bg-indigo-600 text-white rounded-2xl text-sm font-semibold shadow-xl shadow-indigo-100 flex items-center justify-center gap-2">
                   {isSubmitting ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />} 
                   Valider la Fiche
                 </button>
@@ -683,33 +683,33 @@ const Visitors: React.FC = () => {
       {isConvertModalOpen && visitorToConvert && (
         <div className="fixed inset-0 z-[300] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300" onClick={() => !isSubmitting && setIsConvertModalOpen(false)} />
-          <div className="relative w-full max-w-md bg-white rounded-[3rem] shadow-2xl p-10 text-center animate-in zoom-in-95 duration-200 border border-slate-100">
-            <div className="w-24 h-24 bg-emerald-50 text-emerald-600 rounded-[2.5rem] flex items-center justify-center mx-auto mb-8 shadow-inner border border-emerald-100/50 animate-pulse">
+          <div className="relative w-full max-w-md bg-white rounded-2xl shadow-2xl p-10 text-center animate-in zoom-in-95 duration-200 border border-slate-100">
+            <div className="w-24 h-24 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center mx-auto mb-8 shadow-inner border border-emerald-100/50 animate-pulse">
               <UserCheck size={48} strokeWidth={2.5} />
             </div>
-            <h3 className="text-2xl font-black text-slate-900 tracking-tight uppercase mb-4">Confirmer l'Intégration</h3>
+            <h3 className="text-2xl font-semibold text-slate-900 tracking-tight mb-4">Confirmer l'Intégration</h3>
             <p className="text-slate-500 text-sm font-medium leading-relaxed italic px-4">
               Voulez-vous transformer <strong>{formatFirstName(visitorToConvert.firstName)} {visitorToConvert.lastName.toUpperCase()}</strong> en membre actif de l'église ? 
             </p>
             
-            <div className="mt-8 bg-slate-50 rounded-[2rem] p-6 text-left border border-slate-100 space-y-3">
+            <div className="mt-8 bg-slate-50 rounded-xl p-6 text-left border border-slate-100 space-y-3">
                <div className="flex items-center gap-3">
                   <div className="w-6 h-6 rounded-lg bg-white border border-slate-200 flex items-center justify-center text-emerald-600">
                     <Check size={14} strokeWidth={3} />
                   </div>
-                  <span className="text-[10px] font-black text-slate-600 uppercase tracking-widest">Transfert des coordonnées</span>
+                  <span className="text-xs font-semibold text-slate-600">Transfert des coordonnées</span>
                </div>
                <div className="flex items-center gap-3">
                   <div className="w-6 h-6 rounded-lg bg-white border border-slate-200 flex items-center justify-center text-emerald-600">
                     <Check size={14} strokeWidth={3} />
                   </div>
-                  <span className="text-[10px] font-black text-slate-600 uppercase tracking-widest">Statut : Membre Actif</span>
+                  <span className="text-xs font-semibold text-slate-600">Statut : Membre Actif</span>
                </div>
                <div className="flex items-center gap-3">
                   <div className="w-6 h-6 rounded-lg bg-white border border-slate-200 flex items-center justify-center text-emerald-600">
                     <Check size={14} strokeWidth={3} />
                   </div>
-                  <span className="text-[10px] font-black text-slate-600 uppercase tracking-widest">Archivage historique visite</span>
+                  <span className="text-xs font-semibold text-slate-600">Archivage historique visite</span>
                </div>
             </div>
 
@@ -717,7 +717,7 @@ const Visitors: React.FC = () => {
               <button 
                 onClick={executeConversion} 
                 disabled={isSubmitting}
-                className="w-full py-5 bg-emerald-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-[0.25em] shadow-xl shadow-emerald-200 hover:bg-emerald-700 transition-all flex items-center justify-center gap-3"
+                className="w-full py-4 bg-emerald-600 text-white rounded-2xl text-sm font-semibold shadow-xl shadow-emerald-200 hover:bg-emerald-700 transition-all flex items-center justify-center gap-3"
               >
                 {isSubmitting ? <Loader2 size={18} className="animate-spin" /> : <UserCheck size={18} />} 
                 Confirmer l'intégration
@@ -725,7 +725,7 @@ const Visitors: React.FC = () => {
               <button 
                 onClick={() => setIsConvertModalOpen(false)} 
                 disabled={isSubmitting}
-                className="w-full py-4 bg-slate-50 text-slate-500 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-100 transition-all border border-slate-200"
+                className="w-full py-3.5 bg-slate-50 text-slate-500 rounded-2xl text-sm font-medium hover:bg-slate-100 transition-all border border-slate-200"
               >
                 Annuler
               </button>
@@ -738,12 +738,12 @@ const Visitors: React.FC = () => {
       {isDeleteConfirmOpen && (
         <div className="fixed inset-0 z-[300] flex items-center justify-center p-6">
           <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300" onClick={() => setIsDeleteConfirmOpen(false)} />
-          <div className="relative w-full max-w-sm bg-white rounded-[2.5rem] shadow-2xl p-10 text-center animate-in zoom-in-95 duration-200 border border-slate-100">
+          <div className="relative w-full max-w-sm bg-white rounded-2xl shadow-2xl p-10 text-center animate-in zoom-in-95 duration-200 border border-slate-100">
             <div className="w-20 h-20 bg-rose-50 text-rose-600 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-inner border border-rose-100/50"><AlertTriangle size={40} /></div>
-            <h3 className="text-xl font-black text-slate-900 leading-tight tracking-tight uppercase">Révoquer Fiche ?</h3>
+            <h3 className="text-xl font-semibold text-slate-900 leading-tight tracking-tight">Révoquer Fiche ?</h3>
             <div className="flex flex-col gap-3 mt-8">
-              <button onClick={handleConfirmDelete} className="w-full py-4 bg-rose-600 text-white rounded-2xl text-[10px] font-black hover:bg-rose-700 transition-all shadow-xl shadow-rose-200 uppercase tracking-widest">Confirmer</button>
-              <button onClick={() => setIsDeleteConfirmOpen(false)} className="w-full py-4 bg-slate-50 text-slate-500 rounded-2xl text-[10px] font-black hover:bg-slate-100 transition-all border border-slate-200 uppercase tracking-widest">Annuler</button>
+              <button onClick={handleConfirmDelete} className="w-full py-3.5 bg-rose-600 text-white rounded-2xl text-sm font-semibold">Confirmer</button>
+              <button onClick={() => setIsDeleteConfirmOpen(false)} className="w-full py-4 bg-slate-50 text-slate-500 rounded-2xl text-xs font-semibold hover:bg-slate-100 transition-all border border-slate-200">Annuler</button>
             </div>
           </div>
         </div>

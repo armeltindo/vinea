@@ -241,7 +241,6 @@ function attendanceToDb(a: any): Record<string, unknown> {
   if (a.date !== undefined) db.date = a.date;
   if (a.service !== undefined) db.service = a.service;
   if (a.total !== undefined) db.total = a.total ?? 0;
-  if (a.notes !== undefined) db.notes = a.notes ?? null;
   if (a.stats !== undefined && a.stats) {
     db.men = a.stats.men ?? 0;
     db.women = a.stats.women ?? 0;

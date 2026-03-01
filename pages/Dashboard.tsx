@@ -62,14 +62,6 @@ type ThemeKey = keyof typeof STAT_THEMES;
 // ── Couleurs des barres de progression ───────────────────────────────────────
 const PROGRESS_COLORS = ['#6366f1', '#0ea5e9', '#10b981', '#f59e0b', '#f43f5e'];
 
-// ── Salutation contextuelle ──────────────────────────────────────────────────
-function getGreeting() {
-  const h = new Date().getHours();
-  if (h < 12) return 'Bonjour';
-  if (h < 18) return 'Bon après-midi';
-  return 'Bonsoir';
-}
-
 // ── StatCard ─────────────────────────────────────────────────────────────────
 interface StatCardProps {
   label: string;
@@ -119,7 +111,7 @@ const StatCard: React.FC<StatCardProps> = ({ label, value, sub, icon, theme, onC
 };
 
 // ── Composant principal ───────────────────────────────────────────────────────
-const Dashboard: React.FC<DashboardProps> = ({ adminName }) => {
+const Dashboard: React.FC<DashboardProps> = ({ adminName: _adminName }) => {
   const navigate = useNavigate();
   const [analysis, setAnalysis] = useState<string | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -249,22 +241,11 @@ const Dashboard: React.FC<DashboardProps> = ({ adminName }) => {
     setIsAnalyzing(false);
   };
 
-  const greeting = getGreeting();
-  const todayLabel = new Date().toLocaleDateString('fr-FR', {
-    weekday: 'long', day: 'numeric', month: 'long',
-  });
-
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
 
       {/* ── En-tête ── */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h2 className="text-2xl font-bold text-slate-900 tracking-tight">
-            {greeting}, {adminName.split(' ')[0]} 👋
-          </h2>
-          <p className="text-sm text-slate-400 mt-1 capitalize">{todayLabel}</p>
-        </div>
         <div className="flex items-center gap-2 flex-wrap">
           <button
             onClick={handleAnalyze}

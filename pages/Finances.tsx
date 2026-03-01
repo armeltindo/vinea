@@ -62,7 +62,7 @@ import {
   ArrowLeft,
   AlertCircle
 } from 'lucide-react';
-import { formatCurrency } from '../constants';
+import { formatCurrency, formatAmount } from '../constants';
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip, Sector } from 'recharts';
 import { analyzePageData, generateDonationReceipt } from '../lib/gemini';
 import { cn, generateId, getInitials, formatFirstName } from '../utils';
@@ -882,7 +882,7 @@ const Finances: React.FC = () => {
                     </div>
                     <div className="text-right">
                        <p className={cn("text-lg font-semibold", op.type === OperationType.DEPENSE ? "text-rose-600" : "text-emerald-600")}>
-                         {op.type === OperationType.DEPENSE ? '-' : '+'}{formatCurrency(op.amount)}
+                         {op.type === OperationType.DEPENSE ? '-' : '+'}{formatAmount(op.amount)}
                        </p>
                        <div className="flex justify-end gap-2 mt-2 opacity-0 group-hover:opacity-100 transition-opacity">
                          {op.type === OperationType.REVENU && (member || op.externalName) && (

@@ -49,4 +49,8 @@ export const formatCurrency = (val: number) => {
   }).format(val).replace(/\u00a0/g, ' ') + ' ' + currency;
 };
 
+export const formatAmount = (val: number) =>
+  new Intl.NumberFormat('fr-FR', { useGrouping: true, minimumFractionDigits: 0 })
+    .format(val).replace(/\u00a0/g, ' ');
+
 // Les données sont maintenant chargées depuis Supabase via lib/db.ts

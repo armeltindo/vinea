@@ -393,7 +393,7 @@ const Settings: React.FC = () => {
   // moduleAccess: source de vérité pour le formulaire d'accès lecture/écriture/suppression
   const [isCredentialsModalOpen, setIsCredentialsModalOpen] = useState(false);
   const [newUserCredentials, setNewUserCredentials] = useState<{ email: string; fullName: string } | null>(null);
-  const [copiedField, setCopiedField] = useState<'email' | 'password' | null>(null);
+  const [copiedField, setCopiedField] = useState<'email' | 'password' | 'message' | null>(null);
 
   const [moduleAccess, setModuleAccess] = useState<Record<string, { r: boolean; w: boolean; d: boolean }>>({
     dashboard: { r: true, w: true, d: false },
@@ -1632,15 +1632,32 @@ const Settings: React.FC = () => {
                 </button>
               </div>
 
-              <p className="text-[10px] text-slate-400 text-center font-medium leading-relaxed px-2">
-                Le collaborateur devra changer ce mot de passe lors de sa première connexion.
-              </p>
+              {/* Message prêt-à-envoyer */}
+              <div className="rounded-2xl border border-slate-200 overflow-hidden">
+                <div className="flex items-center justify-between px-4 py-2.5 bg-slate-100 border-b border-slate-200">
+                  <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Message à envoyer</p>
+                  <button
+                    onClick={() => copyToClipboard(
+                      `Bonjour ${newUserCredentials.fullName},\n\nVous avez été ajouté(e) comme collaborateur sur la plateforme ${churchInfo.name || 'Vinea'}.\n\nVoici vos identifiants de connexion :\n📧 Email : ${newUserCredentials.email}\n🔑 Mot de passe : Discipolat\n\nBonne utilisation !`,
+                      'message'
+                    )}
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-white rounded-lg border border-slate-200 hover:bg-slate-50 transition-colors text-[10px] font-black text-slate-500 uppercase tracking-widest"
+                  >
+                    {copiedField === 'message'
+                      ? <><ClipboardCheck size={13} className="text-emerald-500" /><span className="text-emerald-500">Copié !</span></>
+                      : <><Copy size={13} /><span>Copier</span></>}
+                  </button>
+                </div>
+                <div className="px-4 py-3 bg-white text-[11px] text-slate-600 leading-relaxed whitespace-pre-line font-medium select-all">
+                  {`Bonjour ${newUserCredentials.fullName},\n\nVous avez été ajouté(e) comme collaborateur sur la plateforme ${churchInfo.name || 'Vinea'}.\n\nVoici vos identifiants de connexion :\n📧 Email : ${newUserCredentials.email}\n🔑 Mot de passe : Discipolat\n\nBonne utilisation !`}
+                </div>
+              </div>
 
               <button
                 onClick={() => setIsCredentialsModalOpen(false)}
                 className="w-full py-4 bg-indigo-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-indigo-100 hover:bg-indigo-700 transition-all"
               >
-                J'ai bien noté les identifiants
+                Fermer
               </button>
             </div>
           </div>

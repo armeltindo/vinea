@@ -392,7 +392,7 @@ const Settings: React.FC = () => {
 
   // moduleAccess: source de vérité pour le formulaire d'accès lecture/écriture/suppression
   const [isCredentialsModalOpen, setIsCredentialsModalOpen] = useState(false);
-  const [newUserCredentials, setNewUserCredentials] = useState<{ email: string; fullName: string } | null>(null);
+  const [newUserCredentials, setNewUserCredentials] = useState<{ email: string; fullName: string; needsConfirmation?: boolean } | null>(null);
   const [copiedField, setCopiedField] = useState<'email' | 'password' | 'message' | null>(null);
 
   const [moduleAccess, setModuleAccess] = useState<Record<string, { r: boolean; w: boolean; d: boolean }>>({
@@ -648,6 +648,7 @@ const Settings: React.FC = () => {
       upsertAdminUser({ id: newUser.id, full_name: newUser.fullName, email: newUser.email, role: newUser.role, status: newUser.status, avatar: newUser.avatar, last_active: newUser.lastActive, permissions: encodedPerms });
 
       // Créer le compte auth avec le mot de passe par défaut
+      let needsConfirmation = false;
       if (supabaseAdmin) {
         // Clé service role disponible → compte créé directement confirmé, connexion immédiate possible
         await supabaseAdmin.auth.admin.createUser({
@@ -657,6 +658,7 @@ const Settings: React.FC = () => {
         });
       } else {
         // Fallback : signUp classique (envoi d'un email de confirmation)
+        needsConfirmation = true;
         const { data: { session: adminSession } } = await supabase.auth.getSession();
         await supabase.auth.signUp({ email: newUser.email, password: 'Discipolat' });
         if (adminSession) {
@@ -667,7 +669,7 @@ const Settings: React.FC = () => {
         }
       }
       // Montrer les identifiants au Super Admin
-      setNewUserCredentials({ email: newUser.email, fullName: newUser.fullName });
+      setNewUserCredentials({ email: newUser.email, fullName: newUser.fullName, needsConfirmation });
       setIsCredentialsModalOpen(true);
     }
     setIsUserFormOpen(false);
@@ -1640,6 +1642,16 @@ const Settings: React.FC = () => {
                   {copiedField === 'password' ? <ClipboardCheck size={16} className="text-emerald-500" /> : <Copy size={16} className="text-indigo-400" />}
                 </button>
               </div>
+
+              {/* Avertissement email de confirmation */}
+              {newUserCredentials.needsConfirmation && (
+                <div className="flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-2xl px-4 py-3">
+                  <span className="text-amber-500 text-base mt-0.5">⚠️</span>
+                  <p className="text-xs text-amber-700 font-medium leading-relaxed">
+                    Un <strong>email de confirmation</strong> a été envoyé à ce collaborateur. Il devra cliquer sur le lien dans l'email avant de pouvoir se connecter.
+                  </p>
+                </div>
+              )}
 
               {/* Message prêt-à-envoyer */}
               <div className="rounded-2xl border border-slate-200 overflow-hidden">

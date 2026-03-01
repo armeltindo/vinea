@@ -437,7 +437,12 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
       const { data, error: authError } = await supabase.auth.signInWithPassword({ email, password });
 
       if (authError) {
-        setError('Identifiants invalides. Vérifiez votre email et mot de passe.');
+        const msg = authError.message?.toLowerCase() ?? '';
+        if (msg.includes('email not confirmed')) {
+          setError('Email non confirmé. Vérifiez votre boîte mail et cliquez sur le lien de confirmation avant de vous connecter.');
+        } else {
+          setError('Identifiants invalides. Vérifiez votre email et mot de passe.');
+        }
         setIsLoading(false);
         return;
       }

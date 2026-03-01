@@ -401,14 +401,18 @@ const Attendance: React.FC = () => {
   const handleAttendanceSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmittingAttendance(true);
-    const total = Number(attendanceForm.men) + Number(attendanceForm.women) + Number(attendanceForm.children);
+    const men = Number(attendanceForm.men) || 0;
+    const women = Number(attendanceForm.women) || 0;
+    const children = Number(attendanceForm.children) || 0;
+    const total = men + women + children;
+    const stats = { men, women, children, totalPresent: total, totalAbsent: attendanceForm.absentMembers.length };
     setTimeout(() => {
       if (editingRecordId) {
-        const updated = { ...attendanceForm, id: editingRecordId, total };
+        const updated = { ...attendanceForm, id: editingRecordId, total, stats };
         setHistory(prev => prev.map(h => h.id === editingRecordId ? updated : h));
-        updateAttendanceSession(editingRecordId, { ...attendanceForm, total, absentMembers: attendanceForm.absentMembers } as any);
+        updateAttendanceSession(editingRecordId, { ...attendanceForm, total, stats, absentMembers: attendanceForm.absentMembers } as any);
       } else {
-        const newEntry = { ...attendanceForm, id: generateId(), total };
+        const newEntry = { ...attendanceForm, id: generateId(), total, stats };
         setHistory([newEntry, ...history]);
         createAttendanceSession(newEntry as any);
       }

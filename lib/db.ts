@@ -211,33 +211,45 @@ function promiseToDb(p: Partial<DonationPromise>): Record<string, unknown> {
   return db;
 }
 
-function dbToAttendance(row: any): AttendanceSession {
+function dbToAttendance(row: any): any {
+  const men = row.men ?? 0;
+  const women = row.women ?? 0;
+  const children = row.children ?? 0;
   return {
     id: row.id,
     date: row.date,
     service: row.service,
-    total: row.total ?? undefined,
-    stats: (row.men !== undefined && row.men !== null) ? {
-      men: row.men ?? 0,
-      women: row.women ?? 0,
-      children: row.children ?? 0,
+    total: row.total ?? 0,
+    men,
+    women,
+    children,
+    notes: row.notes ?? '',
+    stats: {
+      men,
+      women,
+      children,
       totalPresent: row.total ?? 0,
       totalAbsent: (row.absent_members ?? []).length,
-    } : undefined,
+    },
     absentMembers: row.absent_members ?? [],
   };
 }
 
-function attendanceToDb(a: Partial<AttendanceSession>): Record<string, unknown> {
+function attendanceToDb(a: any): Record<string, unknown> {
   const db: Record<string, unknown> = {};
   if (a.id !== undefined) db.id = a.id;
   if (a.date !== undefined) db.date = a.date;
   if (a.service !== undefined) db.service = a.service;
   if (a.total !== undefined) db.total = a.total ?? 0;
+  if (a.notes !== undefined) db.notes = a.notes ?? null;
   if (a.stats !== undefined && a.stats) {
-    db.men = a.stats.men;
-    db.women = a.stats.women;
-    db.children = a.stats.children;
+    db.men = a.stats.men ?? 0;
+    db.women = a.stats.women ?? 0;
+    db.children = a.stats.children ?? 0;
+  } else {
+    if (a.men !== undefined) db.men = Number(a.men) ?? 0;
+    if (a.women !== undefined) db.women = Number(a.women) ?? 0;
+    if (a.children !== undefined) db.children = Number(a.children) ?? 0;
   }
   if (a.absentMembers !== undefined) db.absent_members = a.absentMembers;
   return db;

@@ -1374,48 +1374,6 @@ const Settings: React.FC = () => {
                   <div className="space-y-1.5"><label className="text-xs font-medium text-slate-500 ml-1">Nom complet</label><input type="text" required value={userFormData.fullName} onChange={(e) => setUserFormData({...userFormData, fullName: e.target.value})} className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl outline-none text-sm font-bold shadow-sm" /></div>
                   <div className="space-y-1.5"><label className="text-xs font-medium text-slate-500 ml-1">Email professionnel</label><input type="email" required value={userFormData.email} onChange={(e) => setUserFormData({...userFormData, email: e.target.value})} className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl outline-none text-sm font-bold shadow-sm" /></div>
                </div>
-               <div className="space-y-4">
-                  <div className="flex items-center justify-between border-b border-slate-200 pb-2">
-                    <h4 className="text-xs font-medium text-slate-700 flex items-center gap-2">
-                      <Shield size={14} className="text-indigo-600" /> Matrice des Permissions
-                    </h4>
-                    <div className="flex gap-2">
-                      <button type="button" onClick={() => setUserFormData({...userFormData, permissions: AVAILABLE_MODULES.map(m => m.id)})} className="text-xs font-semibold text-indigo-600 hover:underline">Tout activer</button>
-                      <button type="button" onClick={() => setUserFormData({...userFormData, permissions: ['dashboard', 'spiritual']})} className="text-xs font-semibold text-rose-500 hover:underline">Vider</button>
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    {AVAILABLE_MODULES.map((module) => {
-                      const isSelected = userFormData.permissions?.includes(module.id);
-                      return (
-                        <button
-                          key={module.id}
-                          type="button"
-                          onClick={() => togglePermission(module.id)}
-                          className={cn(
-                            "flex items-center justify-between p-4 rounded-2xl border transition-all text-left group",
-                            isSelected ? "bg-indigo-600 border-indigo-600 text-white shadow-lg shadow-indigo-100" : "bg-white border-slate-100 text-slate-500 hover:border-indigo-200"
-                          )}
-                        >
-                          <div className="flex items-center gap-3">
-                             <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center transition-colors", isSelected ? "bg-white/20" : "bg-slate-50 text-slate-400 group-hover:text-indigo-600")}>
-                                <module.icon size={16} />
-                             </div>
-                             <span className="text-xs font-semibold">{module.label}</span>
-                          </div>
-                          {isSelected && <Check size={14} strokeWidth={4} />}
-                        </button>
-                      );
-                    })}
-                  </div>
-               </div>
-               <div className="flex gap-3 pt-4">
-                  <button type="button" onClick={() => setIsUserFormOpen(false)} className="flex-1 py-4 bg-white border border-slate-200 text-slate-500 rounded-2xl text-xs font-medium">Annuler</button>
-                  <button type="submit" className="flex-1 py-4 bg-indigo-600 text-white rounded-2xl text-xs font-medium shadow-xl flex items-center justify-center gap-2">
-                     <Save size={16} /> Enregistrer
-                  </button>
-                </div>
-              </div>
 
               {/* Section permissions */}
               <div className="p-6 space-y-4">

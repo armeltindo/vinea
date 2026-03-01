@@ -41,8 +41,10 @@ import {
   TrendingUp,
   ArrowUpRight,
   ArrowDownRight,
-  BarChart2
+  BarChart2,
+  CreditCard
 } from 'lucide-react';
+import MemberCardModal from './MemberCardModal';
 import { Member, MemberStatus, Department, DepartmentActivity, ActivityStatus, FinancialRecord, AttendanceSession, OperationType } from '../types';
 import { formatPhone } from '../constants';
 import { cn, getInitials, getDisplayNickname, formatFirstName } from '../utils';
@@ -91,6 +93,7 @@ interface MemberDetailsProps {
 const MemberDetails: React.FC<MemberDetailsProps> = ({ member, isOpen, onClose, onEdit, onDelete, onPreviewPhoto }) => {
   if (!member) return null;
 
+  const [isCardModalOpen, setIsCardModalOpen] = useState(false);
   const [allMembers, setAllMembers] = useState<Member[]>([]);
   const [activities, setActivities] = useState<DepartmentActivity[]>([]);
   const [enrollments, setEnrollments] = useState<any[]>([]);
@@ -221,6 +224,7 @@ const MemberDetails: React.FC<MemberDetailsProps> = ({ member, isOpen, onClose, 
   };
 
   return (
+    <>
     <div className={cn(
       "fixed inset-0 z-[70] overflow-hidden transition-all duration-300 flex items-center justify-center p-4",
       isOpen ? "pointer-events-auto" : "pointer-events-none"
@@ -634,13 +638,19 @@ const MemberDetails: React.FC<MemberDetailsProps> = ({ member, isOpen, onClose, 
 
         {/* Fixed Footer Actions */}
         <div className="p-8 border-t border-slate-100 bg-white/80 backdrop-blur-md flex gap-3 shrink-0 z-20">
-          <button 
+          <button
+            onClick={() => setIsCardModalOpen(true)}
+            className="px-5 py-4 bg-slate-50 text-slate-600 border border-slate-200 rounded-2xl text-xs font-medium hover:bg-slate-100 transition-all flex items-center justify-center gap-2"
+          >
+            <CreditCard size={16} /> Carte
+          </button>
+          <button
             onClick={() => onEdit(member)}
             className="flex-1 py-4 bg-indigo-50 text-indigo-600 border border-indigo-100 rounded-2xl text-xs font-medium hover:bg-indigo-100 transition-all flex items-center justify-center gap-2"
           >
             <Edit size={16} /> Modifier Fiche
           </button>
-          <button 
+          <button
             onClick={() => onDelete(member.id)}
             className="px-6 py-4 bg-rose-50 text-rose-600 border border-rose-100 rounded-2xl text-xs font-medium hover:bg-rose-100 transition-all flex items-center justify-center gap-2"
           >
@@ -649,6 +659,13 @@ const MemberDetails: React.FC<MemberDetailsProps> = ({ member, isOpen, onClose, 
         </div>
       </div>
     </div>
+
+    <MemberCardModal
+      member={member}
+      isOpen={isCardModalOpen}
+      onClose={() => setIsCardModalOpen(false)}
+    />
+    </>
   );
 };
 

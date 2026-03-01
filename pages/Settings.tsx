@@ -385,8 +385,38 @@ const Settings: React.FC = () => {
   const [userToDelete, setUserToDelete] = useState<AdminUser | null>(null);
   const [editingUser, setEditingUser] = useState<AdminUser | null>(null);
   const [userFormData, setUserFormData] = useState<Partial<AdminUser>>({
-    fullName: '', email: '', role: 'Administrateur', status: 'Actif', permissions: ['dashboard']
+    fullName: '', email: '', role: 'Administrateur', status: 'Actif', permissions: ['dashboard:rw'],
   });
+
+  // moduleAccess: source de vérité pour le formulaire d'accès lecture/écriture
+  const [moduleAccess, setModuleAccess] = useState<Record<string, { r: boolean; w: boolean }>>({
+    dashboard: { r: true, w: true },
+    spiritual: { r: true, w: false },
+  });
+
+  /** 'members:rw' | 'members:r' | 'members' → { r, w } par module */
+  const parseModuleAccess = (perms: string[]): Record<string, { r: boolean; w: boolean }> => {
+    const result: Record<string, { r: boolean; w: boolean }> = {};
+    for (const p of perms) {
+      if (p.includes(':')) {
+        const [mod, acc] = p.split(':');
+        result[mod] = { r: acc.includes('r'), w: acc.includes('w') };
+      } else if (p) {
+        result[p] = { r: true, w: true }; // ancien format → accès complet
+      }
+    }
+    return result;
+  };
+
+  /** { r, w } par module → ['members:rw', 'finances:r', …] */
+  const encodeModuleAccess = (access: Record<string, { r: boolean; w: boolean }>): string[] =>
+    Object.entries(access)
+      .filter(([, v]) => v.r)
+      .map(([mod, v]) => (v.w ? `${mod}:rw` : `${mod}:r`));
+
+  /** Extrait l'ID de module depuis un token ('members:rw' → 'members') */
+  const modIdOf = (token: string) => (token.includes(':') ? token.split(':')[0] : token);
+  const isWriteToken = (token: string) => !token.includes(':') || token.endsWith(':rw');
 
   useEffect(() => {
     const load = async () => {
@@ -575,6 +605,7 @@ const Settings: React.FC = () => {
   const handleOpenEditUser = (user: AdminUser) => {
     setEditingUser(user);
     setUserFormData({ ...user });
+    setModuleAccess(parseModuleAccess(user.permissions));
     setIsUserFormOpen(true);
   };
 
@@ -589,19 +620,21 @@ const Settings: React.FC = () => {
 
   const handleSaveUser = (e: React.FormEvent) => {
     e.preventDefault();
+    const encodedPerms = encodeModuleAccess(moduleAccess);
     if (editingUser) {
-      const updated = { ...editingUser, ...userFormData } as AdminUser;
+      const updated = { ...editingUser, ...userFormData, permissions: encodedPerms } as AdminUser;
       setAdminUsers(adminUsers.map(u => u.id === editingUser.id ? updated : u));
-      upsertAdminUser({ id: updated.id, full_name: updated.fullName, email: updated.email, role: updated.role, status: updated.status, avatar: updated.avatar, last_active: updated.lastActive, permissions: updated.permissions });
+      upsertAdminUser({ id: updated.id, full_name: updated.fullName, email: updated.email, role: updated.role, status: updated.status, avatar: updated.avatar, last_active: updated.lastActive, permissions: encodedPerms });
     } else {
       const newUser: AdminUser = {
         ...userFormData as AdminUser,
+        permissions: encodedPerms,
         id: generateId(),
         avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${userFormData.fullName}`,
         lastActive: 'Jamais'
       };
       setAdminUsers([...adminUsers, newUser]);
-      upsertAdminUser({ id: newUser.id, full_name: newUser.fullName, email: newUser.email, role: newUser.role, status: newUser.status, avatar: newUser.avatar, last_active: newUser.lastActive, permissions: newUser.permissions });
+      upsertAdminUser({ id: newUser.id, full_name: newUser.fullName, email: newUser.email, role: newUser.role, status: newUser.status, avatar: newUser.avatar, last_active: newUser.lastActive, permissions: encodedPerms });
     }
     setIsUserFormOpen(false);
     setEditingUser(null);
@@ -873,7 +906,7 @@ const Settings: React.FC = () => {
                   <p className="text-xs text-slate-500 font-medium">Définissez précisément les droits de chaque collaborateur.</p>
                 </div>
                 <button 
-                  onClick={() => { setEditingUser(null); setUserFormData({ fullName: '', email: '', role: 'Administrateur', status: 'Actif', permissions: ['dashboard', 'spiritual'] }); setIsUserFormOpen(true); }}
+                  onClick={() => { setEditingUser(null); setUserFormData({ fullName: '', email: '', role: 'Administrateur', status: 'Actif', permissions: ['dashboard:rw', 'spiritual:r'] }); setModuleAccess({ dashboard: { r: true, w: true }, spiritual: { r: true, w: false } }); setIsUserFormOpen(true); }}
                   className="flex items-center gap-2 px-4 py-2.5 bg-indigo-600 text-white rounded-xl text-xs font-medium shadow-lg shadow-indigo-200"
                 >
                   <UserPlus size={16} /> Ajouter Collaborateur
@@ -915,17 +948,26 @@ const Settings: React.FC = () => {
                             </span>
                           </td>
                           <td className="px-6 py-4">
-                             <div className="flex flex-wrap gap-1 max-w-[200px]">
-                                {user.permissions.length === AVAILABLE_MODULES.length ? (
+                             <div className="flex flex-wrap gap-1 max-w-[240px]">
+                                {user.permissions.length >= AVAILABLE_MODULES.length ? (
                                   <span className="text-xs font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-100 uppercase">Tout l'ERP</span>
                                 ) : (
-                                  user.permissions.slice(0, 3).map(pId => (
-                                    <span key={pId} className="px-1.5 py-0.5 bg-slate-100 text-slate-500 rounded text-xs font-medium border border-slate-200">
-                                      {AVAILABLE_MODULES.find(m => m.id === pId)?.label}
-                                    </span>
-                                  ))
+                                  user.permissions.slice(0, 3).map(token => {
+                                    const id = modIdOf(token);
+                                    const canW = isWriteToken(token);
+                                    const mod = AVAILABLE_MODULES.find(m => m.id === id);
+                                    if (!mod) return null;
+                                    return (
+                                      <span key={token} className="flex items-center gap-1 px-1.5 py-0.5 bg-slate-50 text-slate-600 rounded text-[10px] font-medium border border-slate-200">
+                                        {mod.label}
+                                        <span className={cn('text-[8px] font-bold px-0.5 rounded', canW ? 'text-emerald-600 bg-emerald-50' : 'text-amber-600 bg-amber-50')}>
+                                          {canW ? 'L+É' : 'L'}
+                                        </span>
+                                      </span>
+                                    );
+                                  })
                                 )}
-                                {user.permissions.length > 3 && user.permissions.length !== AVAILABLE_MODULES.length && (
+                                {user.permissions.length > 3 && user.permissions.length < AVAILABLE_MODULES.length && (
                                   <span className="text-xs font-semibold text-slate-400 px-1.5 py-0.5">+{user.permissions.length - 3}</span>
                                 )}
                              </div>
@@ -1375,44 +1417,85 @@ const Settings: React.FC = () => {
                   <div className="space-y-1.5"><label className="text-xs font-medium text-slate-500 ml-1">Email professionnel</label><input type="email" required value={userFormData.email} onChange={(e) => setUserFormData({...userFormData, email: e.target.value})} className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl outline-none text-sm font-bold shadow-sm" /></div>
                </div>
 
-              {/* Section permissions */}
-              <div className="p-6 space-y-4">
+              {/* Section permissions Lecture / Écriture */}
+              <div className="space-y-3">
                 <div className="flex items-center justify-between">
                   <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] flex items-center gap-1.5">
-                    <Shield size={11} className="text-indigo-500" /> Modules accessibles
+                    <Shield size={11} className="text-indigo-500" /> Droits d'accès par module
                     <span className="ml-1 px-1.5 py-0.5 bg-indigo-100 text-indigo-600 rounded text-[9px] font-black">
-                      {userFormData.permissions?.length ?? 0}/{AVAILABLE_MODULES.length}
+                      {Object.values(moduleAccess).filter(v => v.r).length}/{AVAILABLE_MODULES.length}
                     </span>
                   </p>
                   <div className="flex items-center gap-3">
-                    <button type="button" onClick={() => setUserFormData({...userFormData, permissions: AVAILABLE_MODULES.map(m => m.id)})} className="text-[9px] font-black text-indigo-600 uppercase tracking-widest hover:underline">Tout</button>
+                    <button type="button" onClick={() => {
+                      const all: Record<string, { r: boolean; w: boolean }> = {};
+                      AVAILABLE_MODULES.forEach(m => { all[m.id] = { r: true, w: true }; });
+                      setModuleAccess(all);
+                    }} className="text-[9px] font-black text-indigo-600 uppercase tracking-widest hover:underline">Tout L+É</button>
                     <span className="text-slate-200 text-xs">|</span>
-                    <button type="button" onClick={() => setUserFormData({...userFormData, permissions: ['dashboard']})} className="text-[9px] font-black text-rose-400 uppercase tracking-widest hover:underline">Réinitialiser</button>
+                    <button type="button" onClick={() => {
+                      const reset: Record<string, { r: boolean; w: boolean }> = {};
+                      AVAILABLE_MODULES.forEach(m => { reset[m.id] = { r: false, w: false }; });
+                      reset['dashboard'] = { r: true, w: false };
+                      setModuleAccess(reset);
+                    }} className="text-[9px] font-black text-rose-400 uppercase tracking-widest hover:underline">Réinitialiser</button>
                   </div>
                 </div>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                  {AVAILABLE_MODULES.map((module) => {
-                    const isSelected = userFormData.permissions?.includes(module.id);
+
+                {/* En-tête du tableau */}
+                <div className="grid grid-cols-[1fr_72px_72px] items-center gap-x-2 px-3 pb-1 border-b border-slate-100">
+                  <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Module</span>
+                  <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest text-center">Lecture</span>
+                  <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest text-center">Écriture</span>
+                </div>
+
+                {/* Lignes du tableau */}
+                <div className="divide-y divide-slate-50 rounded-xl overflow-hidden border border-slate-100">
+                  {AVAILABLE_MODULES.map((mod, idx) => {
+                    const access = moduleAccess[mod.id] ?? { r: false, w: false };
                     return (
-                      <button
-                        key={module.id}
-                        type="button"
-                        onClick={() => togglePermission(module.id)}
-                        className={cn(
-                          "flex items-center gap-2 p-3 rounded-xl border transition-all text-left",
-                          isSelected
-                            ? "bg-indigo-600 border-indigo-600 text-white shadow-md shadow-indigo-100"
-                            : "bg-white border-slate-100 text-slate-400 hover:border-indigo-200 hover:text-indigo-500"
-                        )}
-                      >
-                        <div className={cn("w-6 h-6 rounded-lg flex items-center justify-center shrink-0", isSelected ? "bg-white/20" : "bg-slate-50")}>
-                          <module.icon size={13} />
+                      <div key={mod.id} className={cn('grid grid-cols-[1fr_72px_72px] items-center gap-x-2 px-3 py-2.5 transition-colors', idx % 2 === 0 ? 'bg-white' : 'bg-slate-50/50', access.r ? '' : 'opacity-50')}>
+                        {/* Nom du module */}
+                        <div className="flex items-center gap-2 min-w-0">
+                          <div className={cn('w-6 h-6 rounded-lg flex items-center justify-center shrink-0', access.r ? 'bg-indigo-50 text-indigo-500' : 'bg-slate-100 text-slate-400')}>
+                            <mod.icon size={12} />
+                          </div>
+                          <span className="text-xs font-semibold text-slate-700 truncate">{mod.label}</span>
                         </div>
-                        <span className="text-[9px] font-black uppercase tracking-tight leading-tight flex-1">{module.label}</span>
-                        {isSelected && <Check size={11} strokeWidth={3} className="shrink-0" />}
-                      </button>
+
+                        {/* Lecture */}
+                        <div className="flex justify-center">
+                          <button type="button" onClick={() => {
+                            const cur = moduleAccess[mod.id] ?? { r: false, w: false };
+                            const newR = !cur.r;
+                            setModuleAccess(prev => ({ ...prev, [mod.id]: { r: newR, w: newR ? cur.w : false } }));
+                          }} className={cn('w-6 h-6 rounded-md border-2 flex items-center justify-center transition-all', access.r ? 'bg-indigo-600 border-indigo-600 text-white' : 'bg-white border-slate-200 hover:border-indigo-300')}>
+                            {access.r && <Check size={11} strokeWidth={3} />}
+                          </button>
+                        </div>
+
+                        {/* Écriture */}
+                        <div className="flex justify-center">
+                          <button type="button" disabled={!access.r} onClick={() => {
+                            const cur = moduleAccess[mod.id] ?? { r: false, w: false };
+                            setModuleAccess(prev => ({ ...prev, [mod.id]: { ...cur, w: !cur.w } }));
+                          }} className={cn('w-6 h-6 rounded-md border-2 flex items-center justify-center transition-all', !access.r && 'cursor-not-allowed opacity-30', access.w ? 'bg-emerald-500 border-emerald-500 text-white' : 'bg-white border-slate-200 hover:border-emerald-300')}>
+                            {access.w && <Check size={11} strokeWidth={3} />}
+                          </button>
+                        </div>
+                      </div>
                     );
                   })}
+                </div>
+
+                {/* Légende */}
+                <div className="flex items-center gap-4 pt-1 px-1">
+                  <div className="flex items-center gap-1.5 text-[9px] text-slate-400 font-medium">
+                    <div className="w-3 h-3 rounded bg-indigo-600" /> Lecture — peut consulter
+                  </div>
+                  <div className="flex items-center gap-1.5 text-[9px] text-slate-400 font-medium">
+                    <div className="w-3 h-3 rounded bg-emerald-500" /> Écriture — peut créer, modifier, supprimer
+                  </div>
                 </div>
               </div>
 

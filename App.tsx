@@ -254,7 +254,8 @@ const App: React.FC = () => {
         setAdminAvatar(adminUser.avatar ?? '');
       }
     } else {
-      perms = adminUser.permissions?.length > 2 ? adminUser.permissions : ALL_PERMISSIONS;
+      const rawPerms: string[] = adminUser.permissions?.length > 2 ? adminUser.permissions : ALL_PERMISSIONS;
+      perms = rawPerms.map((p: string) => (p.includes(':') ? p.split(':')[0] : p));
       setCurrentUserRole(adminUser.role ?? 'Administrateur');
       setCurrentUserPermissions(perms);
       setAdminName(adminUser.full_name ?? 'Admin Vinea');

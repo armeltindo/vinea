@@ -154,7 +154,7 @@ const Members: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('Tous les statuts');
   const [roleFilter, setRoleFilter] = useState<string>('Tous les rôles');
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc' | 'none'>('none');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc' | 'none'>('asc');
 
   const [availableStatuses] = useState<string[]>(Object.values(MemberStatus));
   const [availableRoles] = useState<string[]>(Object.values(MemberType));

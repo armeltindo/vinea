@@ -37,6 +37,19 @@ export const getInitialsFromString = (fullName?: string): string => {
 };
 
 /**
+ * Formate un nom complet pour l'affichage header/sidebar.
+ * Ex: "Armel TINDO" → "Armel T."
+ */
+export const formatDisplayName = (fullName: string): string => {
+  const parts = fullName.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return fullName;
+  const prenom = parts[0].charAt(0).toUpperCase() + parts[0].slice(1).toLowerCase();
+  if (parts.length === 1) return prenom;
+  const initial = parts[parts.length - 1].charAt(0).toUpperCase() + '.';
+  return `${prenom} ${initial}`;
+};
+
+/**
  * Retourne le surnom s'il existe, sinon "Frère/Soeur + Prénom"
  */
 export const getDisplayNickname = (firstName: string, nickname: string | undefined, gender: 'Masculin' | 'Féminin'): string => {

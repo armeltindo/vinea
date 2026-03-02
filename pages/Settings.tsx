@@ -389,6 +389,8 @@ const Settings: React.FC = () => {
   const [userFormData, setUserFormData] = useState<Partial<AdminUser>>({
     fullName: '', email: '', role: 'Administrateur', status: 'Actif', permissions: ['dashboard:rw'],
   });
+  const [userFirstName, setUserFirstName] = useState('');
+  const [userLastName, setUserLastName] = useState('');
 
   // moduleAccess: source de vérité pour le formulaire d'accès lecture/écriture/suppression
   const [isCredentialsModalOpen, setIsCredentialsModalOpen] = useState(false);
@@ -616,6 +618,9 @@ const Settings: React.FC = () => {
   const handleOpenEditUser = (user: AdminUser) => {
     setEditingUser(user);
     setUserFormData({ ...user });
+    const parts = user.fullName.trim().split(/\s+/);
+    setUserFirstName(parts[0] || '');
+    setUserLastName(parts.slice(1).join(' ') || '');
     setModuleAccess(parseModuleAccess(user.permissions));
     setIsUserFormOpen(true);
   };
@@ -955,7 +960,7 @@ const Settings: React.FC = () => {
                   <p className="text-xs text-slate-500 font-medium">Définissez précisément les droits de chaque collaborateur.</p>
                 </div>
                 <button 
-                  onClick={() => { setEditingUser(null); setUserFormData({ fullName: '', email: '', role: 'Administrateur', status: 'Actif', permissions: ['dashboard:rw', 'spiritual:r'] }); setModuleAccess({ dashboard: { r: true, w: true, d: false }, spiritual: { r: true, w: false, d: false } }); setIsUserFormOpen(true); }}
+                  onClick={() => { setEditingUser(null); setUserFormData({ fullName: '', email: '', role: 'Administrateur', status: 'Actif', permissions: ['dashboard:rw', 'spiritual:r'] }); setUserFirstName(''); setUserLastName(''); setModuleAccess({ dashboard: { r: true, w: true, d: false }, spiritual: { r: true, w: false, d: false } }); setIsUserFormOpen(true); }}
                   className="flex items-center gap-2 px-4 py-2.5 bg-indigo-600 text-white rounded-xl text-xs font-medium shadow-lg shadow-indigo-200"
                 >
                   <UserPlus size={16} /> Ajouter Collaborateur
@@ -1463,9 +1468,10 @@ const Settings: React.FC = () => {
             </div>
             <form onSubmit={handleSaveUser} className="flex-1 overflow-y-auto p-8 space-y-8 custom-scrollbar bg-slate-50/30">
                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-1.5"><label className="text-xs font-medium text-slate-500 ml-1">Nom complet</label><input type="text" required value={userFormData.fullName} onChange={(e) => setUserFormData({...userFormData, fullName: e.target.value})} className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl outline-none text-sm font-bold shadow-sm" /></div>
-                  <div className="space-y-1.5"><label className="text-xs font-medium text-slate-500 ml-1">Email professionnel</label><input type="email" required value={userFormData.email} onChange={(e) => setUserFormData({...userFormData, email: e.target.value})} className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl outline-none text-sm font-bold shadow-sm" /></div>
+                  <div className="space-y-1.5"><label className="text-xs font-medium text-slate-500 ml-1">Prénom</label><input type="text" required value={userFirstName} onChange={(e) => { setUserFirstName(e.target.value); setUserFormData({...userFormData, fullName: `${e.target.value.trim()} ${userLastName.trim()}`.trim()}); }} className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl outline-none text-sm font-bold shadow-sm" placeholder="ex: Armel" /></div>
+                  <div className="space-y-1.5"><label className="text-xs font-medium text-slate-500 ml-1">Nom</label><input type="text" required value={userLastName} onChange={(e) => { setUserLastName(e.target.value); setUserFormData({...userFormData, fullName: `${userFirstName.trim()} ${e.target.value.trim()}`.trim()}); }} className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl outline-none text-sm font-bold shadow-sm" placeholder="ex: TINDO" /></div>
                </div>
+               <div className="space-y-1.5"><label className="text-xs font-medium text-slate-500 ml-1">Email professionnel</label><input type="email" required value={userFormData.email} onChange={(e) => setUserFormData({...userFormData, email: e.target.value})} className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl outline-none text-sm font-bold shadow-sm" /></div>
 
               {/* Section permissions Lecture / Écriture */}
               <div className="space-y-3">

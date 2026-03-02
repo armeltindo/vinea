@@ -47,7 +47,7 @@ import {
   ArrowRight,
   Menu
 } from 'lucide-react';
-import { cn, formatFirstName } from './utils';
+import { cn, formatFirstName, formatDisplayName } from './utils';
 import { Notification, NotificationSettings, Member, Visitor, AttendanceSession, VisitorStatus } from './types';
 
 const tabToPath = (tab: string) => tab === 'dashboard' ? '/' : `/${tab}`;
@@ -250,7 +250,7 @@ const App: React.FC = () => {
       perms = ALL_PERMISSIONS;
       setCurrentUserPermissions(perms);
       if (adminUser) {
-        setAdminName(adminUser.full_name ?? 'Admin Vinea');
+        setAdminName(formatDisplayName(adminUser.full_name ?? 'Admin Vinea'));
         setAdminAvatar(adminUser.avatar ?? '');
       }
     } else {
@@ -258,7 +258,7 @@ const App: React.FC = () => {
       perms = rawPerms.map((p: string) => (p.includes(':') ? p.split(':')[0] : p));
       setCurrentUserRole(adminUser.role ?? 'Administrateur');
       setCurrentUserPermissions(perms);
-      setAdminName(adminUser.full_name ?? 'Admin Vinea');
+      setAdminName(formatDisplayName(adminUser.full_name ?? 'Admin Vinea'));
       setAdminAvatar(adminUser.avatar ?? `https://api.dicebear.com/7.x/avataaars/svg?seed=${email}`);
     }
   };
@@ -311,7 +311,7 @@ const App: React.FC = () => {
     // Mettre à jour nom/avatar dans le header et la sidebar quand le profil est modifié dans Settings
     const handleProfileUpdated = (e: Event) => {
       const { fullName, avatar } = (e as CustomEvent).detail ?? {};
-      if (fullName) setAdminName(fullName);
+      if (fullName) setAdminName(formatDisplayName(fullName));
       if (avatar) setAdminAvatar(avatar);
     };
     window.addEventListener('vinea_profile_updated', handleProfileUpdated);
@@ -345,7 +345,7 @@ const App: React.FC = () => {
     const decoded = permissions.map((p: string) => (p.includes(':') ? p.split(':')[0] : p));
     const finalPermissions = decoded.includes('spiritual') ? decoded : [...decoded, 'spiritual'];
     setCurrentUserPermissions(finalPermissions);
-    if (name) setAdminName(name);
+    if (name) setAdminName(formatDisplayName(name));
   };
 
   const handleConfirmLogout = async () => {

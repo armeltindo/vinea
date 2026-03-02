@@ -338,6 +338,8 @@ const Settings: React.FC = () => {
     email: 'admin@vinea.org',
     avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Admin'
   });
+  const [adminFirstName, setAdminFirstName] = useState('Administrateur');
+  const [adminLastName, setAdminLastName] = useState('Vinea');
 
   const [notificationSettings, setNotificationSettings] = useState<NotificationSettings>({
     enableBirthdays: true,
@@ -487,6 +489,9 @@ const Settings: React.FC = () => {
         const me = mappedUsers.find((u: any) => u.email.toLowerCase() === currentEmail.toLowerCase());
         if (me) {
           setAdminInfo({ fullName: me.fullName, role: me.role, email: me.email, avatar: me.avatar });
+          const _parts = me.fullName.trim().split(/\s+/);
+          setAdminFirstName(_parts[0] || '');
+          setAdminLastName(_parts.slice(1).join(' ') || '');
           adminInfoLoaded.current = true;
           currentAdminId.current = me.id;
           // Synchroniser le header et la sidebar dès le chargement de Settings
@@ -1267,9 +1272,10 @@ const Settings: React.FC = () => {
                    </div>
                    <div className="flex-1 w-full space-y-6">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                         <div className="space-y-1.5"><label className="text-xs font-medium text-slate-500 ml-1">Nom Complet</label><input type="text" value={adminInfo.fullName} onChange={(e) => setAdminInfo({...adminInfo, fullName: e.target.value})} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold focus:bg-white transition-all shadow-sm" /></div>
-                         <div className="space-y-1.5"><label className="text-xs font-medium text-slate-500 ml-1">Adresse Email</label><input type="email" value={adminInfo.email} onChange={(e) => setAdminInfo({...adminInfo, email: e.target.value})} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold focus:bg-white transition-all shadow-sm" /></div>
+                         <div className="space-y-1.5"><label className="text-xs font-medium text-slate-500 ml-1">Prénom</label><input type="text" value={adminFirstName} onChange={(e) => { setAdminFirstName(e.target.value); setAdminInfo({...adminInfo, fullName: `${e.target.value.trim()} ${adminLastName.trim()}`.trim()}); }} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold focus:bg-white transition-all shadow-sm" placeholder="ex: Armel" /></div>
+                         <div className="space-y-1.5"><label className="text-xs font-medium text-slate-500 ml-1">Nom</label><input type="text" value={adminLastName} onChange={(e) => { setAdminLastName(e.target.value); setAdminInfo({...adminInfo, fullName: `${adminFirstName.trim()} ${e.target.value.trim()}`.trim()}); }} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold focus:bg-white transition-all shadow-sm" placeholder="ex: TINDO" /></div>
                       </div>
+                      <div className="space-y-1.5"><label className="text-xs font-medium text-slate-500 ml-1">Adresse Email</label><input type="email" value={adminInfo.email} onChange={(e) => setAdminInfo({...adminInfo, email: e.target.value})} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold focus:bg-white transition-all shadow-sm" /></div>
                       <div className="p-4 bg-indigo-50 border border-indigo-100 rounded-2xl flex items-center justify-between shadow-sm">
                          <div className="flex items-center gap-3">
                            <ShieldCheck size={20} className="text-indigo-600" />

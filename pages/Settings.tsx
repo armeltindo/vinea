@@ -683,10 +683,16 @@ const Settings: React.FC = () => {
     });
   };
 
-  const confirmDeleteUser = () => {
+  const confirmDeleteUser = async () => {
     if (userToDelete) {
       setAdminUsers(adminUsers.filter(u => u.id !== userToDelete.id));
-      deleteAdminUser(userToDelete.id);
+      await deleteAdminUser(userToDelete.id);
+      // Supprimer aussi le compte Supabase Auth
+      if (supabaseAdmin && userToDelete.email) {
+        const { data: { users } } = await supabaseAdmin.auth.admin.listUsers({ perPage: 1000 });
+        const authUser = users.find(u => u.email === userToDelete.email);
+        if (authUser) await supabaseAdmin.auth.admin.deleteUser(authUser.id);
+      }
       setIsUserDeleteModalOpen(false);
       setUserToDelete(null);
     }

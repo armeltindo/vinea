@@ -342,7 +342,8 @@ const App: React.FC = () => {
   const handleLogin = (email: string, role: string, permissions: string[], name?: string) => {
     setIsAuthenticated(true);
     setCurrentUserRole(role);
-    const finalPermissions = permissions.includes('spiritual') ? permissions : [...permissions, 'spiritual'];
+    const decoded = permissions.map((p: string) => (p.includes(':') ? p.split(':')[0] : p));
+    const finalPermissions = decoded.includes('spiritual') ? decoded : [...decoded, 'spiritual'];
     setCurrentUserPermissions(finalPermissions);
     if (name) setAdminName(name);
   };

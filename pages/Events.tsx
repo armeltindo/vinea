@@ -2,40 +2,45 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { usePermissions } from '../context/PermissionsContext';
 import Card from '../components/Card';
 import AIAnalysis from '../components/AIAnalysis';
-import { 
-  Calendar, 
-  Plus, 
-  MapPin, 
-  Users, 
-  Sparkles, 
-  ChevronRight, 
-  Clock, 
-  Tag, 
+import {
+  Calendar,
+  Plus,
+  MapPin,
+  Users,
+  Sparkles,
+  ChevronRight,
+  Clock,
+  Tag,
   TrendingUp,
   Ticket,
-  Target, 
-  DollarSign, 
-  Search, 
-  Filter, 
-  X, 
-  Save, 
-  ArrowLeft, 
-  CalendarDays, 
-  Loader2, 
-  Trash2, 
-  Edit, 
-  Receipt, 
-  AlertCircle, 
-  CheckCircle2, 
-  ArrowUpRight, 
-  PlusCircle, 
-  Settings2, 
-  Check
+  Target,
+  DollarSign,
+  Search,
+  Filter,
+  X,
+  Save,
+  ArrowLeft,
+  CalendarDays,
+  Loader2,
+  Trash2,
+  Edit,
+  Receipt,
+  AlertCircle,
+  CheckCircle2,
+  ArrowUpRight,
+  PlusCircle,
+  Settings2,
+  Check,
+  Globe,
+  ThumbsUp,
+  ThumbsDown,
+  RotateCcw
 } from 'lucide-react';
 import { analyzePageData } from '../lib/gemini';
 import { formatCurrency, DEPARTMENTS } from '../constants';
 import { cn, generateId } from '../utils';
-import { getChurchEvents, createChurchEvent, updateChurchEvent, deleteChurchEvent, getAppConfig, setAppConfig } from '../lib/db';
+import { getChurchEvents, createChurchEvent, updateChurchEvent, deleteChurchEvent, getAppConfig, setAppConfig, createDepartmentActivity, deleteDepartmentActivity } from '../lib/db';
+import { ActivityStatus } from '../types';
 
 interface Expense {
   id: string;
@@ -76,6 +81,80 @@ interface TeamAssignment {
   status: 'Confirmé' | 'En attente' | 'Prêt';
 }
 
+// ─── Calcul des fêtes internationales ───────────────────────────────────────
+
+interface Holiday {
+  id: string;
+  title: string;
+  date: string;
+  emoji: string;
+}
+
+function computeEaster(year: number): Date {
+  const a = year % 19, b = Math.floor(year / 100), c = year % 100;
+  const d = Math.floor(b / 4), e = b % 4, f = Math.floor((b + 8) / 25);
+  const g = Math.floor((b - f + 1) / 3);
+  const h = (19 * a + b - d - g + 15) % 30;
+  const i = Math.floor(c / 4), k = c % 4;
+  const l = (32 + 2 * e + 2 * i - h - k) % 7;
+  const m = Math.floor((a + 11 * h + 22 * l) / 451);
+  const month = Math.floor((h + l - 7 * m + 114) / 31) - 1;
+  const day = ((h + l - 7 * m + 114) % 31) + 1;
+  return new Date(year, month, day);
+}
+
+function addDays(d: Date, n: number): Date {
+  return new Date(d.getTime() + n * 86400000);
+}
+
+function getNthWeekday(year: number, month: number, weekday: number, n: number): Date {
+  const first = new Date(year, month, 1);
+  let diff = (weekday - first.getDay() + 7) % 7;
+  if (n > 1) diff += 7 * (n - 1);
+  return new Date(year, month, 1 + diff);
+}
+
+function getInternationalHolidays(year: number): Holiday[] {
+  const fmt = (d: Date) => d.toISOString().split('T')[0];
+  const easter = computeEaster(year);
+  const pentecote = addDays(easter, 49);
+  const lastSundayMay = (() => {
+    const d = new Date(year, 5, 0);
+    while (d.getDay() !== 0) d.setDate(d.getDate() - 1);
+    return d;
+  })();
+  const fetesMeres = lastSundayMay.getTime() === pentecote.getTime()
+    ? getNthWeekday(year, 5, 0, 1)
+    : lastSundayMay;
+  const fetesPeres = getNthWeekday(year, 5, 0, 3);
+  return [
+    { id: 'new_year',        title: "Jour de l'An",                           date: fmt(new Date(year, 0, 1)),    emoji: '🎆' },
+    { id: 'epiphanie',       title: 'Épiphanie',                              date: fmt(new Date(year, 0, 6)),    emoji: '👑' },
+    { id: 'saint_valentin',  title: 'Saint-Valentin',                         date: fmt(new Date(year, 1, 14)),   emoji: '❤️' },
+    { id: 'journee_femme',   title: 'Journée Internationale de la Femme',     date: fmt(new Date(year, 2, 8)),    emoji: '👩' },
+    { id: 'paques',          title: 'Dimanche de Pâques',                     date: fmt(easter),                  emoji: '🐣' },
+    { id: 'lundi_paques',    title: 'Lundi de Pâques',                        date: fmt(addDays(easter, 1)),      emoji: '🐰' },
+    { id: 'fete_travail',    title: 'Fête du Travail',                        date: fmt(new Date(year, 4, 1)),    emoji: '⚒️' },
+    { id: 'victoire_1945',   title: 'Victoire 1945',                          date: fmt(new Date(year, 4, 8)),    emoji: '✌️' },
+    { id: 'fete_afrique',    title: "Journée de l'Afrique",                   date: fmt(new Date(year, 4, 25)),   emoji: '🌍' },
+    { id: 'ascension',       title: 'Ascension',                              date: fmt(addDays(easter, 39)),     emoji: '✨' },
+    { id: 'fetes_meres',     title: 'Fête des Mères',                         date: fmt(fetesMeres),              emoji: '🌸' },
+    { id: 'lundi_pentecote', title: 'Lundi de Pentecôte',                     date: fmt(addDays(easter, 50)),     emoji: '🕊️' },
+    { id: 'fetes_peres',     title: 'Fête des Pères',                         date: fmt(fetesPeres),              emoji: '👨' },
+    { id: 'fete_nationale',  title: 'Fête Nationale',                         date: fmt(new Date(year, 6, 14)),   emoji: '🎉' },
+    { id: 'assomption',      title: 'Assomption',                             date: fmt(new Date(year, 7, 15)),   emoji: '🌿' },
+    { id: 'toussaint',       title: 'Toussaint',                              date: fmt(new Date(year, 10, 1)),   emoji: '🕯️' },
+    { id: 'armistice',       title: 'Armistice',                              date: fmt(new Date(year, 10, 11)),  emoji: '🕊️' },
+    { id: 'journee_enfance', title: "Journée Mondiale de l'Enfance",          date: fmt(new Date(year, 10, 20)),  emoji: '🧒' },
+    { id: 'noel',            title: 'Noël',                                   date: fmt(new Date(year, 11, 25)),  emoji: '🎄' },
+    { id: 'saint_etienne',   title: 'Saint-Étienne',                         date: fmt(new Date(year, 11, 26)),  emoji: '⭐' },
+  ].sort((a, b) => a.date.localeCompare(b.date));
+}
+
+type HolidayStatus = { status: 'validated' | 'rejected'; activityId?: string };
+
+// ─────────────────────────────────────────────────────────────────────────────
+
 const Events: React.FC = () => {
   const { canDelete } = usePermissions();
   const [events, setEvents] = useState<Event[]>([]);
@@ -83,19 +162,64 @@ const Events: React.FC = () => {
   const [assignments, setAssignments] = useState<TeamAssignment[]>([]);
   const [availableDepartments, setAvailableDepartments] = useState<string[]>(DEPARTMENTS);
 
+  // Fêtes internationales
+  const currentYear = new Date().getFullYear();
+  const holidays = useMemo(() => getInternationalHolidays(currentYear), [currentYear]);
+  const [holidayStatuses, setHolidayStatuses] = useState<Record<string, HolidayStatus>>({});
+  const [holidayLoading, setHolidayLoading] = useState<Record<string, boolean>>({});
+
   useEffect(() => {
     Promise.all([
       getChurchEvents(),
       getAppConfig('event_goals'),
       getAppConfig('event_assignments'),
       getAppConfig('departments'),
-    ]).then(([eventsData, savedGoals, savedAssignments, depts]) => {
+      getAppConfig(`holiday_statuses_${currentYear}`),
+    ]).then(([eventsData, savedGoals, savedAssignments, depts, savedHolidays]) => {
       setEvents(eventsData.map(e => ({ ...e, registered: e.registeredCount, target: e.targetCount })) as any);
       if (savedGoals) setGoals(savedGoals);
       if (savedAssignments) setAssignments(savedAssignments);
       if (depts && Array.isArray(depts)) setAvailableDepartments(depts);
+      if (savedHolidays && typeof savedHolidays === 'object') setHolidayStatuses(savedHolidays);
     });
   }, []);
+
+  useEffect(() => {
+    setAppConfig(`holiday_statuses_${currentYear}`, holidayStatuses);
+  }, [holidayStatuses]);
+
+  const handleValidateHoliday = async (h: Holiday) => {
+    setHolidayLoading(prev => ({ ...prev, [h.id]: true }));
+    const activity = {
+      id: generateId(),
+      title: h.emoji + ' ' + h.title,
+      deptId: 'holiday',
+      responsibleId: '',
+      deadline: h.date,
+      status: ActivityStatus.PLANIFIEE,
+      createdAt: new Date().toISOString(),
+      recurrence: 'Ponctuelle' as any,
+    };
+    const created = await createDepartmentActivity(activity);
+    if (created) {
+      setHolidayStatuses(prev => ({ ...prev, [h.id]: { status: 'validated', activityId: created.id } }));
+    }
+    setHolidayLoading(prev => ({ ...prev, [h.id]: false }));
+  };
+
+  const handleRejectHoliday = async (h: Holiday) => {
+    setHolidayLoading(prev => ({ ...prev, [h.id]: true }));
+    const existing = holidayStatuses[h.id];
+    if (existing?.activityId) await deleteDepartmentActivity(existing.activityId);
+    setHolidayStatuses(prev => ({ ...prev, [h.id]: { status: 'rejected' } }));
+    setHolidayLoading(prev => ({ ...prev, [h.id]: false }));
+  };
+
+  const handleResetHoliday = async (h: Holiday) => {
+    const existing = holidayStatuses[h.id];
+    if (existing?.activityId) await deleteDepartmentActivity(existing.activityId);
+    setHolidayStatuses(prev => { const next = { ...prev }; delete next[h.id]; return next; });
+  };
 
   const [activeTab, setActiveTab] = useState<'upcoming' | 'archives'>('upcoming');
   const [searchTerm, setSearchTerm] = useState('');
@@ -501,6 +625,100 @@ const Events: React.FC = () => {
                 <p className="text-sm font-bold text-slate-400 italic">Aucun événement trouvé.</p>
               </div>
             )}
+          </div>
+
+          {/* ── Fêtes Internationales ─────────────────────────────────────── */}
+          <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
+            <div className="flex items-center justify-between px-8 py-5 border-b border-slate-100">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-indigo-50 flex items-center justify-center">
+                  <Globe size={18} className="text-indigo-600" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-slate-900">Fêtes Internationales</h3>
+                  <p className="text-xs text-slate-400">{currentYear} — Valider pour les ajouter au calendrier</p>
+                </div>
+              </div>
+              <span className="text-xs font-semibold text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full">
+                {Object.values(holidayStatuses).filter(s => s.status === 'validated').length} validée(s)
+              </span>
+            </div>
+            <div className="divide-y divide-slate-50">
+              {holidays.map(h => {
+                const st = holidayStatuses[h.id];
+                const loading = holidayLoading[h.id];
+                const d = new Date(h.date + 'T00:00:00');
+                const isPast = d < new Date(new Date().toDateString());
+                return (
+                  <div key={h.id} className={cn(
+                    "flex items-center gap-4 px-8 py-4 transition-all",
+                    st?.status === 'validated' ? "bg-emerald-50/40" : st?.status === 'rejected' ? "bg-slate-50/60 opacity-60" : "hover:bg-slate-50/50"
+                  )}>
+                    {/* Date badge */}
+                    <div className={cn(
+                      "w-12 h-12 rounded-xl flex flex-col items-center justify-center shrink-0 text-center",
+                      st?.status === 'validated' ? "bg-emerald-600 shadow-sm shadow-emerald-200" : "bg-slate-100"
+                    )}>
+                      <span className={cn("text-[9px] font-bold uppercase leading-none", st?.status === 'validated' ? "text-emerald-200" : "text-slate-400")}>
+                        {d.toLocaleDateString('fr-FR', { month: 'short' })}
+                      </span>
+                      <span className={cn("text-base font-black leading-none mt-0.5", st?.status === 'validated' ? "text-white" : "text-slate-700")}>
+                        {d.getDate()}
+                      </span>
+                    </div>
+
+                    {/* Infos */}
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-slate-800 truncate">{h.emoji} {h.title}</p>
+                      <p className="text-xs text-slate-400">
+                        {d.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}
+                        {isPast && <span className="ml-2 text-slate-300 italic">• passée</span>}
+                      </p>
+                    </div>
+
+                    {/* Actions */}
+                    {!st ? (
+                      <div className="flex gap-2 shrink-0">
+                        <button
+                          onClick={() => handleValidateHoliday(h)}
+                          disabled={loading}
+                          className="flex items-center gap-1.5 px-3 py-2 bg-emerald-50 text-emerald-700 border border-emerald-100 rounded-xl text-xs font-semibold hover:bg-emerald-100 transition-all disabled:opacity-50"
+                        >
+                          {loading ? <Loader2 size={12} className="animate-spin" /> : <ThumbsUp size={12} />}
+                          Valider
+                        </button>
+                        <button
+                          onClick={() => handleRejectHoliday(h)}
+                          disabled={loading}
+                          className="flex items-center gap-1.5 px-3 py-2 bg-slate-50 text-slate-500 border border-slate-200 rounded-xl text-xs font-semibold hover:bg-slate-100 transition-all disabled:opacity-50"
+                        >
+                          {loading ? <Loader2 size={12} className="animate-spin" /> : <ThumbsDown size={12} />}
+                          Rejeter
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2 shrink-0">
+                        <span className={cn(
+                          "px-3 py-1.5 rounded-xl text-xs font-bold border flex items-center gap-1.5",
+                          st.status === 'validated'
+                            ? "bg-emerald-50 text-emerald-700 border-emerald-100"
+                            : "bg-slate-50 text-slate-400 border-slate-200"
+                        )}>
+                          {st.status === 'validated' ? <><CheckCircle2 size={12} /> Validée</> : <><X size={12} /> Rejetée</>}
+                        </span>
+                        <button
+                          onClick={() => handleResetHoliday(h)}
+                          className="p-2 text-slate-300 hover:text-slate-500 transition-colors rounded-lg"
+                          title="Réinitialiser"
+                        >
+                          <RotateCcw size={14} />
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
           </div>
         </div>
 

@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { usePermissions } from '../context/PermissionsContext';
 import Card from '../components/Card';
 import { 
   Plus, 
@@ -134,6 +135,7 @@ const getServiceIcon = (type: string, size = 14) => {
 
 const Services: React.FC = () => {
   const navigate = useNavigate();
+  const { canDelete } = usePermissions();
   const [services, setServices] = useState<ChurchService[]>([]);
 
   const currentYearStr = new Date().getFullYear().toString();
@@ -761,7 +763,7 @@ const Services: React.FC = () => {
               <button onClick={handlePrint} className="px-6 py-3.5 bg-slate-900 text-white rounded-2xl text-xs font-medium hover:bg-slate-800 transition-all flex items-center justify-center gap-2 shadow-lg"><Printer size={16} /> Imprimer</button>
               <div className="flex-1"></div>
               <button onClick={() => { setEditingId(selectedService.id); setFormData(selectedService); setIsDetailsOpen(false); navigate('', { replace: true }); setIsFormOpen(true); }} className="px-5 py-3.5 bg-indigo-50 text-indigo-600 border border-indigo-100 rounded-2xl text-xs font-medium hover:bg-indigo-100 transition-all flex items-center justify-center gap-2"><Edit size={15} /> Modifier</button>
-              <button onClick={() => { setServiceToDeleteId(selectedService.id); }} className="px-5 py-3.5 bg-rose-50 text-rose-600 border border-rose-100 rounded-2xl text-xs font-medium hover:bg-rose-100 transition-all flex items-center justify-center gap-2"><Trash2 size={15} /></button>
+              {canDelete('services') && <button onClick={() => { setServiceToDeleteId(selectedService.id); }} className="px-5 py-3.5 bg-rose-50 text-rose-600 border border-rose-100 rounded-2xl text-xs font-medium hover:bg-rose-100 transition-all flex items-center justify-center gap-2"><Trash2 size={15} /></button>}
             </div>
           </div>
         </div>

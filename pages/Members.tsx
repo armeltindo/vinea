@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { usePermissions } from '../context/PermissionsContext';
 import Card from '../components/Card';
 import AIAnalysis from '../components/AIAnalysis';
 import Avatar from '../components/Avatar';
@@ -146,6 +147,7 @@ const getDepartmentIcon = (dept: string, size = 10) => {
 
 const Members: React.FC = () => {
   const navigate = useNavigate();
+  const { canDelete } = usePermissions();
   const [searchParams] = useSearchParams();
   const [members, setMembers] = useState<Member[]>([]);
   const [discipleshipPairs, setDiscipleshipPairs] = useState<any[]>([]);
@@ -858,7 +860,7 @@ const Members: React.FC = () => {
                     <td className="px-8 py-5 text-right">
                       <div className="flex justify-end gap-1" onClick={(e) => e.stopPropagation()}>
                         <button onClick={() => handleEditClick(member)} className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all shadow-sm" title="Modifier"><Edit size={16} /></button>
-                        <button onClick={() => handleDeleteClick(member.id)} className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-all shadow-sm" title="Supprimer"><Trash2 size={16} /></button>
+                        {canDelete('members') && <button onClick={() => handleDeleteClick(member.id)} className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-all shadow-sm" title="Supprimer"><Trash2 size={16} /></button>}
                       </div>
                     </td>
                   </tr>

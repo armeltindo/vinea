@@ -391,6 +391,16 @@ const App: React.FC = () => {
     (tab === 'spiritual' && currentUserPermissions.includes('dashboard')) ||
     tab === 'dashboard';
 
+  const canDelete = (module: string): boolean => {
+    if (currentUserRole === 'Super Admin') return true;
+    return rawPermissions.some(p => p === `${module}:rwd`);
+  };
+
+  const canWrite = (module: string): boolean => {
+    if (currentUserRole === 'Super Admin') return true;
+    return rawPermissions.some(p => p === module || p === `${module}:rw` || p === `${module}:rwd`);
+  };
+
   if (authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50">
@@ -585,26 +595,28 @@ const App: React.FC = () => {
         </header>
 
         <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto">
-          <React.Suspense fallback={pageFallback}>
-            <Routes>
-              <Route path="/" element={<Dashboard adminName={adminName} />} />
-              <Route path="/members" element={canAccessRoute('members') ? <Members /> : <Navigate to="/" replace />} />
-              <Route path="/visitors" element={canAccessRoute('visitors') ? <Visitors /> : <Navigate to="/" replace />} />
-              <Route path="/spiritual" element={canAccessRoute('spiritual') ? <SpiritualGrowth /> : <Navigate to="/" replace />} />
-              <Route path="/discipleship" element={canAccessRoute('discipleship') ? <Discipleship /> : <Navigate to="/" replace />} />
-              <Route path="/attendance" element={canAccessRoute('attendance') ? <Attendance /> : <Navigate to="/" replace />} />
-              <Route path="/planning" element={canAccessRoute('planning') ? <Planning /> : <Navigate to="/" replace />} />
-              <Route path="/services" element={canAccessRoute('services') ? <Services /> : <Navigate to="/" replace />} />
-              <Route path="/meetings" element={canAccessRoute('meetings') ? <Meetings /> : <Navigate to="/" replace />} />
-              <Route path="/events" element={canAccessRoute('events') ? <Events /> : <Navigate to="/" replace />} />
-              <Route path="/finances" element={canAccessRoute('finances') ? <Finances /> : <Navigate to="/" replace />} />
-              <Route path="/meditations" element={canAccessRoute('meditations') ? <Meditations /> : <Navigate to="/" replace />} />
-              <Route path="/reports" element={canAccessRoute('reports') ? <Reports /> : <Navigate to="/" replace />} />
-              <Route path="/settings" element={canAccessRoute('settings') ? <Settings /> : <Navigate to="/" replace />} />
-              <Route path="/admin" element={canAccessRoute('admin') ? <Admin /> : <Navigate to="/" replace />} />
-              <Route path="*" element={<Navigate to="/" replace />} />
-            </Routes>
-          </React.Suspense>
+          <PermissionsContext.Provider value={{ canDelete, canWrite }}>
+            <React.Suspense fallback={pageFallback}>
+              <Routes>
+                <Route path="/" element={<Dashboard adminName={adminName} />} />
+                <Route path="/members" element={canAccessRoute('members') ? <Members /> : <Navigate to="/" replace />} />
+                <Route path="/visitors" element={canAccessRoute('visitors') ? <Visitors /> : <Navigate to="/" replace />} />
+                <Route path="/spiritual" element={canAccessRoute('spiritual') ? <SpiritualGrowth /> : <Navigate to="/" replace />} />
+                <Route path="/discipleship" element={canAccessRoute('discipleship') ? <Discipleship /> : <Navigate to="/" replace />} />
+                <Route path="/attendance" element={canAccessRoute('attendance') ? <Attendance /> : <Navigate to="/" replace />} />
+                <Route path="/planning" element={canAccessRoute('planning') ? <Planning /> : <Navigate to="/" replace />} />
+                <Route path="/services" element={canAccessRoute('services') ? <Services /> : <Navigate to="/" replace />} />
+                <Route path="/meetings" element={canAccessRoute('meetings') ? <Meetings /> : <Navigate to="/" replace />} />
+                <Route path="/events" element={canAccessRoute('events') ? <Events /> : <Navigate to="/" replace />} />
+                <Route path="/finances" element={canAccessRoute('finances') ? <Finances /> : <Navigate to="/" replace />} />
+                <Route path="/meditations" element={canAccessRoute('meditations') ? <Meditations /> : <Navigate to="/" replace />} />
+                <Route path="/reports" element={canAccessRoute('reports') ? <Reports /> : <Navigate to="/" replace />} />
+                <Route path="/settings" element={canAccessRoute('settings') ? <Settings /> : <Navigate to="/" replace />} />
+                <Route path="/admin" element={canAccessRoute('admin') ? <Admin /> : <Navigate to="/" replace />} />
+                <Route path="*" element={<Navigate to="/" replace />} />
+              </Routes>
+            </React.Suspense>
+          </PermissionsContext.Provider>
         </div>
 
         <LogoutModal isOpen={showLogoutConfirm} onClose={() => setShowLogoutConfirm(false)} onConfirm={handleConfirmLogout} />

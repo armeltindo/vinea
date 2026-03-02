@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { usePermissions } from '../context/PermissionsContext';
 import Card from '../components/Card';
 import AIAnalysis from '../components/AIAnalysis';
 import { 
@@ -104,6 +105,7 @@ const parseCSV = (text: string) => {
 
 const Meditations: React.FC = () => {
   const navigate = useNavigate();
+  const { canDelete } = usePermissions();
   const [meditations, setMeditations] = useState<any[]>([]);
 
   useEffect(() => {
@@ -353,9 +355,9 @@ const Meditations: React.FC = () => {
                   <button onClick={() => { const newVal = !med.isRead; setMeditations(prev => prev.map(m => m.id === med.id ? {...m, isRead: newVal} : m)); updateMeditation(med.id, { isRead: newVal }); }} className={cn("p-2 rounded-xl shadow-sm", med.isRead ? "text-emerald-600 bg-emerald-50" : "text-slate-400 bg-slate-50 hover:text-indigo-600")}>
                     {med.isRead ? <CheckCircle size={16} strokeWidth={2.5} /> : <Eye size={16} />}
                   </button>
-                  <button onClick={(e) => { e.stopPropagation(); setMeditationToDeleteId(med.id); setIsDeleteConfirmOpen(true); }} className="p-2 text-slate-300 bg-slate-50 rounded-xl transition-all opacity-0 group-hover:opacity-100">
+                  {canDelete('meditations') && <button onClick={(e) => { e.stopPropagation(); setMeditationToDeleteId(med.id); setIsDeleteConfirmOpen(true); }} className="p-2 text-slate-300 bg-slate-50 rounded-xl transition-all opacity-0 group-hover:opacity-100">
                     <Trash2 size={16} />
-                  </button>
+                  </button>}
                 </div>
               </div>
 
@@ -600,12 +602,14 @@ const Meditations: React.FC = () => {
                     >
                       <Copy size={20} />
                     </button>
-                    <button 
+                    {canDelete('meditations') && (
+                    <button
                       onClick={() => { setMeditationToDeleteId(readingMeditation.id); setIsDeleteConfirmOpen(true); }}
                       className="p-5 bg-rose-50 text-rose-600 rounded-[1.5rem] border border-rose-100 hover:bg-rose-100 transition-all shadow-sm active:scale-95"
                     >
                       <Trash2 size={20} />
                     </button>
+                    )}
                   </div>
                 </div>
               </div>

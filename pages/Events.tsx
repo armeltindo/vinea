@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
+import { usePermissions } from '../context/PermissionsContext';
 import Card from '../components/Card';
 import AIAnalysis from '../components/AIAnalysis';
 import { 
@@ -76,6 +77,7 @@ interface TeamAssignment {
 }
 
 const Events: React.FC = () => {
+  const { canDelete } = usePermissions();
   const [events, setEvents] = useState<Event[]>([]);
   const [goals, setGoals] = useState<Goal[]>([]);
   const [assignments, setAssignments] = useState<TeamAssignment[]>([]);
@@ -929,12 +931,14 @@ const Events: React.FC = () => {
               >
                 <Edit size={16} /> Modifier
               </button>
-              <button 
+              {canDelete('events') && (
+              <button
                 onClick={() => handleDeleteRequest(selectedEvent.id)}
                 className="px-6 py-4 bg-rose-50 text-rose-600 border border-rose-100 rounded-2xl text-xs font-medium hover:bg-rose-100 transition-all flex items-center justify-center gap-2"
               >
                 <Trash2 size={16} />
               </button>
+              )}
             </div>
           </div>
         </div>

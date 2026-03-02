@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { usePermissions } from '../context/PermissionsContext';
 import Card from '../components/Card';
 import AIAnalysis from '../components/AIAnalysis';
 import { 
@@ -109,6 +110,7 @@ const renderActiveShape = (props: any) => {
 
 const Finances: React.FC = () => {
   const navigate = useNavigate();
+  const { canDelete } = usePermissions();
   const [operations, setOperations] = useState<FinancialRecord[]>([]);
   const [campaigns, setCampaigns] = useState<DonationCampaign[]>([]);
   const [promises, setPromises] = useState<DonationPromise[]>([]);
@@ -918,9 +920,9 @@ const Finances: React.FC = () => {
                          >
                            <Edit size={14} />
                          </button>
-                         <button onClick={(e) => { e.stopPropagation(); setOpToDeleteId(op.id); setIsDeleteConfirmOpen(true); }} className="p-1.5 bg-rose-50 text-rose-400 hover:text-rose-600 rounded-lg">
+                         {canDelete('finances') && <button onClick={(e) => { e.stopPropagation(); setOpToDeleteId(op.id); setIsDeleteConfirmOpen(true); }} className="p-1.5 bg-rose-50 text-rose-400 hover:text-rose-600 rounded-lg">
                            <Trash2 size={14} />
-                         </button>
+                         </button>}
                        </div>
                     </div>
                   </div>
@@ -1561,7 +1563,7 @@ const Finances: React.FC = () => {
                                 <p className="text-sm font-semibold text-indigo-600">{formatCurrency(p.amount)}</p>
                                 <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                    <button onClick={() => handleEditPromise(p)} className="p-1.5 bg-slate-50 text-slate-400 hover:text-indigo-600 rounded-lg"><Edit size={14}/></button>
-                                   <button onClick={() => handleDeletePromise(p.id)} className="p-1.5 bg-rose-50 text-rose-400 hover:text-rose-600 rounded-lg"><Trash2 size={14}/></button>
+                                   {canDelete('finances') && <button onClick={() => handleDeletePromise(p.id)} className="p-1.5 bg-rose-50 text-rose-400 hover:text-rose-600 rounded-lg"><Trash2 size={14}/></button>}
                                 </div>
                              </div>
                           </div>
@@ -1633,12 +1635,14 @@ const Finances: React.FC = () => {
                     <Edit size={18} /> Modifier
                   </button>
                 </div>
-                <button 
+                {canDelete('finances') && (
+                <button
                   onClick={() => handleDeleteCampaign(selectedCampaign.id)}
                   className="w-full py-4 bg-rose-50 text-rose-600 border border-rose-100 rounded-2xl text-xs font-medium hover:bg-rose-100 transition-all flex items-center justify-center gap-2"
                 >
                   <Trash2 size={18} /> Supprimer définitivement
                 </button>
+                )}
               </div>
           </div>
         </div>
@@ -1716,13 +1720,15 @@ const Finances: React.FC = () => {
                                >
                                  <Edit size={16} />
                                </button>
-                               <button 
+                               {canDelete('finances') && (
+                               <button
                                  onClick={() => handleDeletePromise(data.donorPromises[0].id)}
                                  className="p-3 bg-rose-50 text-rose-400 rounded-xl hover:bg-rose-600 hover:text-white transition-all shadow-sm"
                                  title="Supprimer la promesse"
                                >
                                  <Trash2 size={16} />
                                </button>
+                               )}
                              </div>
                            )}
                            
@@ -1985,7 +1991,7 @@ const Finances: React.FC = () => {
               >
                 <Edit size={16} /> Modifier l'opération
               </button>
-              <button onClick={() => { setOpToDeleteId(selectedOperation.id); setIsDeleteConfirmOpen(true); }} className="flex-1 py-4 bg-rose-50 text-rose-600 border border-rose-100 rounded-2xl text-xs font-medium hover:bg-rose-100 transition-all flex items-center justify-center gap-2"><Trash2 size={16} /></button>
+              {canDelete('finances') && <button onClick={() => { setOpToDeleteId(selectedOperation.id); setIsDeleteConfirmOpen(true); }} className="flex-1 py-4 bg-rose-50 text-rose-600 border border-rose-100 rounded-2xl text-xs font-medium hover:bg-rose-100 transition-all flex items-center justify-center gap-2"><Trash2 size={16} /></button>}
             </div>
           </div>
         </div>

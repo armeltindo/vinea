@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { usePermissions } from '../context/PermissionsContext';
 import Card from '../components/Card';
 import AIAnalysis from '../components/AIAnalysis';
 import Avatar from '../components/Avatar';
@@ -66,6 +67,7 @@ const formatToUIDate = (isoDate: string | undefined) => {
 
 const Visitors: React.FC = () => {
   const navigate = useNavigate();
+  const { canDelete } = usePermissions();
   const [availableStatuses] = useState<string[]>(Object.values(VisitorStatus));
   const [statusFilter, setStatusFilter] = useState<string>('Tous les statuts');
   const [availableServices] = useState<string[]>(SERVICES_LIST);
@@ -570,7 +572,7 @@ const Visitors: React.FC = () => {
                   <td className="px-8 py-5 text-right">
                     <div className="flex justify-end gap-1" onClick={(e) => e.stopPropagation()}>
                       <button onClick={() => handleOpenForm(visitor)} className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 transition-all rounded-xl shadow-sm"><Edit size={16} /></button>
-                      <button onClick={() => { setVisitorToDeleteId(visitor.id); setIsDeleteConfirmOpen(true); }} className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-all rounded-xl shadow-sm"><Trash2 size={16} /></button>
+                      {canDelete('visitors') && <button onClick={() => { setVisitorToDeleteId(visitor.id); setIsDeleteConfirmOpen(true); }} className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-all rounded-xl shadow-sm"><Trash2 size={16} /></button>}
                     </div>
                   </td>
                 </tr>

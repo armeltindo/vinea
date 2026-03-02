@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
+import { usePermissions } from '../context/PermissionsContext';
 import Card from '../components/Card';
 import AIAnalysis from '../components/AIAnalysis';
 import { 
@@ -35,6 +36,7 @@ import { cn, generateId } from '../utils';
 import { getDepartmentsInfo, upsertDepartmentInfo, getDepartmentActivities, createDepartmentActivity, updateDepartmentActivity, deleteDepartmentActivity, getMembers, getAppConfig } from '../lib/db';
 
 const Departments: React.FC = () => {
+  const { canDelete } = usePermissions();
   const [departments, setDepartments] = useState<DepartmentInfo[]>([]);
   const [availableDepartments, setAvailableDepartments] = useState<string[]>([]);
   const [activities, setActivities] = useState<DepartmentActivity[]>([]);
@@ -338,7 +340,7 @@ const Departments: React.FC = () => {
                       <td className="px-6 py-4 text-right">
                         <div className="flex justify-end gap-1">
                           <button onClick={() => { setEditingActivity(activity); setActivityFormData(activity); setIsActivityFormOpen(true); }} className="p-2 text-slate-400 hover:text-indigo-600 transition-colors"><Edit size={16} /></button>
-                          <button onClick={() => deleteActivity(activity.id)} className="p-2 text-slate-400 hover:text-rose-600 transition-colors"><Trash2 size={16} /></button>
+                          {canDelete('planning') && <button onClick={() => deleteActivity(activity.id)} className="p-2 text-slate-400 hover:text-rose-600 transition-colors"><Trash2 size={16} /></button>}
                         </div>
                       </td>
                     </tr>

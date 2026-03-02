@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
+import { usePermissions } from '../context/PermissionsContext';
 import Card from '../components/Card';
 import AIAnalysis from '../components/AIAnalysis';
 import { 
@@ -93,6 +94,7 @@ interface AbsentEntry {
 }
 
 const Attendance: React.FC = () => {
+  const { canDelete } = usePermissions();
   const [history, setHistory] = useState<any[]>([]);
   const [members, setMembers] = useState<Member[]>([]);
   const [visitors, setVisitors] = useState<Visitor[]>([]);
@@ -712,7 +714,7 @@ const Attendance: React.FC = () => {
                   <td className="px-8 py-5 text-right">
                     <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-all" onClick={e => e.stopPropagation()}>
                        <button onClick={() => handleEditRecord(record)} className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all"><Edit size={14}/></button>
-                       <button onClick={() => { setRecordToDeleteId(record.id); setIsDeleteConfirmOpen(true); }} className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-all"><Trash2 size={14}/></button>
+                       {canDelete('attendance') && <button onClick={() => { setRecordToDeleteId(record.id); setIsDeleteConfirmOpen(true); }} className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-all"><Trash2 size={14}/></button>}
                     </div>
                   </td>
                 </tr>
@@ -822,12 +824,14 @@ const Attendance: React.FC = () => {
               >
                 <Edit size={16} /> Modifier
               </button>
-              <button 
+              {canDelete('attendance') && (
+              <button
                 onClick={() => { setRecordToDeleteId(selectedRecord.id); setIsDeleteConfirmOpen(true); }}
                 className="flex-1 py-3.5 bg-rose-50 text-rose-600 border border-rose-100 rounded-2xl text-xs font-medium hover:bg-rose-100 transition-all flex items-center justify-center gap-2"
               >
                 <Trash2 size={16} />
               </button>
+              )}
             </div>
           </div>
         </div>

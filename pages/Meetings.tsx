@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { usePermissions } from '../context/PermissionsContext';
 import Card from '../components/Card';
 import AIAnalysis from '../components/AIAnalysis';
 import { 
@@ -43,6 +44,7 @@ const CATEGORIES = ['Conseil', 'Département', 'Ouvriers', 'Jeunesse', 'Finances
 
 const Meetings: React.FC = () => {
   const navigate = useNavigate();
+  const { canDelete } = usePermissions();
   const [meetings, setMeetings] = useState<Meeting[]>([]);
   const [members, setMembers] = useState<Member[]>([]);
 
@@ -806,7 +808,7 @@ const Meetings: React.FC = () => {
               </div>
               <div className="flex gap-2">
                  <button onClick={() => { setEditingMeetingId(selectedMeeting.id); setFormData(selectedMeeting); setIsFormOpen(true); }} className="flex-1 py-3 bg-indigo-50 text-indigo-600 rounded-xl text-xs font-medium border border-indigo-100 hover:bg-indigo-100 transition-colors">Modifier</button>
-                 <button onClick={() => { setMeetingToDeleteId(selectedMeeting.id); setIsDeleteConfirmOpen(true); }} className="p-3 bg-rose-50 text-rose-600 rounded-xl border border-rose-100 hover:bg-rose-100 transition-all"><Trash2 size={16} /></button>
+                 {canDelete('meetings') && <button onClick={() => { setMeetingToDeleteId(selectedMeeting.id); setIsDeleteConfirmOpen(true); }} className="p-3 bg-rose-50 text-rose-600 rounded-xl border border-rose-100 hover:bg-rose-100 transition-all"><Trash2 size={16} /></button>}
               </div>
             </div>
           </div>

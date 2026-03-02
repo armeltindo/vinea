@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { usePermissions } from '../context/PermissionsContext';
 import Card from '../components/Card';
 import AIAnalysis from '../components/AIAnalysis';
 import { 
@@ -82,6 +83,7 @@ const PATHWAYS: Pathway[] = [
 
 const Discipleship: React.FC = () => {
   const navigate = useNavigate();
+  const { canDelete } = usePermissions();
   const [analysis, setAnalysis] = useState<string | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
 
@@ -695,12 +697,14 @@ const Discipleship: React.FC = () => {
                 >
                   <Edit size={16} /> Modifier le suivi
                 </button>
-                <button 
+                {canDelete('discipleship') && (
+                <button
                   onClick={() => handleDeletePair(selectedPair.id)}
                   className="px-6 py-4 bg-rose-50 text-rose-600 border border-rose-100 rounded-2xl text-xs font-medium hover:bg-rose-100 transition-all flex items-center justify-center gap-2"
                 >
                   <Trash2 size={18} />
                 </button>
+                )}
               </div>
           </div>
         </div>
@@ -802,7 +806,7 @@ const Discipleship: React.FC = () => {
                </div>
 
                <div className="flex gap-3 pt-6">
-                  {editingPair && (
+                  {editingPair && canDelete('discipleship') && (
                     <button type="button" onClick={() => handleDeletePair(editingPair.id)} className="p-4 bg-rose-50 text-rose-600 border border-rose-100 rounded-2xl hover:bg-rose-100 transition-colors">
                       <Trash2 size={22} />
                     </button>
@@ -863,7 +867,7 @@ const Discipleship: React.FC = () => {
                             <p className="text-xs text-slate-400">Le {new Date(enrollment.startDate).toLocaleDateString()}</p>
                           </div>
                         </div>
-                        <button onClick={() => handleUnenroll(enrollment.id)} className="p-2 text-slate-300 hover:text-rose-500"><Trash2 size={16} /></button>
+                        {canDelete('discipleship') && <button onClick={() => handleUnenroll(enrollment.id)} className="p-2 text-slate-300 hover:text-rose-500"><Trash2 size={16} /></button>}
                       </div>
                       <div className="space-y-3">
                          <div className="flex justify-between items-center text-xs font-semibold text-slate-400">

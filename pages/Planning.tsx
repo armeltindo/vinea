@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { usePermissions } from '../context/PermissionsContext';
 import Card from '../components/Card';
 import AIAnalysis from '../components/AIAnalysis';
 import { 
@@ -152,6 +153,7 @@ const RECURRENCE_OPTIONS: ActivityRecurrence[] = [
 
 const Planning: React.FC = () => {
   const navigate = useNavigate();
+  const { canDelete } = usePermissions();
   const [churchName, setChurchName] = useState('Vinea');
   const [departments, setDepartments] = useState<DepartmentInfo[]>([]);
   const [activities, setActivities] = useState<DepartmentActivity[]>([]);
@@ -759,7 +761,7 @@ const Planning: React.FC = () => {
                       <td className="px-10 py-6 text-right">
                         <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-all" onClick={e => e.stopPropagation()}>
                           <button onClick={() => handleEditActivity(activity)} className="p-2.5 bg-white border border-slate-200 text-slate-400 hover:text-indigo-600 rounded-xl shadow-sm"><Edit size={16} /></button>
-                          <button onClick={() => { setActivityToDeleteId(activity.id); setIsDeleteActivityConfirmOpen(true); }} className="p-2.5 bg-white border border-slate-200 text-slate-400 hover:text-rose-600 rounded-xl shadow-sm"><Trash2 size={16} /></button>
+                          {canDelete('planning') && <button onClick={() => { setActivityToDeleteId(activity.id); setIsDeleteActivityConfirmOpen(true); }} className="p-2.5 bg-white border border-slate-200 text-slate-400 hover:text-rose-600 rounded-xl shadow-sm"><Trash2 size={16} /></button>}
                         </div>
                       </td>
                     </tr>
@@ -882,12 +884,14 @@ const Planning: React.FC = () => {
                 >
                   <Edit size={16} /> Modifier
                 </button>
-                <button 
+                {canDelete('planning') && (
+                <button
                   onClick={() => { setActivityToDeleteId(selectedActivityForDetails.id); setIsDeleteActivityConfirmOpen(true); }}
                   className="px-6 py-4 bg-rose-50 text-rose-600 border border-rose-100 rounded-2xl text-xs font-medium hover:bg-rose-100 transition-all flex items-center justify-center gap-2"
                 >
                   <Trash2 size={16} />
                 </button>
+                )}
               </div>
             </div>
           </div>

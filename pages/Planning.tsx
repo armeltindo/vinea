@@ -942,6 +942,38 @@ const Planning: React.FC = () => {
                       </div>
                     )}
                   </div>
+                  <div className="space-y-1.5 relative">
+                    <label className="text-xs font-medium text-slate-500 ml-1 flex items-center gap-2"><UserCheck size={12} className="text-slate-400" /> Assistant</label>
+                    <div className="relative group">
+                       <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                       <input
+                          type="text"
+                          placeholder="RECHERCHER UN MEMBRE..."
+                          value={assistantSearch}
+                          onChange={e => {
+                            setAssistantSearch(e.target.value);
+                            if (deptFormData.assistantId) setDeptFormData({...deptFormData, assistantId: ''});
+                          }}
+                          className="w-full pl-12 pr-4 py-4 bg-white border border-slate-200 rounded-2xl outline-none text-sm font-normal"
+                        />
+                    </div>
+                    {assistantSearch && !deptFormData.assistantId && (
+                      <div className="absolute z-30 left-0 right-0 top-full mt-1 max-h-40 overflow-y-auto bg-white border border-slate-200 rounded-2xl shadow-xl custom-scrollbar">
+                        {members.filter(m => `${formatFirstName(m.firstName)} ${m.lastName}`.toLowerCase().includes(assistantSearch.toLowerCase())).map(m => (
+                          <button key={m.id} type="button" onClick={() => { setDeptFormData({...deptFormData, assistantId: m.id}); setAssistantSearch(`${formatFirstName(m.firstName)} ${m.lastName.toUpperCase()}`); }} className="w-full text-left px-5 py-4 text-xs font-medium hover:bg-slate-50 flex items-center gap-3 transition-colors border-b border-slate-50 last:border-0">
+                            <div className="w-8 h-8 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-center overflow-hidden shrink-0 text-xs font-medium text-slate-500">
+                               {m.photoUrl ? (
+                                 <img src={m.photoUrl} alt="" className="w-full h-full object-cover" />
+                               ) : (
+                                 getInitials(m.firstName, m.lastName)
+                               )}
+                            </div>
+                            <span className="text-slate-700">{formatFirstName(m.firstName)} {m.lastName.toUpperCase()}</span>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                </div>
                <div className="flex gap-3 pt-8 pb-4">
                   <button type="button" onClick={() => setIsDeptFormOpen(false)} disabled={isSubmitting} className="flex-1 py-4 bg-white border border-slate-200 text-slate-500 rounded-2xl text-xs font-medium">Annuler</button>
@@ -1089,6 +1121,24 @@ const Planning: React.FC = () => {
                     <p className="text-lg font-bold text-slate-900">{getMemberNameFormatted(selectedDeptForDetails.presidentId)}</p>
                  </div>
               </div>
+              {selectedDeptForDetails.assistantId && (() => {
+                const assistant = members.find(m => m.id === selectedDeptForDetails.assistantId);
+                return (
+                  <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-500 font-semibold text-base uppercase overflow-hidden shadow-inner shrink-0">
+                      {assistant?.photoUrl ? (
+                        <img src={assistant.photoUrl} alt="" className="w-full h-full object-cover" />
+                      ) : (
+                        getInitials(assistant?.firstName, assistant?.lastName)
+                      )}
+                    </div>
+                    <div>
+                      <p className="text-xs font-medium text-slate-400">Assistant</p>
+                      <p className="text-sm font-bold text-slate-800">{getMemberNameFormatted(selectedDeptForDetails.assistantId)}</p>
+                    </div>
+                  </div>
+                );
+              })()}
               <div className="space-y-4">
                 <h4 className="text-xs font-bold text-slate-900 flex items-center gap-2"><Users size={18} className="text-indigo-500" /> Équipe ({selectedDeptForDetails.memberIds.length})</h4>
                 <div className="grid grid-cols-1 gap-2">

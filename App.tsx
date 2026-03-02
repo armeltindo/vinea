@@ -250,7 +250,10 @@ const App: React.FC = () => {
       perms = ALL_PERMISSIONS;
       setCurrentUserPermissions(perms);
       if (adminUser) {
-        setAdminName(formatDisplayName(adminUser.full_name ?? 'Admin Vinea'));
+        const displayName = (adminUser.first_name && adminUser.last_name)
+          ? `${adminUser.first_name} ${adminUser.last_name}`
+          : adminUser.full_name ?? 'Admin Vinea';
+        setAdminName(formatDisplayName(displayName));
         setAdminAvatar(adminUser.avatar ?? '');
       }
     } else {
@@ -258,7 +261,10 @@ const App: React.FC = () => {
       perms = rawPerms.map((p: string) => (p.includes(':') ? p.split(':')[0] : p));
       setCurrentUserRole(adminUser.role ?? 'Administrateur');
       setCurrentUserPermissions(perms);
-      setAdminName(formatDisplayName(adminUser.full_name ?? 'Admin Vinea'));
+      const displayName = (adminUser.first_name && adminUser.last_name)
+        ? `${adminUser.first_name} ${adminUser.last_name}`
+        : adminUser.full_name ?? 'Admin Vinea';
+      setAdminName(formatDisplayName(displayName));
       setAdminAvatar(adminUser.avatar ?? `https://api.dicebear.com/7.x/avataaars/svg?seed=${email}`);
     }
   };

@@ -46,6 +46,8 @@ CREATE TABLE church_settings (
 CREATE TABLE admin_users (
     id TEXT PRIMARY KEY,
     full_name TEXT NOT NULL,
+    first_name TEXT,
+    last_name TEXT,
     email TEXT UNIQUE NOT NULL,
     role TEXT DEFAULT 'Administrateur',
     status TEXT DEFAULT 'Actif',

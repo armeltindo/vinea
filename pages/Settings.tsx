@@ -93,6 +93,8 @@ interface ListManagerProps {
 interface AdminUser {
   id: string;
   fullName: string;
+  firstName: string;
+  lastName: string;
   email: string;
   role: string;
   status: 'Actif' | 'Inactif';
@@ -389,7 +391,7 @@ const Settings: React.FC = () => {
   const [userToDelete, setUserToDelete] = useState<AdminUser | null>(null);
   const [editingUser, setEditingUser] = useState<AdminUser | null>(null);
   const [userFormData, setUserFormData] = useState<Partial<AdminUser>>({
-    fullName: '', email: '', role: 'Administrateur', status: 'Actif', permissions: ['dashboard:rw'],
+    fullName: '', firstName: '', lastName: '', email: '', role: 'Administrateur', status: 'Actif', permissions: ['dashboard:rw'],
   });
   const [userFirstName, setUserFirstName] = useState('');
   const [userLastName, setUserLastName] = useState('');
@@ -473,25 +475,29 @@ const Settings: React.FC = () => {
       if (departmentsData) setDepartments(departmentsData);
       if (aiConfigData) setAiConfig(aiConfigData);
 
-      const mappedUsers = users.map((u: any) => ({
-        id: u.id,
-        fullName: u.full_name,
-        email: u.email,
-        role: u.role,
-        status: u.status,
-        avatar: u.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${u.full_name}`,
-        lastActive: u.last_active || 'Inconnu',
-        permissions: u.permissions || ['dashboard'],
-      }));
+      const mappedUsers = users.map((u: any) => {
+        const parts = (u.full_name || '').trim().split(/\s+/);
+        return {
+          id: u.id,
+          fullName: u.full_name,
+          firstName: u.first_name || parts[0] || '',
+          lastName: u.last_name || parts.slice(1).join(' ') || '',
+          email: u.email,
+          role: u.role,
+          status: u.status,
+          avatar: u.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${u.full_name}`,
+          lastActive: u.last_active || 'Inconnu',
+          permissions: u.permissions || ['dashboard'],
+        };
+      });
 
       if (mappedUsers.length > 0) {
         setAdminUsers(mappedUsers);
         const me = mappedUsers.find((u: any) => u.email.toLowerCase() === currentEmail.toLowerCase());
         if (me) {
           setAdminInfo({ fullName: me.fullName, role: me.role, email: me.email, avatar: me.avatar });
-          const _parts = me.fullName.trim().split(/\s+/);
-          setAdminFirstName(_parts[0] || '');
-          setAdminLastName(_parts.slice(1).join(' ') || '');
+          setAdminFirstName(me.firstName || me.fullName.trim().split(/\s+/)[0] || '');
+          setAdminLastName(me.lastName || me.fullName.trim().split(/\s+/).slice(1).join(' ') || '');
           adminInfoLoaded.current = true;
           currentAdminId.current = me.id;
           // Synchroniser le header et la sidebar dès le chargement de Settings
@@ -559,6 +565,8 @@ const Settings: React.FC = () => {
       await upsertAdminUser({
         id: currentAdminId.current,
         full_name: adminInfo.fullName,
+        first_name: adminFirstName.trim(),
+        last_name: adminLastName.trim(),
         email: adminInfo.email,
         role: matchingUser?.role ?? 'Super Admin',
         status: matchingUser?.status ?? 'Actif',
@@ -623,9 +631,8 @@ const Settings: React.FC = () => {
   const handleOpenEditUser = (user: AdminUser) => {
     setEditingUser(user);
     setUserFormData({ ...user });
-    const parts = user.fullName.trim().split(/\s+/);
-    setUserFirstName(parts[0] || '');
-    setUserLastName(parts.slice(1).join(' ') || '');
+    setUserFirstName(user.firstName || user.fullName.trim().split(/\s+/)[0] || '');
+    setUserLastName(user.lastName || user.fullName.trim().split(/\s+/).slice(1).join(' ') || '');
     setModuleAccess(parseModuleAccess(user.permissions));
     setIsUserFormOpen(true);
   };
@@ -645,7 +652,7 @@ const Settings: React.FC = () => {
     if (editingUser) {
       const updated = { ...editingUser, ...userFormData, permissions: encodedPerms } as AdminUser;
       setAdminUsers(adminUsers.map(u => u.id === editingUser.id ? updated : u));
-      upsertAdminUser({ id: updated.id, full_name: updated.fullName, email: updated.email, role: updated.role, status: updated.status, avatar: updated.avatar, last_active: updated.lastActive, permissions: encodedPerms });
+      upsertAdminUser({ id: updated.id, full_name: updated.fullName, first_name: updated.firstName, last_name: updated.lastName, email: updated.email, role: updated.role, status: updated.status, avatar: updated.avatar, last_active: updated.lastActive, permissions: encodedPerms });
     } else {
       const newUser: AdminUser = {
         ...userFormData as AdminUser,
@@ -655,7 +662,7 @@ const Settings: React.FC = () => {
         lastActive: 'Jamais'
       };
       setAdminUsers([...adminUsers, newUser]);
-      upsertAdminUser({ id: newUser.id, full_name: newUser.fullName, email: newUser.email, role: newUser.role, status: newUser.status, avatar: newUser.avatar, last_active: newUser.lastActive, permissions: encodedPerms });
+      upsertAdminUser({ id: newUser.id, full_name: newUser.fullName, first_name: newUser.firstName, last_name: newUser.lastName, email: newUser.email, role: newUser.role, status: newUser.status, avatar: newUser.avatar, last_active: newUser.lastActive, permissions: encodedPerms });
 
       // Créer le compte auth avec le mot de passe par défaut
       let needsConfirmation = false;
@@ -965,7 +972,7 @@ const Settings: React.FC = () => {
                   <p className="text-xs text-slate-500 font-medium">Définissez précisément les droits de chaque collaborateur.</p>
                 </div>
                 <button 
-                  onClick={() => { setEditingUser(null); setUserFormData({ fullName: '', email: '', role: 'Administrateur', status: 'Actif', permissions: ['dashboard:rw', 'spiritual:r'] }); setUserFirstName(''); setUserLastName(''); setModuleAccess({ dashboard: { r: true, w: true, d: false }, spiritual: { r: true, w: false, d: false } }); setIsUserFormOpen(true); }}
+                  onClick={() => { setEditingUser(null); setUserFormData({ fullName: '', firstName: '', lastName: '', email: '', role: 'Administrateur', status: 'Actif', permissions: ['dashboard:rw', 'spiritual:r'] }); setUserFirstName(''); setUserLastName(''); setModuleAccess({ dashboard: { r: true, w: true, d: false }, spiritual: { r: true, w: false, d: false } }); setIsUserFormOpen(true); }}
                   className="flex items-center gap-2 px-4 py-2.5 bg-indigo-600 text-white rounded-xl text-xs font-medium shadow-lg shadow-indigo-200"
                 >
                   <UserPlus size={16} /> Ajouter Collaborateur
@@ -1474,8 +1481,8 @@ const Settings: React.FC = () => {
             </div>
             <form onSubmit={handleSaveUser} className="flex-1 overflow-y-auto p-8 space-y-8 custom-scrollbar bg-slate-50/30">
                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-1.5"><label className="text-xs font-medium text-slate-500 ml-1">Prénom</label><input type="text" required value={userFirstName} onChange={(e) => { setUserFirstName(e.target.value); setUserFormData({...userFormData, fullName: `${e.target.value.trim()} ${userLastName.trim()}`.trim()}); }} className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl outline-none text-sm font-bold shadow-sm" placeholder="ex: Armel" /></div>
-                  <div className="space-y-1.5"><label className="text-xs font-medium text-slate-500 ml-1">Nom</label><input type="text" required value={userLastName} onChange={(e) => { setUserLastName(e.target.value); setUserFormData({...userFormData, fullName: `${userFirstName.trim()} ${e.target.value.trim()}`.trim()}); }} className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl outline-none text-sm font-bold shadow-sm" placeholder="ex: TINDO" /></div>
+                  <div className="space-y-1.5"><label className="text-xs font-medium text-slate-500 ml-1">Prénom</label><input type="text" required value={userFirstName} onChange={(e) => { setUserFirstName(e.target.value); setUserFormData({...userFormData, firstName: e.target.value.trim(), fullName: `${e.target.value.trim()} ${userLastName.trim()}`.trim()}); }} className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl outline-none text-sm font-bold shadow-sm" placeholder="ex: Armel" /></div>
+                  <div className="space-y-1.5"><label className="text-xs font-medium text-slate-500 ml-1">Nom</label><input type="text" required value={userLastName} onChange={(e) => { setUserLastName(e.target.value); setUserFormData({...userFormData, lastName: e.target.value.trim(), fullName: `${userFirstName.trim()} ${e.target.value.trim()}`.trim()}); }} className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl outline-none text-sm font-bold shadow-sm" placeholder="ex: TINDO" /></div>
                </div>
                <div className="space-y-1.5"><label className="text-xs font-medium text-slate-500 ml-1">Email professionnel</label><input type="email" required value={userFormData.email} onChange={(e) => setUserFormData({...userFormData, email: e.target.value})} className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl outline-none text-sm font-bold shadow-sm" /></div>
 

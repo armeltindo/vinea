@@ -66,7 +66,7 @@ import { SERVICES_LIST } from '../constants';
 import { cn, generateId } from '../utils';
 import { analyzeSermon, generateSocialSummary, suggestSermonTags } from '../lib/gemini';
 import { ChurchService } from '../types';
-import { getChurchServices, createChurchService, updateChurchService, deleteChurchService } from '../lib/db';
+import { getChurchServices, createChurchService, updateChurchService, deleteChurchService, getAppConfig } from '../lib/db';
 
 const formatToUIDate = (isoDate: string | undefined) => {
   if (!isoDate) return '';
@@ -139,11 +139,12 @@ const Services: React.FC = () => {
   const [services, setServices] = useState<ChurchService[]>([]);
 
   const currentYearStr = new Date().getFullYear().toString();
-  const [availableServiceTypes] = useState(SERVICES_LIST);
+  const [availableServiceTypes, setAvailableServiceTypes] = useState(SERVICES_LIST);
 
   useEffect(() => {
-    getChurchServices().then(s => {
+    Promise.all([getChurchServices(), getAppConfig('service_types')]).then(([s, serviceTypes]) => {
       setServices(s);
+      if (serviceTypes && Array.isArray(serviceTypes) && serviceTypes.length > 0) setAvailableServiceTypes(serviceTypes);
       const detailId = new URLSearchParams(window.location.search).get('detail');
       if (detailId) {
         const found = s.find((x: ChurchService) => x.id === detailId);

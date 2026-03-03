@@ -158,15 +158,23 @@ const Members: React.FC = () => {
   const [roleFilter, setRoleFilter] = useState<string>('Tous les rôles');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc' | 'none'>('asc');
 
-  const [availableStatuses] = useState<string[]>(Object.values(MemberStatus));
-  const [availableRoles] = useState<string[]>(Object.values(MemberType));
+  const [availableStatuses, setAvailableStatuses] = useState<string[]>(Object.values(MemberStatus));
+  const [availableRoles, setAvailableRoles] = useState<string[]>(Object.values(MemberType));
   const [availableDepartments, setAvailableDepartments] = useState<string[]>(CONST_DEPARTMENTS);
 
   useEffect(() => {
     const load = async () => {
       setIsLoadingData(true);
-      const [m, p, depts] = await Promise.all([getMembers(), getDiscipleshipPairs(), getAppConfig('departments')]);
+      const [m, p, depts, memberStatuses, memberRoles] = await Promise.all([
+        getMembers(),
+        getDiscipleshipPairs(),
+        getAppConfig('departments'),
+        getAppConfig('member_statuses'),
+        getAppConfig('member_roles'),
+      ]);
       if (depts && Array.isArray(depts)) setAvailableDepartments(depts);
+      if (memberStatuses && Array.isArray(memberStatuses) && memberStatuses.length > 0) setAvailableStatuses(memberStatuses);
+      if (memberRoles && Array.isArray(memberRoles) && memberRoles.length > 0) setAvailableRoles(memberRoles);
       setMembers(m);
       setDiscipleshipPairs(p);
       setIsLoadingData(false);

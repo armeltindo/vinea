@@ -47,7 +47,7 @@ import { SERVICES_LIST, formatPhone } from '../constants';
 import { Visitor, VisitorStatus, VisitorQualification, Member, MemberType, MemberStatus, FollowUpEntry } from '../types';
 import { analyzePageData } from '../lib/gemini';
 import { cn, generateId, getInitials, formatFirstName } from '../utils';
-import { getMembers, createMember, getVisitors, createVisitor, updateVisitor, deleteVisitor } from '../lib/db';
+import { getMembers, createMember, getVisitors, createVisitor, updateVisitor, deleteVisitor, getAppConfig } from '../lib/db';
 
 const QUALIFICATION_ITEMS = [
   { id: 'seekingChurch', label: 'Cherche une église', icon: <Target size={14} /> },
@@ -68,9 +68,9 @@ const formatToUIDate = (isoDate: string | undefined) => {
 const Visitors: React.FC = () => {
   const navigate = useNavigate();
   const { canDelete } = usePermissions();
-  const [availableStatuses] = useState<string[]>(Object.values(VisitorStatus));
+  const [availableStatuses, setAvailableStatuses] = useState<string[]>(Object.values(VisitorStatus));
   const [statusFilter, setStatusFilter] = useState<string>('Tous les statuts');
-  const [availableServices] = useState<string[]>(SERVICES_LIST);
+  const [availableServices, setAvailableServices] = useState<string[]>(SERVICES_LIST);
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc' | 'none'>('none');
 
   const [members, setMembers] = useState<Member[]>([]);
@@ -80,9 +80,16 @@ const Visitors: React.FC = () => {
   useEffect(() => {
     const load = async () => {
       setIsLoadingData(true);
-      const [m, v] = await Promise.all([getMembers(), getVisitors()]);
+      const [m, v, serviceTypes, visitorStatuses] = await Promise.all([
+        getMembers(),
+        getVisitors(),
+        getAppConfig('service_types'),
+        getAppConfig('visitor_statuses'),
+      ]);
       setMembers(m);
       setVisitors(v);
+      if (serviceTypes && Array.isArray(serviceTypes) && serviceTypes.length > 0) setAvailableServices(serviceTypes);
+      if (visitorStatuses && Array.isArray(visitorStatuses) && visitorStatuses.length > 0) setAvailableStatuses(visitorStatuses);
       setIsLoadingData(false);
       const detailId = new URLSearchParams(window.location.search).get('detail');
       if (detailId) {

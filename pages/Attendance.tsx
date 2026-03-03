@@ -174,13 +174,14 @@ const Attendance: React.FC = () => {
 
   useEffect(() => {
     const load = async () => {
-      const [h, m, v, settings, savedAssignments, savedFollowUp] = await Promise.all([
+      const [h, m, v, settings, savedAssignments, savedFollowUp, serviceTypes] = await Promise.all([
         getAttendanceSessions(),
         getMembers(),
         getVisitors(),
         getChurchSettings(),
         getAppConfig('attendance_assignments'),
         getAppConfig('attendance_followup_history'),
+        getAppConfig('service_types'),
       ]);
       setHistory(h as any[]);
       setMembers(m);
@@ -188,6 +189,11 @@ const Attendance: React.FC = () => {
       if (settings?.name) setChurchName(settings.name);
       if (savedAssignments) setAssignments(savedAssignments);
       if (savedFollowUp) setFollowUpHistory(savedFollowUp);
+      if (serviceTypes && Array.isArray(serviceTypes) && serviceTypes.length > 0) {
+        setAvailableServices(serviceTypes);
+        setChartServiceFilter(serviceTypes[0]);
+        setAttendanceForm(prev => ({ ...prev, service: prev.service || serviceTypes[0] }));
+      }
     };
     load();
   }, []);

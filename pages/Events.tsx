@@ -151,7 +151,7 @@ function getInternationalHolidays(year: number): Holiday[] {
   ].sort((a, b) => a.date.localeCompare(b.date));
 }
 
-type HolidayStatus = { status: 'validated' | 'rejected'; activityId?: string };
+type HolidayStatus = { status: 'validated' | 'rejected'; activityId?: string; eventId?: string };
 
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -208,10 +208,40 @@ const Events: React.FC = () => {
       createdAt: new Date().toISOString(),
       recurrence: 'Ponctuelle' as ActivityRecurrence,
     };
-    const created = await createDepartmentActivity(activity);
+    const eventPayload = {
+      id: generateId(),
+      title: `${h.emoji} ${h.title}`,
+      startDate: h.date,
+      endDate: h.date,
+      location: '',
+      category: 'Fête',
+      status: 'Validé',
+      registeredCount: 0,
+      targetCount: 100,
+      budget: 0,
+      expenses: 0,
+      image: null,
+    };
+    const [created, createdEvent] = await Promise.all([
+      createDepartmentActivity(activity),
+      createChurchEvent(eventPayload),
+    ]);
+    if (createdEvent) {
+      const localEvent: Event = {
+        ...eventPayload,
+        registered: 0,
+        target: 100,
+        image: '',
+      };
+      setEvents(prev => [...prev, localEvent]);
+    }
     setHolidayStatuses(prev => ({
       ...prev,
-      [h.id]: { status: 'validated', ...(created ? { activityId: created.id } : {}) },
+      [h.id]: {
+        status: 'validated',
+        ...(created ? { activityId: created.id } : {}),
+        ...(createdEvent ? { eventId: createdEvent.id } : {}),
+      },
     }));
     setHolidayLoading(prev => ({ ...prev, [h.id]: false }));
   };
@@ -219,7 +249,11 @@ const Events: React.FC = () => {
   const handleRejectHoliday = async (h: Holiday) => {
     setHolidayLoading(prev => ({ ...prev, [h.id]: true }));
     const existing = holidayStatuses[h.id];
-    if (existing?.activityId) await deleteDepartmentActivity(existing.activityId);
+    await Promise.all([
+      existing?.activityId ? deleteDepartmentActivity(existing.activityId) : Promise.resolve(),
+      existing?.eventId ? deleteChurchEvent(existing.eventId) : Promise.resolve(),
+    ]);
+    if (existing?.eventId) setEvents(prev => prev.filter(e => e.id !== existing.eventId));
     setHolidayStatuses(prev => ({ ...prev, [h.id]: { status: 'rejected' } }));
     setHolidayLoading(prev => ({ ...prev, [h.id]: false }));
   };
@@ -228,7 +262,11 @@ const Events: React.FC = () => {
     if (holidayLoading[h.id]) return;
     setHolidayLoading(prev => ({ ...prev, [h.id]: true }));
     const existing = holidayStatuses[h.id];
-    if (existing?.activityId) await deleteDepartmentActivity(existing.activityId);
+    await Promise.all([
+      existing?.activityId ? deleteDepartmentActivity(existing.activityId) : Promise.resolve(),
+      existing?.eventId ? deleteChurchEvent(existing.eventId) : Promise.resolve(),
+    ]);
+    if (existing?.eventId) setEvents(prev => prev.filter(e => e.id !== existing.eventId));
     setHolidayStatuses(prev => { const next = { ...prev }; delete next[h.id]; return next; });
     setHolidayLoading(prev => ({ ...prev, [h.id]: false }));
   };

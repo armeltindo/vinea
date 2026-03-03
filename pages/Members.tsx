@@ -1129,17 +1129,17 @@ const Members: React.FC = () => {
                 <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-4">
                   <div className="flex items-center gap-2 mb-2"><User size={16} className="text-indigo-600" /><h4 className="text-xs font-medium text-slate-500">Identité</h4></div>
                   <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-1.5"><label className="text-xs font-medium text-slate-500 ml-1">Prénoms</label><input type="text" required value={formData.firstName} onChange={(e) => setFormData({...formData, firstName: e.target.value})} placeholder="Prénoms" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:border-indigo-300 outline-none text-sm font-bold" /></div>
-                    <div className="space-y-1.5"><label className="text-xs font-medium text-slate-500 ml-1">Nom</label><input type="text" required value={formData.lastName} onChange={(e) => setFormData({...formData, lastName: e.target.value.toUpperCase()})} placeholder="NOM" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:border-indigo-300 outline-none text-sm font-bold" /></div>
+                    <div className="space-y-1.5"><label className="text-xs font-medium text-slate-500 ml-1">Prénoms</label><input type="text" required value={formData.firstName} onChange={(e) => setFormData(prev => ({...prev, firstName: e.target.value}))} placeholder="Prénoms" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:border-indigo-300 outline-none text-sm font-bold" /></div>
+                    <div className="space-y-1.5"><label className="text-xs font-medium text-slate-500 ml-1">Nom</label><input type="text" required value={formData.lastName} onChange={(e) => setFormData(prev => ({...prev, lastName: e.target.value.toUpperCase()}))} placeholder="NOM" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:border-indigo-300 outline-none text-sm font-bold" /></div>
                   </div>
                   <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-1.5"><label className="text-xs font-medium text-slate-500 ml-1">Rôle / Fonction</label><select value={formData.type} onChange={(e) => setFormData({...formData, type: e.target.value as MemberType})} className="w-full px-4 py-3 bg-indigo-50 border-none rounded-2xl outline-none text-xs font-semibold text-indigo-700">{availableRoles.map(role => <option key={role} value={role}>{role}</option>)}</select></div>
-                    <div className="space-y-1.5"><label className="text-xs font-medium text-slate-500 ml-1">Statut Actuel</label><select value={formData.status} onChange={(e) => setFormData({...formData, status: e.target.value as MemberStatus})} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl outline-none text-xs font-medium text-slate-700">{availableStatuses.map(stat => <option key={stat} value={stat}>{stat}</option>)}</select></div>
+                    <div className="space-y-1.5"><label className="text-xs font-medium text-slate-500 ml-1">Rôle / Fonction</label><select value={formData.type} onChange={(e) => setFormData(prev => ({...prev, type: e.target.value as MemberType}))} className="w-full px-4 py-3 bg-indigo-50 border-none rounded-2xl outline-none text-xs font-semibold text-indigo-700">{availableRoles.map(role => <option key={role} value={role}>{role}</option>)}</select></div>
+                    <div className="space-y-1.5"><label className="text-xs font-medium text-slate-500 ml-1">Statut Actuel</label><select value={formData.status} onChange={(e) => setFormData(prev => ({...prev, status: e.target.value as MemberStatus}))} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl outline-none text-xs font-medium text-slate-700">{availableStatuses.map(stat => <option key={stat} value={stat}>{stat}</option>)}</select></div>
                   </div>
-                  <div className="space-y-1.5"><label className="text-xs font-medium text-slate-500 ml-1">Surnom / Petit nom</label><input type="text" value={formData.nickname || ''} onChange={(e) => setFormData({...formData, nickname: e.target.value})} placeholder="Ex: JP" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:border-indigo-300 outline-none text-sm font-bold" /></div>
+                  <div className="space-y-1.5"><label className="text-xs font-medium text-slate-500 ml-1">Surnom / Petit nom</label><input type="text" value={formData.nickname || ''} onChange={(e) => setFormData(prev => ({...prev, nickname: e.target.value}))} placeholder="Ex: JP" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:border-indigo-300 outline-none text-sm font-bold" /></div>
                   <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-1.5"><label className="text-xs font-medium text-slate-500 ml-1">Sexe</label><select value={formData.gender} onChange={(e) => setFormData({...formData, gender: e.target.value as any})} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl outline-none text-sm font-bold"><option value="Masculin">Masculin</option><option value="Féminin">Féminin</option></select></div>
-                    <div className="space-y-1.5"><label className="text-xs font-medium text-slate-500 ml-1">État Civil</label><select value={formData.maritalStatus} onChange={(e) => setFormData({...formData, maritalStatus: e.target.value})} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl outline-none text-sm font-bold"><option value="Célibataire">Célibataire</option><option value="Marié(e)">Marié(e)</option><option value="Veuf/Veuve">Veuf/Veuve</option><option value="Fiancé(e)">Fiancé(e)</option></select></div>
+                    <div className="space-y-1.5"><label className="text-xs font-medium text-slate-500 ml-1">Sexe</label><select value={formData.gender} onChange={(e) => setFormData(prev => ({...prev, gender: e.target.value as any}))} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl outline-none text-sm font-bold"><option value="Masculin">Masculin</option><option value="Féminin">Féminin</option></select></div>
+                    <div className="space-y-1.5"><label className="text-xs font-medium text-slate-500 ml-1">État Civil</label><select value={formData.maritalStatus} onChange={(e) => setFormData(prev => ({...prev, maritalStatus: e.target.value}))} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl outline-none text-sm font-bold"><option value="Célibataire">Célibataire</option><option value="Marié(e)">Marié(e)</option><option value="Veuf/Veuve">Veuf/Veuve</option><option value="Fiancé(e)">Fiancé(e)</option></select></div>
                   </div>
 
                   {/* Champ conditionnel Nom du Conjoint avec recherche */}
@@ -1155,7 +1155,7 @@ const Members: React.FC = () => {
                           value={spouseSearch}
                           onChange={(e) => {
                             setSpouseSearch(e.target.value);
-                            setFormData({...formData, spouseName: e.target.value});
+                            setFormData(prev => ({...prev, spouseName: e.target.value}));
                             setIsSpouseDropdownOpen(true);
                           }}
                           onFocus={() => setIsSpouseDropdownOpen(true)}
@@ -1177,7 +1177,7 @@ const Members: React.FC = () => {
                               type="button" 
                               onClick={() => { 
                                 const name = `${formatFirstName(m.firstName)} ${m.lastName.toUpperCase()}`;
-                                setFormData({...formData, spouseName: name});
+                                setFormData(prev => ({...prev, spouseName: name}));
                                 setSpouseSearch(name);
                                 setIsSpouseDropdownOpen(false);
                               }} 
@@ -1203,7 +1203,7 @@ const Members: React.FC = () => {
                       <input
                         type="date"
                         value={formData.weddingDate || ''}
-                        onChange={(e) => setFormData({...formData, weddingDate: e.target.value})}
+                        onChange={(e) => setFormData(prev => ({...prev, weddingDate: e.target.value}))}
                         className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:border-rose-300 outline-none text-sm font-bold transition-all"
                       />
                     </div>
@@ -1221,7 +1221,7 @@ const Members: React.FC = () => {
                         value={motherSearch}
                         onChange={(e) => {
                           setMotherSearch(e.target.value);
-                          setFormData({...formData, motherName: e.target.value, motherId: ''});
+                          setFormData(prev => ({...prev, motherName: e.target.value, motherId: ''}));
                           setIsMotherDropdownOpen(true);
                         }}
                         onFocus={() => setIsMotherDropdownOpen(true)}
@@ -1244,7 +1244,7 @@ const Members: React.FC = () => {
                             type="button"
                             onClick={() => {
                               const name = `${formatFirstName(m.firstName)} ${m.lastName.toUpperCase()}`;
-                              setFormData({...formData, motherName: name, motherId: m.id});
+                              setFormData(prev => ({...prev, motherName: name, motherId: m.id}));
                               setMotherSearch(name);
                               setIsMotherDropdownOpen(false);
                             }}
@@ -1272,7 +1272,7 @@ const Members: React.FC = () => {
                         value={fatherSearch}
                         onChange={(e) => {
                           setFatherSearch(e.target.value);
-                          setFormData({...formData, fatherName: e.target.value, fatherId: ''});
+                          setFormData(prev => ({...prev, fatherName: e.target.value, fatherId: ''}));
                           setIsFatherDropdownOpen(true);
                         }}
                         onFocus={() => setIsFatherDropdownOpen(true)}
@@ -1295,7 +1295,7 @@ const Members: React.FC = () => {
                             type="button"
                             onClick={() => {
                               const name = `${formatFirstName(m.firstName)} ${m.lastName.toUpperCase()}`;
-                              setFormData({...formData, fatherName: name, fatherId: m.id});
+                              setFormData(prev => ({...prev, fatherName: name, fatherId: m.id}));
                               setFatherSearch(name);
                               setIsFatherDropdownOpen(false);
                             }}
@@ -1317,7 +1317,7 @@ const Members: React.FC = () => {
                     <div className="grid grid-cols-3 gap-2">
                       <select
                         value={birthDay}
-                        onChange={(e) => { const d = e.target.value; setBirthDay(d); setFormData({...formData, birthDate: assembleBirthDate(d, birthMonth, birthYear)}); }}
+                        onChange={(e) => { const d = e.target.value; setBirthDay(d); setFormData(prev => ({...prev, birthDate: assembleBirthDate(d, birthMonth, birthYear)})); }}
                         className="w-full px-3 py-3 bg-slate-50 border border-slate-200 rounded-2xl outline-none text-sm font-bold focus:bg-white focus:border-indigo-300 transition-all"
                       >
                         <option value="">Jour</option>
@@ -1327,7 +1327,7 @@ const Members: React.FC = () => {
                       </select>
                       <select
                         value={birthMonth}
-                        onChange={(e) => { const m = e.target.value; setBirthMonth(m); setFormData({...formData, birthDate: assembleBirthDate(birthDay, m, birthYear)}); }}
+                        onChange={(e) => { const m = e.target.value; setBirthMonth(m); setFormData(prev => ({...prev, birthDate: assembleBirthDate(birthDay, m, birthYear)})); }}
                         className="w-full px-3 py-3 bg-slate-50 border border-slate-200 rounded-2xl outline-none text-sm font-bold focus:bg-white focus:border-indigo-300 transition-all"
                       >
                         <option value="">Mois</option>
@@ -1340,23 +1340,23 @@ const Members: React.FC = () => {
                         min={1900}
                         max={new Date().getFullYear()}
                         value={birthYear}
-                        onChange={(e) => { const y = e.target.value; setBirthYear(y); setFormData({...formData, birthDate: assembleBirthDate(birthDay, birthMonth, y)}); }}
+                        onChange={(e) => { const y = e.target.value; setBirthYear(y); setFormData(prev => ({...prev, birthDate: assembleBirthDate(birthDay, birthMonth, y)})); }}
                         placeholder="Année"
                         className="w-full px-3 py-3 bg-slate-50 border border-slate-200 rounded-2xl outline-none text-sm font-bold focus:bg-white focus:border-indigo-300 transition-all placeholder:font-normal placeholder:text-slate-400"
                       />
                     </div>
                   </div>
-                  <div className="space-y-1.5"><label className="text-xs font-medium text-slate-500 ml-1">Profession (Facultatif)</label><input type="text" value={formData.profession} onChange={(e) => setFormData({...formData, profession: e.target.value})} placeholder="Ex: Comptable, Étudiant..." className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:border-indigo-300 outline-none text-sm font-bold" /></div>
+                  <div className="space-y-1.5"><label className="text-xs font-medium text-slate-500 ml-1">Profession (Facultatif)</label><input type="text" value={formData.profession} onChange={(e) => setFormData(prev => ({...prev, profession: e.target.value}))} placeholder="Ex: Comptable, Étudiant..." className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:border-indigo-300 outline-none text-sm font-bold" /></div>
                 </div>
                 <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-4">
                   <div className="flex items-center gap-2 mb-2"><Calendar size={16} className="text-indigo-600" /><h4 className="text-xs font-medium text-slate-500">Jalons Spirituels & Adhésion</h4></div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-1.5"><label className="text-xs font-medium text-slate-500 ml-1">Date d'adhésion</label><input type="date" value={formData.joinDate} onChange={(e) => setFormData({...formData, joinDate: e.target.value})} className="w-full px-4 py-3 bg-white border border-slate-200 rounded-2xl focus:bg-white focus:border-indigo-300 outline-none text-sm font-bold shadow-sm" /></div>
+                    <div className="space-y-1.5"><label className="text-xs font-medium text-slate-500 ml-1">Date d'adhésion</label><input type="date" value={formData.joinDate} onChange={(e) => setFormData(prev => ({...prev, joinDate: e.target.value}))} className="w-full px-4 py-3 bg-white border border-slate-200 rounded-2xl focus:bg-white focus:border-indigo-300 outline-none text-sm font-bold shadow-sm" /></div>
                     <div className="space-y-1.5">
                       <label className="text-xs font-medium text-slate-500 ml-1">Date de baptême</label>
                       <div className="flex gap-2">
-                         <input type="date" value={formData.baptizedDate} onChange={(e) => setFormData({...formData, baptizedDate: e.target.value, baptized: !!e.target.value})} className="flex-1 px-4 py-3 bg-white border border-slate-200 rounded-2xl focus:bg-white focus:border-indigo-300 outline-none text-sm font-bold shadow-sm" />
-                         <button type="button" onClick={() => setFormData({...formData, baptized: !formData.baptized})} className={cn("px-4 rounded-2xl text-xs font-medium transition-all", formData.baptized ? "bg-emerald-600 text-white" : "bg-slate-100 text-slate-400")}>
+                         <input type="date" value={formData.baptizedDate} onChange={(e) => setFormData(prev => ({...prev, baptizedDate: e.target.value, baptized: !!e.target.value}))} className="flex-1 px-4 py-3 bg-white border border-slate-200 rounded-2xl focus:bg-white focus:border-indigo-300 outline-none text-sm font-bold shadow-sm" />
+                         <button type="button" onClick={() => setFormData(prev => ({...prev, baptized: !formData.baptized}))} className={cn("px-4 rounded-2xl text-xs font-medium transition-all", formData.baptized ? "bg-emerald-600 text-white" : "bg-slate-100 text-slate-400")}>
                            {formData.baptized ? 'OUI' : 'NON'}
                          </button>
                       </div>
@@ -1372,7 +1372,7 @@ const Members: React.FC = () => {
                     <label className="text-xs font-medium text-slate-500 ml-1">Comment a-t-il/elle été atteint(e) ?</label>
                     <select
                       value={formData.source || 'Direct'}
-                      onChange={(e) => setFormData({...formData, source: e.target.value})}
+                      onChange={(e) => setFormData(prev => ({...prev, source: e.target.value}))}
                       className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl outline-none text-sm font-bold focus:bg-white focus:border-indigo-300 transition-all"
                     >
                       <option value="Direct">Direct</option>
@@ -1397,7 +1397,7 @@ const Members: React.FC = () => {
                         value={invitedBySearch}
                         onChange={(e) => {
                           setInvitedBySearch(e.target.value);
-                          setFormData({...formData, invitedBy: e.target.value});
+                          setFormData(prev => ({...prev, invitedBy: e.target.value}));
                           setIsInvitedByDropdownOpen(true);
                         }}
                         onFocus={() => setIsInvitedByDropdownOpen(true)}
@@ -1416,7 +1416,7 @@ const Members: React.FC = () => {
                         }).map(m => (
                           <button key={m.id} type="button" onClick={() => {
                             const name = `${formatFirstName(m.firstName)} ${m.lastName.toUpperCase()}`;
-                            setFormData({...formData, invitedBy: name});
+                            setFormData(prev => ({...prev, invitedBy: name}));
                             setInvitedBySearch(name);
                             setIsInvitedByDropdownOpen(false);
                           }} className="w-full text-left px-4 py-3 text-xs font-medium hover:bg-indigo-50 border-b border-slate-50 last:border-0 flex items-center gap-3">
@@ -1442,7 +1442,7 @@ const Members: React.FC = () => {
                         value={discipleMakerSearch}
                         onChange={(e) => {
                           setDiscipleMakerSearch(e.target.value);
-                          if (!e.target.value) setFormData({...formData, assignedDiscipleMakerId: ''});
+                          if (!e.target.value) setFormData(prev => ({...prev, assignedDiscipleMakerId: ''}));
                           setIsDiscipleMakerDropdownOpen(true);
                         }}
                         onFocus={() => setIsDiscipleMakerDropdownOpen(true)}
@@ -1462,7 +1462,7 @@ const Members: React.FC = () => {
                         }).map(m => (
                           <button key={m.id} type="button" onClick={() => {
                             const name = `${formatFirstName(m.firstName)} ${m.lastName.toUpperCase()}`;
-                            setFormData({...formData, assignedDiscipleMakerId: m.id});
+                            setFormData(prev => ({...prev, assignedDiscipleMakerId: m.id}));
                             setDiscipleMakerSearch(name);
                             setIsDiscipleMakerDropdownOpen(false);
                           }} className="w-full text-left px-4 py-3 text-xs font-medium hover:bg-indigo-50 border-b border-slate-50 last:border-0 flex items-center gap-3">
@@ -1490,12 +1490,12 @@ const Members: React.FC = () => {
                 <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-4">
                   <div className="flex items-center gap-2 mb-2"><Phone size={16} className="text-emerald-600" /><h4 className="text-xs font-medium text-slate-500">Coordonnées</h4></div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                     <div className="space-y-1.5"><label className="text-xs font-medium text-slate-500 ml-1">Téléphone Principal</label><input type="tel" value={formData.phone || ''} onChange={(e) => setFormData({...formData, phone: e.target.value})} placeholder="07 08 09 10 11" className="w-full px-4 py-3 bg-white border border-slate-200 rounded-2xl focus:bg-white focus:border-indigo-300 outline-none text-sm font-bold transition-all" /></div>
-                     <div className="space-y-1.5"><label className="text-xs font-medium text-slate-500 ml-1">Téléphone Secondaire</label><input type="tel" value={formData.secondaryPhone || ''} onChange={(e) => setFormData({...formData, secondaryPhone: e.target.value})} placeholder="07 08 09 10 11" className="w-full px-4 py-3 bg-white border border-slate-200 rounded-2xl focus:bg-white focus:border-indigo-300 outline-none text-sm font-bold transition-all" /></div>
+                     <div className="space-y-1.5"><label className="text-xs font-medium text-slate-500 ml-1">Téléphone Principal</label><input type="tel" value={formData.phone || ''} onChange={(e) => setFormData(prev => ({...prev, phone: e.target.value}))} placeholder="07 08 09 10 11" className="w-full px-4 py-3 bg-white border border-slate-200 rounded-2xl focus:bg-white focus:border-indigo-300 outline-none text-sm font-bold transition-all" /></div>
+                     <div className="space-y-1.5"><label className="text-xs font-medium text-slate-500 ml-1">Téléphone Secondaire</label><input type="tel" value={formData.secondaryPhone || ''} onChange={(e) => setFormData(prev => ({...prev, secondaryPhone: e.target.value}))} placeholder="07 08 09 10 11" className="w-full px-4 py-3 bg-white border border-slate-200 rounded-2xl focus:bg-white focus:border-indigo-300 outline-none text-sm font-bold transition-all" /></div>
                   </div>
-                  <div className="space-y-1.5"><label className="text-xs font-medium text-slate-500 ml-1">Numéro WhatsApp (Optionnel)</label><input type="tel" value={formData.whatsappPhone || ''} onChange={(e) => setFormData({...formData, whatsappPhone: e.target.value})} placeholder="07 08 09 10 11" className="w-full px-4 py-3 bg-white border border-slate-200 rounded-2xl focus:bg-white focus:border-indigo-300 outline-none text-sm font-bold transition-all" /></div>
-                  <div className="space-y-1.5"><label className="text-xs font-medium text-slate-500 ml-1">Email</label><input type="email" value={formData.email || ''} onChange={(e) => setFormData({...formData, email: e.target.value})} placeholder="email@exemple.com" className="w-full px-4 py-3 bg-white border border-slate-200 rounded-2xl focus:bg-white focus:border-indigo-300 outline-none text-sm font-bold transition-all" /></div>
-                  <div className="space-y-1.5"><label className="text-xs font-medium text-slate-500 ml-1">Adresse physique</label><textarea rows={3} value={formData.address || ''} onChange={(e) => setFormData({...formData, address: e.target.value})} placeholder="Ex: Cocody, Rue de la Paix" className="w-full px-5 py-4 bg-white border border-slate-200 rounded-xl outline-none text-sm font-medium resize-none shadow-sm transition-all" /></div>
+                  <div className="space-y-1.5"><label className="text-xs font-medium text-slate-500 ml-1">Numéro WhatsApp (Optionnel)</label><input type="tel" value={formData.whatsappPhone || ''} onChange={(e) => setFormData(prev => ({...prev, whatsappPhone: e.target.value}))} placeholder="07 08 09 10 11" className="w-full px-4 py-3 bg-white border border-slate-200 rounded-2xl focus:bg-white focus:border-indigo-300 outline-none text-sm font-bold transition-all" /></div>
+                  <div className="space-y-1.5"><label className="text-xs font-medium text-slate-500 ml-1">Email</label><input type="email" value={formData.email || ''} onChange={(e) => setFormData(prev => ({...prev, email: e.target.value}))} placeholder="email@exemple.com" className="w-full px-4 py-3 bg-white border border-slate-200 rounded-2xl focus:bg-white focus:border-indigo-300 outline-none text-sm font-bold transition-all" /></div>
+                  <div className="space-y-1.5"><label className="text-xs font-medium text-slate-500 ml-1">Adresse physique</label><textarea rows={3} value={formData.address || ''} onChange={(e) => setFormData(prev => ({...prev, address: e.target.value}))} placeholder="Ex: Cocody, Rue de la Paix" className="w-full px-5 py-4 bg-white border border-slate-200 rounded-xl outline-none text-sm font-medium resize-none shadow-sm transition-all" /></div>
                 </div>
               </div>
                 {/* ── Contact d'Urgence ──────────────────────────────────── */}
@@ -1507,7 +1507,7 @@ const Members: React.FC = () => {
                       <input
                         type="text"
                         value={formData.emergencyContact?.name || ''}
-                        onChange={(e) => setFormData({...formData, emergencyContact: {...(formData.emergencyContact || {name:'',phone:'',relation:''}), name: e.target.value}})}
+                        onChange={(e) => setFormData(prev => ({...prev, emergencyContact: {...(prev.emergencyContact || {name:'',phone:'',relation:''}), name: e.target.value}}))}
                         placeholder="Ex: KOUAME Marie"
                         className="w-full px-4 py-3 bg-white border border-slate-200 rounded-2xl focus:bg-white focus:border-rose-300 outline-none text-sm font-bold transition-all"
                       />
@@ -1517,7 +1517,7 @@ const Members: React.FC = () => {
                       <input
                         type="text"
                         value={formData.emergencyContact?.relation || ''}
-                        onChange={(e) => setFormData({...formData, emergencyContact: {...(formData.emergencyContact || {name:'',phone:'',relation:''}), relation: e.target.value}})}
+                        onChange={(e) => setFormData(prev => ({...prev, emergencyContact: {...(prev.emergencyContact || {name:'',phone:'',relation:''}), relation: e.target.value}}))}
                         placeholder="Ex: Épouse, Mère, Frère..."
                         className="w-full px-4 py-3 bg-white border border-slate-200 rounded-2xl focus:bg-white focus:border-rose-300 outline-none text-sm font-bold transition-all"
                       />
@@ -1527,7 +1527,7 @@ const Members: React.FC = () => {
                       <input
                         type="tel"
                         value={formData.emergencyContact?.phone || ''}
-                        onChange={(e) => setFormData({...formData, emergencyContact: {...(formData.emergencyContact || {name:'',phone:'',relation:''}), phone: e.target.value}})}
+                        onChange={(e) => setFormData(prev => ({...prev, emergencyContact: {...(prev.emergencyContact || {name:'',phone:'',relation:''}), phone: e.target.value}}))}
                         placeholder="07 08 09 10 11"
                         className="w-full px-4 py-3 bg-white border border-slate-200 rounded-2xl focus:bg-white focus:border-rose-300 outline-none text-sm font-bold transition-all"
                       />

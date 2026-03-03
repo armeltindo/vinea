@@ -210,6 +210,12 @@ const Members: React.FC = () => {
   const [birthMonth, setBirthMonth] = useState('');
   const [birthYear, setBirthYear] = useState('');
 
+  // États pour la recherche "Invité par" et "Disciple-maker assigné"
+  const [invitedBySearch, setInvitedBySearch] = useState('');
+  const [isInvitedByDropdownOpen, setIsInvitedByDropdownOpen] = useState(false);
+  const [discipleMakerSearch, setDiscipleMakerSearch] = useState('');
+  const [isDiscipleMakerDropdownOpen, setIsDiscipleMakerDropdownOpen] = useState(false);
+
   const initialState: Partial<Member> = {
     lastName: '',
     firstName: '',
@@ -217,6 +223,7 @@ const Members: React.FC = () => {
     gender: 'Masculin',
     maritalStatus: 'Célibataire',
     spouseName: '',
+    weddingDate: '',
     type: availableRoles[availableRoles.length - 1] as MemberType,
     status: availableStatuses[0] as MemberStatus,
     departments: [],
@@ -232,6 +239,10 @@ const Members: React.FC = () => {
     birthDate: '',
     address: '',
     baptized: false,
+    source: 'Direct',
+    invitedBy: '',
+    assignedDiscipleMakerId: '',
+    emergencyContact: { name: '', phone: '', relation: '' },
     motherId: '',
     motherName: '',
     fatherId: '',
@@ -325,6 +336,9 @@ const Members: React.FC = () => {
     setBirthDay(bd.day);
     setBirthMonth(bd.month);
     setBirthYear(bd.year);
+    setInvitedBySearch(member.invitedBy || '');
+    const dm = members.find(m => m.id === member.assignedDiscipleMakerId);
+    setDiscipleMakerSearch(dm ? `${formatFirstName(dm.firstName)} ${dm.lastName.toUpperCase()}` : '');
     setIsDetailsOpen(false);
     navigate('', { replace: true });
     setIsFormOpen(true);
@@ -583,6 +597,7 @@ const Members: React.FC = () => {
     setMotherSearch('');
     setFatherSearch('');
     setBirthDay(''); setBirthMonth(''); setBirthYear('');
+    setInvitedBySearch(''); setDiscipleMakerSearch('');
   };
 
   const closeForm = () => {
@@ -594,6 +609,7 @@ const Members: React.FC = () => {
     setMotherSearch('');
     setFatherSearch('');
     setBirthDay(''); setBirthMonth(''); setBirthYear('');
+    setInvitedBySearch(''); setDiscipleMakerSearch('');
   };
 
   const resetFilters = () => {
@@ -1149,6 +1165,21 @@ const Members: React.FC = () => {
                     </div>
                   )}
 
+                  {/* Date de mariage — visible uniquement si Marié(e) */}
+                  {formData.maritalStatus === 'Marié(e)' && (
+                    <div className="space-y-1.5 animate-in slide-in-from-top-2 duration-300">
+                      <label className="text-xs font-medium text-slate-500 ml-1 flex items-center gap-2">
+                        <Calendar size={12} className="text-rose-400" /> Date de mariage
+                      </label>
+                      <input
+                        type="date"
+                        value={formData.weddingDate || ''}
+                        onChange={(e) => setFormData({...formData, weddingDate: e.target.value})}
+                        className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:border-rose-300 outline-none text-sm font-bold transition-all"
+                      />
+                    </div>
+                  )}
+
                   {/* Champ Mère */}
                   <div className="space-y-1.5 relative">
                     <label className="text-xs font-medium text-slate-500 ml-1 flex items-center gap-2">
@@ -1305,6 +1336,126 @@ const Members: React.FC = () => {
                     </div>
                   </div>
                 </div>
+                {/* ── Intégration & Suivi ─────────────────────────────────── */}
+                <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-4">
+                  <div className="flex items-center gap-2 mb-2"><BookOpen size={16} className="text-indigo-600" /><h4 className="text-xs font-medium text-slate-500">Intégration & Suivi</h4></div>
+
+                  {/* Source */}
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-medium text-slate-500 ml-1">Comment a-t-il/elle été atteint(e) ?</label>
+                    <select
+                      value={formData.source || 'Direct'}
+                      onChange={(e) => setFormData({...formData, source: e.target.value})}
+                      className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl outline-none text-sm font-bold focus:bg-white focus:border-indigo-300 transition-all"
+                    >
+                      <option value="Direct">Direct</option>
+                      <option value="Invité">Invité par un membre</option>
+                      <option value="Bouche à oreille">Bouche à oreille</option>
+                      <option value="Réseaux sociaux">Réseaux sociaux</option>
+                      <option value="Événement">Événement / Croisade</option>
+                      <option value="Site web">Site web</option>
+                      <option value="Autre">Autre</option>
+                    </select>
+                  </div>
+
+                  {/* Invité par */}
+                  <div className="space-y-1.5 relative">
+                    <label className="text-xs font-medium text-slate-500 ml-1 flex items-center gap-2">
+                      <UserCheck size={12} className="text-indigo-400" /> Invité(e) par (Facultatif)
+                    </label>
+                    <div className="relative group">
+                      <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                      <input
+                        type="text"
+                        value={invitedBySearch}
+                        onChange={(e) => {
+                          setInvitedBySearch(e.target.value);
+                          setFormData({...formData, invitedBy: e.target.value});
+                          setIsInvitedByDropdownOpen(true);
+                        }}
+                        onFocus={() => setIsInvitedByDropdownOpen(true)}
+                        onBlur={() => setTimeout(() => setIsInvitedByDropdownOpen(false), 150)}
+                        placeholder="Nom du membre qui a invité..."
+                        className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl outline-none text-sm font-bold focus:bg-white focus:border-indigo-300 transition-all shadow-sm"
+                      />
+                    </div>
+                    {isInvitedByDropdownOpen && invitedBySearch.length >= 2 && (
+                      <div className="absolute z-30 left-0 right-0 top-full mt-1 max-h-40 overflow-y-auto bg-white border border-slate-200 rounded-2xl shadow-xl custom-scrollbar">
+                        {members.filter(m => {
+                          if (editingMemberId && m.id === editingMemberId) return false;
+                          const fullName = `${m.firstName} ${m.lastName}`.toLowerCase();
+                          const nick = (m.nickname || '').toLowerCase();
+                          return fullName.includes(invitedBySearch.toLowerCase()) || nick.includes(invitedBySearch.toLowerCase());
+                        }).map(m => (
+                          <button key={m.id} type="button" onClick={() => {
+                            const name = `${formatFirstName(m.firstName)} ${m.lastName.toUpperCase()}`;
+                            setFormData({...formData, invitedBy: name});
+                            setInvitedBySearch(name);
+                            setIsInvitedByDropdownOpen(false);
+                          }} className="w-full text-left px-4 py-3 text-xs font-medium hover:bg-indigo-50 border-b border-slate-50 last:border-0 flex items-center gap-3">
+                            <div className="w-6 h-6 rounded-lg bg-slate-100 flex items-center justify-center overflow-hidden shrink-0 text-xs font-medium text-slate-500">
+                              {m.photoUrl ? <img src={m.photoUrl} alt="" className="w-full h-full object-cover" /> : getInitials(m.firstName, m.lastName)}
+                            </div>
+                            <span className="text-slate-700">{formatFirstName(m.firstName)} {m.lastName.toUpperCase()}</span>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Disciple-maker / Mentor assigné */}
+                  <div className="space-y-1.5 relative">
+                    <label className="text-xs font-medium text-slate-500 ml-1 flex items-center gap-2">
+                      <BookOpen size={12} className="text-indigo-400" /> Disciple-maker assigné (Facultatif)
+                    </label>
+                    <div className="relative group">
+                      <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                      <input
+                        type="text"
+                        value={discipleMakerSearch}
+                        onChange={(e) => {
+                          setDiscipleMakerSearch(e.target.value);
+                          if (!e.target.value) setFormData({...formData, assignedDiscipleMakerId: ''});
+                          setIsDiscipleMakerDropdownOpen(true);
+                        }}
+                        onFocus={() => setIsDiscipleMakerDropdownOpen(true)}
+                        onBlur={() => setTimeout(() => setIsDiscipleMakerDropdownOpen(false), 150)}
+                        placeholder="Chercher un disciple-maker..."
+                        className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl outline-none text-sm font-bold focus:bg-white focus:border-indigo-300 transition-all shadow-sm"
+                      />
+                    </div>
+                    {isDiscipleMakerDropdownOpen && discipleMakerSearch.length >= 2 && (
+                      <div className="absolute z-30 left-0 right-0 top-full mt-1 max-h-40 overflow-y-auto bg-white border border-slate-200 rounded-2xl shadow-xl custom-scrollbar">
+                        {members.filter(m => {
+                          if (editingMemberId && m.id === editingMemberId) return false;
+                          if (!m.isDiscipleMaker) return false;
+                          const fullName = `${m.firstName} ${m.lastName}`.toLowerCase();
+                          const nick = (m.nickname || '').toLowerCase();
+                          return fullName.includes(discipleMakerSearch.toLowerCase()) || nick.includes(discipleMakerSearch.toLowerCase());
+                        }).map(m => (
+                          <button key={m.id} type="button" onClick={() => {
+                            const name = `${formatFirstName(m.firstName)} ${m.lastName.toUpperCase()}`;
+                            setFormData({...formData, assignedDiscipleMakerId: m.id});
+                            setDiscipleMakerSearch(name);
+                            setIsDiscipleMakerDropdownOpen(false);
+                          }} className="w-full text-left px-4 py-3 text-xs font-medium hover:bg-indigo-50 border-b border-slate-50 last:border-0 flex items-center gap-3">
+                            <div className="w-6 h-6 rounded-lg bg-slate-100 flex items-center justify-center overflow-hidden shrink-0 text-xs font-medium text-slate-500">
+                              {m.photoUrl ? <img src={m.photoUrl} alt="" className="w-full h-full object-cover" /> : getInitials(m.firstName, m.lastName)}
+                            </div>
+                            <div>
+                              <span className="text-slate-700">{formatFirstName(m.firstName)} {m.lastName.toUpperCase()}</span>
+                              <span className="ml-2 text-[10px] text-indigo-500 font-semibold uppercase">Disciple-maker</span>
+                            </div>
+                          </button>
+                        ))}
+                        {members.filter(m => m.isDiscipleMaker && (editingMemberId ? m.id !== editingMemberId : true) && (`${m.firstName} ${m.lastName}`.toLowerCase().includes(discipleMakerSearch.toLowerCase()) || (m.nickname || '').toLowerCase().includes(discipleMakerSearch.toLowerCase()))).length === 0 && (
+                          <p className="px-4 py-3 text-xs text-slate-400 italic">Aucun disciple-maker trouvé</p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
                 <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-4">
                   <div className="flex items-center gap-2 mb-2"><Plus size={16} className="text-indigo-600" /><h4 className="text-xs font-medium text-slate-500">Engagement & Ministères</h4></div>
                   <div className="space-y-3"><label className="text-xs font-medium text-slate-500 ml-1">Départements affectés</label><div className="grid grid-cols-1 gap-2">{availableDepartments.map(dept => { const isSelected = formData.departments?.includes(dept as Department); return (<button key={dept} type="button" onClick={() => toggleDepartment(dept)} className={cn("flex items-center justify-between px-4 py-2.5 rounded-xl border text-xs font-medium transition-all duration-200", isSelected ? cn(getDepartmentColor(dept), "ring-2 ring-indigo-500/20") : "bg-white border-slate-200 text-slate-400 hover:bg-slate-50")}><div className="flex items-center gap-3">{getDepartmentIcon(dept as Department, 14)}{dept}</div>{isSelected && <Check size={14} strokeWidth={3} />}</button>); })}</div></div>
@@ -1320,6 +1471,43 @@ const Members: React.FC = () => {
                   <div className="space-y-1.5"><label className="text-xs font-medium text-slate-500 ml-1">Adresse physique</label><textarea rows={3} value={formData.address || ''} onChange={(e) => setFormData({...formData, address: e.target.value})} placeholder="Ex: Cocody, Rue de la Paix" className="w-full px-5 py-4 bg-white border border-slate-200 rounded-xl outline-none text-sm font-medium resize-none shadow-sm transition-all" /></div>
                 </div>
               </div>
+                {/* ── Contact d'Urgence ──────────────────────────────────── */}
+                <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-4">
+                  <div className="flex items-center gap-2 mb-2"><Shield size={16} className="text-rose-500" /><h4 className="text-xs font-medium text-slate-500">Contact d'Urgence</h4></div>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-medium text-slate-500 ml-1">Nom complet</label>
+                      <input
+                        type="text"
+                        value={formData.emergencyContact?.name || ''}
+                        onChange={(e) => setFormData({...formData, emergencyContact: {...(formData.emergencyContact || {name:'',phone:'',relation:''}), name: e.target.value}})}
+                        placeholder="Ex: KOUAME Marie"
+                        className="w-full px-4 py-3 bg-white border border-slate-200 rounded-2xl focus:bg-white focus:border-rose-300 outline-none text-sm font-bold transition-all"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-medium text-slate-500 ml-1">Relation</label>
+                      <input
+                        type="text"
+                        value={formData.emergencyContact?.relation || ''}
+                        onChange={(e) => setFormData({...formData, emergencyContact: {...(formData.emergencyContact || {name:'',phone:'',relation:''}), relation: e.target.value}})}
+                        placeholder="Ex: Épouse, Mère, Frère..."
+                        className="w-full px-4 py-3 bg-white border border-slate-200 rounded-2xl focus:bg-white focus:border-rose-300 outline-none text-sm font-bold transition-all"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-medium text-slate-500 ml-1">Téléphone</label>
+                      <input
+                        type="tel"
+                        value={formData.emergencyContact?.phone || ''}
+                        onChange={(e) => setFormData({...formData, emergencyContact: {...(formData.emergencyContact || {name:'',phone:'',relation:''}), phone: e.target.value}})}
+                        placeholder="07 08 09 10 11"
+                        className="w-full px-4 py-3 bg-white border border-slate-200 rounded-2xl focus:bg-white focus:border-rose-300 outline-none text-sm font-bold transition-all"
+                      />
+                    </div>
+                  </div>
+                </div>
+
               <div className="pt-8 flex gap-4">
                 <button type="button" onClick={closeForm} className="flex-1 py-3.5 bg-white border border-slate-200 text-slate-500 rounded-2xl text-sm font-medium hover:bg-slate-50 transition-all">Annuler</button>
                 <button type="submit" className="flex-1 py-3.5 bg-indigo-600 text-white rounded-2xl text-sm font-semibold hover:bg-indigo-700 transition-all shadow-xl shadow-indigo-200 flex items-center justify-center gap-2"><Save size={14} /> Enregistrer</button>

@@ -147,6 +147,11 @@ const MemberDetails: React.FC<MemberDetailsProps> = ({ member, isOpen, onClose, 
     );
   }, [member.id, allMembers]);
 
+  const mentorMember = useMemo(() => {
+    if (!member.assignedDiscipleMakerId) return null;
+    return allMembers.find(m => m.id === member.assignedDiscipleMakerId) ?? null;
+  }, [member.assignedDiscipleMakerId, allMembers]);
+
   const dynamicHistory = useMemo(() => {
     const events: { id: string, date: string, type: string, label: string, icon: React.ReactNode }[] = [];
     const memberFullName = `${member.firstName} ${member.lastName}`.toLowerCase();
@@ -335,6 +340,18 @@ const MemberDetails: React.FC<MemberDetailsProps> = ({ member, isOpen, onClose, 
                 <p className="text-xs font-medium text-slate-500">État Civil</p>
                 <p className="text-xs font-medium text-slate-800">{member.maritalStatus}</p>
               </div>
+              {member.source && (
+                <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm space-y-1">
+                  <p className="text-xs font-medium text-slate-500">Source / Comment atteint</p>
+                  <p className="text-xs font-medium text-slate-800">{member.source}</p>
+                </div>
+              )}
+              {member.invitedBy && (
+                <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm space-y-1">
+                  <p className="text-xs font-medium text-slate-500">Invité(e) par</p>
+                  <p className="text-xs font-medium text-slate-800">{member.invitedBy}</p>
+                </div>
+              )}
               {(member.maritalStatus.includes('Marié') || member.spouseName) && (
                 <div className="col-span-2 bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-4">
                   {spouseMember ? (
@@ -542,6 +559,29 @@ const MemberDetails: React.FC<MemberDetailsProps> = ({ member, isOpen, onClose, 
               </div>
             </div>
           </div>
+
+          {/* Section: Disciple-maker assigné / Mentor */}
+          {mentorMember && (
+            <div className="space-y-4">
+              <h4 className="text-xs font-medium text-slate-500 flex items-center gap-2">
+                <BookOpen size={14} className="text-indigo-600" /> Disciple-maker assigné
+              </h4>
+              <div className="bg-indigo-50/60 border border-indigo-100 p-5 rounded-xl flex items-center gap-5">
+                <Avatar
+                  firstName={mentorMember.firstName}
+                  lastName={mentorMember.lastName}
+                  photoUrl={mentorMember.photoUrl}
+                  size="lg"
+                  shape="card"
+                />
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-semibold text-indigo-500 uppercase tracking-wide">Disciple-maker</p>
+                  <p className="text-sm font-semibold text-slate-800 truncate">{formatFirstName(mentorMember.firstName)} {mentorMember.lastName.toUpperCase()}</p>
+                  <p className="text-xs text-slate-400 mt-0.5">{mentorMember.status} · {mentorMember.type}</p>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Section: Contact d'Urgence */}
           {member.emergencyContact && (member.emergencyContact.name || member.emergencyContact.phone) && (

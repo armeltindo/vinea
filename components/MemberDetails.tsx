@@ -51,6 +51,25 @@ import { cn, getInitials, getDisplayNickname, formatFirstName } from '../utils';
 import { getMembers, getDepartmentActivities, getDiscipleshipEnrollments, getFinancialRecords, getAttendanceSessions } from '../lib/db';
 import Avatar from './Avatar';
 
+const MOIS = ['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
+
+// Formate une date de naissance partielle (1900 = pas d'année, 00 = pas de jour/mois)
+const formatBirthDate = (dateStr: string): string => {
+  const parts = dateStr.split('-');
+  if (parts.length !== 3) return '';
+  const [y, m, d] = parts;
+  const hasYear = y !== '1900';
+  const hasMonth = m !== '00';
+  const hasDay = d !== '00';
+  const mLabel = hasMonth ? MOIS[parseInt(m, 10) - 1] : '';
+  if (hasDay && hasMonth && hasYear) return `${parseInt(d)} ${mLabel} ${y}`;
+  if (hasDay && hasMonth) return `${parseInt(d)} ${mLabel}`;
+  if (hasMonth && hasYear) return `${mLabel} ${y}`;
+  if (hasMonth) return mLabel;
+  if (hasYear) return y;
+  return '';
+};
+
 const getDepartmentIcon = (dept: Department, size = 14) => {
   switch (dept) {
     case Department.EVANGELISATION: return <Flame size={size} />;
@@ -334,7 +353,7 @@ const MemberDetails: React.FC<MemberDetailsProps> = ({ member, isOpen, onClose, 
               </div>
               <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm space-y-1">
                 <p className="text-xs font-medium text-slate-500">Date de naissance</p>
-                <p className="text-xs font-bold text-slate-800">{member.birthDate ? (() => { const d = new Date(member.birthDate + 'T00:00:00'); const opts: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'long' }; if (d.getFullYear() !== 1900) opts.year = 'numeric'; return d.toLocaleDateString('fr-FR', opts); })() : '---'}</p>
+                <p className="text-xs font-bold text-slate-800">{member.birthDate ? (formatBirthDate(member.birthDate) || '---') : '---'}</p>
               </div>
               <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm space-y-1">
                 <p className="text-xs font-medium text-slate-500">État Civil</p>
@@ -450,7 +469,7 @@ const MemberDetails: React.FC<MemberDetailsProps> = ({ member, isOpen, onClose, 
                         {formatFirstName(child.firstName)} {child.lastName.toUpperCase()}
                       </p>
                       <p className="text-xs text-slate-400 mt-0.5">{child.status} · {child.type}</p>
-                      {child.birthDate && (() => { const d = new Date(child.birthDate + 'T00:00:00'); const opts: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'long' }; if (d.getFullYear() !== 1900) opts.year = 'numeric'; return <p className="text-xs text-slate-400">Né(e) le {d.toLocaleDateString('fr-FR', opts)}</p>; })()}
+                      {child.birthDate && formatBirthDate(child.birthDate) && <p className="text-xs text-slate-400">Né(e) le {formatBirthDate(child.birthDate)}</p>}
                     </div>
                     <div className={`px-2 py-1 rounded-lg text-xs font-medium ${
                       child.motherId === member.id && child.fatherId === member.id

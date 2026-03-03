@@ -112,6 +112,8 @@ const App: React.FC = () => {
     if (settings.enableBirthdays) {
       members.forEach(m => {
         if (m.birthDate) {
+          const [, bMonth, bDay] = m.birthDate.split('-');
+          if (bMonth === '00' || bDay === '00') return;
           const bd = new Date(m.birthDate + 'T00:00:00');
           if (bd.getDate() === now.getDate() && bd.getMonth() === now.getMonth()) {
             newNotifications.push({

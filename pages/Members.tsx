@@ -259,20 +259,26 @@ const Members: React.FC = () => {
 
   const [formData, setFormData] = useState<Partial<Member>>(initialState);
 
-  // Décompose une date stockée (YYYY-MM-DD ou 1900-MM-DD) en parties jour/mois/année
+  // Décompose une date stockée (YYYY-MM-DD, 1900 = pas d'année, 00 = pas de jour/mois)
   const parseBirthDate = (dateStr?: string) => {
     if (!dateStr) return { day: '', month: '', year: '' };
     const parts = dateStr.split('-');
     if (parts.length !== 3) return { day: '', month: '', year: '' };
     const [y, m, d] = parts;
-    return { day: String(parseInt(d, 10)), month: String(parseInt(m, 10)), year: y === '1900' ? '' : y };
+    return {
+      day: d === '00' ? '' : String(parseInt(d, 10)),
+      month: m === '00' ? '' : String(parseInt(m, 10)),
+      year: y === '1900' ? '' : y,
+    };
   };
 
-  // Assemble les parties en YYYY-MM-DD (utilise 1900 si pas d'année)
+  // Assemble les parties en YYYY-MM-DD (1900 = pas d'année, 00 = pas de jour/mois)
   const assembleBirthDate = (day: string, month: string, year: string): string => {
-    if (!day || !month) return '';
+    if (!day && !month && !year) return '';
     const y = year && year.length === 4 ? year : '1900';
-    return `${y}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+    const m = month ? month.padStart(2, '0') : '00';
+    const d = day ? day.padStart(2, '0') : '00';
+    return `${y}-${m}-${d}`;
   };
 
   const handleAnalyze = async () => {
@@ -317,7 +323,7 @@ const Members: React.FC = () => {
     const anniversaires = members.filter(m => {
       if (!m.birthDate) return false;
       const parts = m.birthDate.split('-');
-      return parts.length >= 2 && parseInt(parts[1]) === thisMonth;
+      return parts.length === 3 && parts[1] !== '00' && parts[2] !== '00' && parseInt(parts[1]) === thisMonth;
     }).length;
 
     const parStatut: Record<string, number> = {};
@@ -1302,28 +1308,26 @@ const Members: React.FC = () => {
                     )}
                   </div>
 
-                  {/* Date de naissance : jour + mois obligatoires, année optionnelle */}
+                  {/* Date de naissance : tous les champs sont facultatifs */}
                   <div className="space-y-1.5">
-                    <label className="text-xs font-medium text-slate-500 ml-1">Date de naissance</label>
+                    <label className="text-xs font-medium text-slate-500 ml-1">Date de naissance (Facultatif)</label>
                     <div className="grid grid-cols-3 gap-2">
                       <select
-                        required
                         value={birthDay}
                         onChange={(e) => { const d = e.target.value; setBirthDay(d); setFormData({...formData, birthDate: assembleBirthDate(d, birthMonth, birthYear)}); }}
                         className="w-full px-3 py-3 bg-slate-50 border border-slate-200 rounded-2xl outline-none text-sm font-bold focus:bg-white focus:border-indigo-300 transition-all"
                       >
-                        <option value="">Jour *</option>
+                        <option value="">Jour</option>
                         {Array.from({length: 31}, (_, i) => i + 1).map(d => (
                           <option key={d} value={String(d)}>{d}</option>
                         ))}
                       </select>
                       <select
-                        required
                         value={birthMonth}
                         onChange={(e) => { const m = e.target.value; setBirthMonth(m); setFormData({...formData, birthDate: assembleBirthDate(birthDay, m, birthYear)}); }}
                         className="w-full px-3 py-3 bg-slate-50 border border-slate-200 rounded-2xl outline-none text-sm font-bold focus:bg-white focus:border-indigo-300 transition-all"
                       >
-                        <option value="">Mois *</option>
+                        <option value="">Mois</option>
                         {['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'].map((name, idx) => (
                           <option key={idx + 1} value={String(idx + 1)}>{name}</option>
                         ))}

@@ -145,7 +145,7 @@ const Dashboard: React.FC<DashboardProps> = ({ adminName: _adminName }) => {
 
     // Membres & Départements
     const totalMembersCount = members.length;
-    const enfantsCount = members.filter(m => m.status === MemberStatus.ENFANT).length;
+    const enfantsCount = members.filter(m => (m.type as string) === 'Enfant' || m.status === MemberStatus.ENFANT).length;
     const deptCounts: Record<string, number> = {};
     members.forEach(m => {
       (m.departments || []).forEach(dept => {

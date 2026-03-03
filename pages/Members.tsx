@@ -316,9 +316,10 @@ const Members: React.FC = () => {
     const baptises = members.filter(m => m.baptized).length;
     const hommes = members.filter(m => m.gender === 'Masculin').length;
     const femmes = members.filter(m => m.gender === 'Féminin').length;
-    const enfantsTotal = members.filter(m => m.status === MemberStatus.ENFANT).length;
-    const enfantsHommes = members.filter(m => m.status === MemberStatus.ENFANT && m.gender === 'Masculin').length;
-    const enfantsFemmes = members.filter(m => m.status === MemberStatus.ENFANT && m.gender === 'Féminin').length;
+    const isEnfant = (m: Member) => (m.type as string) === 'Enfant' || m.status === MemberStatus.ENFANT;
+    const enfantsTotal = members.filter(isEnfant).length;
+    const enfantsHommes = members.filter(m => isEnfant(m) && m.gender === 'Masculin').length;
+    const enfantsFemmes = members.filter(m => isEnfant(m) && m.gender === 'Féminin').length;
 
     const now = new Date();
     const thisMonth = now.getMonth() + 1;

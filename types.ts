@@ -4,7 +4,8 @@ export enum MemberType {
   ASSISTANT = 'Assistant',
   CO_DIRIGEANT = 'Co-dirigeant',
   OUVRIER = 'Ouvrier',
-  MEMBRE_SIMPLE = 'Membre simple'
+  MEMBRE_SIMPLE = 'Membre simple',
+  ENFANT = 'Enfant'
 }
 
 export enum MemberStatus {

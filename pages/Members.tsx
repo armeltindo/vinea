@@ -308,6 +308,9 @@ const Members: React.FC = () => {
     const baptises = members.filter(m => m.baptized).length;
     const hommes = members.filter(m => m.gender === 'Masculin').length;
     const femmes = members.filter(m => m.gender === 'Féminin').length;
+    const enfantsTotal = members.filter(m => m.status === MemberStatus.ENFANT).length;
+    const enfantsHommes = members.filter(m => m.status === MemberStatus.ENFANT && m.gender === 'Masculin').length;
+    const enfantsFemmes = members.filter(m => m.status === MemberStatus.ENFANT && m.gender === 'Féminin').length;
 
     const now = new Date();
     const thisMonth = now.getMonth() + 1;
@@ -325,7 +328,7 @@ const Members: React.FC = () => {
     const topDepts = Object.entries(parDept).sort(([, a], [, b]) => b - a).slice(0, 6);
     const maxDept = topDepts[0]?.[1] || 1;
 
-    return { total, actifs, baptises, hommes, femmes, anniversaires, parStatut, topDepts, maxDept };
+    return { total, actifs, baptises, hommes, femmes, enfantsTotal, enfantsHommes, enfantsFemmes, anniversaires, parStatut, topDepts, maxDept };
   }, [members]);
 
   const handleOpenDetails = (member: Member) => {
@@ -689,6 +692,9 @@ const Members: React.FC = () => {
               <div>
                 <p className="text-xs font-medium text-slate-500">Total membres</p>
                 <p className="text-3xl font-bold text-slate-900">{stats.total}</p>
+                {stats.enfantsTotal > 0 && (
+                  <p className="text-xs text-indigo-500 font-medium mt-0.5">dont {stats.enfantsTotal} enfant{stats.enfantsTotal > 1 ? 's' : ''}</p>
+                )}
               </div>
             </div>
 
@@ -769,10 +775,16 @@ const Members: React.FC = () => {
                   <div className="flex-1 bg-indigo-50 border border-indigo-100 rounded-xl p-3 text-center">
                     <p className="text-xl font-semibold text-indigo-700">{stats.hommes}</p>
                     <p className="text-xs font-semibold text-indigo-400 uppercase mt-0.5">Hommes</p>
+                    {stats.enfantsHommes > 0 && (
+                      <p className="text-xs text-indigo-400 mt-1">dont {stats.enfantsHommes} enfant{stats.enfantsHommes > 1 ? 's' : ''}</p>
+                    )}
                   </div>
                   <div className="flex-1 bg-pink-50 border border-pink-100 rounded-xl p-3 text-center">
                     <p className="text-xl font-semibold text-pink-600">{stats.femmes}</p>
                     <p className="text-xs font-semibold text-pink-400 uppercase mt-0.5">Femmes</p>
+                    {stats.enfantsFemmes > 0 && (
+                      <p className="text-xs text-pink-400 mt-1">dont {stats.enfantsFemmes} enfant{stats.enfantsFemmes > 1 ? 's' : ''}</p>
+                    )}
                   </div>
                 </div>
               </div>

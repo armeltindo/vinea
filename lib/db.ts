@@ -378,10 +378,9 @@ function departmentActivityToDb(a: Partial<DepartmentActivity>): Record<string, 
 export const getMembers = async (): Promise<Member[]> => {
   const { data, error } = await supabase
     .from('members')
-    .select('*')
-    .order('created_at', { ascending: false });
+    .select('*');
   if (error) { console.error('getMembers:', error.message); return []; }
-  return (data ?? []).map(dbToMember);
+  return (data ?? []).map(dbToMember).sort((a, b) => a.firstName.localeCompare(b.firstName, 'fr'));
 };
 
 export const createMember = async (m: Member): Promise<Member | null> => {

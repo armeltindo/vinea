@@ -249,9 +249,11 @@ const Attendance: React.FC = () => {
   }, [allPeople, chronortedHistory]);
 
   const filteredAbsentMembers = useMemo(() => {
-    return allAbsentsList.filter(entry => 
-      `${entry.person.firstName} ${entry.person.lastName}`.toLowerCase().includes(absentSearchTerm.toLowerCase())
-    );
+    return allAbsentsList
+      .filter(entry =>
+        `${entry.person.firstName} ${entry.person.lastName}`.toLowerCase().includes(absentSearchTerm.toLowerCase())
+      )
+      .sort((a, b) => a.person.firstName.localeCompare(b.person.firstName, 'fr'));
   }, [allAbsentsList, absentSearchTerm]);
 
   const sortedAndFilteredHistory = useMemo(() => {
@@ -785,7 +787,11 @@ const Attendance: React.FC = () => {
                   <UserX size={14} className="text-rose-500" /> Absences Nominatives ({selectedRecord.absentMembers?.length || 0})
                 </h4>
                 <div className="grid grid-cols-1 gap-2">
-                  {selectedRecord.absentMembers?.length > 0 ? selectedRecord.absentMembers.map((id: string) => {
+                  {selectedRecord.absentMembers?.length > 0 ? [...selectedRecord.absentMembers].sort((a: string, b: string) => {
+                    const pa = allPeople.find(p => p.id === a);
+                    const pb = allPeople.find(p => p.id === b);
+                    return (pa?.firstName ?? '').localeCompare(pb?.firstName ?? '', 'fr');
+                  }).map((id: string) => {
                     const person = allPeople.find(p => p.id === id);
                     return (
                       <div key={id} className="flex items-center justify-between p-3.5 bg-white border border-slate-100 rounded-2xl group hover:border-rose-200 transition-all">

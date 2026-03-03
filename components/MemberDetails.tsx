@@ -160,11 +160,14 @@ const MemberDetails: React.FC<MemberDetailsProps> = ({ member, isOpen, onClose, 
   }, [member.fatherId, member.fatherName, allMembers]);
 
   const children = useMemo(() => {
+    const parentName = `${formatFirstName(member.firstName)} ${member.lastName.toUpperCase()}`.toLowerCase();
     return allMembers.filter(m =>
       (m.motherId && m.motherId === member.id) ||
-      (m.fatherId && m.fatherId === member.id)
+      (m.fatherId && m.fatherId === member.id) ||
+      (m.motherName && m.motherName.toLowerCase() === parentName) ||
+      (m.fatherName && m.fatherName.toLowerCase() === parentName)
     );
-  }, [member.id, allMembers]);
+  }, [member.id, member.firstName, member.lastName, allMembers]);
 
   const mentorMember = useMemo(() => {
     if (!member.assignedDiscipleMakerId) return null;
@@ -371,7 +374,7 @@ const MemberDetails: React.FC<MemberDetailsProps> = ({ member, isOpen, onClose, 
                   <p className="text-xs font-medium text-slate-800">{member.invitedBy}</p>
                 </div>
               )}
-              {(member.maritalStatus.includes('Marié') || member.spouseName) && (
+              {(member.maritalStatus.includes('Marié') || member.spouseName || member.weddingDate) && (
                 <div className="col-span-2 bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-4">
                   {spouseMember ? (
                     <Avatar
@@ -390,7 +393,9 @@ const MemberDetails: React.FC<MemberDetailsProps> = ({ member, isOpen, onClose, 
                     <p className="text-xs font-medium text-slate-500">Conjoint(e)</p>
                     <p className="text-xs font-medium text-slate-800">{member.spouseName || 'Non spécifié'}</p>
                     {member.weddingDate && (
-                      <p className="text-xs text-slate-400 mt-0.5">Mariés le {new Date(member.weddingDate).toLocaleDateString()}</p>
+                      <p className="text-xs text-slate-400 mt-0.5">
+                        Mariés le {new Date(member.weddingDate).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
+                      </p>
                     )}
                   </div>
                 </div>

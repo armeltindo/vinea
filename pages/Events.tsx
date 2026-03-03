@@ -209,9 +209,10 @@ const Events: React.FC = () => {
       recurrence: 'Ponctuelle' as ActivityRecurrence,
     };
     const created = await createDepartmentActivity(activity);
-    if (created) {
-      setHolidayStatuses(prev => ({ ...prev, [h.id]: { status: 'validated', activityId: created.id } }));
-    }
+    setHolidayStatuses(prev => ({
+      ...prev,
+      [h.id]: { status: 'validated', ...(created ? { activityId: created.id } : {}) },
+    }));
     setHolidayLoading(prev => ({ ...prev, [h.id]: false }));
   };
 
@@ -575,7 +576,12 @@ const Events: React.FC = () => {
                     </div>
                     <span className={cn(
                       "px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap border shadow-sm",
-                      event.status === 'Terminé' ? "bg-slate-50 text-slate-400 border-slate-100" : "bg-emerald-50 text-emerald-700 border-emerald-100"
+                      event.status === 'Terminé' ? "bg-slate-50 text-slate-400 border-slate-100" :
+                      event.status === 'Validé'   ? "bg-emerald-50 text-emerald-700 border-emerald-100" :
+                      event.status === 'Rejeté'   ? "bg-rose-50 text-rose-600 border-rose-100" :
+                      event.status === 'Annulé'   ? "bg-orange-50 text-orange-500 border-orange-100" :
+                      event.status === 'En cours' ? "bg-blue-50 text-blue-600 border-blue-100" :
+                      "bg-indigo-50 text-indigo-600 border-indigo-100"
                     )}>
                       {event.status}
                     </span>
@@ -1239,7 +1245,7 @@ const Events: React.FC = () => {
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1.5">
                     <label className="text-xs font-medium text-slate-500 ml-1">Catégorie</label>
-                    <select 
+                    <select
                       value={formData.category}
                       onChange={(e) => setFormData({...formData, category: e.target.value})}
                       className="w-full px-4 py-3 bg-white border border-slate-200 rounded-2xl outline-none text-sm font-normal tracking-wide"
@@ -1253,14 +1259,29 @@ const Events: React.FC = () => {
                     </select>
                   </div>
                   <div className="space-y-1.5">
-                    <label className="text-xs font-medium text-slate-500 ml-1">Cible inscrits</label>
-                    <input 
-                      type="number" required
-                      value={formData.target}
-                      onChange={(e) => setFormData({...formData, target: parseInt(e.target.value) || 0})}
-                      className="w-full px-4 py-3 bg-white border border-slate-200 rounded-2xl outline-none text-sm font-bold shadow-sm"
-                    />
+                    <label className="text-xs font-medium text-slate-500 ml-1">Statut</label>
+                    <select
+                      value={formData.status}
+                      onChange={(e) => setFormData({...formData, status: e.target.value})}
+                      className="w-full px-4 py-3 bg-white border border-slate-200 rounded-2xl outline-none text-sm font-normal tracking-wide"
+                    >
+                      <option value="Programmé">Programmé</option>
+                      <option value="Validé">Validé</option>
+                      <option value="En cours">En cours</option>
+                      <option value="Terminé">Terminé</option>
+                      <option value="Rejeté">Rejeté</option>
+                      <option value="Annulé">Annulé</option>
+                    </select>
                   </div>
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium text-slate-500 ml-1">Cible inscrits</label>
+                  <input
+                    type="number" required
+                    value={formData.target}
+                    onChange={(e) => setFormData({...formData, target: parseInt(e.target.value) || 0})}
+                    className="w-full px-4 py-3 bg-white border border-slate-200 rounded-2xl outline-none text-sm font-bold shadow-sm"
+                  />
                 </div>
 
                 <div className="space-y-1.5">

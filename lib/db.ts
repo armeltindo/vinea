@@ -359,7 +359,7 @@ function departmentActivityToDb(a: Partial<DepartmentActivity>): Record<string, 
   const db: Record<string, unknown> = {};
   if (a.id !== undefined) db.id = a.id;
   if (a.title !== undefined) db.title = a.title;
-  if (a.deptId !== undefined) db.dept_id = a.deptId;
+  if (a.deptId !== undefined) db.dept_id = a.deptId || null;
   if (a.responsibleId !== undefined) db.responsible_id = a.responsibleId || null;
   if (a.associateName !== undefined) db.associate_name = a.associateName ?? null;
   if (a.cost !== undefined) db.cost = a.cost;

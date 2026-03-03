@@ -1455,7 +1455,7 @@ const Members: React.FC = () => {
                       <div className="absolute z-30 left-0 right-0 top-full mt-1 max-h-40 overflow-y-auto bg-white border border-slate-200 rounded-2xl shadow-xl custom-scrollbar">
                         {members.filter(m => {
                           if (editingMemberId && m.id === editingMemberId) return false;
-                          if (!m.isDiscipleMaker) return false;
+                          if (m.type === MemberType.MEMBRE_SIMPLE || m.type === MemberType.ENFANT) return false;
                           const fullName = `${m.firstName} ${m.lastName}`.toLowerCase();
                           const nick = (m.nickname || '').toLowerCase();
                           return fullName.includes(discipleMakerSearch.toLowerCase()) || nick.includes(discipleMakerSearch.toLowerCase());
@@ -1471,12 +1471,12 @@ const Members: React.FC = () => {
                             </div>
                             <div>
                               <span className="text-slate-700">{formatFirstName(m.firstName)} {m.lastName.toUpperCase()}</span>
-                              <span className="ml-2 text-[10px] text-indigo-500 font-semibold uppercase">Disciple-maker</span>
+                              <span className="ml-2 text-[10px] text-indigo-500 font-semibold uppercase">{m.type}</span>
                             </div>
                           </button>
                         ))}
-                        {members.filter(m => m.isDiscipleMaker && (editingMemberId ? m.id !== editingMemberId : true) && (`${m.firstName} ${m.lastName}`.toLowerCase().includes(discipleMakerSearch.toLowerCase()) || (m.nickname || '').toLowerCase().includes(discipleMakerSearch.toLowerCase()))).length === 0 && (
-                          <p className="px-4 py-3 text-xs text-slate-400 italic">Aucun disciple-maker trouvé</p>
+                        {members.filter(m => m.type !== MemberType.MEMBRE_SIMPLE && m.type !== MemberType.ENFANT && (editingMemberId ? m.id !== editingMemberId : true) && (`${m.firstName} ${m.lastName}`.toLowerCase().includes(discipleMakerSearch.toLowerCase()) || (m.nickname || '').toLowerCase().includes(discipleMakerSearch.toLowerCase()))).length === 0 && (
+                          <p className="px-4 py-3 text-xs text-slate-400 italic">Aucun faiseur de disciple trouvé</p>
                         )}
                       </div>
                     )}

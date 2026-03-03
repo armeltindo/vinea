@@ -255,6 +255,10 @@ const Members: React.FC = () => {
     motherName: '',
     fatherId: '',
     fatherName: '',
+    baptizedBy: '',
+    baptizedChurch: '',
+    skills: '',
+    notes: '',
   };
 
   const [formData, setFormData] = useState<Partial<Member>>(initialState);
@@ -1387,6 +1391,16 @@ const Members: React.FC = () => {
                       </div>
                     </div>
                   </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-medium text-slate-500 ml-1">Baptisé par (Facultatif)</label>
+                      <input type="text" value={formData.baptizedBy || ''} onChange={(e) => setFormData(prev => ({...prev, baptizedBy: e.target.value}))} placeholder="Ex: Pasteur DUPONT" className="w-full px-4 py-3 bg-white border border-slate-200 rounded-2xl focus:bg-white focus:border-indigo-300 outline-none text-sm font-bold shadow-sm" />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-medium text-slate-500 ml-1">Église du baptême (Facultatif)</label>
+                      <input type="text" value={formData.baptizedChurch || ''} onChange={(e) => setFormData(prev => ({...prev, baptizedChurch: e.target.value}))} placeholder="Ex: Église Vinea Abidjan" className="w-full px-4 py-3 bg-white border border-slate-200 rounded-2xl focus:bg-white focus:border-indigo-300 outline-none text-sm font-bold shadow-sm" />
+                    </div>
+                  </div>
                 </div>
                 {/* ── Intégration & Suivi ─────────────────────────────────── */}
                 <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-4">
@@ -1521,6 +1535,8 @@ const Members: React.FC = () => {
                   <div className="space-y-1.5"><label className="text-xs font-medium text-slate-500 ml-1">Numéro WhatsApp (Optionnel)</label><input type="tel" value={formData.whatsappPhone || ''} onChange={(e) => setFormData(prev => ({...prev, whatsappPhone: e.target.value}))} placeholder="07 08 09 10 11" className="w-full px-4 py-3 bg-white border border-slate-200 rounded-2xl focus:bg-white focus:border-indigo-300 outline-none text-sm font-bold transition-all" /></div>
                   <div className="space-y-1.5"><label className="text-xs font-medium text-slate-500 ml-1">Email</label><input type="email" value={formData.email || ''} onChange={(e) => setFormData(prev => ({...prev, email: e.target.value}))} placeholder="email@exemple.com" className="w-full px-4 py-3 bg-white border border-slate-200 rounded-2xl focus:bg-white focus:border-indigo-300 outline-none text-sm font-bold transition-all" /></div>
                   <div className="space-y-1.5"><label className="text-xs font-medium text-slate-500 ml-1">Adresse physique</label><textarea rows={3} value={formData.address || ''} onChange={(e) => setFormData(prev => ({...prev, address: e.target.value}))} placeholder="Ex: Cocody, Rue de la Paix" className="w-full px-5 py-4 bg-white border border-slate-200 rounded-xl outline-none text-sm font-medium resize-none shadow-sm transition-all" /></div>
+                  <div className="space-y-1.5"><label className="text-xs font-medium text-slate-500 ml-1">Compétences / Dons (Facultatif)</label><input type="text" value={formData.skills || ''} onChange={(e) => setFormData(prev => ({...prev, skills: e.target.value}))} placeholder="Ex: Chant, Informatique, Enseignement..." className="w-full px-4 py-3 bg-white border border-slate-200 rounded-2xl focus:bg-white focus:border-indigo-300 outline-none text-sm font-bold transition-all" /></div>
+                  <div className="space-y-1.5"><label className="text-xs font-medium text-slate-500 ml-1">Notes internes (Facultatif)</label><textarea rows={3} value={formData.notes || ''} onChange={(e) => setFormData(prev => ({...prev, notes: e.target.value}))} placeholder="Informations complémentaires sur le membre..." className="w-full px-5 py-4 bg-white border border-slate-200 rounded-xl outline-none text-sm font-medium resize-none shadow-sm transition-all" /></div>
                 </div>
               </div>
                 {/* ── Contact d'Urgence ──────────────────────────────────── */}

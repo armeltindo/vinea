@@ -90,9 +90,9 @@ function memberToDb(m: Partial<Member>): Record<string, unknown> {
   if (m.assignedDiscipleMakerId !== undefined) db.assigned_disciple_maker_id = m.assignedDiscipleMakerId || null;
   if (m.photoUrl !== undefined) db.photo_url = m.photoUrl ?? null;
   if (m.motherId !== undefined) db.mother_id = m.motherId || null;
-  if (m.motherName !== undefined) db.mother_name = m.motherName ?? null;
+  if (m.motherName !== undefined) db.mother_name = m.motherName || null;
   if (m.fatherId !== undefined) db.father_id = m.fatherId || null;
-  if (m.fatherName !== undefined) db.father_name = m.fatherName ?? null;
+  if (m.fatherName !== undefined) db.father_name = m.fatherName || null;
   return db;
 }
 

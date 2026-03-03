@@ -40,7 +40,7 @@ import { analyzePageData } from '../lib/gemini';
 import { formatCurrency, DEPARTMENTS } from '../constants';
 import { cn, generateId } from '../utils';
 import { getChurchEvents, createChurchEvent, updateChurchEvent, deleteChurchEvent, getAppConfig, setAppConfig, createDepartmentActivity, deleteDepartmentActivity } from '../lib/db';
-import { ActivityStatus } from '../types';
+import { ActivityStatus, ActivityRecurrence } from '../types';
 
 interface Expense {
   id: string;
@@ -163,10 +163,11 @@ const Events: React.FC = () => {
   const [availableDepartments, setAvailableDepartments] = useState<string[]>(DEPARTMENTS);
 
   // Fêtes internationales
-  const currentYear = new Date().getFullYear();
+  const currentYear = useMemo(() => new Date().getFullYear(), []);
   const holidays = useMemo(() => getInternationalHolidays(currentYear), [currentYear]);
   const [holidayStatuses, setHolidayStatuses] = useState<Record<string, HolidayStatus>>({});
   const [holidayLoading, setHolidayLoading] = useState<Record<string, boolean>>({});
+  const holidayStatusesLoaded = React.useRef(false);
 
   useEffect(() => {
     Promise.all([
@@ -181,24 +182,31 @@ const Events: React.FC = () => {
       if (savedAssignments) setAssignments(savedAssignments);
       if (depts && Array.isArray(depts)) setAvailableDepartments(depts);
       if (savedHolidays && typeof savedHolidays === 'object') setHolidayStatuses(savedHolidays);
+      holidayStatusesLoaded.current = true;
     });
   }, []);
 
   useEffect(() => {
+    if (!holidayStatusesLoaded.current) return;
     setAppConfig(`holiday_statuses_${currentYear}`, holidayStatuses);
   }, [holidayStatuses]);
+
+  const validatedCount = useMemo(
+    () => Object.values(holidayStatuses).filter(s => s.status === 'validated').length,
+    [holidayStatuses]
+  );
 
   const handleValidateHoliday = async (h: Holiday) => {
     setHolidayLoading(prev => ({ ...prev, [h.id]: true }));
     const activity = {
       id: generateId(),
-      title: h.emoji + ' ' + h.title,
-      deptId: 'holiday',
+      title: `${h.emoji} ${h.title}`,
+      deptId: '',
       responsibleId: '',
       deadline: h.date,
       status: ActivityStatus.PLANIFIEE,
       createdAt: new Date().toISOString(),
-      recurrence: 'Ponctuelle' as any,
+      recurrence: 'Ponctuelle' as ActivityRecurrence,
     };
     const created = await createDepartmentActivity(activity);
     if (created) {
@@ -216,9 +224,12 @@ const Events: React.FC = () => {
   };
 
   const handleResetHoliday = async (h: Holiday) => {
+    if (holidayLoading[h.id]) return;
+    setHolidayLoading(prev => ({ ...prev, [h.id]: true }));
     const existing = holidayStatuses[h.id];
     if (existing?.activityId) await deleteDepartmentActivity(existing.activityId);
     setHolidayStatuses(prev => { const next = { ...prev }; delete next[h.id]; return next; });
+    setHolidayLoading(prev => ({ ...prev, [h.id]: false }));
   };
 
   const [activeTab, setActiveTab] = useState<'upcoming' | 'archives'>('upcoming');
@@ -640,29 +651,31 @@ const Events: React.FC = () => {
                 </div>
               </div>
               <span className="text-xs font-semibold text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full">
-                {Object.values(holidayStatuses).filter(s => s.status === 'validated').length} validée(s)
+                {validatedCount} validée(s)
               </span>
             </div>
             <div className="divide-y divide-slate-50">
               {holidays.map(h => {
                 const st = holidayStatuses[h.id];
                 const loading = holidayLoading[h.id];
+                const isValidated = st?.status === 'validated';
+                const isRejected = st?.status === 'rejected';
                 const d = new Date(h.date + 'T00:00:00');
-                const isPast = d < new Date(new Date().toDateString());
+                const isPast = d < today;
                 return (
                   <div key={h.id} className={cn(
                     "flex items-center gap-4 px-8 py-4 transition-all",
-                    st?.status === 'validated' ? "bg-emerald-50/40" : st?.status === 'rejected' ? "bg-slate-50/60 opacity-60" : "hover:bg-slate-50/50"
+                    isValidated ? "bg-emerald-50/40" : isRejected ? "bg-slate-50/60 opacity-60" : "hover:bg-slate-50/50"
                   )}>
                     {/* Date badge */}
                     <div className={cn(
                       "w-12 h-12 rounded-xl flex flex-col items-center justify-center shrink-0 text-center",
-                      st?.status === 'validated' ? "bg-emerald-600 shadow-sm shadow-emerald-200" : "bg-slate-100"
+                      isValidated ? "bg-emerald-600 shadow-sm shadow-emerald-200" : "bg-slate-100"
                     )}>
-                      <span className={cn("text-[9px] font-bold uppercase leading-none", st?.status === 'validated' ? "text-emerald-200" : "text-slate-400")}>
+                      <span className={cn("text-[9px] font-bold uppercase leading-none", isValidated ? "text-emerald-200" : "text-slate-400")}>
                         {d.toLocaleDateString('fr-FR', { month: 'short' })}
                       </span>
-                      <span className={cn("text-base font-black leading-none mt-0.5", st?.status === 'validated' ? "text-white" : "text-slate-700")}>
+                      <span className={cn("text-base font-black leading-none mt-0.5", isValidated ? "text-white" : "text-slate-700")}>
                         {d.getDate()}
                       </span>
                     </div>
@@ -700,18 +713,19 @@ const Events: React.FC = () => {
                       <div className="flex items-center gap-2 shrink-0">
                         <span className={cn(
                           "px-3 py-1.5 rounded-xl text-xs font-bold border flex items-center gap-1.5",
-                          st.status === 'validated'
+                          isValidated
                             ? "bg-emerald-50 text-emerald-700 border-emerald-100"
                             : "bg-slate-50 text-slate-400 border-slate-200"
                         )}>
-                          {st.status === 'validated' ? <><CheckCircle2 size={12} /> Validée</> : <><X size={12} /> Rejetée</>}
+                          {isValidated ? <><CheckCircle2 size={12} /> Validée</> : <><X size={12} /> Rejetée</>}
                         </span>
                         <button
                           onClick={() => handleResetHoliday(h)}
-                          className="p-2 text-slate-300 hover:text-slate-500 transition-colors rounded-lg"
+                          disabled={loading}
+                          className="p-2 text-slate-300 hover:text-slate-500 transition-colors rounded-lg disabled:opacity-50"
                           title="Réinitialiser"
                         >
-                          <RotateCcw size={14} />
+                          {loading ? <Loader2 size={14} className="animate-spin" /> : <RotateCcw size={14} />}
                         </button>
                       </div>
                     )}

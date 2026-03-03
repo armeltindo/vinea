@@ -27,7 +27,7 @@ import {
   Area,
 } from 'recharts';
 import { cn } from '../utils';
-import { OperationType } from '../types';
+import { OperationType, MemberStatus } from '../types';
 
 interface DashboardProps {
   adminName: string;
@@ -70,9 +70,10 @@ interface StatCardProps {
   icon: React.ReactNode;
   theme: ThemeKey;
   onClick: () => void;
+  hint?: string;
 }
 
-const StatCard: React.FC<StatCardProps> = ({ label, value, sub, icon, theme, onClick }) => {
+const StatCard: React.FC<StatCardProps> = ({ label, value, sub, icon, theme, onClick, hint }) => {
   const t = STAT_THEMES[theme];
   return (
     <div
@@ -97,6 +98,7 @@ const StatCard: React.FC<StatCardProps> = ({ label, value, sub, icon, theme, onC
         {value}
       </p>
       <p className="text-sm font-medium text-slate-500 mt-1.5">{label}</p>
+      {hint && <p className="text-xs text-indigo-500 font-medium mt-1">{hint}</p>}
 
       {/* Footer */}
       <div className="mt-4 pt-3.5 border-t border-slate-100 flex items-center justify-between">
@@ -117,6 +119,7 @@ const Dashboard: React.FC<DashboardProps> = ({ adminName: _adminName }) => {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [stats, setStats] = useState({
     totalMembers: 0,
+    enfantsCount: 0,
     monthlyRevenue: 0,
     lastAttendance: 0,
     lastAttendanceDate: 'Aucun relevé',
@@ -142,6 +145,7 @@ const Dashboard: React.FC<DashboardProps> = ({ adminName: _adminName }) => {
 
     // Membres & Départements
     const totalMembersCount = members.length;
+    const enfantsCount = members.filter(m => m.status === MemberStatus.ENFANT).length;
     const deptCounts: Record<string, number> = {};
     members.forEach(m => {
       (m.departments || []).forEach(dept => {
@@ -216,6 +220,7 @@ const Dashboard: React.FC<DashboardProps> = ({ adminName: _adminName }) => {
 
     setStats({
       totalMembers: totalMembersCount,
+      enfantsCount,
       monthlyRevenue,
       lastAttendance: lastServiceGlobal?.total || 0,
       lastAttendanceDate: lastDateFormatted,
@@ -276,6 +281,7 @@ const Dashboard: React.FC<DashboardProps> = ({ adminName: _adminName }) => {
           icon={<Users size={20} />}
           theme="indigo"
           onClick={() => navigate('/members')}
+          hint={stats.enfantsCount > 0 ? `dont ${stats.enfantsCount} enfant${stats.enfantsCount > 1 ? 's' : ''}` : undefined}
         />
         <StatCard
           label="Revenus du mois"

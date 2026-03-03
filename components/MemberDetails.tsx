@@ -113,12 +113,39 @@ const MemberDetails: React.FC<MemberDetailsProps> = ({ member, isOpen, onClose, 
   const spouseMember = useMemo(() => {
     if (!member.spouseName) return null;
     const sName = member.spouseName.toLowerCase();
-    return allMembers.find(m => 
+    return allMembers.find(m =>
       `${formatFirstName(m.firstName)} ${m.lastName.toUpperCase()}`.toLowerCase() === sName ||
       `${m.lastName.toUpperCase()} ${formatFirstName(m.firstName)}`.toLowerCase() === sName ||
       (m.nickname && m.nickname.toLowerCase() === sName)
     );
   }, [member.spouseName, allMembers]);
+
+  const motherMember = useMemo(() => {
+    if (member.motherId) return allMembers.find(m => m.id === member.motherId) ?? null;
+    if (!member.motherName) return null;
+    const n = member.motherName.toLowerCase();
+    return allMembers.find(m =>
+      `${formatFirstName(m.firstName)} ${m.lastName.toUpperCase()}`.toLowerCase() === n ||
+      (m.nickname && m.nickname.toLowerCase() === n)
+    ) ?? null;
+  }, [member.motherId, member.motherName, allMembers]);
+
+  const fatherMember = useMemo(() => {
+    if (member.fatherId) return allMembers.find(m => m.id === member.fatherId) ?? null;
+    if (!member.fatherName) return null;
+    const n = member.fatherName.toLowerCase();
+    return allMembers.find(m =>
+      `${formatFirstName(m.firstName)} ${m.lastName.toUpperCase()}`.toLowerCase() === n ||
+      (m.nickname && m.nickname.toLowerCase() === n)
+    ) ?? null;
+  }, [member.fatherId, member.fatherName, allMembers]);
+
+  const children = useMemo(() => {
+    return allMembers.filter(m =>
+      (m.motherId && m.motherId === member.id) ||
+      (m.fatherId && m.fatherId === member.id)
+    );
+  }, [member.id, allMembers]);
 
   const dynamicHistory = useMemo(() => {
     const events: { id: string, date: string, type: string, label: string, icon: React.ReactNode }[] = [];
@@ -332,8 +359,104 @@ const MemberDetails: React.FC<MemberDetailsProps> = ({ member, isOpen, onClose, 
                   </div>
                 </div>
               )}
+
+              {/* Parents */}
+              {(member.motherName || member.fatherName) && (
+                <>
+                  {member.motherName && (
+                    <div className="col-span-2 bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-4">
+                      {motherMember ? (
+                        <Avatar
+                          firstName={motherMember.firstName}
+                          lastName={motherMember.lastName}
+                          photoUrl={motherMember.photoUrl}
+                          size="lg"
+                          shape="card"
+                        />
+                      ) : (
+                        <div className="w-12 h-12 rounded-xl bg-pink-50 flex items-center justify-center text-pink-400 border border-pink-100">
+                          <Baby size={20} />
+                        </div>
+                      )}
+                      <div className="flex-1">
+                        <p className="text-xs font-medium text-slate-500">Mère</p>
+                        <p className="text-xs font-medium text-slate-800">{member.motherName}</p>
+                        {motherMember && <p className="text-xs text-slate-400 mt-0.5">{motherMember.status} · {motherMember.type}</p>}
+                      </div>
+                    </div>
+                  )}
+                  {member.fatherName && (
+                    <div className="col-span-2 bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-4">
+                      {fatherMember ? (
+                        <Avatar
+                          firstName={fatherMember.firstName}
+                          lastName={fatherMember.lastName}
+                          photoUrl={fatherMember.photoUrl}
+                          size="lg"
+                          shape="card"
+                        />
+                      ) : (
+                        <div className="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center text-blue-400 border border-blue-100">
+                          <Baby size={20} />
+                        </div>
+                      )}
+                      <div className="flex-1">
+                        <p className="text-xs font-medium text-slate-500">Père</p>
+                        <p className="text-xs font-medium text-slate-800">{member.fatherName}</p>
+                        {fatherMember && <p className="text-xs text-slate-400 mt-0.5">{fatherMember.status} · {fatherMember.type}</p>}
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
             </div>
           </div>
+
+          {/* Section: Enfants */}
+          {children.length > 0 && (
+            <div className="space-y-4">
+              <h4 className="text-xs font-medium text-slate-500 flex items-center gap-2">
+                <Baby size={14} className="text-purple-500" /> Enfants ({children.length})
+              </h4>
+              <div className="grid grid-cols-1 gap-3">
+                {children.map(child => (
+                  <div key={child.id} className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-4">
+                    <Avatar
+                      firstName={child.firstName}
+                      lastName={child.lastName}
+                      photoUrl={child.photoUrl}
+                      size="lg"
+                      shape="card"
+                    />
+                    <div className="flex-1">
+                      <p className="text-xs font-medium text-slate-800">
+                        {formatFirstName(child.firstName)} {child.lastName.toUpperCase()}
+                      </p>
+                      <p className="text-xs text-slate-400 mt-0.5">{child.status} · {child.type}</p>
+                      {child.birthDate && (
+                        <p className="text-xs text-slate-400">
+                          Né(e) le {new Date(child.birthDate).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
+                        </p>
+                      )}
+                    </div>
+                    <div className={`px-2 py-1 rounded-lg text-xs font-medium ${
+                      child.motherId === member.id && child.fatherId === member.id
+                        ? 'bg-purple-50 text-purple-600'
+                        : child.motherId === member.id
+                        ? 'bg-pink-50 text-pink-600'
+                        : 'bg-blue-50 text-blue-600'
+                    }`}>
+                      {child.motherId === member.id && child.fatherId === member.id
+                        ? 'Les deux'
+                        : child.motherId === member.id
+                        ? 'Via mère'
+                        : 'Via père'}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Section: Profession & Talents */}
           <div className="space-y-4">

@@ -48,6 +48,10 @@ function dbToMember(row: any): Member {
     invitedBy: row.invited_by ?? undefined,
     assignedDiscipleMakerId: row.assigned_disciple_maker_id ?? undefined,
     photoUrl: row.photo_url ?? undefined,
+    motherId: row.mother_id ?? undefined,
+    motherName: row.mother_name ?? undefined,
+    fatherId: row.father_id ?? undefined,
+    fatherName: row.father_name ?? undefined,
   };
 }
 
@@ -85,6 +89,10 @@ function memberToDb(m: Partial<Member>): Record<string, unknown> {
   if (m.invitedBy !== undefined) db.invited_by = m.invitedBy ?? null;
   if (m.assignedDiscipleMakerId !== undefined) db.assigned_disciple_maker_id = m.assignedDiscipleMakerId || null;
   if (m.photoUrl !== undefined) db.photo_url = m.photoUrl ?? null;
+  if (m.motherId !== undefined) db.mother_id = m.motherId || null;
+  if (m.motherName !== undefined) db.mother_name = m.motherName ?? null;
+  if (m.fatherId !== undefined) db.father_id = m.fatherId || null;
+  if (m.fatherName !== undefined) db.father_name = m.fatherName ?? null;
   return db;
 }
 

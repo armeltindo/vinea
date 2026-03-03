@@ -11,7 +11,8 @@ export enum MemberStatus {
   ACTIF = 'Actif',
   INACTIF = 'Inactif',
   RETROGRADE = 'Rétrograde',
-  EN_VOYAGE = 'En voyage'
+  EN_VOYAGE = 'En voyage',
+  ENFANT = 'Enfant'
 }
 
 export enum Department {
@@ -201,6 +202,10 @@ export interface Member {
   invitedBy?: string;
   assignedDiscipleMakerId?: string;
   photoUrl?: string;
+  motherId?: string;
+  motherName?: string;
+  fatherId?: string;
+  fatherName?: string;
 }
 
 export interface Visitor {

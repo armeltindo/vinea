@@ -91,6 +91,10 @@ CREATE TABLE members (
     invited_by TEXT,
     assigned_disciple_maker_id TEXT REFERENCES members(id) ON DELETE SET NULL,
     photo_url TEXT,
+    mother_id TEXT REFERENCES members(id) ON DELETE SET NULL,
+    mother_name TEXT,
+    father_id TEXT REFERENCES members(id) ON DELETE SET NULL,
+    father_name TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );

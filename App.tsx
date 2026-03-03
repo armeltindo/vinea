@@ -106,17 +106,33 @@ const App: React.FC = () => {
     const now = new Date();
     const todayStr = now.toISOString().split('T')[0];
 
-    // 1. Anniversaires
+    // 1. Anniversaires (naissance + mariage)
     if (settings.enableBirthdays) {
       members.forEach(m => {
         if (m.birthDate) {
-          const bd = new Date(m.birthDate);
+          const bd = new Date(m.birthDate + 'T00:00:00');
           if (bd.getDate() === now.getDate() && bd.getMonth() === now.getMonth()) {
             newNotifications.push({
               id: `birthday-${m.id}-${now.getFullYear()}`,
               type: 'birthday',
               title: 'Anniversaire aujourd\'hui',
               message: `C'est l'anniversaire de ${formatFirstName(m.firstName)} ${m.lastName.toUpperCase()}. N'oubliez pas de le/la bénir !`,
+              date: todayStr,
+              isRead: false,
+              link: 'members',
+              targetId: m.id
+            });
+          }
+        }
+        if (m.weddingDate) {
+          const wd = new Date(m.weddingDate + 'T00:00:00');
+          if (wd.getDate() === now.getDate() && wd.getMonth() === now.getMonth()) {
+            const years = now.getFullYear() - wd.getFullYear();
+            newNotifications.push({
+              id: `wedding-${m.id}-${now.getFullYear()}`,
+              type: 'birthday',
+              title: 'Anniversaire de mariage',
+              message: `${formatFirstName(m.firstName)} ${m.lastName.toUpperCase()} fête ${years} an${years > 1 ? 's' : ''} de mariage aujourd'hui. Félicitez-le/la !`,
               date: todayStr,
               isRead: false,
               link: 'members',

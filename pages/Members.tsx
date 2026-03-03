@@ -286,9 +286,9 @@ const Members: React.FC = () => {
     });
 
     if (sortOrder === 'asc') {
-      result.sort((a, b) => a.firstName.localeCompare(b.firstName));
+      result.sort((a, b) => a.lastName.localeCompare(b.lastName));
     } else if (sortOrder === 'desc') {
-      result.sort((a, b) => b.firstName.localeCompare(a.firstName));
+      result.sort((a, b) => b.lastName.localeCompare(a.lastName));
     }
 
     return result;
@@ -834,7 +834,7 @@ const Members: React.FC = () => {
             )}
           >
             {sortOrder === 'asc' ? <ArrowUp size={16} /> : sortOrder === 'desc' ? <ArrowDown size={16} /> : <ArrowUpDown size={16} />}
-            Prénom
+            Nom
           </button>
 
           <button onClick={resetFilters} className="p-3 bg-white border border-slate-200 rounded-xl text-slate-500 hover:text-rose-500 hover:bg-rose-50 transition-all shadow-sm active:scale-90" title="Réinitialiser les filtres"><RotateCcw size={18} /></button>

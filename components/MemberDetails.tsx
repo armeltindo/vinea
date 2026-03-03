@@ -329,7 +329,7 @@ const MemberDetails: React.FC<MemberDetailsProps> = ({ member, isOpen, onClose, 
               </div>
               <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm space-y-1">
                 <p className="text-xs font-medium text-slate-500">Date de naissance</p>
-                <p className="text-xs font-bold text-slate-800">{member.birthDate ? new Date(member.birthDate).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }) : '---'}</p>
+                <p className="text-xs font-bold text-slate-800">{member.birthDate ? (() => { const d = new Date(member.birthDate + 'T00:00:00'); const opts: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'long' }; if (d.getFullYear() !== 1900) opts.year = 'numeric'; return d.toLocaleDateString('fr-FR', opts); })() : '---'}</p>
               </div>
               <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm space-y-1">
                 <p className="text-xs font-medium text-slate-500">État Civil</p>
@@ -433,11 +433,7 @@ const MemberDetails: React.FC<MemberDetailsProps> = ({ member, isOpen, onClose, 
                         {formatFirstName(child.firstName)} {child.lastName.toUpperCase()}
                       </p>
                       <p className="text-xs text-slate-400 mt-0.5">{child.status} · {child.type}</p>
-                      {child.birthDate && (
-                        <p className="text-xs text-slate-400">
-                          Né(e) le {new Date(child.birthDate).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
-                        </p>
-                      )}
+                      {child.birthDate && (() => { const d = new Date(child.birthDate + 'T00:00:00'); const opts: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'long' }; if (d.getFullYear() !== 1900) opts.year = 'numeric'; return <p className="text-xs text-slate-400">Né(e) le {d.toLocaleDateString('fr-FR', opts)}</p>; })()}
                     </div>
                     <div className={`px-2 py-1 rounded-lg text-xs font-medium ${
                       child.motherId === member.id && child.fatherId === member.id

@@ -205,6 +205,11 @@ const Members: React.FC = () => {
   const [fatherSearch, setFatherSearch] = useState('');
   const [isFatherDropdownOpen, setIsFatherDropdownOpen] = useState(false);
 
+  // États pour la saisie de la date de naissance (jour/mois obligatoires, année optionnelle)
+  const [birthDay, setBirthDay] = useState('');
+  const [birthMonth, setBirthMonth] = useState('');
+  const [birthYear, setBirthYear] = useState('');
+
   const initialState: Partial<Member> = {
     lastName: '',
     firstName: '',
@@ -234,6 +239,22 @@ const Members: React.FC = () => {
   };
 
   const [formData, setFormData] = useState<Partial<Member>>(initialState);
+
+  // Décompose une date stockée (YYYY-MM-DD ou 1900-MM-DD) en parties jour/mois/année
+  const parseBirthDate = (dateStr?: string) => {
+    if (!dateStr) return { day: '', month: '', year: '' };
+    const parts = dateStr.split('-');
+    if (parts.length !== 3) return { day: '', month: '', year: '' };
+    const [y, m, d] = parts;
+    return { day: String(parseInt(d, 10)), month: String(parseInt(m, 10)), year: y === '1900' ? '' : y };
+  };
+
+  // Assemble les parties en YYYY-MM-DD (utilise 1900 si pas d'année)
+  const assembleBirthDate = (day: string, month: string, year: string): string => {
+    if (!day || !month) return '';
+    const y = year && year.length === 4 ? year : '1900';
+    return `${y}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+  };
 
   const handleAnalyze = async () => {
     setIsAnalyzing(true);
@@ -300,6 +321,10 @@ const Members: React.FC = () => {
     setSpouseSearch(member.spouseName || '');
     setMotherSearch(member.motherName || '');
     setFatherSearch(member.fatherName || '');
+    const bd = parseBirthDate(member.birthDate);
+    setBirthDay(bd.day);
+    setBirthMonth(bd.month);
+    setBirthYear(bd.year);
     setIsDetailsOpen(false);
     navigate('', { replace: true });
     setIsFormOpen(true);
@@ -557,6 +582,7 @@ const Members: React.FC = () => {
     setIsSpouseDropdownOpen(false);
     setMotherSearch('');
     setFatherSearch('');
+    setBirthDay(''); setBirthMonth(''); setBirthYear('');
   };
 
   const closeForm = () => {
@@ -567,6 +593,7 @@ const Members: React.FC = () => {
     setIsSpouseDropdownOpen(false);
     setMotherSearch('');
     setFatherSearch('');
+    setBirthDay(''); setBirthMonth(''); setBirthYear('');
   };
 
   const resetFilters = () => {
@@ -1224,10 +1251,44 @@ const Members: React.FC = () => {
                     )}
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-1.5"><label className="text-xs font-medium text-slate-500 ml-1">Date de naissance</label><input type="date" value={formData.birthDate} onChange={(e) => setFormData({...formData, birthDate: e.target.value})} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl outline-none text-sm font-bold" /></div>
-                    <div className="space-y-1.5"><label className="text-xs font-medium text-slate-500 ml-1">Profession (Facultatif)</label><input type="text" value={formData.profession} onChange={(e) => setFormData({...formData, profession: e.target.value})} placeholder="Ex: Comptable, Étudiant..." className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:border-indigo-300 outline-none text-sm font-bold" /></div>
+                  {/* Date de naissance : jour + mois obligatoires, année optionnelle */}
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-medium text-slate-500 ml-1">Date de naissance</label>
+                    <div className="grid grid-cols-3 gap-2">
+                      <select
+                        required
+                        value={birthDay}
+                        onChange={(e) => { const d = e.target.value; setBirthDay(d); setFormData({...formData, birthDate: assembleBirthDate(d, birthMonth, birthYear)}); }}
+                        className="w-full px-3 py-3 bg-slate-50 border border-slate-200 rounded-2xl outline-none text-sm font-bold focus:bg-white focus:border-indigo-300 transition-all"
+                      >
+                        <option value="">Jour *</option>
+                        {Array.from({length: 31}, (_, i) => i + 1).map(d => (
+                          <option key={d} value={String(d)}>{d}</option>
+                        ))}
+                      </select>
+                      <select
+                        required
+                        value={birthMonth}
+                        onChange={(e) => { const m = e.target.value; setBirthMonth(m); setFormData({...formData, birthDate: assembleBirthDate(birthDay, m, birthYear)}); }}
+                        className="w-full px-3 py-3 bg-slate-50 border border-slate-200 rounded-2xl outline-none text-sm font-bold focus:bg-white focus:border-indigo-300 transition-all"
+                      >
+                        <option value="">Mois *</option>
+                        {['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'].map((name, idx) => (
+                          <option key={idx + 1} value={String(idx + 1)}>{name}</option>
+                        ))}
+                      </select>
+                      <input
+                        type="number"
+                        min={1900}
+                        max={new Date().getFullYear()}
+                        value={birthYear}
+                        onChange={(e) => { const y = e.target.value; setBirthYear(y); setFormData({...formData, birthDate: assembleBirthDate(birthDay, birthMonth, y)}); }}
+                        placeholder="Année"
+                        className="w-full px-3 py-3 bg-slate-50 border border-slate-200 rounded-2xl outline-none text-sm font-bold focus:bg-white focus:border-indigo-300 transition-all placeholder:font-normal placeholder:text-slate-400"
+                      />
+                    </div>
                   </div>
+                  <div className="space-y-1.5"><label className="text-xs font-medium text-slate-500 ml-1">Profession (Facultatif)</label><input type="text" value={formData.profession} onChange={(e) => setFormData({...formData, profession: e.target.value})} placeholder="Ex: Comptable, Étudiant..." className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:border-indigo-300 outline-none text-sm font-bold" /></div>
                 </div>
                 <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-4">
                   <div className="flex items-center gap-2 mb-2"><Calendar size={16} className="text-indigo-600" /><h4 className="text-xs font-medium text-slate-500">Jalons Spirituels & Adhésion</h4></div>

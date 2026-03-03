@@ -49,6 +49,7 @@ import {
 } from 'lucide-react';
 import { cn, formatFirstName, formatDisplayName } from './utils';
 import { Notification, NotificationSettings, Member, Visitor, AttendanceSession, VisitorStatus } from './types';
+import { PermissionsContext } from './context/PermissionsContext';
 
 const tabToPath = (tab: string) => tab === 'dashboard' ? '/' : `/${tab}`;
 
@@ -67,6 +68,7 @@ const App: React.FC = () => {
 
   const [currentUserRole, setCurrentUserRole] = useState('Super Admin');
   const [currentUserPermissions, setCurrentUserPermissions] = useState<string[]>(['dashboard', 'spiritual']);
+  const [rawPermissions, setRawPermissions] = useState<string[]>([]);
 
   const [adminName, setAdminName] = useState('Admin Vinea');
   const [adminAvatar, setAdminAvatar] = useState('');
@@ -265,6 +267,7 @@ const App: React.FC = () => {
       setCurrentUserRole('Super Admin');
       perms = ALL_PERMISSIONS;
       setCurrentUserPermissions(perms);
+      setRawPermissions(ALL_PERMISSIONS);
       if (adminUser) {
         const displayName = (adminUser.first_name && adminUser.last_name)
           ? `${adminUser.first_name} ${adminUser.last_name}`
@@ -277,6 +280,7 @@ const App: React.FC = () => {
       perms = rawPerms.map((p: string) => (p.includes(':') ? p.split(':')[0] : p));
       setCurrentUserRole(adminUser.role ?? 'Administrateur');
       setCurrentUserPermissions(perms);
+      setRawPermissions(rawPerms);
       const displayName = (adminUser.first_name && adminUser.last_name)
         ? `${adminUser.first_name} ${adminUser.last_name}`
         : adminUser.full_name ?? 'Admin Vinea';
@@ -323,6 +327,7 @@ const App: React.FC = () => {
         setIsAuthenticated(false);
         setCurrentUserRole('Super Admin');
         setCurrentUserPermissions(['dashboard', 'spiritual']);
+        setRawPermissions([]);
       }
     });
 
@@ -364,6 +369,7 @@ const App: React.FC = () => {
   const handleLogin = (email: string, role: string, permissions: string[], name?: string) => {
     setIsAuthenticated(true);
     setCurrentUserRole(role);
+    setRawPermissions(permissions);
     const decoded = permissions.map((p: string) => (p.includes(':') ? p.split(':')[0] : p));
     const finalPermissions = decoded.includes('spiritual') ? decoded : [...decoded, 'spiritual'];
     setCurrentUserPermissions(finalPermissions);
@@ -375,6 +381,7 @@ const App: React.FC = () => {
     setIsAuthenticated(false);
     setCurrentUserRole('Super Admin');
     setCurrentUserPermissions(['dashboard', 'spiritual']);
+    setRawPermissions([]);
     setShowLogoutConfirm(false);
   };
 

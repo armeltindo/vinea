@@ -63,7 +63,7 @@ import { formatPhone, DEPARTMENTS as CONST_DEPARTMENTS } from '../constants';
 import { Member, MemberStatus, MemberType, Department } from '../types';
 import { analyzePageData } from '../lib/gemini';
 import { cn, generateId, getInitials, getDisplayNickname, formatFirstName } from '../utils';
-import { getMembers, createMember, updateMember, deleteMember, getDiscipleshipPairs, getAppConfig, syncMemberToDepartments } from '../lib/db';
+import { getMembers, createMember, updateMember, deleteMember, getDiscipleshipPairs, createDiscipleshipPair, updateDiscipleshipPair, deleteDiscipleshipPair, getAppConfig, syncMemberToDepartments } from '../lib/db';
 
 // Helper pour convertir YYYY-MM-DD en DD-MM-YYYY
 const formatToUIDate = (isoDate: string | undefined) => {
@@ -582,6 +582,31 @@ const Members: React.FC = () => {
       };
       newMembersList = [memberToSave, ...newMembersList];
       await createMember(memberToSave);
+    }
+
+    // Sync bidirectionnel : mentor disciple ↔ discipleship pairs
+    const newMentorId = memberToSave.assignedDiscipleMakerId || '';
+    const oldMentorId = editingMemberId ? (members.find(m => m.id === editingMemberId)?.assignedDiscipleMakerId || '') : '';
+    if (newMentorId !== oldMentorId) {
+      const allPairs = await getDiscipleshipPairs();
+      const existingPair = allPairs.find(p => p.discipleId === memberToSave.id);
+      if (newMentorId) {
+        if (existingPair) {
+          await updateDiscipleshipPair(existingPair.id, { mentorId: newMentorId });
+        } else {
+          await createDiscipleshipPair({
+            id: generateId(),
+            mentorId: newMentorId,
+            discipleId: memberToSave.id,
+            startDate: new Date().toISOString().split('T')[0],
+            progress: 0,
+            status: 'active',
+            lastMeeting: '',
+          });
+        }
+      } else if (existingPair) {
+        await deleteDiscipleshipPair(existingPair.id);
+      }
     }
 
     // Sync bidirectionnel : répercuter les changements de départements du membre sur departments_info

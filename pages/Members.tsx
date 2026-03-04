@@ -566,10 +566,12 @@ const Members: React.FC = () => {
     if (editingMemberId) {
       const existing = members.find(m => m.id === editingMemberId)!;
       previousDepts = existing.departments ?? [];
-      memberToSave = { ...existing, ...formData, firstName: formattedFirstName, lastName: formattedLastName } as Member;
+      const isDiscipleMaker = ![MemberType.MEMBRE_SIMPLE, MemberType.ENFANT].includes((formData.type ?? existing.type) as MemberType);
+      memberToSave = { ...existing, ...formData, firstName: formattedFirstName, lastName: formattedLastName, isDiscipleMaker } as Member;
       newMembersList = newMembersList.map(m => m.id === editingMemberId ? memberToSave : m);
       await updateMember(editingMemberId, memberToSave);
     } else {
+      const isDiscipleMaker = ![MemberType.MEMBRE_SIMPLE, MemberType.ENFANT].includes(formData.type as MemberType);
       memberToSave = {
         ...formData as Member,
         id: generateId(),
@@ -577,7 +579,7 @@ const Members: React.FC = () => {
         lastName: formattedLastName,
         emergencyContact: formData.emergencyContact || { name: '', phone: '', relation: '' },
         source: formData.source || 'Direct',
-        isDiscipleMaker: formData.isDiscipleMaker || false,
+        isDiscipleMaker,
         baptized: formData.baptized || !!formData.baptizedDate,
         whatsapp: formData.whatsapp || false,
         whatsappPhone: formData.whatsappPhone || '',

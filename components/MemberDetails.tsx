@@ -199,7 +199,7 @@ const MemberDetails: React.FC<MemberDetailsProps> = ({ member, isOpen, onClose, 
     setTimeout(() => setCopiedField(null), 2000);
   };
 
-  const loginUrl = `${window.location.origin}/exercice-spirituel`;
+  const loginUrl = `${window.location.origin}/mon-espace`;
   const copyAll = () => {
     if (!accountModal) return;
     const text = `Lien : ${loginUrl}\nIdentifiant : ${accountModal.username}\nMot de passe : ${accountModal.password}`;

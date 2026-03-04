@@ -438,14 +438,14 @@ const App: React.FC = () => {
     </div>
   );
 
-  if (location.pathname.startsWith('/exercice-spirituel')) {
+  if (location.pathname.startsWith('/mon-espace')) {
     return (
       <React.Suspense fallback={memberPortalFallback}>
         <Routes>
-          <Route path="/exercice-spirituel" element={<ExerciceSpirituelLogin />} />
-          <Route path="/exercice-spirituel/dashboard" element={<ExerciceSpirituelDashboard />} />
-          <Route path="/exercice-spirituel/groupe" element={<ExerciceSpirituelGroupe />} />
-          <Route path="*" element={<Navigate to="/exercice-spirituel" replace />} />
+          <Route path="/mon-espace" element={<ExerciceSpirituelLogin />} />
+          <Route path="/mon-espace/dashboard" element={<ExerciceSpirituelDashboard />} />
+          <Route path="/mon-espace/groupe" element={<ExerciceSpirituelGroupe />} />
+          <Route path="*" element={<Navigate to="/mon-espace" replace />} />
         </Routes>
       </React.Suspense>
     );

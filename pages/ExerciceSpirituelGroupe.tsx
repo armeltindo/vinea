@@ -447,13 +447,13 @@ const ExerciceSpirituelGroupe: React.FC = () => {
   // ── Vérifier session ────────────────────────────────────────
   useEffect(() => {
     const raw = localStorage.getItem('vinea_member_session');
-    if (!raw) { navigate('/exercice-spirituel'); return; }
+    if (!raw) { navigate('/mon-espace'); return; }
     try {
       const s: MemberSession = JSON.parse(raw);
-      if (!s.isDiscipleMaker) { navigate('/exercice-spirituel/dashboard'); return; }
+      if (!s.isDiscipleMaker) { navigate('/mon-espace/dashboard'); return; }
       setSession(s);
     } catch {
-      navigate('/exercice-spirituel');
+      navigate('/mon-espace');
     }
   }, [navigate]);
 
@@ -506,11 +506,11 @@ const ExerciceSpirituelGroupe: React.FC = () => {
   const handleLogout = () => {
     localStorage.removeItem('vinea_member_session');
     localStorage.removeItem('vinea_member_role_choice');
-    navigate('/exercice-spirituel');
+    navigate('/mon-espace');
   };
 
   const goToMyExercises = () => {
-    navigate('/exercice-spirituel/dashboard');
+    navigate('/mon-espace/dashboard');
   };
 
   if (!session) return null;

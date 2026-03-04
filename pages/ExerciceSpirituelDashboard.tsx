@@ -58,7 +58,7 @@ const ExerciceSpirituelDashboard: React.FC = () => {
   // ── Vérifier session ────────────────────────────────────────
   useEffect(() => {
     const raw = localStorage.getItem('vinea_member_session');
-    if (!raw) { navigate('/exercice-spirituel'); return; }
+    if (!raw) { navigate('/mon-espace'); return; }
     try {
       const s: MemberSession = JSON.parse(raw);
       setSession(s);
@@ -69,7 +69,7 @@ const ExerciceSpirituelDashboard: React.FC = () => {
         setRoleChoice('member');
       }
     } catch {
-      navigate('/exercice-spirituel');
+      navigate('/mon-espace');
     }
   }, [navigate]);
 
@@ -160,12 +160,12 @@ const ExerciceSpirituelDashboard: React.FC = () => {
   const handleLogout = () => {
     localStorage.removeItem('vinea_member_session');
     localStorage.removeItem('vinea_member_role_choice');
-    navigate('/exercice-spirituel');
+    navigate('/mon-espace');
   };
 
   const handleRoleChoice = (role: 'member' | 'dm') => {
     if (role === 'dm') {
-      navigate('/exercice-spirituel/groupe');
+      navigate('/mon-espace/groupe');
     } else {
       setRoleChoice('member');
     }
@@ -259,7 +259,7 @@ const ExerciceSpirituelDashboard: React.FC = () => {
           )}
           {session.isDiscipleMaker && (
             <button
-              onClick={() => navigate('/exercice-spirituel/groupe')}
+              onClick={() => navigate('/mon-espace/groupe')}
               className="px-3 py-2 bg-white/20 hover:bg-white/30 border border-white/30 rounded-xl text-xs font-bold transition-colors flex items-center gap-1.5"
             >
               <Users size={14} />

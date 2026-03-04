@@ -61,7 +61,7 @@ const ExerciceSpirituelLogin: React.FC = () => {
     // Pause pour afficher le message de bienvenue puis rediriger
     setTimeout(() => {
       localStorage.setItem('vinea_member_session', JSON.stringify(session));
-      navigate('/exercice-spirituel/dashboard');
+      navigate('/mon-espace/dashboard');
     }, 2200);
   };
 

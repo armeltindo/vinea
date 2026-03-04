@@ -259,16 +259,26 @@ const Discipleship: React.FC = () => {
       setActivePairs(prev => prev.map(p => p.id === editingPair.id ? pairData : p));
       if (selectedPair?.id === editingPair.id) setSelectedPair(pairData);
       await updateDiscipleshipPair(editingPair.id, { mentorId: pairData.mentorId, discipleId: pairData.discipleId, startDate: pairData.startDate, progress: pairData.progress, status: pairData.status, lastMeeting: pairData.lastMeeting });
-      // Sync membre : si le disciple a changé, effacer l'ancien assignedDiscipleMakerId
+      // Sync disciple : si le disciple a changé, effacer l'ancien assignedDiscipleMakerId
       if (editingPair.discipleId !== pairData.discipleId) {
         await updateMember(editingPair.discipleId, { assignedDiscipleMakerId: '' });
       }
       await updateMember(pairData.discipleId, { assignedDiscipleMakerId: pairData.mentorId });
+      // Sync mentor : si le mentor a changé, l'ancien mentor perd peut-être son statut
+      if (editingPair.mentorId !== pairData.mentorId) {
+        const oldMentorStillHasPairs = activePairs.some(p => p.id !== editingPair.id && p.mentorId === editingPair.mentorId);
+        if (!oldMentorStillHasPairs) {
+          await updateMember(editingPair.mentorId, { isDiscipleMaker: false });
+        }
+      }
+      await updateMember(pairData.mentorId, { isDiscipleMaker: true });
     } else {
       setActivePairs(prev => [pairData, ...prev]);
       await createDiscipleshipPair({ id: pairData.id, mentorId: pairData.mentorId, discipleId: pairData.discipleId, startDate: pairData.startDate, progress: pairData.progress, status: pairData.status, lastMeeting: pairData.lastMeeting });
-      // Sync membre : mettre à jour assignedDiscipleMakerId sur le disciple
+      // Sync disciple : mettre à jour assignedDiscipleMakerId
       await updateMember(pairData.discipleId, { assignedDiscipleMakerId: pairData.mentorId });
+      // Sync mentor : marquer comme faiseur de disciples
+      await updateMember(pairData.mentorId, { isDiscipleMaker: true });
     }
     setIsPairModalOpen(false);
   };
@@ -289,9 +299,16 @@ const Discipleship: React.FC = () => {
       setEditingPair(null);
       setSelectedPair(null);
       await deleteDiscipleshipPair(pairToDeleteId);
-      // Sync membre : effacer assignedDiscipleMakerId sur le disciple
+      // Sync disciple : effacer assignedDiscipleMakerId
       if (pairToDelete?.discipleId) {
         await updateMember(pairToDelete.discipleId, { assignedDiscipleMakerId: '' });
+      }
+      // Sync mentor : si plus aucune paire active, retirer isDiscipleMaker
+      if (pairToDelete?.mentorId) {
+        const mentorStillHasPairs = activePairs.some(p => p.id !== pairToDeleteId && p.mentorId === pairToDelete.mentorId);
+        if (!mentorStillHasPairs) {
+          await updateMember(pairToDelete.mentorId, { isDiscipleMaker: false });
+        }
       }
       setPairToDeleteId(null);
     }

@@ -9,6 +9,10 @@ import Avatar from './components/Avatar';
 // Dashboard chargé en priorité (page par défaut après connexion)
 import Dashboard from './pages/Dashboard';
 
+// Portail membres (public — sans authentification admin)
+const ExerciceSpirituelLogin = React.lazy(() => import('./pages/ExerciceSpirituelLogin'));
+const ExerciceSpirituelDashboard = React.lazy(() => import('./pages/ExerciceSpirituelDashboard'));
+
 // Autres pages chargées à la demande (code splitting)
 const Members = React.lazy(() => import('./pages/Members'));
 const Planning = React.lazy(() => import('./pages/Planning'));
@@ -425,6 +429,25 @@ const App: React.FC = () => {
     if (currentUserRole === 'Super Admin') return true;
     return rawPermissions.some(p => p === module || p === `${module}:rw` || p === `${module}:rwd`);
   };
+
+  // ── Portail membres — accessible sans authentification admin ──
+  const memberPortalFallback = (
+    <div className="min-h-screen flex items-center justify-center bg-indigo-900">
+      <div className="w-8 h-8 border-4 border-white border-t-transparent rounded-full animate-spin opacity-40" />
+    </div>
+  );
+
+  if (location.pathname.startsWith('/exercice-spirituel')) {
+    return (
+      <React.Suspense fallback={memberPortalFallback}>
+        <Routes>
+          <Route path="/exercice-spirituel" element={<ExerciceSpirituelLogin />} />
+          <Route path="/exercice-spirituel/dashboard" element={<ExerciceSpirituelDashboard />} />
+          <Route path="*" element={<Navigate to="/exercice-spirituel" replace />} />
+        </Routes>
+      </React.Suspense>
+    );
+  }
 
   if (authLoading) {
     return (

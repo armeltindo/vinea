@@ -207,7 +207,52 @@ export interface Member {
   motherName?: string;
   fatherId?: string;
   fatherName?: string;
+  // Compte membre (exercices spirituels)
+  memberAccountActive?: boolean;
+  memberUsername?: string;
 }
+
+// --- Exercices Spirituels Quotidiens ---
+
+export interface SpiritualExerciseType {
+  id: string;
+  label: string;
+  fieldType: 'text' | 'boolean';
+  position: number;
+  active: boolean;
+  hasDetail: boolean;
+  detailLabel?: string;
+  createdAt?: string;
+}
+
+export interface DailyExerciseEntry {
+  id: string;
+  exerciseId: string;
+  typeId: string;
+  valueText?: string;
+  valueBool?: boolean;
+  detailText?: string;
+}
+
+export interface DailyExercise {
+  id: string;
+  memberId: string;
+  date: string; // YYYY-MM-DD
+  entries: DailyExerciseEntry[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface MemberSession {
+  memberId: string;
+  firstName: string;
+  lastName: string;
+  gender: 'Masculin' | 'Féminin';
+  isDiscipleMaker: boolean;
+  phone?: string;
+}
+
+// --- End Exercices Spirituels Quotidiens ---
 
 export interface Visitor {
   id: string;

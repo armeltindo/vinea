@@ -42,13 +42,17 @@ import {
   ArrowUpRight,
   ArrowDownRight,
   BarChart2,
-  CreditCard
+  CreditCard,
+  UserCheck,
+  Copy,
+  KeyRound,
+  Loader2
 } from 'lucide-react';
 import MemberCardModal from './MemberCardModal';
 import { Member, MemberStatus, Department, DepartmentActivity, ActivityStatus, FinancialRecord, AttendanceSession, OperationType } from '../types';
 import { formatPhone } from '../constants';
 import { cn, getInitials, getDisplayNickname, formatFirstName } from '../utils';
-import { getMembers, getDepartmentActivities, getDiscipleshipEnrollments, getFinancialRecords, getAttendanceSessions } from '../lib/db';
+import { getMembers, getDepartmentActivities, getDiscipleshipEnrollments, getFinancialRecords, getAttendanceSessions, generateMemberUsername, activateMemberAccount } from '../lib/db';
 import Avatar from './Avatar';
 
 const MOIS = ['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
@@ -118,6 +122,9 @@ const MemberDetails: React.FC<MemberDetailsProps> = ({ member, isOpen, onClose, 
   const [enrollments, setEnrollments] = useState<any[]>([]);
   const [financialRecords, setFinancialRecords] = useState<FinancialRecord[]>([]);
   const [attendanceSessions, setAttendanceSessions] = useState<AttendanceSession[]>([]);
+  const [isActivatingAccount, setIsActivatingAccount] = useState(false);
+  const [accountModal, setAccountModal] = useState<{ username: string; password: string } | null>(null);
+  const [copiedField, setCopiedField] = useState<string | null>(null);
 
   useEffect(() => {
     if (isOpen) {
@@ -173,6 +180,31 @@ const MemberDetails: React.FC<MemberDetailsProps> = ({ member, isOpen, onClose, 
     if (!member.assignedDiscipleMakerId) return null;
     return allMembers.find(m => m.id === member.assignedDiscipleMakerId) ?? null;
   }, [member.assignedDiscipleMakerId, allMembers]);
+
+  const handleActivateAccount = async () => {
+    setIsActivatingAccount(true);
+    const username = await generateMemberUsername(member);
+    // Mot de passe : téléphone si disponible, sinon nom normalisé sans accent
+    const password = member.phone
+      ? member.phone.replace(/\s/g, '')
+      : member.lastName.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+    await activateMemberAccount(member.id, username);
+    setIsActivatingAccount(false);
+    setAccountModal({ username, password });
+  };
+
+  const handleCopy = (text: string, field: string) => {
+    navigator.clipboard.writeText(text);
+    setCopiedField(field);
+    setTimeout(() => setCopiedField(null), 2000);
+  };
+
+  const loginUrl = `${window.location.origin}/exercice-spirituel`;
+  const copyAll = () => {
+    if (!accountModal) return;
+    const text = `Lien : ${loginUrl}\nIdentifiant : ${accountModal.username}\nMot de passe : ${accountModal.password}`;
+    handleCopy(text, 'all');
+  };
 
   const dynamicHistory = useMemo(() => {
     const events: { id: string, date: string, type: string, label: string, icon: React.ReactNode }[] = [];
@@ -820,25 +852,45 @@ const MemberDetails: React.FC<MemberDetailsProps> = ({ member, isOpen, onClose, 
         </div>
 
         {/* Fixed Footer Actions */}
-        <div className="p-8 border-t border-slate-100 bg-white/80 backdrop-blur-md flex gap-3 shrink-0 z-20">
+        <div className="p-8 border-t border-slate-100 bg-white/80 backdrop-blur-md flex flex-col gap-3 shrink-0 z-20">
+          {/* Bouton activation compte membre */}
           <button
-            onClick={() => setIsCardModalOpen(true)}
-            className="px-5 py-4 bg-slate-50 text-slate-600 border border-slate-200 rounded-2xl text-xs font-medium hover:bg-slate-100 transition-all flex items-center justify-center gap-2"
+            onClick={handleActivateAccount}
+            disabled={isActivatingAccount}
+            className={cn(
+              "w-full py-3 rounded-2xl text-xs font-medium transition-all flex items-center justify-center gap-2 border",
+              member.memberAccountActive
+                ? "bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100"
+                : "bg-violet-50 text-violet-700 border-violet-200 hover:bg-violet-100"
+            )}
           >
-            <CreditCard size={16} /> Carte
+            {isActivatingAccount
+              ? <><Loader2 size={15} className="animate-spin" /> Génération...</>
+              : member.memberAccountActive
+              ? <><UserCheck size={15} /> Compte actif — Réinitialiser infos</>
+              : <><KeyRound size={15} /> Activer le compte Exercices Spirituels</>
+            }
           </button>
-          <button
-            onClick={() => onEdit(member)}
-            className="flex-1 py-4 bg-indigo-50 text-indigo-600 border border-indigo-100 rounded-2xl text-xs font-medium hover:bg-indigo-100 transition-all flex items-center justify-center gap-2"
-          >
-            <Edit size={16} /> Modifier Fiche
-          </button>
-          <button
-            onClick={() => onDelete(member.id)}
-            className="px-6 py-4 bg-rose-50 text-rose-600 border border-rose-100 rounded-2xl text-xs font-medium hover:bg-rose-100 transition-all flex items-center justify-center gap-2"
-          >
-            <Trash2 size={16} />
-          </button>
+          <div className="flex gap-3">
+            <button
+              onClick={() => setIsCardModalOpen(true)}
+              className="px-5 py-4 bg-slate-50 text-slate-600 border border-slate-200 rounded-2xl text-xs font-medium hover:bg-slate-100 transition-all flex items-center justify-center gap-2"
+            >
+              <CreditCard size={16} /> Carte
+            </button>
+            <button
+              onClick={() => onEdit(member)}
+              className="flex-1 py-4 bg-indigo-50 text-indigo-600 border border-indigo-100 rounded-2xl text-xs font-medium hover:bg-indigo-100 transition-all flex items-center justify-center gap-2"
+            >
+              <Edit size={16} /> Modifier Fiche
+            </button>
+            <button
+              onClick={() => onDelete(member.id)}
+              className="px-6 py-4 bg-rose-50 text-rose-600 border border-rose-100 rounded-2xl text-xs font-medium hover:bg-rose-100 transition-all flex items-center justify-center gap-2"
+            >
+              <Trash2 size={16} />
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -848,6 +900,72 @@ const MemberDetails: React.FC<MemberDetailsProps> = ({ member, isOpen, onClose, 
       isOpen={isCardModalOpen}
       onClose={() => setIsCardModalOpen(false)}
     />
+
+    {/* Modale informations de connexion */}
+    {accountModal && (
+      <div className="fixed inset-0 z-[300] flex items-center justify-center p-4">
+        <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setAccountModal(null)} />
+        <div className="relative w-full max-w-sm bg-white rounded-3xl shadow-2xl p-8 border border-slate-100 animate-in zoom-in-95 duration-200">
+          <div className="w-14 h-14 bg-emerald-50 rounded-2xl flex items-center justify-center mx-auto mb-5">
+            <UserCheck size={26} className="text-emerald-600" />
+          </div>
+          <h3 className="text-lg font-bold text-slate-900 text-center">Compte activé !</h3>
+          <p className="text-xs text-slate-500 text-center mt-1 mb-6">
+            Copiez ces informations et envoyez-les au membre.
+          </p>
+
+          <div className="space-y-3">
+            {/* URL */}
+            <div className="bg-slate-50 rounded-xl p-4 border border-slate-200">
+              <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Lien de connexion</p>
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-xs font-bold text-indigo-600 break-all">{loginUrl}</p>
+                <button onClick={() => handleCopy(loginUrl, 'url')} className="shrink-0 p-1.5 rounded-lg hover:bg-slate-200 transition-colors text-slate-500">
+                  {copiedField === 'url' ? <CheckCircle2 size={14} className="text-emerald-500" /> : <Copy size={14} />}
+                </button>
+              </div>
+            </div>
+
+            {/* Identifiant */}
+            <div className="bg-slate-50 rounded-xl p-4 border border-slate-200">
+              <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Identifiant</p>
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-sm font-black text-slate-800 font-mono">{accountModal.username}</p>
+                <button onClick={() => handleCopy(accountModal.username, 'username')} className="shrink-0 p-1.5 rounded-lg hover:bg-slate-200 transition-colors text-slate-500">
+                  {copiedField === 'username' ? <CheckCircle2 size={14} className="text-emerald-500" /> : <Copy size={14} />}
+                </button>
+              </div>
+            </div>
+
+            {/* Mot de passe */}
+            <div className="bg-slate-50 rounded-xl p-4 border border-slate-200">
+              <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Mot de passe</p>
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-sm font-black text-slate-800 font-mono">{accountModal.password}</p>
+                <button onClick={() => handleCopy(accountModal.password, 'password')} className="shrink-0 p-1.5 rounded-lg hover:bg-slate-200 transition-colors text-slate-500">
+                  {copiedField === 'password' ? <CheckCircle2 size={14} className="text-emerald-500" /> : <Copy size={14} />}
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-2 mt-6">
+            <button
+              onClick={copyAll}
+              className="w-full py-3 bg-indigo-600 text-white rounded-2xl text-xs font-bold hover:bg-indigo-700 transition-all flex items-center justify-center gap-2 shadow-lg shadow-indigo-100"
+            >
+              {copiedField === 'all' ? <><CheckCircle2 size={15} /> Copié !</> : <><Copy size={15} /> Tout copier</>}
+            </button>
+            <button
+              onClick={() => setAccountModal(null)}
+              className="w-full py-3 bg-slate-50 text-slate-600 rounded-2xl text-xs font-medium border border-slate-200 hover:bg-slate-100 transition-all"
+            >
+              Fermer
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
     </>
   );
 };

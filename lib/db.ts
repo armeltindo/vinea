@@ -7,7 +7,8 @@ import { supabase } from './supabase';
 import {
   Member, Visitor, FinancialRecord, DonationCampaign, DonationPromise,
   AttendanceSession, ChurchService, DepartmentInfo, DepartmentActivity,
-  OperationType, PaymentMethod, MemberStatus, MemberType, VisitorStatus, ActivityStatus
+  OperationType, PaymentMethod, MemberStatus, MemberType, VisitorStatus, ActivityStatus,
+  SpiritualExerciseType, DailyExercise, DailyExerciseEntry
 } from '../types';
 
 // ─────────────────────────────────────────────
@@ -52,6 +53,8 @@ function dbToMember(row: any): Member {
     motherName: row.mother_name ?? undefined,
     fatherId: row.father_id ?? undefined,
     fatherName: row.father_name ?? undefined,
+    memberAccountActive: row.member_account_active ?? false,
+    memberUsername: row.member_username ?? undefined,
   };
 }
 
@@ -93,6 +96,8 @@ function memberToDb(m: Partial<Member>): Record<string, unknown> {
   if (m.motherName !== undefined) db.mother_name = m.motherName || null;
   if (m.fatherId !== undefined) db.father_id = m.fatherId || null;
   if (m.fatherName !== undefined) db.father_name = m.fatherName || null;
+  if (m.memberAccountActive !== undefined) db.member_account_active = m.memberAccountActive;
+  if (m.memberUsername !== undefined) db.member_username = m.memberUsername ?? null;
   return db;
 }
 
@@ -1154,4 +1159,243 @@ export const upsertDiscipleshipEnrollment = async (e: any): Promise<void> => {
 export const deleteDiscipleshipEnrollment = async (id: string): Promise<void> => {
   const { error } = await supabase.from('discipleship_enrollments').delete().eq('id', id);
   if (error) console.error('deleteDiscipleshipEnrollment:', error.message);
+};
+
+// ─────────────────────────────────────────────
+// COMPTE MEMBRE — Authentification portail
+// ─────────────────────────────────────────────
+
+/** Normalise un texte : minuscule, sans accents, sans espaces */
+export const normalizeForLogin = (text: string): string =>
+  text.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+
+/**
+ * Recherche un membre par numéro de téléphone + nom de famille.
+ * La comparaison du nom est insensible aux accents, casse et espaces.
+ */
+export const getMemberByPhoneAndLastName = async (
+  phone: string,
+  lastName: string
+): Promise<Member | null> => {
+  const normalizedPhone = phone.replace(/\s/g, '');
+  const { data, error } = await supabase
+    .from('members')
+    .select('*')
+    .eq('phone', normalizedPhone);
+  if (error) { console.error('getMemberByPhoneAndLastName:', error.message); return null; }
+  if (!data || data.length === 0) return null;
+  const normalizedInput = normalizeForLogin(lastName);
+  const match = data.find((row: any) =>
+    normalizeForLogin(row.last_name || '') === normalizedInput
+  );
+  return match ? dbToMember(match) : null;
+};
+
+/**
+ * Active le compte membre et persiste le username généré.
+ */
+export const activateMemberAccount = async (
+  memberId: string,
+  username: string
+): Promise<void> => {
+  const { error } = await supabase
+    .from('members')
+    .update({ member_account_active: true, member_username: username })
+    .eq('id', memberId);
+  if (error) console.error('activateMemberAccount:', error.message);
+};
+
+/**
+ * Génère le username d'un membre selon les règles :
+ *  - {i_prénom}.{nom_normalisé}.{téléphone} si téléphone existe
+ *  - sinon {i_prénom}.{nom_normalisé}[.1|.2|...] avec déduplication
+ */
+export const generateMemberUsername = async (member: Member): Promise<string> => {
+  const norm = (s: string) =>
+    s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/\s+/g, '');
+  const initial = norm(member.firstName).charAt(0);
+  const last = norm(member.lastName);
+
+  if (member.phone) {
+    return `${initial}.${last}.${member.phone.replace(/\s/g, '')}`;
+  }
+
+  // Sans téléphone → vérifier les doublons dans la base
+  const { data } = await supabase
+    .from('members')
+    .select('member_username')
+    .not('member_username', 'is', null);
+  const existing = (data ?? []).map((r: any) => r.member_username as string);
+
+  const base = `${initial}.${last}`;
+  if (!existing.includes(base)) return base;
+
+  let suffix = 1;
+  while (existing.includes(`${base}.${suffix}`)) suffix++;
+  return `${base}.${suffix}`;
+};
+
+// ─────────────────────────────────────────────
+// TYPES D'EXERCICES SPIRITUELS
+// ─────────────────────────────────────────────
+
+function dbToExerciseType(row: any): SpiritualExerciseType {
+  return {
+    id: row.id,
+    label: row.label,
+    fieldType: row.field_type,
+    position: row.position ?? 0,
+    active: row.active ?? true,
+    hasDetail: row.has_detail ?? false,
+    detailLabel: row.detail_label ?? undefined,
+    createdAt: row.created_at,
+  };
+}
+
+export const getSpiritualExerciseTypes = async (): Promise<SpiritualExerciseType[]> => {
+  const { data, error } = await supabase
+    .from('spiritual_exercise_types')
+    .select('*')
+    .order('position', { ascending: true });
+  if (error) { console.error('getSpiritualExerciseTypes:', error.message); return []; }
+  return (data ?? []).map(dbToExerciseType);
+};
+
+export const upsertSpiritualExerciseType = async (t: SpiritualExerciseType): Promise<void> => {
+  const { error } = await supabase
+    .from('spiritual_exercise_types')
+    .upsert({
+      id: t.id,
+      label: t.label,
+      field_type: t.fieldType,
+      position: t.position,
+      active: t.active,
+      has_detail: t.hasDetail,
+      detail_label: t.detailLabel ?? null,
+    }, { onConflict: 'id' });
+  if (error) console.error('upsertSpiritualExerciseType:', error.message);
+};
+
+export const deleteSpiritualExerciseType = async (id: string): Promise<void> => {
+  const { error } = await supabase.from('spiritual_exercise_types').delete().eq('id', id);
+  if (error) console.error('deleteSpiritualExerciseType:', error.message);
+};
+
+// ─────────────────────────────────────────────
+// EXERCICES SPIRITUELS QUOTIDIENS
+// ─────────────────────────────────────────────
+
+export const getDailyExercises = async (memberId: string): Promise<DailyExercise[]> => {
+  const { data: exercises, error } = await supabase
+    .from('daily_spiritual_exercises')
+    .select('*')
+    .eq('member_id', memberId)
+    .order('date', { ascending: false });
+  if (error) { console.error('getDailyExercises:', error.message); return []; }
+
+  const ids = (exercises ?? []).map((e: any) => e.id);
+  if (ids.length === 0) return [];
+
+  const { data: entries } = await supabase
+    .from('daily_exercise_entries')
+    .select('*')
+    .in('exercise_id', ids);
+
+  return (exercises ?? []).map((e: any) => ({
+    id: e.id,
+    memberId: e.member_id,
+    date: e.date,
+    createdAt: e.created_at,
+    updatedAt: e.updated_at,
+    entries: (entries ?? [])
+      .filter((en: any) => en.exercise_id === e.id)
+      .map((en: any): DailyExerciseEntry => ({
+        id: en.id,
+        exerciseId: en.exercise_id,
+        typeId: en.type_id,
+        valueText: en.value_text ?? undefined,
+        valueBool: en.value_bool ?? undefined,
+        detailText: en.detail_text ?? undefined,
+      })),
+  }));
+};
+
+export const getDailyExerciseByDate = async (
+  memberId: string,
+  date: string
+): Promise<DailyExercise | null> => {
+  const { data: exercise, error } = await supabase
+    .from('daily_spiritual_exercises')
+    .select('*')
+    .eq('member_id', memberId)
+    .eq('date', date)
+    .maybeSingle();
+  if (error) { console.error('getDailyExerciseByDate:', error.message); return null; }
+  if (!exercise) return null;
+
+  const { data: entries } = await supabase
+    .from('daily_exercise_entries')
+    .select('*')
+    .eq('exercise_id', exercise.id);
+
+  return {
+    id: exercise.id,
+    memberId: exercise.member_id,
+    date: exercise.date,
+    createdAt: exercise.created_at,
+    updatedAt: exercise.updated_at,
+    entries: (entries ?? []).map((en: any): DailyExerciseEntry => ({
+      id: en.id,
+      exerciseId: en.exercise_id,
+      typeId: en.type_id,
+      valueText: en.value_text ?? undefined,
+      valueBool: en.value_bool ?? undefined,
+      detailText: en.detail_text ?? undefined,
+    })),
+  };
+};
+
+/** Crée ou met à jour un exercice quotidien avec ses entrées */
+export const upsertDailyExercise = async (
+  memberId: string,
+  date: string,
+  entries: Array<{ typeId: string; valueText?: string; valueBool?: boolean; detailText?: string }>
+): Promise<void> => {
+  // Upsert de la soumission principale
+  const exerciseId = `${memberId}_${date}`;
+  const { error: exErr } = await supabase
+    .from('daily_spiritual_exercises')
+    .upsert({
+      id: exerciseId,
+      member_id: memberId,
+      date,
+      updated_at: new Date().toISOString(),
+    }, { onConflict: 'member_id,date' });
+  if (exErr) { console.error('upsertDailyExercise (exercise):', exErr.message); return; }
+
+  // Retrouver l'ID réel (en cas d'upsert sur conflict)
+  const { data: exRow } = await supabase
+    .from('daily_spiritual_exercises')
+    .select('id')
+    .eq('member_id', memberId)
+    .eq('date', date)
+    .single();
+  const realExerciseId = exRow?.id ?? exerciseId;
+
+  // Upsert des entrées
+  const rows = entries.map(e => ({
+    id: `${realExerciseId}_${e.typeId}`,
+    exercise_id: realExerciseId,
+    type_id: e.typeId,
+    value_text: e.valueText ?? null,
+    value_bool: e.valueBool ?? null,
+    detail_text: e.detailText ?? null,
+  }));
+
+  if (rows.length > 0) {
+    const { error: entErr } = await supabase
+      .from('daily_exercise_entries')
+      .upsert(rows, { onConflict: 'exercise_id,type_id' });
+    if (entErr) console.error('upsertDailyExercise (entries):', entErr.message);
+  }
 };

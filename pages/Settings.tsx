@@ -76,7 +76,8 @@ import {
 import { cn, generateId, formatFirstName } from '../utils';
 import { SERVICES_LIST, DEPARTMENTS as CONST_DEPARTMENTS } from '../constants';
 import { MemberStatus, VisitorStatus, MemberType, NotificationSettings } from '../types';
-import { getChurchSettings, upsertChurchSettings, getAdminUsers, upsertAdminUser, deleteAdminUser, getAppConfig, setAppConfig } from '../lib/db';
+import { getChurchSettings, upsertChurchSettings, getAdminUsers, upsertAdminUser, deleteAdminUser, getAppConfig, setAppConfig, getSpiritualExerciseTypes, upsertSpiritualExerciseType, deleteSpiritualExerciseType } from '../lib/db';
+import { SpiritualExerciseType } from '../types';
 import { supabase, supabaseAdmin } from '../lib/supabase';
 
 interface ListManagerProps {
@@ -356,6 +357,11 @@ const Settings: React.FC = () => {
   const [serviceTypes, setServiceTypes] = useState<string[]>(SERVICES_LIST);
   const [departments, setDepartments] = useState<string[]>(CONST_DEPARTMENTS);
   const [adminUsers, setAdminUsers] = useState<AdminUser[]>([]);
+  const [exerciseTypes, setExerciseTypes] = useState<SpiritualExerciseType[]>([]);
+  const [newExerciseLabel, setNewExerciseLabel] = useState('');
+  const [newExerciseFieldType, setNewExerciseFieldType] = useState<'text' | 'boolean'>('boolean');
+  const [newExerciseHasDetail, setNewExerciseHasDetail] = useState(false);
+  const [newExerciseDetailLabel, setNewExerciseDetailLabel] = useState('');
 
   const [aiConfig, setAiConfig] = useState({
     tone: 'Chaleureux & Pastoral',
@@ -474,6 +480,10 @@ const Settings: React.FC = () => {
       if (serviceTypesData) setServiceTypes(serviceTypesData);
       if (departmentsData) setDepartments(departmentsData);
       if (aiConfigData) setAiConfig(aiConfigData);
+
+      // Charger les types d'exercices spirituels
+      const exTypes = await getSpiritualExerciseTypes();
+      if (exTypes.length > 0) setExerciseTypes(exTypes);
 
       const mappedUsers = users.map((u: any) => {
         const parts = (u.full_name || '').trim().split(/\s+/);
@@ -865,10 +875,43 @@ const Settings: React.FC = () => {
     { id: 'users', label: 'Utilisateurs', icon: UsersIcon },
     { id: 'notifications', label: 'Notifications', icon: Bell },
     { id: 'lists', label: 'Statuts & Listes', icon: ListTodo },
+    { id: 'exercises', label: 'Exercices Spirituels', icon: Zap },
     { id: 'admin', label: 'Mon Profil', icon: UserCircle },
     { id: 'system', label: 'Système & IA', icon: Cpu },
     { id: 'security', label: 'Danger Zone', icon: ShieldAlert },
   ];
+
+  const handleAddExerciseType = async () => {
+    if (!newExerciseLabel.trim()) return;
+    const newType: SpiritualExerciseType = {
+      id: `exercise_${Date.now()}`,
+      label: newExerciseLabel.trim(),
+      fieldType: newExerciseFieldType,
+      position: exerciseTypes.length + 1,
+      active: true,
+      hasDetail: newExerciseHasDetail,
+      detailLabel: newExerciseHasDetail ? newExerciseDetailLabel.trim() || 'Précisez' : undefined,
+    };
+    await upsertSpiritualExerciseType(newType);
+    setExerciseTypes(prev => [...prev, newType]);
+    setNewExerciseLabel('');
+    setNewExerciseDetailLabel('');
+    setNewExerciseHasDetail(false);
+  };
+
+  const handleDeleteExerciseType = async (id: string) => {
+    await deleteSpiritualExerciseType(id);
+    setExerciseTypes(prev => prev.filter(t => t.id !== id));
+  };
+
+  const handleToggleExerciseActive = async (id: string) => {
+    const updated = exerciseTypes.map(t =>
+      t.id === id ? { ...t, active: !t.active } : t
+    );
+    setExerciseTypes(updated);
+    const t = updated.find(x => x.id === id);
+    if (t) await upsertSpiritualExerciseType(t);
+  };
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500 pb-12">
@@ -1254,6 +1297,102 @@ const Settings: React.FC = () => {
                 placeholder="Ex: École du Dimanche"
                 warningText="Ces catégories alimentent le registre des cultes."
               />
+            </div>
+          )}
+
+          {activeSection === 'exercises' && (
+            <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
+              <Card title="Exercices Spirituels" subtitle="Configurer les exercices du portail membres" icon={<Zap size={18} />}>
+                <div className="space-y-6">
+                  {/* Ajouter un exercice */}
+                  <div className="space-y-3 p-4 bg-slate-50 rounded-2xl border border-slate-200">
+                    <p className="text-xs font-bold text-slate-600">Ajouter un exercice</p>
+                    <div className="flex gap-3">
+                      <input
+                        type="text"
+                        value={newExerciseLabel}
+                        onChange={e => setNewExerciseLabel(e.target.value)}
+                        onKeyDown={e => e.key === 'Enter' && handleAddExerciseType()}
+                        placeholder="Ex: Témoignage"
+                        className="flex-1 px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-medium focus:border-indigo-300 focus:ring-4 focus:ring-indigo-500/5 outline-none transition-all"
+                      />
+                      <select
+                        value={newExerciseFieldType}
+                        onChange={e => setNewExerciseFieldType(e.target.value as 'text' | 'boolean')}
+                        className="px-3 py-3 bg-white border border-slate-200 rounded-xl text-sm font-medium focus:border-indigo-300 outline-none transition-all"
+                      >
+                        <option value="boolean">Oui / Non</option>
+                        <option value="text">Texte libre</option>
+                      </select>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={newExerciseHasDetail}
+                          onChange={e => setNewExerciseHasDetail(e.target.checked)}
+                          className="w-4 h-4 rounded border-slate-300 text-indigo-600"
+                        />
+                        <span className="text-xs text-slate-600 font-medium">Champ de précision</span>
+                      </label>
+                      {newExerciseHasDetail && (
+                        <input
+                          type="text"
+                          value={newExerciseDetailLabel}
+                          onChange={e => setNewExerciseDetailLabel(e.target.value)}
+                          placeholder="Label du champ (ex: Lequel ?)"
+                          className="flex-1 px-3 py-2 bg-white border border-slate-200 rounded-xl text-sm focus:border-indigo-300 outline-none transition-all"
+                        />
+                      )}
+                    </div>
+                    <button
+                      onClick={handleAddExerciseType}
+                      disabled={!newExerciseLabel.trim()}
+                      className="px-5 py-2.5 bg-indigo-600 text-white rounded-xl text-xs font-semibold hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center gap-2"
+                    >
+                      <Plus size={15} /> Ajouter
+                    </button>
+                  </div>
+
+                  {/* Liste des exercices */}
+                  <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden divide-y divide-slate-100">
+                    {exerciseTypes.length === 0 ? (
+                      <p className="text-xs text-slate-400 text-center py-8">Aucun exercice configuré.</p>
+                    ) : exerciseTypes.map(type => (
+                      <div key={type.id} className="flex items-center gap-3 px-5 py-4">
+                        <div className="flex-1 min-w-0">
+                          <p className={cn("text-sm font-semibold", !type.active && "line-through text-slate-400")}>{type.label}</p>
+                          <div className="flex items-center gap-2 mt-0.5">
+                            <span className="text-[10px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full font-medium">
+                              {type.fieldType === 'boolean' ? 'Oui/Non' : 'Texte libre'}
+                            </span>
+                            {type.hasDetail && type.detailLabel && (
+                              <span className="text-[10px] text-indigo-500 font-medium">+ {type.detailLabel}</span>
+                            )}
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => handleToggleExerciseActive(type.id)}
+                          className={cn(
+                            "text-xs font-medium px-3 py-1.5 rounded-lg transition-all border",
+                            type.active
+                              ? "bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100"
+                              : "bg-slate-50 text-slate-400 border-slate-200 hover:bg-slate-100"
+                          )}
+                        >
+                          {type.active ? 'Actif' : 'Inactif'}
+                        </button>
+                        <button
+                          onClick={() => handleDeleteExerciseType(type.id)}
+                          className="p-2 rounded-lg text-slate-400 hover:bg-rose-50 hover:text-rose-600 transition-colors"
+                        >
+                          <Trash2 size={15} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </Card>
             </div>
           )}
 

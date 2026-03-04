@@ -1491,3 +1491,25 @@ export const isMemberMentor = async (memberId: string): Promise<boolean> => {
   if (error) { console.error('isMemberMentor:', error.message); return false; }
   return (data ?? []).length > 0;
 };
+
+/** Retourne les visiteurs assignés à un parrain (faiseur de disciple) */
+export const getVisitorsByParrainId = async (parrainId: string): Promise<Visitor[]> => {
+  const { data, error } = await supabase
+    .from('visitors')
+    .select('*')
+    .eq('parrain_id', parrainId)
+    .order('visit_date', { ascending: false });
+  if (error) { console.error('getVisitorsByParrainId:', error.message); return []; }
+  return (data ?? []).map(dbToVisitor);
+};
+
+/** Retourne les N dernières sessions de présence */
+export const getRecentAttendanceSessions = async (limit = 5): Promise<AttendanceSession[]> => {
+  const { data, error } = await supabase
+    .from('attendance_sessions')
+    .select('*')
+    .order('date', { ascending: false })
+    .limit(limit);
+  if (error) { console.error('getRecentAttendanceSessions:', error.message); return []; }
+  return (data ?? []).map(dbToAttendance);
+};

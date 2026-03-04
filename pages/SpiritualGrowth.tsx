@@ -35,9 +35,9 @@ import {
 } from 'lucide-react';
 import { analyzePageData } from '../lib/gemini';
 import { cn, generateId, formatFirstName, getInitials, getDisplayNickname } from '../utils';
-import { Member, MemberType, SpiritualExerciseDef, YearlySpiritualGoals, MonthlySpiritualPoint, SpiritualObjective } from '../types';
+import { Member, MemberType, SpiritualExerciseDef, YearlySpiritualGoals, MonthlySpiritualPoint, SpiritualObjective, DailyExercise } from '../types';
 import { SPIRITUAL_EXERCISES_LIST } from '../constants';
-import { getMembers, getSpiritualGoals, getSpiritualPoints, upsertSpiritualGoals, upsertSpiritualPoints, getDailyExercisesCountByMemberIds } from '../lib/db';
+import { getMembers, getSpiritualGoals, getSpiritualPoints, upsertSpiritualGoals, upsertSpiritualPoints, getDailyExercisesCountByMemberIds, getDailyExercises } from '../lib/db';
 
 const MONTHS = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
 
@@ -68,6 +68,9 @@ const SpiritualGrowth: React.FC = () => {
   const [monthlyPoints, setMonthlyPoints] = useState<MonthlySpiritualPoint[]>([]);
   const [portalCounts7, setPortalCounts7] = useState<Record<string, number>>({});
   const [portalCounts30, setPortalCounts30] = useState<Record<string, number>>({});
+  const [portalDetailMember, setPortalDetailMember] = useState<Member | null>(null);
+  const [portalDetailExercises, setPortalDetailExercises] = useState<DailyExercise[]>([]);
+  const [portalDetailLoading, setPortalDetailLoading] = useState(false);
 
   useEffect(() => {
     Promise.all([getMembers(), getSpiritualGoals(), getSpiritualPoints()]).then(([mbrs, goals, points]) => {
@@ -101,6 +104,14 @@ const SpiritualGrowth: React.FC = () => {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysis, setAnalysis] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+
+  const openPortalDetail = async (member: Member) => {
+    setPortalDetailMember(member);
+    setPortalDetailLoading(true);
+    const exs = await getDailyExercises(member.id);
+    setPortalDetailExercises(exs);
+    setPortalDetailLoading(false);
+  };
 
   const today = new Date();
   const currentYear = today.getFullYear();
@@ -347,7 +358,7 @@ const SpiritualGrowth: React.FC = () => {
                 const color7 = ratio7 >= 0.8 ? 'bg-emerald-100 text-emerald-700' : ratio7 >= 0.5 ? 'bg-amber-100 text-amber-700' : 'bg-rose-100 text-rose-700';
                 const color30 = ratio30 >= 0.8 ? 'bg-emerald-100 text-emerald-700' : ratio30 >= 0.5 ? 'bg-amber-100 text-amber-700' : 'bg-rose-100 text-rose-700';
                 return (
-                  <div key={m.id} className="flex items-center gap-3 px-4 py-3 rounded-xl bg-slate-50 border border-slate-100 hover:bg-slate-100 transition-colors">
+                  <div key={m.id} onClick={() => openPortalDetail(m)} className="flex items-center gap-3 px-4 py-3 rounded-xl bg-slate-50 border border-slate-100 hover:bg-indigo-50 hover:border-indigo-200 transition-colors cursor-pointer">
                     <div className="w-9 h-9 rounded-xl overflow-hidden border border-slate-200 shrink-0">
                       {m.photoUrl ? (
                         <img src={m.photoUrl} alt="" className="w-full h-full object-cover" />
@@ -381,6 +392,65 @@ const SpiritualGrowth: React.FC = () => {
           onEditPoint={openEditPoint}
           onClose={() => setIsHistoryModalOpen(false)}
         />
+      )}
+
+      {/* Modal: Détail exercices quotidiens d'un membre du portail */}
+      {portalDetailMember && (
+        <div className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center p-0 sm:p-4">
+          <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setPortalDetailMember(null)} />
+          <div className="relative w-full sm:max-w-md bg-white rounded-t-3xl sm:rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh]">
+            <div className="bg-violet-600 px-6 py-5 text-white shrink-0">
+              <div className="flex justify-between items-start mb-1">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl overflow-hidden border border-white/30 shrink-0">
+                    {portalDetailMember.photoUrl ? (
+                      <img src={portalDetailMember.photoUrl} alt="" className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full bg-white/20 flex items-center justify-center text-sm font-bold">
+                        {portalDetailMember.firstName.charAt(0)}{portalDetailMember.lastName.charAt(0)}
+                      </div>
+                    )}
+                  </div>
+                  <div>
+                    <p className="font-semibold text-base leading-tight">{portalDetailMember.firstName} {portalDetailMember.lastName}</p>
+                    <p className="text-xs text-violet-200">Exercices quotidiens — {portalDetailExercises.length} soumissions</p>
+                  </div>
+                </div>
+                <button onClick={() => setPortalDetailMember(null)} className="p-2 hover:bg-white/10 rounded-full transition-colors">
+                  <X size={18} />
+                </button>
+              </div>
+            </div>
+            <div className="flex-1 overflow-y-auto p-5 space-y-3">
+              {portalDetailLoading ? (
+                <div className="flex justify-center py-12">
+                  <Loader2 size={28} className="animate-spin text-violet-400" />
+                </div>
+              ) : portalDetailExercises.length === 0 ? (
+                <p className="text-center text-sm text-slate-400 py-12">Aucun exercice enregistré</p>
+              ) : (
+                portalDetailExercises.map(ex => (
+                  <div key={ex.id} className="bg-slate-50 border border-slate-100 rounded-2xl p-4 space-y-2">
+                    <p className="text-xs font-semibold text-slate-600">
+                      {new Date(ex.date).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      {ex.entries.map(e => (
+                        <span key={e.id} className={cn(
+                          'px-2.5 py-1 rounded-lg text-xs font-medium',
+                          e.valueBool === false ? 'bg-rose-50 text-rose-500 line-through' : 'bg-emerald-50 text-emerald-700'
+                        )}>
+                          {e.typeId}
+                          {e.valueText ? ` : ${e.valueText}` : ''}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Modal: Nouveau Flux (Recherche + Objectifs) */}

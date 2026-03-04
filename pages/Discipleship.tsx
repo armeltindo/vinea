@@ -38,7 +38,8 @@ import {
   PieChart as PieIcon,
   Loader2,
   Search as SearchIcon,
-  CircleDashed
+  CircleDashed,
+  FileText
 } from 'lucide-react';
 import { Member, MemberType, Visitor, VisitorStatus } from '../types';
 import { analyzePageData } from '../lib/gemini';
@@ -80,6 +81,16 @@ const PATHWAYS: Pathway[] = [
   { id: 'p3', title: 'Leadership', color: 'bg-amber-500', desc: "Développement des dons spirituels et gestion de ministère." },
   { id: 'p4', title: 'Service & Ministère', color: 'bg-rose-500', desc: "Mise en pratique et déploiement dans les départements." },
 ];
+
+// Parse les notes textuelles du portail : "[date] Type — note → Prochain pas : ..."
+const parsePortalNotes = (notes: string): { date: string; type: string; note: string; nextStep?: string }[] => {
+  if (!notes?.trim()) return [];
+  return notes.split('\n').filter(l => l.trim()).map(line => {
+    const m = line.match(/^\[(\d{4}-\d{2}-\d{2})\]\s+(\w+)\s+—\s+(.+?)(?:\s+→\s+Prochain pas : (.+))?$/);
+    if (!m) return null;
+    return { date: m[1], type: m[2], note: m[3], nextStep: m[4] };
+  }).filter(Boolean) as { date: string; type: string; note: string; nextStep?: string }[];
+};
 
 const Discipleship: React.FC = () => {
   const navigate = useNavigate();
@@ -693,6 +704,30 @@ const Discipleship: React.FC = () => {
                       </div>
                    </div>
                 </div>
+
+                {(() => {
+                  const notes = parsePortalNotes(getMemberInfo(selectedPair.discipleId)?.notes ?? '');
+                  if (notes.length === 0) return null;
+                  return (
+                    <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6 space-y-4">
+                      <h4 className="text-xs font-medium text-slate-500 flex items-center gap-2">
+                        <FileText size={14} className="text-indigo-500" /> Comptes rendus portail
+                      </h4>
+                      <div className="space-y-3">
+                        {notes.map((entry, i) => (
+                          <div key={i} className="p-4 bg-slate-50 border border-slate-100 rounded-xl text-xs space-y-1.5">
+                            <div className="flex justify-between items-center">
+                              <span className="font-semibold text-indigo-600">{entry.type}</span>
+                              <span className="text-slate-400">{new Date(entry.date).toLocaleDateString('fr-FR')}</span>
+                            </div>
+                            <p className="text-slate-700 leading-relaxed">{entry.note}</p>
+                            {entry.nextStep && <p className="text-amber-600 font-medium">→ {entry.nextStep}</p>}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })()}
 
                 <div className="p-6 bg-amber-50 border border-amber-100 rounded-2xl flex items-start gap-4">
                    <Info size={20} className="text-amber-500 shrink-0 mt-0.5" />

@@ -84,6 +84,16 @@ import { SERVICES_LIST } from '../constants';
 import { GoogleGenAI } from "@google/genai";
 import { getAttendanceSessions, createAttendanceSession, updateAttendanceSession, deleteAttendanceSession, getMembers, getVisitors, getChurchSettings, getAppConfig, setAppConfig } from '../lib/db';
 
+// Parse les notes textuelles du portail : "[date] Type — note → Prochain pas : ..."
+const parsePortalNotes = (notes: string): { date: string; type: string; note: string; nextStep?: string }[] => {
+  if (!notes?.trim()) return [];
+  return notes.split('\n').filter(l => l.trim()).map(line => {
+    const m = line.match(/^\[(\d{4}-\d{2}-\d{2})\]\s+(\w+)\s+—\s+(.+?)(?:\s+→\s+Prochain pas : (.+))?$/);
+    if (!m) return null;
+    return { date: m[1], type: m[2], note: m[3], nextStep: m[4] };
+  }).filter(Boolean) as { date: string; type: string; note: string; nextStep?: string }[];
+};
+
 interface AbsentEntry {
   person: Member | Visitor;
   isVisitor: boolean;
@@ -993,6 +1003,31 @@ const Attendance: React.FC = () => {
                     </div>
                  </div>
                )}
+
+               {/* Comptes rendus depuis le portail (member.notes) */}
+               {!('followUpHistory' in followUpMember) && (() => {
+                 const portalNotes = parsePortalNotes((followUpMember as Member).notes ?? '');
+                 if (portalNotes.length === 0) return null;
+                 return (
+                   <div className="space-y-4">
+                     <h4 className="text-xs font-medium text-slate-500 flex items-center gap-2">
+                       <HistoryIcon size={12} className="text-violet-500" /> Comptes rendus portail
+                     </h4>
+                     <div className="space-y-3">
+                       {portalNotes.map((entry, i) => (
+                         <div key={i} className="p-4 bg-white border border-violet-100 rounded-2xl shadow-sm space-y-2">
+                           <div className="flex justify-between items-center border-b border-slate-50 pb-1.5">
+                             <span className="text-xs font-semibold text-violet-600">{entry.type}</span>
+                             <span className="text-xs text-slate-400">{new Date(entry.date).toLocaleDateString('fr-FR')}</span>
+                           </div>
+                           <p className="text-xs text-slate-600 font-medium italic leading-relaxed">"{entry.note}"</p>
+                           {entry.nextStep && <p className="text-xs text-amber-600">→ {entry.nextStep}</p>}
+                         </div>
+                       ))}
+                     </div>
+                   </div>
+                 );
+               })()}
 
                <div className="space-y-4">
                   <h4 className="text-xs font-medium text-slate-500 flex items-center gap-2">

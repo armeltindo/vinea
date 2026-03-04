@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Phone, User, LogIn, Loader2, AlertCircle } from 'lucide-react';
-import { getMemberByPhoneAndLastName, normalizeForLogin } from '../lib/db';
+import { getMemberByPhoneAndLastName, isMemberMentor, normalizeForLogin } from '../lib/db';
 import { MemberSession } from '../types';
 import { cn } from '../utils';
 
@@ -42,12 +42,16 @@ const ExerciceSpirituelLogin: React.FC = () => {
       return;
     }
 
+    // Un membre est faiseur de disciples s'il est mentor dans au moins un binôme actif
+    // (défini dans la page Discipleship), ou si le champ isDiscipleMaker est activé sur sa fiche
+    const isMentor = member.isDiscipleMaker || (await isMemberMentor(member.id));
+
     const session: MemberSession = {
       memberId: member.id,
       firstName: member.firstName,
       lastName: member.lastName,
       gender: member.gender,
-      isDiscipleMaker: member.isDiscipleMaker,
+      isDiscipleMaker: isMentor,
       phone: member.phone,
       photoUrl: member.photoUrl,
     };

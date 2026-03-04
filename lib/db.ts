@@ -1404,12 +1404,35 @@ export const upsertDailyExercise = async (
 // PORTAIL FAISEURS DE DISCIPLES
 // ─────────────────────────────────────────────
 
-/** Retourne les membres assignés à un faiseur de disciple */
+/**
+ * Retourne les disciples d'un mentor :
+ * - via les binômes actifs dans discipleship_pairs (source principale)
+ * - complété par les membres dont assigned_disciple_maker_id pointe vers ce mentor
+ */
 export const getDisciplesByMentorId = async (mentorId: string): Promise<Member[]> => {
+  // 1. Récupérer les IDs des disciples depuis les paires actives
+  const { data: pairs } = await supabase
+    .from('discipleship_pairs')
+    .select('disciple_id')
+    .eq('mentor_id', mentorId)
+    .eq('status', 'Actif');
+  const pairDiscipeIds = (pairs ?? []).map((r: any) => r.disciple_id as string);
+
+  // 2. Récupérer aussi via assigned_disciple_maker_id (rétrocompatibilité)
+  const { data: assigned } = await supabase
+    .from('members')
+    .select('id')
+    .eq('assigned_disciple_maker_id', mentorId);
+  const assignedIds = (assigned ?? []).map((r: any) => r.id as string);
+
+  // 3. Union sans doublons
+  const allIds = Array.from(new Set([...pairDiscipeIds, ...assignedIds]));
+  if (allIds.length === 0) return [];
+
   const { data, error } = await supabase
     .from('members')
     .select('*')
-    .eq('assigned_disciple_maker_id', mentorId)
+    .in('id', allIds)
     .order('first_name', { ascending: true });
   if (error) { console.error('getDisciplesByMentorId:', error.message); return []; }
   return (data ?? []).map(dbToMember);
@@ -1452,4 +1475,19 @@ export const getDailyExerciseDatesByMemberId = async (
     .limit(limit);
   if (error) { console.error('getDailyExerciseDatesByMemberId:', error.message); return []; }
   return (data ?? []).map((r: any) => r.date);
+};
+
+/**
+ * Vérifie si un membre est mentor dans au moins un binôme actif.
+ * Utilisé par le portail pour déterminer si le membre est un faiseur de disciples.
+ */
+export const isMemberMentor = async (memberId: string): Promise<boolean> => {
+  const { data, error } = await supabase
+    .from('discipleship_pairs')
+    .select('id')
+    .eq('mentor_id', memberId)
+    .eq('status', 'Actif')
+    .limit(1);
+  if (error) { console.error('isMemberMentor:', error.message); return false; }
+  return (data ?? []).length > 0;
 };

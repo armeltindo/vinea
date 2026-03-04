@@ -250,6 +250,7 @@ export interface MemberSession {
   gender: 'Masculin' | 'Féminin';
   isDiscipleMaker: boolean;
   phone?: string;
+  photoUrl?: string;
 }
 
 // --- End Exercices Spirituels Quotidiens ---

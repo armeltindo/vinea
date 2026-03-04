@@ -49,6 +49,7 @@ const ExerciceSpirituelLogin: React.FC = () => {
       gender: member.gender,
       isDiscipleMaker: member.isDiscipleMaker,
       phone: member.phone,
+      photoUrl: member.photoUrl,
     };
 
     setFoundMember(session);

@@ -77,12 +77,18 @@ const DiscipeCard: React.FC<DiscipeCardProps> = ({ disciple, count7, count30 }) 
           hasAccount && "hover:bg-slate-50 transition-colors"
         )}
       >
-        {/* Avatar */}
-        <div className={cn(
-          "w-10 h-10 rounded-xl flex items-center justify-center text-sm font-bold shrink-0",
-          hasAccount ? "bg-indigo-100 text-indigo-600" : "bg-slate-100 text-slate-400"
-        )}>
-          {disciple.firstName.charAt(0)}{disciple.lastName.charAt(0)}
+        {/* Avatar / Photo */}
+        <div className="w-10 h-10 rounded-xl overflow-hidden shrink-0 border border-slate-100">
+          {disciple.photoUrl ? (
+            <img src={disciple.photoUrl} alt="" className="w-full h-full object-cover" />
+          ) : (
+            <div className={cn(
+              "w-full h-full flex items-center justify-center text-sm font-bold",
+              hasAccount ? "bg-indigo-100 text-indigo-600" : "bg-slate-100 text-slate-400"
+            )}>
+              {disciple.firstName.charAt(0)}{disciple.lastName.charAt(0)}
+            </div>
+          )}
         </div>
 
         {/* Infos */}
@@ -209,7 +215,6 @@ const ExerciceSpirituelGroupe: React.FC = () => {
   };
 
   const goToMyExercises = () => {
-    localStorage.setItem('vinea_member_role_choice', 'member');
     navigate('/exercice-spirituel/dashboard');
   };
 
@@ -221,17 +226,28 @@ const ExerciceSpirituelGroupe: React.FC = () => {
   return (
     <div className="min-h-screen bg-slate-50">
       {/* Header */}
-      <header className="bg-indigo-700 text-white px-4 py-4 flex items-center justify-between shadow-lg">
-        <div>
-          <h1 className="text-sm font-bold">Mon groupe de discipolat</h1>
-          <p className="text-indigo-200 text-xs mt-0.5">
-            {session.gender === 'Masculin' ? 'Frère' : 'Sœur'} {session.firstName}
-          </p>
+      <header className="bg-indigo-700 text-white px-4 py-3 flex items-center justify-between shadow-lg">
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-xl overflow-hidden border border-white/30 shrink-0">
+            {session.photoUrl ? (
+              <img src={session.photoUrl} alt="" className="w-full h-full object-cover" />
+            ) : (
+              <div className="w-full h-full bg-white/10 flex items-center justify-center text-xs font-bold">
+                {session.firstName.charAt(0)}{session.lastName.charAt(0)}
+              </div>
+            )}
+          </div>
+          <div>
+            <h1 className="text-sm font-bold leading-tight">Mon groupe de discipolat</h1>
+            <p className="text-indigo-200 text-xs">
+              {session.gender === 'Masculin' ? 'Frère' : 'Sœur'} {session.firstName}
+            </p>
+          </div>
         </div>
         <div className="flex items-center gap-2">
           <button
             onClick={goToMyExercises}
-            className="px-3 py-1.5 bg-white/10 hover:bg-white/20 rounded-xl text-xs font-medium transition-colors flex items-center gap-1.5"
+            className="px-3 py-2 bg-white/20 hover:bg-white/30 border border-white/30 rounded-xl text-xs font-bold transition-colors flex items-center gap-1.5"
           >
             <BookOpen size={14} />
             Mes exercices

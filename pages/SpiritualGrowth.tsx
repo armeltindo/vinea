@@ -37,7 +37,7 @@ import { analyzePageData } from '../lib/gemini';
 import { cn, generateId, formatFirstName, getInitials, getDisplayNickname } from '../utils';
 import { Member, MemberType, SpiritualExerciseDef, YearlySpiritualGoals, MonthlySpiritualPoint, SpiritualObjective } from '../types';
 import { SPIRITUAL_EXERCISES_LIST } from '../constants';
-import { getMembers, getSpiritualGoals, getSpiritualPoints, upsertSpiritualGoals, upsertSpiritualPoints } from '../lib/db';
+import { getMembers, getSpiritualGoals, getSpiritualPoints, upsertSpiritualGoals, upsertSpiritualPoints, getDailyExercisesCountByMemberIds } from '../lib/db';
 
 const MONTHS = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
 
@@ -55,16 +55,39 @@ const calculateMergedScore = (results: Record<string, boolean>) => {
   return score;
 };
 
+const toLocalDate = (d: Date): string => {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+};
+
 const SpiritualGrowth: React.FC = () => {
   const [members, setMembers] = useState<Member[]>([]);
   const [yearlyGoals, setYearlyGoals] = useState<YearlySpiritualGoals[]>([]);
   const [monthlyPoints, setMonthlyPoints] = useState<MonthlySpiritualPoint[]>([]);
+  const [portalCounts7, setPortalCounts7] = useState<Record<string, number>>({});
+  const [portalCounts30, setPortalCounts30] = useState<Record<string, number>>({});
 
   useEffect(() => {
     Promise.all([getMembers(), getSpiritualGoals(), getSpiritualPoints()]).then(([mbrs, goals, points]) => {
       setMembers(mbrs);
       setYearlyGoals(goals as any);
       setMonthlyPoints(points as any);
+
+      // Charger les stats du portail pour les membres avec un compte actif
+      const activeIds = (mbrs as Member[]).filter(m => m.memberAccountActive).map(m => m.id);
+      if (activeIds.length > 0) {
+        const ago7 = toLocalDate(new Date(Date.now() - 7 * 86400000));
+        const ago30 = toLocalDate(new Date(Date.now() - 30 * 86400000));
+        Promise.all([
+          getDailyExercisesCountByMemberIds(activeIds, ago7),
+          getDailyExercisesCountByMemberIds(activeIds, ago30),
+        ]).then(([c7, c30]) => {
+          setPortalCounts7(c7);
+          setPortalCounts30(c30);
+        });
+      }
     });
   }, []);
 
@@ -304,6 +327,51 @@ const SpiritualGrowth: React.FC = () => {
           )}
         </div>
       </Card>
+
+      {/* Portail membres — exercices quotidiens */}
+      {(() => {
+        const portalMembers = members.filter(m => m.memberAccountActive);
+        if (portalMembers.length === 0) return null;
+        return (
+          <Card
+            title="Portail — Exercices Quotidiens"
+            subtitle="Soumissions des membres via le portail mobile"
+            icon={<Calendar size={18} className="text-violet-500" />}
+          >
+            <div className="space-y-2">
+              {portalMembers.map(m => {
+                const c7 = portalCounts7[m.id] ?? 0;
+                const c30 = portalCounts30[m.id] ?? 0;
+                const ratio7 = c7 / 7;
+                const ratio30 = c30 / 30;
+                const color7 = ratio7 >= 0.8 ? 'bg-emerald-100 text-emerald-700' : ratio7 >= 0.5 ? 'bg-amber-100 text-amber-700' : 'bg-rose-100 text-rose-700';
+                const color30 = ratio30 >= 0.8 ? 'bg-emerald-100 text-emerald-700' : ratio30 >= 0.5 ? 'bg-amber-100 text-amber-700' : 'bg-rose-100 text-rose-700';
+                return (
+                  <div key={m.id} className="flex items-center gap-3 px-4 py-3 rounded-xl bg-slate-50 border border-slate-100 hover:bg-slate-100 transition-colors">
+                    <div className="w-9 h-9 rounded-xl overflow-hidden border border-slate-200 shrink-0">
+                      {m.photoUrl ? (
+                        <img src={m.photoUrl} alt="" className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full bg-violet-100 flex items-center justify-center text-xs font-bold text-violet-600">
+                          {m.firstName.charAt(0)}{m.lastName.charAt(0)}
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-slate-800 truncate">{m.firstName} {m.lastName}</p>
+                      <p className="text-xs text-slate-400">{m.memberUsername || '—'}</p>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <span className={cn('px-2.5 py-1 rounded-lg text-xs font-bold', color7)}>{c7}/7j</span>
+                      <span className={cn('px-2.5 py-1 rounded-lg text-xs font-bold', color30)}>{c30}/30j</span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </Card>
+        );
+      })()}
 
       {/* Modal: Historique de Fidélité */}
       {isHistoryModalOpen && selectedMemberId && (

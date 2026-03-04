@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Calendar, Save, LogOut, CheckCircle2, AlertCircle, Loader2, Bell } from 'lucide-react';
+import { Calendar, Save, LogOut, CheckCircle2, AlertCircle, Loader2, Bell, Users } from 'lucide-react';
 import {
   getSpiritualExerciseTypes,
   getDailyExerciseByDate,
@@ -62,9 +62,9 @@ const ExerciceSpirituelDashboard: React.FC = () => {
     try {
       const s: MemberSession = JSON.parse(raw);
       setSession(s);
-      // Si double rôle et pas encore de choix
-      if (s.isDiscipleMaker && !localStorage.getItem('vinea_member_role_choice')) {
-        setRoleChoice(null); // montrer écran de choix
+      // Les faiseurs de disciples voient toujours l'écran de choix au démarrage
+      if (s.isDiscipleMaker) {
+        setRoleChoice(null);
       } else {
         setRoleChoice('member');
       }
@@ -164,7 +164,6 @@ const ExerciceSpirituelDashboard: React.FC = () => {
   };
 
   const handleRoleChoice = (role: 'member' | 'dm') => {
-    localStorage.setItem('vinea_member_role_choice', role);
     if (role === 'dm') {
       navigate('/exercice-spirituel/groupe');
     } else {
@@ -178,23 +177,40 @@ const ExerciceSpirituelDashboard: React.FC = () => {
   if (session.isDiscipleMaker && roleChoice === null) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-indigo-800 to-violet-900 flex items-center justify-center p-4">
-        <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-3xl p-8 shadow-2xl w-full max-w-sm text-center">
-          <div className="w-16 h-16 bg-white/10 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-white/20">
-            <span className="text-2xl font-black text-white">V</span>
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute -top-40 -right-40 w-80 h-80 bg-white/5 rounded-full blur-3xl" />
+          <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-violet-500/10 rounded-full blur-3xl" />
+        </div>
+        <div className="relative bg-white/10 backdrop-blur-md border border-white/20 rounded-3xl p-8 shadow-2xl w-full max-w-sm text-center">
+          {/* Avatar / Photo */}
+          <div className="w-20 h-20 rounded-2xl overflow-hidden mx-auto mb-4 border-2 border-white/30 shadow-xl">
+            {session.photoUrl ? (
+              <img src={session.photoUrl} alt="" className="w-full h-full object-cover" />
+            ) : (
+              <div className="w-full h-full bg-white/10 flex items-center justify-center">
+                <span className="text-2xl font-black text-white">
+                  {session.firstName.charAt(0)}{session.lastName.charAt(0)}
+                </span>
+              </div>
+            )}
           </div>
-          <h2 className="text-white text-lg font-bold mb-1">Que voulez-vous faire ?</h2>
-          <p className="text-indigo-200 text-sm mb-6">Bonjour {session.firstName}, choisissez votre espace.</p>
+          <h2 className="text-white text-lg font-bold mb-1">
+            {session.gender === 'Masculin' ? 'Frère' : 'Sœur'} {session.firstName}
+          </h2>
+          <p className="text-indigo-200 text-sm mb-8">Que souhaitez-vous faire ?</p>
           <div className="space-y-3">
             <button
               onClick={() => handleRoleChoice('member')}
-              className="w-full py-4 bg-white text-indigo-700 rounded-2xl text-sm font-bold hover:bg-indigo-50 transition-all shadow-lg"
+              className="w-full py-4 bg-white text-indigo-700 rounded-2xl text-sm font-bold hover:bg-indigo-50 transition-all shadow-lg flex items-center justify-center gap-2"
             >
+              <Calendar size={18} />
               Mes exercices spirituels
             </button>
             <button
               onClick={() => handleRoleChoice('dm')}
-              className="w-full py-4 bg-white/10 text-white border border-white/20 rounded-2xl text-sm font-bold hover:bg-white/20 transition-all"
+              className="w-full py-4 bg-indigo-500/40 text-white border border-white/20 rounded-2xl text-sm font-bold hover:bg-indigo-500/60 transition-all flex items-center justify-center gap-2"
             >
+              <Users size={18} />
               Mon groupe de discipolat
             </button>
           </div>
@@ -211,12 +227,23 @@ const ExerciceSpirituelDashboard: React.FC = () => {
   return (
     <div className="min-h-screen bg-slate-50">
       {/* Header */}
-      <header className="bg-indigo-700 text-white px-4 py-4 flex items-center justify-between shadow-lg">
-        <div>
-          <h1 className="text-sm font-bold">Exercices Spirituels</h1>
-          <p className="text-indigo-200 text-xs mt-0.5">
-            {session.gender === 'Masculin' ? 'Frère' : 'Sœur'} {session.firstName}
-          </p>
+      <header className="bg-indigo-700 text-white px-4 py-3 flex items-center justify-between shadow-lg">
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-xl overflow-hidden border border-white/30 shrink-0">
+            {session.photoUrl ? (
+              <img src={session.photoUrl} alt="" className="w-full h-full object-cover" />
+            ) : (
+              <div className="w-full h-full bg-white/10 flex items-center justify-center text-xs font-bold">
+                {session.firstName.charAt(0)}{session.lastName.charAt(0)}
+              </div>
+            )}
+          </div>
+          <div>
+            <h1 className="text-sm font-bold leading-tight">Exercices Spirituels</h1>
+            <p className="text-indigo-200 text-xs">
+              {session.gender === 'Masculin' ? 'Frère' : 'Sœur'} {session.firstName}
+            </p>
+          </div>
         </div>
         <div className="flex items-center gap-2">
           {notifications.length > 0 && (
@@ -233,8 +260,9 @@ const ExerciceSpirituelDashboard: React.FC = () => {
           {session.isDiscipleMaker && (
             <button
               onClick={() => navigate('/exercice-spirituel/groupe')}
-              className="px-3 py-1.5 bg-white/10 hover:bg-white/20 rounded-xl text-xs font-medium transition-colors"
+              className="px-3 py-2 bg-white/20 hover:bg-white/30 border border-white/30 rounded-xl text-xs font-bold transition-colors flex items-center gap-1.5"
             >
+              <Users size={14} />
               Mon groupe
             </button>
           )}

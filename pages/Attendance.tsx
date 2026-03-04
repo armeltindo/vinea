@@ -712,6 +712,7 @@ const Attendance: React.FC = () => {
                 <th className="px-4 py-4 text-xs font-medium text-slate-500 text-center">H</th>
                 <th className="px-4 py-4 text-xs font-medium text-slate-500 text-center">F</th>
                 <th className="px-4 py-4 text-xs font-medium text-slate-500 text-center">E</th>
+                <th className="px-4 py-4 text-xs font-medium text-slate-500 text-center">Nouveaux</th>
                 <th className="px-8 py-4 text-xs font-medium text-slate-500 text-right">Total</th>
                 <th className="px-8 py-4 text-xs font-medium text-slate-500 text-right">Actions</th>
               </tr>
@@ -735,6 +736,12 @@ const Attendance: React.FC = () => {
                   <td className="px-4 py-5 text-center text-xs font-bold text-blue-600">{record.men || 0}</td>
                   <td className="px-4 py-5 text-center text-xs font-bold text-pink-600">{record.women || 0}</td>
                   <td className="px-4 py-5 text-center text-xs font-bold text-amber-600">{record.children || 0}</td>
+                  <td className="px-4 py-5 text-center">
+                    {(record.newCount ?? 0) > 0
+                      ? <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-emerald-50 text-emerald-700 rounded-full text-xs font-bold">+{record.newCount}</span>
+                      : <span className="text-xs text-slate-300">—</span>
+                    }
+                  </td>
                   <td className="px-8 py-5 text-right">
                     <span className="text-sm font-semibold text-slate-900">{record.total}</span>
                   </td>
@@ -747,7 +754,7 @@ const Attendance: React.FC = () => {
                 </tr>
               )) : (
                 <tr>
-                  <td colSpan={7} className="px-8 py-20 text-center opacity-30">
+                  <td colSpan={8} className="px-8 py-20 text-center opacity-30">
                     <ClipboardList size={40} className="mx-auto mb-2" />
                     <p className="text-xs font-medium">Aucun relevé enregistré</p>
                   </td>
@@ -794,6 +801,12 @@ const Attendance: React.FC = () => {
                   <p className="text-xs font-semibold text-indigo-600 mb-1">Total</p>
                   <p className="text-2xl font-semibold text-indigo-700">{selectedRecord.total}</p>
                 </div>
+                {(selectedRecord.newCount ?? 0) > 0 && (
+                  <div className="col-span-2 bg-white p-6 rounded-xl border border-emerald-100 shadow-sm text-center bg-emerald-50/30">
+                    <p className="text-xs font-semibold text-emerald-600 mb-1">Nouveaux</p>
+                    <p className="text-2xl font-semibold text-emerald-700">+{selectedRecord.newCount}</p>
+                  </div>
+                )}
               </div>
 
               {selectedRecord.notes && (

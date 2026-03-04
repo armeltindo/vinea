@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Calendar, Save, LogOut, ChevronLeft, ChevronRight, CheckCircle2, AlertCircle, Loader2, Bell } from 'lucide-react';
+import { Calendar, Save, LogOut, CheckCircle2, AlertCircle, Loader2, Bell } from 'lucide-react';
 import {
   getSpiritualExerciseTypes,
   getDailyExerciseByDate,
@@ -35,91 +35,6 @@ const formatDateLong = (dateStr: string): string => {
   const [y, m, d] = dateStr.split('-');
   const months = ['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
   return `${parseInt(d)} ${months[parseInt(m) - 1]} ${y}`;
-};
-
-// ─── Calendrier mini ─────────────────────────────────────────
-
-interface MiniCalendarProps {
-  selectedDate: string;
-  submittedDates: Set<string>;
-  onSelect: (date: string) => void;
-}
-
-const MiniCalendar: React.FC<MiniCalendarProps> = ({ selectedDate, submittedDates, onSelect }) => {
-  const today = toLocalDate(new Date());
-  const [viewDate, setViewDate] = useState(() => {
-    const d = new Date(selectedDate + 'T00:00:00');
-    return { year: d.getFullYear(), month: d.getMonth() };
-  });
-
-  const daysInMonth = new Date(viewDate.year, viewDate.month + 1, 0).getDate();
-  const firstDay = new Date(viewDate.year, viewDate.month, 1).getDay();
-  // Ajuster premier jour (lundi = 0)
-  const startOffset = (firstDay + 6) % 7;
-
-  const prevMonth = () => {
-    setViewDate(v => v.month === 0 ? { year: v.year - 1, month: 11 } : { year: v.year, month: v.month - 1 });
-  };
-  const nextMonth = () => {
-    setViewDate(v => v.month === 11 ? { year: v.year + 1, month: 0 } : { year: v.year, month: v.month + 1 });
-  };
-
-  const months = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
-  const days = ['L','M','M','J','V','S','D'];
-
-  return (
-    <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm">
-      <div className="flex items-center justify-between mb-3">
-        <button onClick={prevMonth} className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500 transition-colors">
-          <ChevronLeft size={16} />
-        </button>
-        <span className="text-xs font-bold text-slate-700">{months[viewDate.month]} {viewDate.year}</span>
-        <button onClick={nextMonth} className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500 transition-colors">
-          <ChevronRight size={16} />
-        </button>
-      </div>
-
-      <div className="grid grid-cols-7 gap-0.5 mb-1">
-        {days.map((d, i) => (
-          <div key={i} className="text-center text-[10px] font-semibold text-slate-400 py-1">{d}</div>
-        ))}
-      </div>
-
-      <div className="grid grid-cols-7 gap-0.5">
-        {Array.from({ length: startOffset }).map((_, i) => (
-          <div key={`empty-${i}`} />
-        ))}
-        {Array.from({ length: daysInMonth }).map((_, i) => {
-          const day = i + 1;
-          const dateStr = `${viewDate.year}-${String(viewDate.month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-          const isSelected = dateStr === selectedDate;
-          const isToday = dateStr === today;
-          const isSubmitted = submittedDates.has(dateStr);
-          const isFuture = dateStr > today;
-
-          return (
-            <button
-              key={day}
-              onClick={() => !isFuture && onSelect(dateStr)}
-              disabled={isFuture}
-              className={cn(
-                "relative w-full aspect-square rounded-lg text-[11px] font-semibold transition-all flex items-center justify-center",
-                isFuture && "text-slate-200 cursor-not-allowed",
-                !isFuture && !isSelected && "text-slate-600 hover:bg-indigo-50",
-                isSelected && "bg-indigo-600 text-white shadow-md shadow-indigo-200",
-                isToday && !isSelected && "ring-2 ring-indigo-300 text-indigo-600"
-              )}
-            >
-              {day}
-              {isSubmitted && !isSelected && (
-                <span className="absolute bottom-0.5 left-1/2 -translate-x-1/2 w-1 h-1 bg-emerald-500 rounded-full" />
-              )}
-            </button>
-          );
-        })}
-      </div>
-    </div>
-  );
 };
 
 // ─── Page principale ─────────────────────────────────────────
@@ -364,23 +279,22 @@ const ExerciceSpirituelDashboard: React.FC = () => {
       )}
 
       <div className="max-w-2xl mx-auto px-4 py-6 space-y-6">
-        {/* Calendrier */}
+        {/* Sélecteur de date */}
         <div className="space-y-2">
           <label className="text-xs font-semibold text-slate-500 flex items-center gap-2">
             <Calendar size={14} />
             Date de la soumission
           </label>
-          <MiniCalendar
-            selectedDate={selectedDate}
-            submittedDates={submittedDates}
-            onSelect={setSelectedDate}
-          />
-          <div className="flex items-center justify-between">
-            <p className="text-xs text-slate-500">
-              Exercices du <span className="font-bold text-slate-700">{formatDateLong(selectedDate)}</span>
-            </p>
+          <div className="flex items-center gap-3">
+            <input
+              type="date"
+              value={selectedDate}
+              max={toLocalDate(new Date())}
+              onChange={e => e.target.value && setSelectedDate(e.target.value)}
+              className="flex-1 px-4 py-3 bg-white border border-slate-200 rounded-2xl text-sm font-medium text-slate-700 focus:border-indigo-300 focus:ring-4 focus:ring-indigo-500/5 outline-none transition-all shadow-sm"
+            />
             {isSubmittedDate && (
-              <span className="flex items-center gap-1 text-xs text-emerald-600 font-medium">
+              <span className="flex items-center gap-1 text-xs text-emerald-600 font-medium shrink-0">
                 <CheckCircle2 size={13} /> Déjà soumis
               </span>
             )}

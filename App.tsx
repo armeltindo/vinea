@@ -12,6 +12,7 @@ import Dashboard from './pages/Dashboard';
 // Portail membres (public — sans authentification admin)
 const ExerciceSpirituelLogin = React.lazy(() => import('./pages/ExerciceSpirituelLogin'));
 const ExerciceSpirituelDashboard = React.lazy(() => import('./pages/ExerciceSpirituelDashboard'));
+const ExerciceSpirituelGroupe = React.lazy(() => import('./pages/ExerciceSpirituelGroupe'));
 
 // Autres pages chargées à la demande (code splitting)
 const Members = React.lazy(() => import('./pages/Members'));
@@ -443,6 +444,7 @@ const App: React.FC = () => {
         <Routes>
           <Route path="/exercice-spirituel" element={<ExerciceSpirituelLogin />} />
           <Route path="/exercice-spirituel/dashboard" element={<ExerciceSpirituelDashboard />} />
+          <Route path="/exercice-spirituel/groupe" element={<ExerciceSpirituelGroupe />} />
           <Route path="*" element={<Navigate to="/exercice-spirituel" replace />} />
         </Routes>
       </React.Suspense>

@@ -1399,3 +1399,57 @@ export const upsertDailyExercise = async (
     if (entErr) console.error('upsertDailyExercise (entries):', entErr.message);
   }
 };
+
+// ─────────────────────────────────────────────
+// PORTAIL FAISEURS DE DISCIPLES
+// ─────────────────────────────────────────────
+
+/** Retourne les membres assignés à un faiseur de disciple */
+export const getDisciplesByMentorId = async (mentorId: string): Promise<Member[]> => {
+  const { data, error } = await supabase
+    .from('members')
+    .select('*')
+    .eq('assigned_disciple_maker_id', mentorId)
+    .order('first_name', { ascending: true });
+  if (error) { console.error('getDisciplesByMentorId:', error.message); return []; }
+  return (data ?? []).map(dbToMember);
+};
+
+/**
+ * Retourne le nombre de soumissions d'exercices par membre depuis une date donnée.
+ * Résultat : { [memberId]: count }
+ */
+export const getDailyExercisesCountByMemberIds = async (
+  memberIds: string[],
+  since: string // YYYY-MM-DD
+): Promise<Record<string, number>> => {
+  if (memberIds.length === 0) return {};
+  const { data, error } = await supabase
+    .from('daily_spiritual_exercises')
+    .select('member_id, date')
+    .in('member_id', memberIds)
+    .gte('date', since);
+  if (error) { console.error('getDailyExercisesCountByMemberIds:', error.message); return {}; }
+  const counts: Record<string, number> = {};
+  for (const row of (data ?? [])) {
+    counts[row.member_id] = (counts[row.member_id] ?? 0) + 1;
+  }
+  return counts;
+};
+
+/**
+ * Retourne les dates soumises pour un membre (pour affichage dans le portail faiseur de disciple).
+ */
+export const getDailyExerciseDatesByMemberId = async (
+  memberId: string,
+  limit = 30
+): Promise<string[]> => {
+  const { data, error } = await supabase
+    .from('daily_spiritual_exercises')
+    .select('date')
+    .eq('member_id', memberId)
+    .order('date', { ascending: false })
+    .limit(limit);
+  if (error) { console.error('getDailyExerciseDatesByMemberId:', error.message); return []; }
+  return (data ?? []).map((r: any) => r.date);
+};

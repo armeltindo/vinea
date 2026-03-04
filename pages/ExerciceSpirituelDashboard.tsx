@@ -165,9 +165,9 @@ const ExerciceSpirituelDashboard: React.FC = () => {
 
   const handleRoleChoice = (role: 'member' | 'dm') => {
     localStorage.setItem('vinea_member_role_choice', role);
-    setRoleChoice(role);
     if (role === 'dm') {
-      // Pour le moment, rester sur la page membre (discipolat à implémenter côté admin)
+      navigate('/exercice-spirituel/groupe');
+    } else {
       setRoleChoice('member');
     }
   };
@@ -232,13 +232,10 @@ const ExerciceSpirituelDashboard: React.FC = () => {
           )}
           {session.isDiscipleMaker && (
             <button
-              onClick={() => {
-                localStorage.removeItem('vinea_member_role_choice');
-                setRoleChoice(null);
-              }}
+              onClick={() => navigate('/exercice-spirituel/groupe')}
               className="px-3 py-1.5 bg-white/10 hover:bg-white/20 rounded-xl text-xs font-medium transition-colors"
             >
-              Changer
+              Mon groupe
             </button>
           )}
           <button

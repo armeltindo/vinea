@@ -127,6 +127,7 @@ const Attendance: React.FC = () => {
     men: 0,
     women: 0,
     children: 0,
+    newCount: 0,
     notes: '',
     absentMembers: [] as string[]
   });
@@ -263,6 +264,9 @@ const Attendance: React.FC = () => {
     });
     return entries;
   }, [allPeople, chronortedHistory]);
+
+  const totalNewCount = useMemo(() => history.reduce((sum, h) => sum + (h.newCount ?? 0), 0), [history]);
+  const lastServiceNewCount = chronortedHistory[0]?.newCount ?? 0;
 
   const filteredAbsentMembers = useMemo(() => {
     return allAbsentsList
@@ -441,6 +445,7 @@ const Attendance: React.FC = () => {
         men: 0,
         women: 0,
         children: 0,
+        newCount: 0,
         notes: '',
         absentMembers: []
       });
@@ -455,6 +460,7 @@ const Attendance: React.FC = () => {
       men: record.men || 0,
       women: record.women || 0,
       children: record.children || 0,
+      newCount: record.newCount || 0,
       notes: record.notes || '',
       absentMembers: record.absentMembers || []
     });
@@ -503,11 +509,14 @@ const Attendance: React.FC = () => {
           </div>
         </Card>
 
-        <Card title="Relance IA" subtitle="Messages suggérés" icon={<BrainCircuit size={20} className="text-indigo-600" />} className="cursor-pointer border-indigo-100 hover:border-indigo-300 transition-all group" onClick={() => setIsAbsentsModalOpen(true)}>
+        <Card title="Nouveaux" subtitle={`Dernier culte : ${lastServiceNewCount}`} icon={<UserPlus size={20} className="text-emerald-600" />}>
           <div className="flex items-end justify-between">
-            <span className="text-3xl font-bold text-indigo-600">{allAbsentsList.length}</span>
-            <div className="w-10 h-10 bg-indigo-50 rounded-xl flex items-center justify-center text-indigo-500 group-hover:scale-110 transition-transform">
-               <ArrowRight size={20} />
+            <div>
+              <span className="text-3xl font-bold text-emerald-600">{totalNewCount}</span>
+              <p className="text-xs text-slate-400 mt-1">total cumulé</p>
+            </div>
+            <div className="w-10 h-10 bg-emerald-50 rounded-xl flex items-center justify-center text-emerald-500">
+               <UserPlus size={20} />
             </div>
           </div>
         </Card>
@@ -1260,7 +1269,19 @@ const Attendance: React.FC = () => {
                             />
                           </div>
                        </div>
-                       <div className="pt-4 border-t border-slate-50 flex justify-between items-center">
+                       <div className="pt-4 border-t border-slate-100">
+                          <div className="space-y-1.5">
+                            <label className="text-xs font-medium text-slate-500 ml-1">Nouveaux visiteurs / premiers contacts</label>
+                            <input
+                              type="number" min="0"
+                              value={attendanceForm.newCount || ''}
+                              onChange={e => setAttendanceForm({...attendanceForm, newCount: parseInt(e.target.value) || 0})}
+                              placeholder="0"
+                              className="w-full px-4 py-3 bg-emerald-50 border border-emerald-200 rounded-xl text-sm font-semibold text-emerald-700 text-center [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                            />
+                          </div>
+                       </div>
+                       <div className="pt-3 border-t border-slate-50 flex justify-between items-center">
                           <span className="text-xs font-medium text-slate-500">Total calculé :</span>
                           <span className="text-2xl font-semibold text-slate-900">{(Number(attendanceForm.men) || 0) + (Number(attendanceForm.women) || 0) + (Number(attendanceForm.children) || 0)}</span>
                        </div>

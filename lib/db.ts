@@ -244,6 +244,7 @@ function dbToAttendance(row: any): any {
       totalPresent: row.total ?? 0,
       totalAbsent: (row.absent_members ?? []).length,
     },
+    newCount: row.new_count ?? 0,
     absentMembers: row.absent_members ?? [],
   };
 }
@@ -264,6 +265,7 @@ function attendanceToDb(a: any): Record<string, unknown> {
     if (a.children !== undefined) db.children = Number(a.children) ?? 0;
   }
   if (a.absentMembers !== undefined) db.absent_members = a.absentMembers;
+  if (a.newCount !== undefined) db.new_count = Number(a.newCount) ?? 0;
   return db;
 }
 

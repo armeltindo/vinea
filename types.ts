@@ -334,6 +334,7 @@ export interface AttendanceSession {
   date: string;
   service: string;
   total?: number;
+  newCount?: number;
   stats?: {
     men: number;
     women: number;

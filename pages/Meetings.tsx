@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { usePermissions } from '../context/PermissionsContext';
 import Card from '../components/Card';
 import AIAnalysis from '../components/AIAnalysis';
@@ -11,10 +11,9 @@ import {
   Share2, Send, Copy, MoreVertical, LayoutList, CheckSquare, UserX, BarChart3, TrendingDown,
   Maximize2
 } from 'lucide-react';
-import { analyzePageData, generateMeetingMinutes, generateMeetingFlash, extractMeetingTasks } from '../lib/gemini';
+import { analyzePageData } from '../lib/gemini';
 import { cn, generateId, getInitials, formatFirstName } from '../utils';
 import { Member, MemberType } from '../types';
-import { GoogleGenAI } from "@google/genai";
 import { getMeetings, createMeeting, updateMeeting, deleteMeeting, getMembers } from '../lib/db';
 
 interface MeetingDecision {
@@ -44,6 +43,7 @@ const CATEGORIES = ['Conseil', 'Département', 'Ouvriers', 'Jeunesse', 'Finances
 
 const Meetings: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { canDelete } = usePermissions();
   const [meetings, setMeetings] = useState<Meeting[]>([]);
   const [members, setMembers] = useState<Member[]>([]);
@@ -55,10 +55,15 @@ const Meetings: React.FC = () => {
     ]).then(([mtgs, mbrs]) => {
       setMeetings(mtgs as any);
       setMembers(mbrs);
-      const detailId = new URLSearchParams(window.location.search).get('detail');
-      if (detailId) {
-        const found = (mtgs as any[]).find(x => x.id === detailId);
-        if (found) setSelectedMeeting(found);
+      const editId = (location.state as any)?.editId;
+      if (editId) {
+        const found = (mtgs as any[]).find(x => x.id === editId);
+        if (found) {
+          setEditingMeetingId(found.id);
+          setFormData(found);
+          setIsFormOpen(true);
+          window.history.replaceState({}, '', window.location.pathname);
+        }
       }
     });
   }, []);
@@ -68,19 +73,8 @@ const Meetings: React.FC = () => {
   const [analysis, setAnalysis] = useState<string | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   
-  const [isGeneratingPV, setIsGeneratingPV] = useState(false);
-  const [isGeneratingFlash, setIsGeneratingFlash] = useState(false);
-  const [isExtractingTasks, setIsExtractingTasks] = useState(false);
-
-  // États pour l'ajout de résolution inline
-  const [isAddingDecision, setIsAddingDecision] = useState(false);
-  const [newDecisionLabel, setNewDecisionLabel] = useState('');
-
   // Nouvel état pour le suivi des présences
   const [isAttendanceTrackerOpen, setIsAttendanceTrackerOpen] = useState(false);
-
-
-  const [selectedMeeting, setSelectedMeeting] = useState<Meeting | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
@@ -161,77 +155,6 @@ const Meetings: React.FC = () => {
     setIsAnalyzing(false);
   };
 
-  const handleGeneratePV = async (meeting: Meeting) => {
-    setIsGeneratingPV(true);
-    const attendeesNames = meeting.attendeeIds.map(id => {
-      const m = members.find(mem => mem.id === id);
-      return m ? `${formatFirstName(m.firstName)} ${m.lastName.toUpperCase()}` : 'Inconnu';
-    });
-    
-    const absenteesNames = (meeting.absenteeIds || []).map(id => {
-      const m = members.find(mem => mem.id === id);
-      return m ? `${formatFirstName(m.firstName)} ${m.lastName.toUpperCase()}` : 'Inconnu';
-    });
-    
-    try {
-      const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY });
-      const prompt = `Rédige un procès-verbal de réunion professionnel et structuré pour l'église Vinea sur la base de ces notes :
-      Titre : ${meeting.title}
-      Date : ${meeting.date}
-      Lieu : ${meeting.location}
-      Participants : ${attendeesNames.join(', ')}
-      Absents/Excusés : ${absenteesNames.join(', ') || 'Aucun'}
-      Notes/Résumé : ${meeting.summary || 'Aucune note spécifique'}
-      Décisions prises : ${meeting.decisions?.map(d => d.label).join(', ') || 'Aucune décison listée'}
-      
-      Le PV doit inclure : Un en-tête Vinea, la liste de présence complète, l'ordre du jour déduit, le résumé des débats et les résolutions adoptées.`;
-
-      const response = await ai.models.generateContent({
-        model: "gemini-3-flash-preview",
-        contents: prompt,
-      });
-
-      const updated = { ...meeting, aiPV: response.text };
-      setMeetings(prev => prev.map(m => m.id === meeting.id ? updated : m));
-      setSelectedMeeting(updated);
-      await updateMeeting(meeting.id, { aiPv: response.text });
-    } catch (e) {
-      console.error(e);
-      alert("Erreur lors de la génération du PV.");
-    }
-    setIsGeneratingPV(false);
-  };
-
-  const handleGenerateFlash = async (meeting: Meeting) => {
-    setIsGeneratingFlash(true);
-    const flash = await generateMeetingFlash(meeting);
-    if (flash) {
-      const url = `https://wa.me/?text=${encodeURIComponent(flash)}`;
-      window.open(url, '_blank');
-    }
-    setIsGeneratingFlash(false);
-  };
-
-  const handleExtractTasks = async (meeting: Meeting) => {
-    if (!meeting.summary) return;
-    setIsExtractingTasks(true);
-    const tasks = await extractMeetingTasks(meeting.summary);
-    if (tasks && tasks.length > 0) {
-      const newDecisions: MeetingDecision[] = tasks.map((t: any) => ({
-        id: generateId(),
-        label: t.title + (t.deadline ? ` (Échéance: ${t.deadline})` : ''),
-        status: 'À faire',
-        assignedTo: t.responsible || ''
-      }));
-      
-      const updated = { ...meeting, decisions: [...(meeting.decisions || []), ...newDecisions] };
-      setMeetings(prev => prev.map(m => m.id === meeting.id ? updated : m));
-      setSelectedMeeting(updated);
-      await updateMeeting(meeting.id, { decisions: updated.decisions });
-    }
-    setIsExtractingTasks(false);
-  };
-
   const filteredMeetings = useMemo(() => {
     return meetings.filter(m => {
       const matchesSearch = m.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
@@ -246,9 +169,6 @@ const Meetings: React.FC = () => {
     setIsSubmitting(true);
     if (editingMeetingId) {
       setMeetings(meetings.map(m => m.id === editingMeetingId ? { ...m, ...formData } : m));
-      if (selectedMeeting?.id === editingMeetingId) {
-        setSelectedMeeting(prev => prev ? { ...prev, ...formData } : null);
-      }
       await updateMeeting(editingMeetingId, formData);
     } else {
       const newMeeting: Meeting = { ...formData, id: generateId(), status: 'Programmé' };
@@ -258,45 +178,6 @@ const Meetings: React.FC = () => {
     setIsFormOpen(false);
     setIsSubmitting(false);
     setEditingMeetingId(null);
-  };
-
-  const toggleStatus = (id: string) => {
-    const meeting = meetings.find(m => m.id === id);
-    if (!meeting) return;
-    const newStatus = meeting.status === 'Programmé' ? 'Terminé' : 'Programmé';
-    setMeetings(meetings.map(m => m.id === id ? { ...m, status: newStatus as any } : m));
-    if (selectedMeeting?.id === id) setSelectedMeeting({ ...meeting, status: newStatus as any });
-    updateMeeting(id, { status: newStatus });
-  };
-
-  const handleAddDecision = () => {
-    if (!newDecisionLabel.trim() || !selectedMeeting) return;
-    const newDecision: MeetingDecision = { id: generateId(), label: newDecisionLabel.trim(), status: 'À faire' };
-    const updatedDecisions = [...(selectedMeeting.decisions || []), newDecision];
-    const updatedMeetings = meetings.map(m => m.id === selectedMeeting.id ? { ...m, decisions: updatedDecisions } : m);
-    setMeetings(updatedMeetings);
-    setSelectedMeeting(updatedMeetings.find(m => m.id === selectedMeeting.id) || null);
-    setNewDecisionLabel('');
-    setIsAddingDecision(false);
-    updateMeeting(selectedMeeting.id, { decisions: updatedDecisions });
-  };
-
-  const handleDeleteDecision = (decisionId: string) => {
-    if (!selectedMeeting) return;
-    const updatedDecisions = (selectedMeeting.decisions || []).filter(d => d.id !== decisionId);
-    const updatedMeetings = meetings.map(m => m.id === selectedMeeting.id ? { ...m, decisions: updatedDecisions } : m);
-    setMeetings(updatedMeetings);
-    setSelectedMeeting(updatedMeetings.find(m => m.id === selectedMeeting.id) || null);
-    updateMeeting(selectedMeeting.id, { decisions: updatedDecisions });
-  };
-
-  const updateDecisionStatus = (decisionId: string, newStatus: MeetingDecision['status']) => {
-    if (!selectedMeeting) return;
-    const updatedDecisions = (selectedMeeting.decisions || []).map(d => d.id === decisionId ? { ...d, status: newStatus } : d);
-    const updatedMeetings = meetings.map(m => m.id === selectedMeeting.id ? { ...m, decisions: updatedDecisions } : m);
-    setMeetings(updatedMeetings);
-    setSelectedMeeting(updatedMeetings.find(m => m.id === selectedMeeting.id) || null);
-    updateMeeting(selectedMeeting.id, { decisions: updatedDecisions });
   };
 
   const toggleAttendeeInForm = (id: string) => {
@@ -325,7 +206,6 @@ const Meetings: React.FC = () => {
     if (meetingToDeleteId) {
       setMeetings(meetings.filter(m => m.id !== meetingToDeleteId));
       setIsDeleteConfirmOpen(false);
-      if (selectedMeeting?.id === meetingToDeleteId) setSelectedMeeting(null);
       await deleteMeeting(meetingToDeleteId);
       setMeetingToDeleteId(null);
     }
@@ -399,7 +279,7 @@ const Meetings: React.FC = () => {
 
           <div className="space-y-4">
             {filteredMeetings.length > 0 ? filteredMeetings.map((meeting) => (
-              <div key={meeting.id} onClick={() => { setSelectedMeeting(meeting); navigate(`?detail=${meeting.id}`, { replace: true }); }} className="bg-white border border-slate-200 rounded-xl overflow-hidden flex flex-col md:flex-row hover:border-indigo-300 transition-all group shadow-sm cursor-pointer active:scale-[0.99]">
+              <div key={meeting.id} onClick={() => navigate(`/meetings/${meeting.id}`)} className="bg-white border border-slate-200 rounded-xl overflow-hidden flex flex-col md:flex-row hover:border-indigo-300 transition-all group shadow-sm cursor-pointer active:scale-[0.99]">
                 <div className={cn("md:w-32 p-6 flex flex-col items-center justify-center border-b md:border-b-0 md:border-r border-slate-100 shrink-0", meeting.status === 'Terminé' ? "bg-slate-50" : "bg-indigo-50/30")}>
                   <span className="text-xs font-medium text-slate-500">{new Date(meeting.date).toLocaleDateString('fr-FR', { month: 'short' }).toUpperCase()}</span>
                   <span className="text-3xl font-semibold text-slate-800 leading-none my-1">{new Date(meeting.date).getDate()}</span>
@@ -459,7 +339,7 @@ const Meetings: React.FC = () => {
                     <p className="text-xs font-semibold text-slate-800er truncate">{decision.label}</p>
                     <p className="text-xs text-slate-400 mt-1">Réunion : {decision.meetingTitle}</p>
                   </div>
-                  <button onClick={(e) => { e.stopPropagation(); const mtg = meetings.find(m => m.id === decision.meetingId) || null; setSelectedMeeting(mtg); if (mtg) navigate(`?detail=${mtg.id}`, { replace: true }); }} className="text-indigo-600 hover:text-indigo-800"><ChevronRight size={14}/></button>
+                  <button onClick={(e) => { e.stopPropagation(); navigate(`/meetings/${decision.meetingId}`); }} className="text-indigo-600 hover:text-indigo-800"><ChevronRight size={14}/></button>
                 </div>
               ))}
               {pendingDecisions.length === 0 && (
@@ -626,189 +506,6 @@ const Meetings: React.FC = () => {
                 >
                   Fermer le Suivi
                 </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Modal: Détails Réunion - Centré */}
-      {selectedMeeting && (
-        <div className="fixed inset-0 z-[150] overflow-hidden flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity" onClick={() => { setSelectedMeeting(null); navigate('', { replace: true }); }} />
-          <div className="relative w-full max-w-3xl bg-white shadow-2xl animate-in zoom-in-95 duration-300 flex flex-col rounded-2xl overflow-hidden max-h-[90vh]">
-            <div className="px-10 py-12 bg-indigo-600 text-white rounded-t-[3rem] shrink-0 relative overflow-hidden">
-              <div className="absolute top-0 right-0 p-8 opacity-10"><UsersRound size={180} /></div>
-              <button onClick={() => { setSelectedMeeting(null); navigate('', { replace: true }); }} className="absolute top-6 left-6 p-2 hover:bg-white/10 rounded-full text-white transition-colors"><ArrowLeft size={24} /></button>
-              <div className="relative z-10 space-y-4">
-                <div className="flex gap-2">
-                  <span className="px-3 py-1 bg-white/20 backdrop-blur-md rounded-full text-xs font-medium">{selectedMeeting.category}</span>
-                  <span className="px-3 py-1 bg-indigo-500 rounded-full text-xs font-medium border border-white/20">Quorum: {calculateQuorum(selectedMeeting.attendeeIds)}%</span>
-                </div>
-                <h3 className="text-3xl font-semibold leading-tight">{selectedMeeting.title}</h3>
-                <div className="flex items-center gap-4 text-indigo-100">
-                  <span className="text-xs font-bold">{new Date(selectedMeeting.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })} • {selectedMeeting.time}</span>
-                </div>
-              </div>
-            </div>
-
-            <div className="flex-1 overflow-y-auto p-10 custom-scrollbar bg-slate-50/30 space-y-8">
-              {/* Actions IA Bar */}
-              <div className="flex flex-wrap gap-3">
-                <button onClick={() => handleGeneratePV(selectedMeeting)} disabled={isGeneratingPV} className="flex-1 py-3 bg-slate-900 text-white rounded-2xl text-xs font-medium flex items-center justify-center gap-2 hover:bg-slate-800 transition-all disabled:opacity-50 shadow-lg">
-                  {isGeneratingPV ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} />} Rédiger PV (IA)
-                </button>
-                <button onClick={() => handleGenerateFlash(selectedMeeting)} disabled={isGeneratingFlash} className="flex-1 py-3 bg-emerald-600 text-white rounded-2xl text-xs font-medium flex items-center justify-center gap-2 hover:bg-emerald-700 transition-all disabled:opacity-50 shadow-lg">
-                  {isGeneratingFlash ? <Loader2 size={16} className="animate-spin" /> : <MessageSquareText size={16} />} Flash Info (WA)
-                </button>
-                <button onClick={() => handleExtractTasks(selectedMeeting)} disabled={isExtractingTasks || !selectedMeeting.summary} className="flex-1 py-3 bg-white border border-indigo-200 text-indigo-600 rounded-2xl text-xs font-medium flex items-center justify-center gap-2 hover:bg-indigo-50 transition-all disabled:opacity-50">
-                  {isExtractingTasks ? <Loader2 size={16} className="animate-spin" /> : <ListChecks size={16} />} Extraire Tâches
-                </button>
-              </div>
-
-              {selectedMeeting.aiPV && (
-                <div className="bg-white p-8 rounded-2xl border border-indigo-200 shadow-xl space-y-4 animate-in zoom-in-95">
-                  <div className="flex items-center justify-between border-b border-slate-100 pb-4">
-                    <h4 className="text-xs font-semibold text-indigo-600 flex items-center gap-2"><FileText size={14}/> Procès-Verbal Généré par IA</h4>
-                    <div className="flex gap-2">
-                      <button onClick={() => { navigator.clipboard.writeText(selectedMeeting.aiPV!); alert("PV copié !"); }} className="p-2 bg-slate-50 text-slate-400 hover:text-indigo-600 rounded-xl transition-colors"><Copy size={16}/></button>
-                      <button onClick={() => { setMeetings(prev => prev.map(m => m.id === selectedMeeting.id ? { ...m, aiPV: undefined } : m)); setSelectedMeeting(prev => prev ? { ...prev, aiPV: undefined } : null); updateMeeting(selectedMeeting.id, { aiPv: null }); }} className="p-2 bg-slate-50 text-slate-400 hover:text-rose-600 rounded-xl transition-colors"><X size={16}/></button>
-                    </div>
-                  </div>
-                  <div className="prose prose-sm max-w-none text-slate-700 font-medium leading-relaxed italic whitespace-pre-wrap">
-                    {selectedMeeting.aiPV}
-                  </div>
-                </div>
-              )}
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="bg-white p-6 rounded-xl border border-slate-100 shadow-sm space-y-4">
-                  <h4 className="text-xs font-medium text-slate-500 flex items-center gap-2"><MapPin size={14} className="text-rose-500" /> Lieu</h4>
-                  <p className="text-sm font-semibold text-slate-800 leading-none">{selectedMeeting.location}</p>
-                </div>
-                <div className="bg-white p-6 rounded-xl border border-slate-100 shadow-sm space-y-4">
-                  <h4 className="text-xs font-medium text-slate-500 flex items-center gap-2"><ShieldCheck size={14} className="text-emerald-500" /> Quorum séance</h4>
-                  <div className="flex items-center gap-2">
-                    <div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                      <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${calculateQuorum(selectedMeeting.attendeeIds)}%` }}></div>
-                    </div>
-                    <span className="text-xs font-semibold text-slate-800">{calculateQuorum(selectedMeeting.attendeeIds)}%</span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-white p-8 rounded-2xl border border-slate-100 shadow-sm space-y-6">
-                <div>
-                  <h4 className="text-xs font-medium text-slate-500 flex items-center gap-2 mb-4"><Users size={14} className="text-indigo-500" /> Participants Présents ({selectedMeeting.attendeeIds.length})</h4>
-                  <div className="flex flex-wrap gap-2">
-                    {selectedMeeting.attendeeIds.map(id => {
-                      const m = members.find(mem => mem.id === id);
-                      return (
-                        <div key={id} className="flex items-center gap-2 px-3 py-1.5 bg-slate-50 border border-slate-100 rounded-full shadow-sm">
-                           <div className="w-5 h-5 rounded-full bg-indigo-500 flex items-center justify-center text-xs font-semibold text-white uppercase overflow-hidden">
-                             {m?.photoUrl ? (
-                               <img src={m.photoUrl} alt="" className="w-full h-full object-cover" />
-                             ) : (
-                               getInitials(m?.firstName, m?.lastName)
-                             )}
-                           </div>
-                           <span className="text-xs font-medium text-slate-700 tracking-tighter">{formatFirstName(m?.firstName || '')} <span className="uppercase">{m?.lastName}</span></span>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                {selectedMeeting.absenteeIds?.length > 0 && (
-                  <div className="pt-6 border-t border-slate-50">
-                    <h4 className="text-xs font-semibold text-rose-400 flex items-center gap-2 mb-4"><UserX size={14} /> Absents / Excusés ({selectedMeeting.absenteeIds.length})</h4>
-                    <div className="flex flex-wrap gap-2">
-                      {selectedMeeting.absenteeIds.map(id => {
-                        const m = members.find(mem => mem.id === id);
-                        return (
-                          <div key={id} className="flex items-center gap-2 px-3 py-1.5 bg-rose-50/50 border border-rose-100 rounded-full">
-                             <div className="w-5 h-5 rounded-full bg-rose-200 flex items-center justify-center text-xs font-semibold text-rose-600 uppercase overflow-hidden">
-                               {m?.photoUrl ? (
-                                 <img src={m.photoUrl} alt="" className="w-full h-full object-cover" />
-                               ) : (
-                                 getInitials(m?.firstName, m?.lastName)
-                               )}
-                             </div>
-                             <span className="text-xs font-semibold text-rose-700 tracking-tighter">{formatFirstName(m?.firstName || '')} <span className="uppercase">{m?.lastName}</span></span>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              <div className="bg-white p-8 rounded-2xl border border-slate-100 shadow-sm space-y-4">
-                 <div className="flex items-center justify-between">
-                   <h4 className="text-xs font-medium text-slate-500 flex items-center gap-2"><ClipboardCheck size={14} className="text-emerald-500" /> Résolutions & Décisions</h4>
-                   <button onClick={() => setIsAddingDecision(!isAddingDecision)} className={cn("p-1.5 rounded-lg transition-all", isAddingDecision ? "bg-rose-50 text-rose-600 rotate-45" : "bg-emerald-50 text-emerald-600 hover:bg-emerald-100")}><Plus size={14} /></button>
-                 </div>
-                 <div className="space-y-3">
-                   {/* Champ d'ajout inline */}
-                   {isAddingDecision && (
-                     <div className="flex items-center gap-2 p-3 bg-slate-50 border border-indigo-200 rounded-2xl animate-in slide-in-from-top-2 duration-200">
-                       <input 
-                        type="text" 
-                        autoFocus
-                        placeholder="Décrire la résolution..." 
-                        value={newDecisionLabel}
-                        onChange={(e) => setNewDecisionLabel(e.target.value)}
-                        onKeyDown={(e) => e.key === 'Enter' && handleAddDecision()}
-                        className="flex-1 bg-transparent border-none outline-none text-xs font-bold text-slate-800 placeholder:text-slate-400"
-                       />
-                       <button 
-                        onClick={handleAddDecision}
-                        disabled={!newDecisionLabel.trim()}
-                        className="p-1.5 bg-indigo-600 text-white rounded-lg disabled:opacity-50"
-                       >
-                         <Check size={14} strokeWidth={3} />
-                       </button>
-                     </div>
-                   )}
-
-                   {selectedMeeting.decisions?.map(decision => (
-                     <div key={decision.id} className="flex items-center justify-between p-4 bg-slate-50 border border-slate-100 rounded-2xl group transition-all">
-                       <div className="flex items-center gap-3 min-w-0">
-                         <div className={cn("w-2 h-8 rounded-full", decision.status === 'Réalisé' ? "bg-emerald-500" : decision.status === 'En cours' ? "bg-blue-500" : "bg-amber-500")}></div>
-                         <div className="min-w-0">
-                            <span className={cn("text-xs font-medium block truncate tracking-tight", decision.status === 'Réalisé' && "text-slate-400 line-through")}>{decision.label}</span>
-                            {decision.assignedTo && <span className="text-xs text-slate-400 italic">Assigné : {decision.assignedTo}</span>}
-                         </div>
-                       </div>
-                       <div className="flex gap-1 shrink-0 ml-4">
-                          <div className="flex gap-0.5 mr-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <button onClick={() => handleDeleteDecision(decision.id)} className="p-1 text-slate-300 hover:text-rose-500"><Trash2 size={14} /></button>
-                          </div>
-                          {(['À faire', 'En cours', 'Réalisé'] as const).map(st => (
-                            <button key={st} onClick={() => updateDecisionStatus(decision.id, st)} className={cn("px-2 py-1 rounded text-xs font-medium transition-all", decision.status === st ? "bg-indigo-600 text-white shadow-sm" : "bg-white text-slate-400 hover:bg-slate-100")}>{st}</button>
-                          ))}
-                       </div>
-                     </div>
-                   ))}
-                   {!selectedMeeting.decisions?.length && !isAddingDecision && <p className="text-xs text-slate-400 italic text-center py-4">Aucune résolution enregistrée.</p>}
-                 </div>
-              </div>
-
-              <div className="bg-white p-8 rounded-2xl border border-indigo-100 shadow-sm space-y-4">
-                <h4 className="text-xs font-medium text-slate-500 flex items-center gap-2"><PenTool size={14} className="text-indigo-600" /> Notes de séance</h4>
-                <p className="text-sm text-slate-700 font-medium leading-relaxed italic whitespace-pre-wrap">{selectedMeeting.summary || "Saisissez les notes de séance pour alimenter l'IA."}</p>
-              </div>
-            </div>
-
-            <div className="p-10 border-t border-slate-100 bg-white flex flex-col gap-3 rounded-b-[3rem] shrink-0">
-              <div className="flex gap-3">
-                <button onClick={() => toggleStatus(selectedMeeting.id)} className={cn("flex-1 py-4 rounded-2xl text-xs font-medium transition-all shadow-lg", selectedMeeting.status === 'Programmé' ? "bg-emerald-600 text-white shadow-emerald-200" : "bg-amber-100 text-amber-700 shadow-amber-200")}>
-                  {selectedMeeting.status === 'Programmé' ? 'Clôturer la séance' : 'Réouvrir la séance'}
-                </button>
-              </div>
-              <div className="flex gap-2">
-                 <button onClick={() => { setEditingMeetingId(selectedMeeting.id); setFormData(selectedMeeting); setIsFormOpen(true); }} className="flex-1 py-3 bg-indigo-50 text-indigo-600 rounded-xl text-xs font-medium border border-indigo-100 hover:bg-indigo-100 transition-colors">Modifier</button>
-                 {canDelete('meetings') && <button onClick={() => { setMeetingToDeleteId(selectedMeeting.id); setIsDeleteConfirmOpen(true); }} className="p-3 bg-rose-50 text-rose-600 rounded-xl border border-rose-100 hover:bg-rose-100 transition-all"><Trash2 size={16} /></button>}
               </div>
             </div>
           </div>

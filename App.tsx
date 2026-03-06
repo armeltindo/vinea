@@ -38,7 +38,7 @@ const Admin = React.lazy(() => import('./pages/Admin'));
 const Login = React.lazy(() => import('./pages/Login'));
 const SpiritualGrowth = React.lazy(() => import('./pages/SpiritualGrowth'));
 import { supabase } from './lib/supabase';
-import { getAdminUserByEmail, getMembers, getVisitors, getAttendanceSessions, getChurchEvents, upsertNotification, getChurchSettings, getAppConfig } from './lib/db';
+import { getAdminUserByEmail, getMembers, getVisitors, getAttendanceSessions, getChurchEvents, upsertNotification, getChurchSettings, getAppConfig, setAppConfig } from './lib/db';
 import { setCurrencyCache } from './constants';
 import { setChurchNameCache } from './lib/gemini';
 import { 
@@ -96,6 +96,7 @@ const App: React.FC = () => {
 
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [readNotificationIds, setReadNotificationIds] = useState<string[]>([]);
+  const readNotifLoaded = useRef(false);
 
   const profileRef = useRef<HTMLDivElement>(null);
   const notifRef = useRef<HTMLDivElement>(null);
@@ -319,9 +320,15 @@ const App: React.FC = () => {
     }
   }, []);
 
+  // Persister les IDs lus (après chargement initial)
+  useEffect(() => {
+    if (readNotifLoaded.current) {
+      setAppConfig('read_notification_ids', readNotificationIds);
+    }
+  }, [readNotificationIds]);
+
   const markAsRead = (id: string) => {
-    const updatedIds = [...readNotificationIds, id];
-    setReadNotificationIds(updatedIds);
+    setReadNotificationIds(prev => prev.includes(id) ? prev : [...prev, id]);
     setNotifications(prev => prev.map(n => n.id === id ? { ...n, isRead: true } : n));
   };
 
@@ -372,9 +379,10 @@ const App: React.FC = () => {
   };
 
   const loadChurchAndNotifSettings = useCallback(async () => {
-    const [settings, notifSettingsData] = await Promise.all([
+    const [settings, notifSettingsData, savedReadIds] = await Promise.all([
       getChurchSettings(),
       getAppConfig('notification_settings'),
+      getAppConfig('read_notification_ids'),
     ]);
     if (settings) {
       setChurchName(settings.name || 'Vinea');
@@ -386,6 +394,10 @@ const App: React.FC = () => {
     if (notifSettingsData) {
       setNotifSettings(notifSettingsData);
     }
+    if (Array.isArray(savedReadIds)) {
+      setReadNotificationIds(savedReadIds);
+    }
+    readNotifLoaded.current = true;
   }, []);
 
   useEffect(() => {
@@ -624,14 +636,11 @@ const App: React.FC = () => {
                        </div>
                     </div>
                     <div className="flex-1 overflow-y-auto custom-scrollbar p-2 space-y-1 bg-slate-50/30">
-                       {notifications.length > 0 ? notifications.map(n => (
-                         <div 
-                          key={n.id} 
+                       {notifications.filter(n => !n.isRead).length > 0 ? notifications.filter(n => !n.isRead).map(n => (
+                         <div
+                          key={n.id}
                           onClick={() => handleNotificationClick(n)}
-                          className={cn(
-                            "p-4 rounded-xl transition-all cursor-pointer border group",
-                            n.isRead ? "bg-white/60 border-transparent opacity-60 hover:opacity-80" : "bg-white border-indigo-100 shadow-sm hover:border-indigo-300"
-                          )}
+                          className="p-4 rounded-xl transition-all cursor-pointer border group bg-white border-indigo-100 shadow-sm hover:border-indigo-300"
                          >
                             <div className="flex items-start gap-4">
                                <div className={cn(
@@ -647,7 +656,7 @@ const App: React.FC = () => {
                                <div className="flex-1 min-w-0">
                                   <div className="flex justify-between items-start gap-2">
                                      <h4 className="text-xs font-semibold text-slate-900 truncate">{n.title}</h4>
-                                     {!n.isRead && <span className="w-2 h-2 bg-indigo-600 rounded-full mt-1 shrink-0"></span>}
+                                     <span className="w-2 h-2 bg-indigo-600 rounded-full mt-1 shrink-0"></span>
                                   </div>
                                   <p className="text-xs text-slate-500 leading-relaxed mt-1">{n.message}</p>
                                   <div className="mt-2 flex items-center justify-between">

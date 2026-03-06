@@ -691,7 +691,7 @@ const Attendance: React.FC = () => {
                </div>
              )}
            </div>
-           <button onClick={() => setIsAbsentsModalOpen(true)} className="w-full mt-4 py-3 bg-slate-900 text-white rounded-xl text-xs font-medium hover:bg-slate-800 transition-all shadow-md">Voir tout le registre</button>
+           <button onClick={() => navigate('/attendance/suivi-absents')} className="w-full mt-4 py-3 bg-slate-900 text-white rounded-xl text-xs font-medium hover:bg-slate-800 transition-all shadow-md">Voir tout le registre</button>
         </Card>
       </div>
 

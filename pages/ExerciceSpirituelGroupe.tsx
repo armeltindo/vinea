@@ -12,6 +12,8 @@ import {
   getDailyExerciseDatesByMemberId,
   getVisitorsByParrainId,
   getRecentAttendanceSessions,
+  getAppConfig,
+  getMembers,
   updateVisitor,
   updateMember,
 } from '../lib/db';
@@ -743,10 +745,11 @@ const ExerciceSpirituelGroupe: React.FC = () => {
     if (!session) return;
     const load = async () => {
       setLoading(true);
-      const [list, vis, sessions] = await Promise.all([
+      const [list, vis, sessions, rawAssignments] = await Promise.all([
         getDisciplesByMentorId(session.memberId),
         getVisitorsByParrainId(session.memberId),
         getRecentAttendanceSessions(5),
+        getAppConfig('attendance_assignments'),
       ]);
       setDisciples(list);
       setVisitors(vis);
@@ -762,19 +765,35 @@ const ExerciceSpirituelGroupe: React.FC = () => {
         setCounts30(c30);
       }
 
-      // Absences : disciples absents dans les sessions récentes
+      // Absences : disciples absents + membres affectés via Attendance
+      const assignments: Record<string, string> = rawAssignments ?? {};
       const discipleIds = new Set(list.map(d => d.id));
       const absentMap: Record<string, string[]> = {};
+      const assignedExtraIds = new Set<string>();
+
       for (const s of sessions) {
         for (const absentId of (s.absentMembers ?? [])) {
           if (discipleIds.has(absentId)) {
             if (!absentMap[absentId]) absentMap[absentId] = [];
             absentMap[absentId].push(s.date);
+          } else if (assignments[`${absentId}_${s.date}`] === session.memberId) {
+            if (!absentMap[absentId]) absentMap[absentId] = [];
+            absentMap[absentId].push(s.date);
+            assignedExtraIds.add(absentId);
           }
         }
       }
+
+      // Charger les membres affectés qui ne sont pas des disciples directs
+      let extraMembers: Member[] = [];
+      if (assignedExtraIds.size > 0) {
+        const allMembers = await getMembers();
+        extraMembers = allMembers.filter(m => assignedExtraIds.has(m.id));
+      }
+
+      const combinedList = [...list, ...extraMembers];
       const absentList = Object.entries(absentMap).map(([id, dates]) => ({
-        member: list.find(m => m.id === id)!,
+        member: combinedList.find(m => m.id === id)!,
         dates,
       })).filter(x => x.member);
       setAbsentDisciples(absentList);

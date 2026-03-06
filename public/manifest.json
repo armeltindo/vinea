@@ -2,7 +2,7 @@
   "name": "Vinea - Gestion d'Église",
   "short_name": "Vinea",
   "description": "Application de gestion d'église",
-  "start_url": "/",
+  "start_url": "/mon-espace",
   "display": "standalone",
   "background_color": "#f8fafc",
   "theme_color": "#1e40af",

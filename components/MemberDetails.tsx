@@ -321,6 +321,556 @@ const MemberDetails: React.FC<MemberDetailsProps> = ({ member, isOpen, onClose, 
     if (member.email) window.location.href = `mailto:${member.email}`;
   };
 
+  // ── Page layout ────────────────────────────────────────────────────────────
+  if (asPage) {
+    return (
+      <>
+        {/* Hero Header */}
+        <div className="relative px-8 py-14 bg-gradient-to-br from-slate-900 via-slate-800 to-indigo-950 rounded-2xl overflow-hidden mb-8">
+          <div className="absolute top-0 right-0 p-8 opacity-10 pointer-events-none">
+            <User size={220} className="text-indigo-300" />
+          </div>
+          <div className="absolute -bottom-20 -left-20 w-72 h-72 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
+          <div className="relative z-10 flex flex-col sm:flex-row items-start gap-8">
+            {/* Avatar */}
+            <div className="rounded-3xl bg-white/95 p-2 shadow-2xl border border-white/30 shrink-0">
+              <Avatar
+                firstName={member.firstName}
+                lastName={member.lastName}
+                photoUrl={member.photoUrl}
+                size="2xl"
+                shape="card"
+                onPhotoClick={member.photoUrl ? () => onPreviewPhoto?.(member.photoUrl!) : undefined}
+              />
+            </div>
+            {/* Info + actions */}
+            <div className="flex-1 min-w-0 space-y-4">
+              <div>
+                <div className="flex flex-wrap items-center gap-2 mb-3">
+                  <span className="px-3 py-1 bg-indigo-500/30 backdrop-blur-md rounded-lg text-xs font-semibold text-indigo-200 border border-indigo-400/20">
+                    {member.type}
+                  </span>
+                  <span className={cn(
+                    "px-3 py-1 rounded-lg text-xs font-semibold border",
+                    member.status === MemberStatus.ACTIF
+                      ? "bg-emerald-500/20 text-emerald-300 border-emerald-400/20"
+                      : member.status === MemberStatus.INACTIF
+                      ? "bg-rose-500/20 text-rose-300 border-rose-400/20"
+                      : "bg-slate-500/20 text-slate-300 border-slate-400/20"
+                  )}>
+                    {member.status}
+                  </span>
+                </div>
+                <h1 className="text-3xl font-bold text-white leading-tight tracking-tight">
+                  {formatFirstName(member.firstName)} {member.lastName.toUpperCase()}
+                </h1>
+                {getDisplayNickname(member.firstName, member.nickname, member.gender) && (
+                  <p className="text-indigo-300 text-sm font-medium mt-1 italic">
+                    « {getDisplayNickname(member.firstName, member.nickname, member.gender)} »
+                  </p>
+                )}
+                {member.profession && (
+                  <p className="text-slate-400 text-sm mt-2 flex items-center gap-2">
+                    <Briefcase size={13} /> {member.profession}
+                  </p>
+                )}
+              </div>
+              {/* Departments */}
+              {member.departments.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {member.departments.map(dept => (
+                    <span key={dept} className="px-2.5 py-1 rounded-xl text-xs font-medium flex items-center gap-1.5 bg-white/10 text-white border border-white/10">
+                      {getDepartmentIcon(dept, 11)} {dept}
+                    </span>
+                  ))}
+                </div>
+              )}
+              {/* Quick actions */}
+              <div className="flex flex-wrap gap-2 pt-2">
+                {member.phone && (
+                  <button onClick={() => handleCall()} className="flex items-center gap-2 px-4 py-2.5 bg-white/10 hover:bg-white/20 rounded-xl text-white text-xs font-medium transition-all border border-white/10">
+                    <Phone size={14} /> Appeler
+                  </button>
+                )}
+                {(member.whatsappPhone || member.phone) && (
+                  <button onClick={handleWhatsApp} className="flex items-center gap-2 px-4 py-2.5 bg-emerald-500/20 hover:bg-emerald-500/30 rounded-xl text-emerald-300 text-xs font-medium transition-all border border-emerald-400/20">
+                    <MessageCircle size={14} /> WhatsApp
+                  </button>
+                )}
+                {member.email && (
+                  <button onClick={handleEmail} className="flex items-center gap-2 px-4 py-2.5 bg-white/10 hover:bg-white/20 rounded-xl text-white text-xs font-medium transition-all border border-white/10">
+                    <Mail size={14} /> Email
+                  </button>
+                )}
+                <button onClick={() => setIsCardModalOpen(true)} className="flex items-center gap-2 px-4 py-2.5 bg-white/10 hover:bg-white/20 rounded-xl text-white text-xs font-medium transition-all border border-white/10">
+                  <CreditCard size={14} /> Carte
+                </button>
+                <button onClick={() => onEdit(member)} className="flex items-center gap-2 px-4 py-2.5 bg-indigo-500/30 hover:bg-indigo-500/40 rounded-xl text-white text-xs font-medium transition-all border border-indigo-400/20">
+                  <Edit size={14} /> Modifier
+                </button>
+                <button onClick={() => onDelete(member.id)} className="flex items-center gap-2 px-4 py-2.5 bg-rose-500/20 hover:bg-rose-500/30 rounded-xl text-rose-300 text-xs font-medium transition-all border border-rose-400/20">
+                  <Trash2 size={14} /> Supprimer
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Account Activation */}
+        <div className="mb-6">
+          <button
+            onClick={handleActivateAccount}
+            disabled={isActivatingAccount}
+            className={cn(
+              "w-full py-3.5 rounded-2xl text-xs font-medium transition-all flex items-center justify-center gap-2 border shadow-sm",
+              member.memberAccountActive
+                ? "bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100"
+                : "bg-violet-50 text-violet-700 border-violet-200 hover:bg-violet-100"
+            )}
+          >
+            {isActivatingAccount
+              ? <><Loader2 size={15} className="animate-spin" /> Génération en cours...</>
+              : member.memberAccountActive
+              ? <><UserCheck size={15} /> Compte actif — Réinitialiser les informations de connexion</>
+              : <><KeyRound size={15} /> Activer le compte Exercices Spirituels</>
+            }
+          </button>
+        </div>
+
+        {/* 2-column content grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pb-10">
+
+          {/* LEFT COLUMN */}
+          <div className="space-y-6">
+
+            {/* Identité & État Civil */}
+            <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+              <div className="px-6 py-4 border-b border-slate-50 flex items-center gap-2">
+                <User size={14} className="text-indigo-600" />
+                <h4 className="text-xs font-semibold text-slate-600">Identité & État Civil</h4>
+              </div>
+              <div className="p-6 grid grid-cols-2 gap-3">
+                <div className="bg-slate-50 p-4 rounded-xl space-y-1">
+                  <p className="text-xs font-medium text-slate-400">Surnom</p>
+                  <p className="text-xs font-semibold text-slate-800">{getDisplayNickname(member.firstName, member.nickname, member.gender) || '—'}</p>
+                </div>
+                <div className="bg-slate-50 p-4 rounded-xl space-y-1">
+                  <p className="text-xs font-medium text-slate-400">Sexe</p>
+                  <p className="text-xs font-semibold text-slate-800">{member.gender}</p>
+                </div>
+                <div className="bg-slate-50 p-4 rounded-xl space-y-1">
+                  <p className="text-xs font-medium text-slate-400">Date de naissance</p>
+                  <p className="text-xs font-semibold text-slate-800">{member.birthDate ? (formatBirthDate(member.birthDate) || '—') : '—'}</p>
+                </div>
+                <div className="bg-slate-50 p-4 rounded-xl space-y-1">
+                  <p className="text-xs font-medium text-slate-400">État Civil</p>
+                  <p className="text-xs font-semibold text-slate-800">{member.maritalStatus}</p>
+                </div>
+                {member.source && (
+                  <div className="bg-slate-50 p-4 rounded-xl space-y-1">
+                    <p className="text-xs font-medium text-slate-400">Source</p>
+                    <p className="text-xs font-semibold text-slate-800">{member.source}</p>
+                  </div>
+                )}
+                {member.invitedBy && (
+                  <div className="bg-slate-50 p-4 rounded-xl space-y-1">
+                    <p className="text-xs font-medium text-slate-400">Invité(e) par</p>
+                    <p className="text-xs font-semibold text-slate-800">{member.invitedBy}</p>
+                  </div>
+                )}
+                {(member.maritalStatus.includes('Marié') || member.spouseName || member.weddingDate) && (
+                  <div className="col-span-2 bg-rose-50/60 border border-rose-100/60 p-4 rounded-xl flex items-center gap-4">
+                    {spouseMember ? (
+                      <Avatar firstName={spouseMember.firstName} lastName={spouseMember.lastName} photoUrl={spouseMember.photoUrl} size="lg" shape="card" />
+                    ) : (
+                      <div className="w-10 h-10 rounded-xl bg-rose-100 flex items-center justify-center text-rose-400 shrink-0"><Heart size={18} /></div>
+                    )}
+                    <div>
+                      <p className="text-xs font-medium text-slate-400">Conjoint(e)</p>
+                      <p className="text-sm font-semibold text-slate-800">{member.spouseName || 'Non spécifié'}</p>
+                      {member.weddingDate && <p className="text-xs text-slate-400">Mariés le {new Date(member.weddingDate).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}</p>}
+                    </div>
+                  </div>
+                )}
+                {member.motherName && (
+                  <div className="col-span-2 bg-pink-50/60 border border-pink-100/60 p-4 rounded-xl flex items-center gap-4">
+                    {motherMember ? (
+                      <Avatar firstName={motherMember.firstName} lastName={motherMember.lastName} photoUrl={motherMember.photoUrl} size="lg" shape="card" />
+                    ) : (
+                      <div className="w-10 h-10 rounded-xl bg-pink-100 flex items-center justify-center text-pink-400 shrink-0"><Baby size={18} /></div>
+                    )}
+                    <div>
+                      <p className="text-xs font-medium text-slate-400">Mère</p>
+                      <p className="text-sm font-semibold text-slate-800">{member.motherName}</p>
+                      {motherMember && <p className="text-xs text-slate-400">{motherMember.status} · {motherMember.type}</p>}
+                    </div>
+                  </div>
+                )}
+                {member.fatherName && (
+                  <div className="col-span-2 bg-blue-50/60 border border-blue-100/60 p-4 rounded-xl flex items-center gap-4">
+                    {fatherMember ? (
+                      <Avatar firstName={fatherMember.firstName} lastName={fatherMember.lastName} photoUrl={fatherMember.photoUrl} size="lg" shape="card" />
+                    ) : (
+                      <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center text-blue-400 shrink-0"><Baby size={18} /></div>
+                    )}
+                    <div>
+                      <p className="text-xs font-medium text-slate-400">Père</p>
+                      <p className="text-sm font-semibold text-slate-800">{member.fatherName}</p>
+                      {fatherMember && <p className="text-xs text-slate-400">{fatherMember.status} · {fatherMember.type}</p>}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Enfants */}
+            {children.length > 0 && (
+              <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+                <div className="px-6 py-4 border-b border-slate-50 flex items-center gap-2">
+                  <Baby size={14} className="text-purple-500" />
+                  <h4 className="text-xs font-semibold text-slate-600">Enfants ({children.length})</h4>
+                </div>
+                <div className="p-6 space-y-3">
+                  {children.map(child => (
+                    <div key={child.id} className="flex items-center gap-4 p-3 bg-slate-50 rounded-xl">
+                      <Avatar firstName={child.firstName} lastName={child.lastName} photoUrl={child.photoUrl} size="lg" shape="card" />
+                      <div className="flex-1">
+                        <p className="text-xs font-semibold text-slate-800">{formatFirstName(child.firstName)} {child.lastName.toUpperCase()}</p>
+                        <p className="text-xs text-slate-400">{child.status} · {child.type}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Contact & Localisation */}
+            <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+              <div className="px-6 py-4 border-b border-slate-50 flex items-center gap-2">
+                <PhoneCall size={14} className="text-emerald-500" />
+                <h4 className="text-xs font-semibold text-slate-600">Contact & Localisation</h4>
+              </div>
+              <div className="p-6 space-y-5">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-xs font-medium text-slate-400 mb-1.5">Téléphone principal</p>
+                    <button onClick={() => handleCall()} className="flex items-center gap-2 text-sm font-semibold text-indigo-600 hover:text-indigo-700 transition-colors">
+                      <Phone size={14} /> {member.phone ? formatPhone(member.phone) : '—'}
+                    </button>
+                  </div>
+                  {member.secondaryPhone && (
+                    <div>
+                      <p className="text-xs font-medium text-slate-400 mb-1.5">Téléphone secondaire</p>
+                      <button onClick={() => handleCall(member.secondaryPhone)} className="flex items-center gap-2 text-sm font-semibold text-slate-700 hover:text-slate-900 transition-colors">
+                        <Phone size={14} /> {formatPhone(member.secondaryPhone)}
+                      </button>
+                    </div>
+                  )}
+                  <div>
+                    <p className="text-xs font-medium text-slate-400 mb-1.5">WhatsApp</p>
+                    <button onClick={handleWhatsApp} className="flex items-center gap-2 text-sm font-semibold text-emerald-600 hover:text-emerald-700 transition-colors">
+                      <MessageCircle size={14} /> {member.whatsappPhone ? formatPhone(member.whatsappPhone) : (member.phone ? formatPhone(member.phone) : '—')}
+                    </button>
+                  </div>
+                  {member.email && (
+                    <div>
+                      <p className="text-xs font-medium text-slate-400 mb-1.5">Email</p>
+                      <button onClick={handleEmail} className="flex items-center gap-2 text-sm font-semibold text-blue-600 hover:text-blue-700 transition-colors truncate max-w-full">
+                        <Mail size={14} /> {member.email}
+                      </button>
+                    </div>
+                  )}
+                </div>
+                <div className="pt-4 border-t border-slate-50 flex items-start gap-4">
+                  <div className="w-9 h-9 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 shrink-0 border border-slate-100">
+                    <MapPin size={16} />
+                  </div>
+                  <div>
+                    <p className="text-xs font-medium text-slate-400">Adresse</p>
+                    <p className="text-sm font-medium text-slate-700 mt-0.5 italic">{member.address || 'Non renseignée'}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Contact d'urgence */}
+            {member.emergencyContact && (member.emergencyContact.name || member.emergencyContact.phone) && (
+              <div className="bg-white rounded-2xl border border-rose-100 shadow-sm overflow-hidden">
+                <div className="px-6 py-4 border-b border-rose-50 flex items-center gap-2">
+                  <ShieldAlert size={14} className="text-rose-500" />
+                  <h4 className="text-xs font-semibold text-slate-600">Contact d'Urgence</h4>
+                </div>
+                <div className="p-6 flex items-center gap-5">
+                  <div className="w-12 h-12 rounded-2xl bg-rose-500 text-white flex items-center justify-center shadow-lg shadow-rose-200 shrink-0">
+                    <UserRound size={22} />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-xs font-semibold text-rose-500">{member.emergencyContact.relation || 'Contact'}</p>
+                    <p className="text-sm font-semibold text-slate-800">{member.emergencyContact.name}</p>
+                    <button onClick={() => handleCall(member.emergencyContact.phone)} className="text-xs font-semibold text-rose-600 mt-0.5 flex items-center gap-1">
+                      <Phone size={10} /> {formatPhone(member.emergencyContact.phone)}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Disciple-maker assigné */}
+            {mentorMember && (
+              <div className="bg-white rounded-2xl border border-indigo-100 shadow-sm overflow-hidden">
+                <div className="px-6 py-4 border-b border-indigo-50 flex items-center gap-2">
+                  <BookOpen size={14} className="text-indigo-600" />
+                  <h4 className="text-xs font-semibold text-slate-600">Disciple-maker assigné</h4>
+                </div>
+                <div className="p-6 flex items-center gap-5">
+                  <Avatar firstName={mentorMember.firstName} lastName={mentorMember.lastName} photoUrl={mentorMember.photoUrl} size="lg" shape="card" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-semibold text-indigo-500 uppercase tracking-wide">Mentor</p>
+                    <p className="text-sm font-semibold text-slate-800">{formatFirstName(mentorMember.firstName)} {mentorMember.lastName.toUpperCase()}</p>
+                    <p className="text-xs text-slate-400">{mentorMember.status} · {mentorMember.type}</p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Comptes rendus de suivi */}
+            {localFollowUp.length > 0 && (
+              <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+                <div className="px-6 py-4 border-b border-slate-50 flex items-center gap-2">
+                  <HistoryIcon size={14} className="text-indigo-600" />
+                  <h4 className="text-xs font-semibold text-slate-600">Comptes rendus de suivi ({localFollowUp.length})</h4>
+                </div>
+                <div className="p-6 space-y-3">
+                  {[...localFollowUp].reverse().map(entry => (
+                    <div key={entry.id} className="flex items-start gap-3 p-3 bg-slate-50 rounded-xl">
+                      <span className="px-2 py-0.5 bg-indigo-100 text-indigo-600 rounded-lg text-xs font-medium shrink-0 mt-0.5">{entry.type}</span>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs text-slate-700">{entry.note}</p>
+                        {entry.nextStep && <p className="text-xs text-indigo-500 mt-0.5">→ {entry.nextStep}</p>}
+                        <p className="text-[10px] text-slate-400 mt-0.5">{new Date(entry.date).toLocaleDateString('fr-FR')}</p>
+                      </div>
+                      <button onClick={() => handleDeleteMemberFollowUp(entry.id)} className="p-1.5 rounded-lg text-slate-300 hover:text-rose-500 hover:bg-rose-50 transition-colors shrink-0">
+                        <Trash2 size={13} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+          </div>
+
+          {/* RIGHT COLUMN */}
+          <div className="space-y-6">
+
+            {/* Contributions Financières */}
+            <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+              <div className="px-6 py-4 border-b border-slate-50 flex items-center gap-2">
+                <Banknote size={14} className="text-emerald-600" />
+                <h4 className="text-xs font-semibold text-slate-600">Contributions Financières</h4>
+              </div>
+              <div className="p-6">
+                {memberFinances.length === 0 ? (
+                  <div className="flex items-center gap-3 text-slate-400">
+                    <Banknote size={18} className="opacity-30" />
+                    <p className="text-xs italic">Aucune contribution enregistrée.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="bg-emerald-50 border border-emerald-100 rounded-2xl p-4 space-y-1">
+                        <p className="text-[9px] font-black text-emerald-500 uppercase tracking-widest">Total donné</p>
+                        <p className="text-xl font-black text-emerald-700 leading-none">{totalContributed.toLocaleString('fr-FR')} <span className="text-xs font-bold">F CFA</span></p>
+                      </div>
+                      <div className="bg-slate-50 border border-slate-100 rounded-2xl p-4 space-y-1">
+                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Opérations</p>
+                        <p className="text-xl font-black text-slate-700 leading-none">{memberFinances.length}</p>
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      {memberFinances.slice(0, 5).map(r => (
+                        <div key={r.id} className="flex items-center gap-3 p-3 bg-slate-50 rounded-xl">
+                          <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center shrink-0", r.type === OperationType.REVENU ? "bg-emerald-100 text-emerald-600" : "bg-rose-100 text-rose-500")}>
+                            {r.type === OperationType.REVENU ? <ArrowUpRight size={14} strokeWidth={3} /> : <ArrowDownRight size={14} strokeWidth={3} />}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-xs font-bold text-slate-800 uppercase truncate">{r.category}</p>
+                            <p className="text-[9px] text-slate-400 font-semibold uppercase">{new Date(r.date).toLocaleDateString('fr-FR')} · {r.paymentMethod}</p>
+                          </div>
+                          <span className={cn("text-xs font-black shrink-0", r.type === OperationType.REVENU ? "text-emerald-600" : "text-rose-500")}>
+                            {r.type === OperationType.REVENU ? '+' : '-'}{r.amount.toLocaleString('fr-FR')}
+                          </span>
+                        </div>
+                      ))}
+                      {memberFinances.length > 5 && <p className="text-[9px] text-slate-400 font-bold uppercase text-center">+ {memberFinances.length - 5} autre(s)</p>}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Présence aux Cultes */}
+            <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+              <div className="px-6 py-4 border-b border-slate-50 flex items-center gap-2">
+                <BarChart2 size={14} className="text-indigo-600" />
+                <h4 className="text-xs font-semibold text-slate-600">Présence aux Cultes</h4>
+              </div>
+              <div className="p-6">
+                {attendanceSessions.length === 0 ? (
+                  <div className="flex items-center gap-3 text-slate-400">
+                    <CalendarCheck size={18} className="opacity-30" />
+                    <p className="text-xs italic">Aucun culte enregistré.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-3 gap-3">
+                      <div className="bg-indigo-50 border border-indigo-100 rounded-2xl p-4 space-y-1">
+                        <p className="text-[9px] font-black text-indigo-400 uppercase tracking-widest">Assiduité</p>
+                        <p className="text-xl font-black text-indigo-700 leading-none">{attendanceRate !== null ? `${attendanceRate}%` : '—'}</p>
+                      </div>
+                      <div className="bg-slate-50 border border-slate-100 rounded-2xl p-4 space-y-1">
+                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Présents</p>
+                        <p className="text-xl font-black text-emerald-600 leading-none">{attendanceSessions.length - memberAbsences.length}</p>
+                      </div>
+                      <div className="bg-slate-50 border border-slate-100 rounded-2xl p-4 space-y-1">
+                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Absents</p>
+                        <p className="text-xl font-black text-rose-500 leading-none">{memberAbsences.length}</p>
+                      </div>
+                    </div>
+                    {attendanceRate !== null && (
+                      <div className="space-y-2">
+                        <div className="flex justify-between items-center">
+                          <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Taux de présence</span>
+                          <span className={cn("text-[10px] font-black uppercase", attendanceRate >= 80 ? "text-emerald-600" : attendanceRate >= 50 ? "text-amber-500" : "text-rose-500")}>
+                            {attendanceRate >= 80 ? 'Excellent' : attendanceRate >= 50 ? 'Moyen' : 'Faible'}
+                          </span>
+                        </div>
+                        <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
+                          <div className={cn("h-full rounded-full transition-all", attendanceRate >= 80 ? "bg-emerald-500" : attendanceRate >= 50 ? "bg-amber-400" : "bg-rose-400")} style={{ width: `${attendanceRate}%` }} />
+                        </div>
+                      </div>
+                    )}
+                    {memberAbsences.length > 0 && (
+                      <div className="space-y-2">
+                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Absences récentes</p>
+                        {memberAbsences.slice(0, 4).map(s => (
+                          <div key={s.id} className="flex items-center gap-3 p-3 bg-slate-50 rounded-xl">
+                            <div className="w-8 h-8 rounded-lg bg-rose-100 text-rose-400 flex items-center justify-center shrink-0"><CalendarX size={13} /></div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-xs font-bold text-slate-700 uppercase truncate">{s.service}</p>
+                              <p className="text-[9px] text-slate-400 font-semibold uppercase">{new Date(s.date).toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'long' })}</p>
+                            </div>
+                          </div>
+                        ))}
+                        {memberAbsences.length > 4 && <p className="text-[9px] text-slate-400 font-bold uppercase text-center">+ {memberAbsences.length - 4} autre(s)</p>}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Parcours Spirituel */}
+            <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+              <div className="px-6 py-4 border-b border-slate-50 flex items-center gap-2">
+                <HistoryIcon size={14} className="text-slate-500" />
+                <h4 className="text-xs font-semibold text-slate-600">Parcours Spirituel</h4>
+              </div>
+              <div className="p-6">
+                {dynamicHistory.length > 0 ? (
+                  <div className="space-y-3">
+                    {dynamicHistory.map(event => (
+                      <div key={event.id} className="flex gap-4 group">
+                        <div className="flex flex-col items-center">
+                          <div className="w-8 h-8 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-400 group-hover:bg-indigo-50 group-hover:text-indigo-600 group-hover:border-indigo-100 transition-all shrink-0">
+                            {event.icon}
+                          </div>
+                          <div className="flex-1 w-px bg-slate-100 my-1 group-last:hidden" />
+                        </div>
+                        <div className="pb-3">
+                          <p className="text-xs font-medium text-slate-400">{event.type} · {new Date(event.date).toLocaleDateString('fr-FR')}</p>
+                          <p className="text-sm font-semibold text-slate-700 mt-0.5">{event.label}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-xs text-slate-400 italic">Aucun événement enregistré.</p>
+                )}
+              </div>
+            </div>
+
+            {/* Notes pastorales */}
+            {member.notes && (
+              <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+                <div className="px-6 py-4 border-b border-slate-50 flex items-center gap-2">
+                  <StickyNote size={14} className="text-indigo-600" />
+                  <h4 className="text-xs font-semibold text-slate-600">Observations Pastorales</h4>
+                </div>
+                <div className="p-6">
+                  <p className="text-sm text-slate-600 font-medium italic leading-relaxed">"{member.notes}"</p>
+                </div>
+              </div>
+            )}
+
+          </div>
+        </div>
+
+        <MemberCardModal member={member} isOpen={isCardModalOpen} onClose={() => setIsCardModalOpen(false)} />
+
+        {/* Modale informations de connexion */}
+        {accountModal && (
+          <div className="fixed inset-0 z-[300] flex items-center justify-center p-4">
+            <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setAccountModal(null)} />
+            <div className="relative w-full max-w-sm bg-white rounded-3xl shadow-2xl p-8 border border-slate-100 animate-in zoom-in-95 duration-200">
+              <div className="w-14 h-14 bg-emerald-50 rounded-2xl flex items-center justify-center mx-auto mb-5">
+                <UserCheck size={26} className="text-emerald-600" />
+              </div>
+              <h3 className="text-lg font-bold text-slate-900 text-center">Compte activé !</h3>
+              <p className="text-xs text-slate-500 text-center mt-1 mb-6">Copiez ces informations et envoyez-les au membre.</p>
+              <div className="space-y-3">
+                <div className="bg-slate-50 rounded-xl p-4 border border-slate-200">
+                  <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Lien de connexion</p>
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-xs font-bold text-indigo-600 break-all">{loginUrl}</p>
+                    <button onClick={() => handleCopy(loginUrl, 'url')} className="shrink-0 p-1.5 rounded-lg hover:bg-slate-200 transition-colors text-slate-500">
+                      {copiedField === 'url' ? <CheckCircle2 size={14} className="text-emerald-500" /> : <Copy size={14} />}
+                    </button>
+                  </div>
+                </div>
+                <div className="bg-slate-50 rounded-xl p-4 border border-slate-200">
+                  <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Identifiant</p>
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-sm font-black text-slate-800 font-mono">{accountModal.username}</p>
+                    <button onClick={() => handleCopy(accountModal.username, 'username')} className="shrink-0 p-1.5 rounded-lg hover:bg-slate-200 transition-colors text-slate-500">
+                      {copiedField === 'username' ? <CheckCircle2 size={14} className="text-emerald-500" /> : <Copy size={14} />}
+                    </button>
+                  </div>
+                </div>
+                <div className="bg-slate-50 rounded-xl p-4 border border-slate-200">
+                  <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Mot de passe</p>
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-sm font-black text-slate-800 font-mono">{accountModal.password}</p>
+                    <button onClick={() => handleCopy(accountModal.password, 'password')} className="shrink-0 p-1.5 rounded-lg hover:bg-slate-200 transition-colors text-slate-500">
+                      {copiedField === 'password' ? <CheckCircle2 size={14} className="text-emerald-500" /> : <Copy size={14} />}
+                    </button>
+                  </div>
+                </div>
+              </div>
+              <div className="flex flex-col gap-2 mt-6">
+                <button onClick={copyAll} className="w-full py-3 bg-indigo-600 text-white rounded-2xl text-xs font-bold hover:bg-indigo-700 transition-all flex items-center justify-center gap-2 shadow-lg shadow-indigo-100">
+                  {copiedField === 'all' ? <><CheckCircle2 size={15} /> Copié !</> : <><Copy size={15} /> Tout copier</>}
+                </button>
+                <button onClick={() => setAccountModal(null)} className="w-full py-3 bg-slate-50 text-slate-600 rounded-2xl text-xs font-medium border border-slate-200 hover:bg-slate-100 transition-all">Fermer</button>
+              </div>
+            </div>
+          </div>
+        )}
+      </>
+    );
+  }
+
+  // ── Modal layout ────────────────────────────────────────────────────────────
   return (
     <>
     <div className={!asPage ? cn(

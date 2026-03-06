@@ -501,15 +501,34 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
     <div className="min-h-screen w-full flex flex-col md:flex-row font-sans text-slate-900 selection:bg-indigo-500/30">
 
       {/* ─── Left Panel: Branding ─── */}
-      <div className="relative md:w-[45%] bg-gradient-to-br from-indigo-600 via-indigo-700 to-violet-800 flex flex-col items-center justify-between px-10 py-12 md:px-14 md:py-16 overflow-hidden">
+      <div className="relative md:w-[45%] bg-gradient-to-br from-indigo-600 via-indigo-700 to-violet-800 flex flex-col items-center justify-between px-8 py-8 md:px-14 md:py-16 overflow-hidden">
 
         {/* Decorative blobs */}
         <div className="absolute top-[-20%] left-[-20%] w-[70%] h-[70%] bg-white/10 rounded-full blur-[100px] pointer-events-none"></div>
         <div className="absolute bottom-[-20%] right-[-20%] w-[60%] h-[60%] bg-violet-900/30 rounded-full blur-[80px] pointer-events-none"></div>
         <div className="absolute inset-0 opacity-[0.04] pointer-events-none bg-[url('https://grainy-gradients.vercel.app/noise.svg')]"></div>
 
-        {/* Logo + Brand */}
-        <div className="relative z-10 flex flex-col items-center text-center">
+        {/* Mobile: logo + verse side by side */}
+        <div className="relative z-10 w-full flex md:hidden items-center gap-5">
+          {/* Logo compact */}
+          <div className="w-14 h-14 shrink-0 flex items-center justify-center shadow-xl rounded-2xl ring-4 ring-white/20 overflow-hidden">
+            <Logo className="w-full h-full" />
+          </div>
+          {/* Verse inline */}
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-1.5 mb-1">
+              <Sparkles size={11} className="text-amber-300 shrink-0" />
+              <span className="text-[10px] font-medium text-indigo-200 tracking-wide">Méditation du jour</span>
+            </div>
+            <p className="text-white/90 text-xs leading-relaxed italic line-clamp-3">
+              « {selectedVerse.text} »
+            </p>
+            <p className="text-[10px] font-medium text-indigo-200 mt-1">{selectedVerse.ref}</p>
+          </div>
+        </div>
+
+        {/* Desktop: logo centered */}
+        <div className="relative z-10 hidden md:flex flex-col items-center text-center">
           <div className="w-20 h-20 flex items-center justify-center shadow-2xl rounded-[1.8rem] ring-8 ring-white/20 overflow-hidden mb-5">
             <Logo className="w-full h-full" />
           </div>
@@ -517,7 +536,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
           <p className="text-indigo-200 text-sm mt-1 font-medium">Gestion d'Église</p>
         </div>
 
-        {/* Verse of the day */}
+        {/* Desktop: Verse of the day */}
         <div className="relative z-10 w-full max-w-xs text-center hidden md:block">
           <div className="w-8 h-px bg-white/25 mx-auto mb-7"></div>
           <div className="flex items-center justify-center gap-2 mb-4">

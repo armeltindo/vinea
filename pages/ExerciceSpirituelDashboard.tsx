@@ -247,7 +247,7 @@ const ExerciceSpirituelDashboard: React.FC = () => {
             )}
           </div>
           <div>
-            <h1 className="text-sm font-bold leading-tight">Exercices Spirituels</h1>
+            <h1 className="text-sm font-bold leading-tight">Mon Espace - MIDC</h1>
             <p className="text-indigo-200 text-xs">
               {session.gender === 'Masculin' ? 'Frère' : 'Sœur'} {session.firstName}
             </p>

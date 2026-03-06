@@ -194,7 +194,14 @@ const SuiviAbsents: React.FC = () => {
 
   // ── Actions
   const handleAssign = (personId: string, date: string, staffId: string) => {
-    setAssignments(prev => ({ ...prev, [`${personId}_${date}`]: staffId }));
+    const key = `${personId}_${date}`;
+    // Update local state
+    setAssignments(prev => {
+      const updated = { ...prev, [key]: staffId };
+      // Persist immediately — don't rely solely on the useEffect
+      setAppConfig('attendance_assignments', updated);
+      return updated;
+    });
     const person = allPeople.find(p => p.id === personId);
     const staff = staffMembers.find(s => s.id === staffId);
     if (person && staff) {
@@ -208,7 +215,6 @@ const SuiviAbsents: React.FC = () => {
         link: 'attendance',
         targetId: personId,
       });
-      // Rafraîchir après un court délai pour laisser setAppConfig persister l'affectation
       setTimeout(() => refreshNotifications(), 500);
     }
   };
@@ -234,11 +240,14 @@ const SuiviAbsents: React.FC = () => {
     const staff = members.find(m => m.id === staffId);
     const author = staff ? `${formatFirstName(staff.firstName)} ${staff.lastName.toUpperCase()}` : 'Admin';
     setTimeout(() => {
+      const memberId = followUpMember.id;
       const entry = { id: generateId(), date: new Date().toISOString(), serviceDate: followUpDate, note: currentNote, author };
-      setFollowUpHistory(prev => ({
-        ...prev,
-        [followUpMember.id]: [entry, ...(prev[followUpMember.id] || [])]
-      }));
+      setFollowUpHistory(prev => {
+        const updated = { ...prev, [memberId]: [entry, ...(prev[memberId] || [])] };
+        // Persist immediately
+        setAppConfig('attendance_followup_history', updated);
+        return updated;
+      });
       setFollowUpSuccess(true);
       setIsSubmitting(false);
       setTimeout(() => { setFollowUpMember(null); setFollowUpSuccess(false); }, 1500);

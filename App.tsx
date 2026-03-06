@@ -251,6 +251,7 @@ const App: React.FC = () => {
   }, [isAuthenticated, generateNotifications]);
 
   const unreadCount = useMemo(() => notifications.filter(n => !n.isRead).length, [notifications]);
+  const notificationsContextValue = useMemo(() => ({ addNotification }), [addNotification]);
 
   // PWA app icon badge
   useEffect(() => {
@@ -681,7 +682,7 @@ const App: React.FC = () => {
         </header>
 
         <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto">
-          <NotificationsContext.Provider value={{ addNotification }}>
+          <NotificationsContext.Provider value={notificationsContextValue}>
           <PermissionsContext.Provider value={{ canDelete, canWrite }}>
             <React.Suspense fallback={pageFallback}>
               <Routes>

@@ -739,7 +739,7 @@ const Settings: React.FC = () => {
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
-        setChurchInfo({ ...churchInfo, logo: reader.result as string });
+        setChurchInfo(prev => ({ ...prev, logo: reader.result as string }));
       };
       reader.readAsDataURL(file);
     }
@@ -750,7 +750,7 @@ const Settings: React.FC = () => {
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
-        setAdminInfo({ ...adminInfo, avatar: reader.result as string });
+        setAdminInfo(prev => ({ ...prev, avatar: reader.result as string }));
       };
       reader.readAsDataURL(file);
     }

@@ -551,19 +551,22 @@ const Members: React.FC = () => {
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
-        setFormData({ ...formData, photoUrl: reader.result as string });
+        setFormData(prev => ({ ...prev, photoUrl: reader.result as string }));
       };
       reader.readAsDataURL(file);
     }
   };
 
   const toggleDepartment = (dept: string) => {
-    const currentDepts = formData.departments || [];
-    if (currentDepts.includes(dept as Department)) {
-      setFormData({ ...formData, departments: currentDepts.filter(d => d !== dept) });
-    } else {
-      setFormData({ ...formData, departments: [...currentDepts, dept as Department] });
-    }
+    setFormData(prev => {
+      const currentDepts = prev.departments || [];
+      return {
+        ...prev,
+        departments: currentDepts.includes(dept as Department)
+          ? currentDepts.filter(d => d !== dept)
+          : [...currentDepts, dept as Department],
+      };
+    });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {

@@ -745,15 +745,42 @@ const Settings: React.FC = () => {
     }
   };
 
-  const handleAdminAvatarUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleAdminAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setAdminInfo(prev => ({ ...prev, avatar: reader.result as string }));
+    if (!file) return;
+
+    // Redimensionner côté client (max 256×256, WebP 85%)
+    const blob = await new Promise<Blob>((resolve, reject) => {
+      const img = new Image();
+      const url = URL.createObjectURL(file);
+      img.onload = () => {
+        URL.revokeObjectURL(url);
+        const scale = Math.min(256 / img.width, 256 / img.height, 1);
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.round(img.width * scale);
+        canvas.height = Math.round(img.height * scale);
+        canvas.getContext('2d')!.drawImage(img, 0, 0, canvas.width, canvas.height);
+        canvas.toBlob(b => b ? resolve(b) : reject(new Error('toBlob failed')), 'image/webp', 0.85);
       };
-      reader.readAsDataURL(file);
+      img.onerror = reject;
+      img.src = url;
+    });
+
+    // Créer le bucket s'il n'existe pas encore (ignoré s'il existe déjà)
+    await supabase.storage.createBucket('avatars', { public: true }).catch(() => {});
+
+    const fileName = `avatar-${currentAdminId.current || 'default'}.webp`;
+    const { error } = await supabase.storage
+      .from('avatars')
+      .upload(fileName, blob, { upsert: true, contentType: 'image/webp' });
+
+    if (error) {
+      console.error('Avatar upload error:', error.message);
+      return;
     }
+
+    const { data } = supabase.storage.from('avatars').getPublicUrl(fileName);
+    setAdminInfo(prev => ({ ...prev, avatar: data.publicUrl }));
   };
 
   const handleExportFullData = async () => {

@@ -17,6 +17,10 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 // Renseignez VITE_SUPABASE_SERVICE_ROLE_KEY dans .env.local (Settings → API → service_role).
 export const supabaseAdmin = supabaseServiceRoleKey
   ? createClient(supabaseUrl, supabaseServiceRoleKey, {
-      auth: { autoRefreshToken: false, persistSession: false },
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false,
+        storageKey: 'supabase-admin-auth',
+      },
     })
   : null;

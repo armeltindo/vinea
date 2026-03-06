@@ -573,6 +573,7 @@ const Members: React.FC = () => {
       img.src = url;
     });
     await supabase.storage.createBucket('members', { public: true }).catch(() => {});
+    await supabase.storage.updateBucket('members', { public: true }).catch(() => {});
     const fileName = `photo-${memberId}.webp`;
     await supabase.storage.from('members').upload(fileName, blob, { upsert: true, contentType: 'image/webp' });
     const { data } = supabase.storage.from('members').getPublicUrl(fileName);

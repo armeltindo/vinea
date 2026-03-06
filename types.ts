@@ -199,6 +199,7 @@ export interface Member {
   profession?: string;
   skills?: string;
   notes?: string;
+  followUpHistory?: FollowUpEntry[];
   source: string;
   invitedBy?: string;
   assignedDiscipleMakerId?: string;

@@ -45,6 +45,7 @@ function dbToMember(row: any): Member {
     profession: row.profession ?? undefined,
     skills: row.skills ?? undefined,
     notes: row.notes ?? undefined,
+    followUpHistory: row.follow_up_history ?? [],
     source: row.source ?? '',
     invitedBy: row.invited_by ?? undefined,
     assignedDiscipleMakerId: row.assigned_disciple_maker_id ?? undefined,
@@ -88,6 +89,7 @@ function memberToDb(m: Partial<Member>): Record<string, unknown> {
   if (m.profession !== undefined) db.profession = m.profession ?? null;
   if (m.skills !== undefined) db.skills = m.skills ?? null;
   if (m.notes !== undefined) db.notes = m.notes ?? null;
+  if (m.followUpHistory !== undefined) db.follow_up_history = m.followUpHistory;
   if (m.source !== undefined) db.source = m.source;
   if (m.invitedBy !== undefined) db.invited_by = m.invitedBy ?? null;
   if (m.assignedDiscipleMakerId !== undefined) db.assigned_disciple_maker_id = m.assignedDiscipleMakerId || null;

@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import {
   LogOut, Users, ChevronDown, ChevronUp, CheckCircle2,
   AlertCircle, Loader2, BookOpen, UserX, Phone, MessageSquare,
-  Calendar, ClipboardList, MapPin, Save, ChevronRight
+  Calendar, ClipboardList, MapPin, Save, ChevronRight,
+  Pencil, Trash2, X, ArrowLeft
 } from 'lucide-react';
 import {
   getDisciplesByMentorId,
@@ -52,12 +53,16 @@ const FOLLOW_UP_TYPES: FollowUpEntry['type'][] = ['Appel', 'Visite', 'Message', 
 interface ReportFormProps {
   onSubmit: (type: FollowUpEntry['type'], note: string, nextStep: string) => Promise<void>;
   onCancel: () => void;
+  initialType?: FollowUpEntry['type'];
+  initialNote?: string;
+  initialNextStep?: string;
+  submitLabel?: string;
 }
 
-const ReportForm: React.FC<ReportFormProps> = ({ onSubmit, onCancel }) => {
-  const [type, setType] = useState<FollowUpEntry['type']>('Appel');
-  const [note, setNote] = useState('');
-  const [nextStep, setNextStep] = useState('');
+const ReportForm: React.FC<ReportFormProps> = ({ onSubmit, onCancel, initialType, initialNote, initialNextStep, submitLabel }) => {
+  const [type, setType] = useState<FollowUpEntry['type']>(initialType ?? 'Appel');
+  const [note, setNote] = useState(initialNote ?? '');
+  const [nextStep, setNextStep] = useState(initialNextStep ?? '');
   const [saving, setSaving] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -124,7 +129,7 @@ const ReportForm: React.FC<ReportFormProps> = ({ onSubmit, onCancel }) => {
           )}
         >
           {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
-          Enregistrer
+          {submitLabel ?? 'Enregistrer'}
         </button>
         <button
           type="button"
@@ -138,15 +143,259 @@ const ReportForm: React.FC<ReportFormProps> = ({ onSubmit, onCancel }) => {
   );
 };
 
+// ─── Modale détail / historique ──────────────────────────────
+
+type ModalTarget =
+  | { type: 'member'; person: Member; count7: number; count30: number }
+  | { type: 'visitor'; person: Visitor };
+
+interface PersonDetailModalProps {
+  target: ModalTarget;
+  onClose: () => void;
+  onUpdate: (updated: Member | Visitor) => void;
+}
+
+const PersonDetailModal: React.FC<PersonDetailModalProps> = ({ target, onClose, onUpdate }) => {
+  const { person, type } = target;
+  const isMember = type === 'member';
+
+  const getHistory = (): FollowUpEntry[] => {
+    if (isMember) return (person as Member).followUpHistory ?? [];
+    return (person as Visitor).followUpHistory ?? [];
+  };
+
+  const [history, setHistory] = useState<FollowUpEntry[]>(getHistory);
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [exerciseDates, setExerciseDates] = useState<string[]>([]);
+  const [loadingDates, setLoadingDates] = useState(false);
+
+  useEffect(() => {
+    if (isMember && (person as Member).memberAccountActive) {
+      setLoadingDates(true);
+      getDailyExerciseDatesByMemberId(person.id, 30).then(d => {
+        setExerciseDates(d);
+        setLoadingDates(false);
+      });
+    }
+  }, [person.id, isMember]);
+
+  const persist = async (newHistory: FollowUpEntry[]) => {
+    setSaving(true);
+    if (isMember) {
+      await updateMember(person.id, { followUpHistory: newHistory });
+      onUpdate({ ...(person as Member), followUpHistory: newHistory });
+    } else {
+      await updateVisitor(person.id, { followUpHistory: newHistory });
+      onUpdate({ ...(person as Visitor), followUpHistory: newHistory });
+    }
+    setHistory(newHistory);
+    setSaving(false);
+  };
+
+  const handleAdd = async (t: FollowUpEntry['type'], note: string, nextStep: string) => {
+    const entry: FollowUpEntry = { id: generateId(), date: new Date().toISOString().split('T')[0], type: t, note, nextStep: nextStep || undefined };
+    await persist([...history, entry]);
+    setShowAddForm(false);
+  };
+
+  const handleEdit = async (id: string, t: FollowUpEntry['type'], note: string, nextStep: string) => {
+    await persist(history.map(e => e.id === id ? { ...e, type: t, note, nextStep: nextStep || undefined } : e));
+    setEditingId(null);
+  };
+
+  const handleDelete = async (id: string) => {
+    await persist(history.filter(e => e.id !== id));
+  };
+
+  const m = isMember ? (person as Member) : null;
+  const v = !isMember ? (person as Visitor) : null;
+  const displayName = `${person.firstName} ${person.lastName}`;
+
+  const statusColor: Record<string, string> = {
+    'En attente': 'bg-slate-100 text-slate-500',
+    '1er Contact': 'bg-blue-100 text-blue-600',
+    'Visite/Rencontre': 'bg-violet-100 text-violet-600',
+    'Intégration/Membre': 'bg-emerald-100 text-emerald-600',
+  };
+
+  return (
+    <div className="fixed inset-0 z-[200] flex flex-col bg-slate-50">
+      {/* Header */}
+      <div className={cn("px-4 py-4 flex items-center gap-3 shadow-sm shrink-0", isMember ? "bg-indigo-700" : "bg-violet-700")}>
+        <button onClick={onClose} className="p-2 rounded-xl bg-white/10 hover:bg-white/20 transition-colors text-white">
+          <ArrowLeft size={20} />
+        </button>
+        <div className="w-10 h-10 rounded-xl overflow-hidden border border-white/30 shrink-0">
+          {(person as Member).photoUrl ? (
+            <img src={(person as Member).photoUrl} alt="" className="w-full h-full object-cover" />
+          ) : (
+            <div className="w-full h-full bg-white/20 flex items-center justify-center text-sm font-bold text-white">
+              {person.firstName.charAt(0)}{person.lastName.charAt(0)}
+            </div>
+          )}
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-bold text-white truncate">{displayName}</p>
+          <p className="text-xs text-white/70">{isMember ? (person.gender === 'Masculin' ? 'Frère · Disciple' : 'Sœur · Disciple') : `Visiteur · ${v!.status}`}</p>
+        </div>
+      </div>
+
+      <div className="flex-1 overflow-y-auto px-4 py-5 space-y-5">
+
+        {/* Infos contact */}
+        <div className="bg-white rounded-2xl border border-slate-200 p-4 space-y-2 shadow-sm">
+          {person.phone && (
+            <a href={`tel:${person.phone}`} className="flex items-center gap-3 text-sm text-slate-700 hover:text-indigo-600 transition-colors">
+              <Phone size={15} className="text-slate-400 shrink-0" />
+              <span className="font-medium">{person.phone}</span>
+            </a>
+          )}
+          {!person.phone && <p className="text-xs text-slate-400 italic">Aucun numéro enregistré</p>}
+          {v && v.visitDate && (
+            <p className="flex items-center gap-3 text-xs text-slate-500">
+              <Calendar size={13} className="text-slate-400 shrink-0" />
+              1ère visite : {formatDateShort(v.visitDate)}
+            </p>
+          )}
+          {v && (
+            <p className="mt-1">
+              <span className={cn("px-2 py-0.5 rounded-lg text-xs font-medium", statusColor[v.status] ?? 'bg-slate-100 text-slate-500')}>
+                {v.status}
+              </span>
+            </p>
+          )}
+        </div>
+
+        {/* Exercices spirituels (disciples uniquement) */}
+        {isMember && (person as Member).memberAccountActive && (
+          <div className="bg-white rounded-2xl border border-indigo-100 p-4 shadow-sm space-y-3">
+            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Exercices spirituels</p>
+            <div className="flex gap-3">
+              <span className={cn("flex-1 text-center px-3 py-2 rounded-xl text-xs font-bold", adherenceColor((target as any).count7, 7))}>
+                {(target as any).count7}/7 jours
+              </span>
+              <span className={cn("flex-1 text-center px-3 py-2 rounded-xl text-xs font-bold", adherenceColor((target as any).count30, 30))}>
+                {(target as any).count30}/30 jours
+              </span>
+            </div>
+            {loadingDates ? (
+              <div className="flex justify-center py-2"><Loader2 size={16} className="animate-spin text-indigo-400" /></div>
+            ) : exerciseDates.length > 0 && (
+              <div className="flex flex-wrap gap-1.5 mt-1">
+                {exerciseDates.map(d => (
+                  <span key={d} className="px-2 py-0.5 bg-emerald-50 text-emerald-700 border border-emerald-100 rounded-lg text-xs font-medium flex items-center gap-1">
+                    <CheckCircle2 size={9} /> {formatDateShort(d)}
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+        {isMember && !(person as Member).memberAccountActive && (
+          <div className="bg-slate-50 rounded-2xl border border-slate-200 p-4 text-center shadow-sm">
+            <p className="text-xs text-slate-400">Aucun compte exercices actif</p>
+          </div>
+        )}
+
+        {/* Historique des rapports */}
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
+              Rapports de suivi ({history.length})
+            </p>
+            {!showAddForm && (
+              <button
+                onClick={() => setShowAddForm(true)}
+                className="px-3 py-1.5 bg-indigo-600 text-white rounded-xl text-xs font-bold hover:bg-indigo-700 transition-colors flex items-center gap-1.5"
+              >
+                + Ajouter
+              </button>
+            )}
+          </div>
+
+          {showAddForm && (
+            <div className="bg-white rounded-2xl border border-indigo-200 shadow-sm overflow-hidden">
+              <div className="px-5 pt-4 pb-2">
+                <p className="text-xs font-semibold text-indigo-600">Nouveau rapport</p>
+              </div>
+              <ReportForm onSubmit={handleAdd} onCancel={() => setShowAddForm(false)} submitLabel="Ajouter" />
+            </div>
+          )}
+
+          {history.length === 0 && !showAddForm && (
+            <p className="text-xs text-slate-400 text-center py-6 italic">Aucun rapport enregistré</p>
+          )}
+
+          {[...history].reverse().map(entry => (
+            <div key={entry.id} className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+              {editingId === entry.id ? (
+                <>
+                  <div className="px-5 pt-4 pb-2 flex items-center justify-between">
+                    <p className="text-xs font-semibold text-amber-600">Modifier le rapport</p>
+                    <button onClick={() => setEditingId(null)} className="p-1 rounded-lg hover:bg-slate-100 text-slate-400"><X size={14} /></button>
+                  </div>
+                  <ReportForm
+                    onSubmit={(t, n, s) => handleEdit(entry.id, t, n, s)}
+                    onCancel={() => setEditingId(null)}
+                    initialType={entry.type}
+                    initialNote={entry.note}
+                    initialNextStep={entry.nextStep ?? ''}
+                    submitLabel="Enregistrer"
+                  />
+                </>
+              ) : (
+                <div className="px-4 py-3 flex items-start gap-3">
+                  <span className={cn("px-2 py-0.5 rounded-lg text-xs font-medium shrink-0 mt-0.5", isMember ? "bg-indigo-100 text-indigo-600" : "bg-violet-100 text-violet-600")}>
+                    {entry.type}
+                  </span>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs text-slate-700">{entry.note}</p>
+                    {entry.nextStep && (
+                      <p className="text-xs text-indigo-600 mt-1 flex items-center gap-1">
+                        <ChevronRight size={10} /> {entry.nextStep}
+                      </p>
+                    )}
+                    <p className="text-[10px] text-slate-400 mt-1">{formatDateShort(entry.date)}</p>
+                  </div>
+                  <div className="flex gap-1 shrink-0">
+                    <button
+                      onClick={() => setEditingId(entry.id)}
+                      className="p-1.5 rounded-lg hover:bg-amber-50 text-slate-400 hover:text-amber-600 transition-colors"
+                      disabled={saving}
+                    >
+                      <Pencil size={13} />
+                    </button>
+                    <button
+                      onClick={() => handleDelete(entry.id)}
+                      className="p-1.5 rounded-lg hover:bg-rose-50 text-slate-400 hover:text-rose-600 transition-colors"
+                      disabled={saving}
+                    >
+                      <Trash2 size={13} />
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+
+      </div>
+    </div>
+  );
+};
+
 // ─── Carte disciple (exercices) ──────────────────────────────
 
 interface DiscipeCardProps {
   disciple: Member;
   count7: number;
   count30: number;
+  onOpenDetail: (member: Member) => void;
 }
 
-const DiscipeCard: React.FC<DiscipeCardProps> = ({ disciple, count7, count30 }) => {
+const DiscipeCard: React.FC<DiscipeCardProps> = ({ disciple, count7, count30, onOpenDetail }) => {
   const [expanded, setExpanded] = useState(false);
   const [dates, setDates] = useState<string[]>([]);
   const [loadingDates, setLoadingDates] = useState(false);
@@ -191,9 +440,12 @@ const DiscipeCard: React.FC<DiscipeCardProps> = ({ disciple, count7, count30 }) 
 
         {/* Infos */}
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-semibold text-slate-800 truncate">
+          <button
+            onClick={e => { e.stopPropagation(); onOpenDetail(disciple); }}
+            className="text-sm font-semibold text-slate-800 hover:text-indigo-600 transition-colors truncate block text-left"
+          >
             {disciple.firstName} {disciple.lastName}
-          </p>
+          </button>
           <p className="text-xs text-slate-400 mt-0.5">
             {disciple.gender === 'Masculin' ? 'Frère' : 'Sœur'}
           </p>
@@ -248,21 +500,28 @@ const DiscipeCard: React.FC<DiscipeCardProps> = ({ disciple, count7, count30 }) 
 interface AbsentCardProps {
   member: Member;
   absenceDates: string[];
-  onReportSaved: () => void;
+  onReportSaved: (updated: Member) => void;
+  onOpenDetail: (member: Member) => void;
 }
 
-const AbsentCard: React.FC<AbsentCardProps> = ({ member, absenceDates, onReportSaved }) => {
+const AbsentCard: React.FC<AbsentCardProps> = ({ member, absenceDates, onReportSaved, onOpenDetail }) => {
   const [showForm, setShowForm] = useState(false);
   const [saved, setSaved] = useState(false);
 
   const handleReport = async (type: FollowUpEntry['type'], note: string, nextStep: string) => {
-    const now = new Date().toISOString().split('T')[0];
-    const entry = `[${now}] ${type} — ${note}${nextStep ? ` → Prochain pas : ${nextStep}` : ''}`;
-    const updatedNotes = member.notes ? `${member.notes}\n${entry}` : entry;
-    await updateMember(member.id, { notes: updatedNotes });
+    const entry: FollowUpEntry = {
+      id: generateId(),
+      date: new Date().toISOString().split('T')[0],
+      type,
+      note,
+      nextStep: nextStep || undefined,
+    };
+    const updatedHistory = [...(member.followUpHistory ?? []), entry];
+    await updateMember(member.id, { followUpHistory: updatedHistory });
+    const updated = { ...member, followUpHistory: updatedHistory };
     setSaved(true);
     setShowForm(false);
-    onReportSaved();
+    onReportSaved(updated);
     setTimeout(() => setSaved(false), 3000);
   };
 
@@ -279,7 +538,12 @@ const AbsentCard: React.FC<AbsentCardProps> = ({ member, absenceDates, onReportS
           )}
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-semibold text-slate-800 truncate">{member.firstName} {member.lastName}</p>
+          <button
+            onClick={() => onOpenDetail(member)}
+            className="text-sm font-semibold text-slate-800 hover:text-indigo-600 transition-colors truncate block text-left"
+          >
+            {member.firstName} {member.lastName}
+          </button>
           <p className="text-xs text-amber-600 mt-0.5 flex items-center gap-1">
             <AlertCircle size={10} />
             Absent : {absenceDates.map(formatDateShort).join(', ')}
@@ -322,9 +586,10 @@ const AbsentCard: React.FC<AbsentCardProps> = ({ member, absenceDates, onReportS
 interface VisitorCardProps {
   visitor: Visitor;
   onReportSaved: (updated: Visitor) => void;
+  onOpenDetail: (visitor: Visitor) => void;
 }
 
-const VisitorCard: React.FC<VisitorCardProps> = ({ visitor, onReportSaved }) => {
+const VisitorCard: React.FC<VisitorCardProps> = ({ visitor, onReportSaved, onOpenDetail }) => {
   const [showForm, setShowForm] = useState(false);
   const [saved, setSaved] = useState(false);
   const [expanded, setExpanded] = useState(false);
@@ -362,7 +627,12 @@ const VisitorCard: React.FC<VisitorCardProps> = ({ visitor, onReportSaved }) => 
           {visitor.firstName.charAt(0)}{visitor.lastName.charAt(0)}
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-semibold text-slate-800 truncate">{visitor.firstName} {visitor.lastName}</p>
+          <button
+            onClick={() => onOpenDetail(visitor)}
+            className="text-sm font-semibold text-slate-800 hover:text-violet-600 transition-colors truncate block text-left"
+          >
+            {visitor.firstName} {visitor.lastName}
+          </button>
           <div className="flex items-center gap-2 mt-0.5 flex-wrap">
             <span className={cn("px-2 py-0.5 rounded-lg text-xs font-medium", statusColor[visitor.status] ?? 'bg-slate-100 text-slate-500')}>
               {visitor.status}
@@ -443,6 +713,7 @@ const ExerciceSpirituelGroupe: React.FC = () => {
   const [absentDisciples, setAbsentDisciples] = useState<{ member: Member; dates: string[] }[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<TabId>('disciples');
+  const [detailModal, setDetailModal] = useState<ModalTarget | null>(null);
 
   // ── Vérifier session ────────────────────────────────────────
   useEffect(() => {
@@ -511,6 +782,27 @@ const ExerciceSpirituelGroupe: React.FC = () => {
 
   const goToMyExercises = () => {
     navigate('/mon-espace/dashboard');
+  };
+
+  const openMemberDetail = (member: Member) => {
+    setDetailModal({ type: 'member', person: member, count7: counts7[member.id] ?? 0, count30: counts30[member.id] ?? 0 });
+  };
+
+  const openVisitorDetail = (visitor: Visitor) => {
+    setDetailModal({ type: 'visitor', person: visitor });
+  };
+
+  const handleModalUpdate = (updated: Member | Visitor) => {
+    if (detailModal?.type === 'member') {
+      const m = updated as Member;
+      setDisciples(prev => prev.map(d => d.id === m.id ? m : d));
+      setAbsentDisciples(prev => prev.map(a => a.member.id === m.id ? { ...a, member: m } : a));
+      setDetailModal(prev => prev ? { ...prev, person: m } as ModalTarget : null);
+    } else {
+      const v = updated as Visitor;
+      setVisitors(prev => prev.map(x => x.id === v.id ? v : x));
+      setDetailModal(prev => prev ? { ...prev, person: v } as ModalTarget : null);
+    }
   };
 
   if (!session) return null;
@@ -663,6 +955,7 @@ const ExerciceSpirituelGroupe: React.FC = () => {
                       disciple={disciple}
                       count7={counts7[disciple.id] ?? 0}
                       count30={counts30[disciple.id] ?? 0}
+                      onOpenDetail={openMemberDetail}
                     />
                   ))
                 )}
@@ -690,7 +983,11 @@ const ExerciceSpirituelGroupe: React.FC = () => {
                         key={member.id}
                         member={member}
                         absenceDates={dates}
-                        onReportSaved={() => {}}
+                        onReportSaved={updated => {
+                          setDisciples(prev => prev.map(d => d.id === updated.id ? updated : d));
+                          setAbsentDisciples(prev => prev.map(a => a.member.id === updated.id ? { ...a, member: updated } : a));
+                        }}
+                        onOpenDetail={openMemberDetail}
                       />
                     ))}
                   </>
@@ -723,6 +1020,7 @@ const ExerciceSpirituelGroupe: React.FC = () => {
                         onReportSaved={updated =>
                           setVisitors(prev => prev.map(v => v.id === updated.id ? updated : v))
                         }
+                        onOpenDetail={openVisitorDetail}
                       />
                     ))}
                   </>
@@ -732,6 +1030,14 @@ const ExerciceSpirituelGroupe: React.FC = () => {
           </>
         )}
       </div>
+
+      {detailModal && (
+        <PersonDetailModal
+          target={detailModal}
+          onClose={() => setDetailModal(null)}
+          onUpdate={handleModalUpdate}
+        />
+      )}
     </div>
   );
 };

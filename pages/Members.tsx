@@ -606,18 +606,22 @@ const Members: React.FC = () => {
       const existing = members.find(m => m.id === editingMemberId)!;
       previousDepts = existing.departments ?? [];
       const isDiscipleMaker = ![MemberType.MEMBRE_SIMPLE, MemberType.ENFANT].includes((formData.type ?? existing.type) as MemberType);
-      const photoUrl = pendingPhotoFile
-        ? await uploadMemberPhoto(pendingPhotoFile, editingMemberId)
-        : formData.photoUrl;
+      let photoUrl = formData.photoUrl;
+      if (pendingPhotoFile) {
+        try { photoUrl = await uploadMemberPhoto(pendingPhotoFile, editingMemberId); }
+        catch { photoUrl = formData.photoUrl; }
+      }
       memberToSave = { ...existing, ...formData, photoUrl, firstName: formattedFirstName, lastName: formattedLastName, isDiscipleMaker } as Member;
       newMembersList = newMembersList.map(m => m.id === editingMemberId ? memberToSave : m);
       await updateMember(editingMemberId, memberToSave);
     } else {
       const newId = generateId();
       const isDiscipleMaker = ![MemberType.MEMBRE_SIMPLE, MemberType.ENFANT].includes(formData.type as MemberType);
-      const photoUrl = pendingPhotoFile
-        ? await uploadMemberPhoto(pendingPhotoFile, newId)
-        : formData.photoUrl;
+      let photoUrl = formData.photoUrl;
+      if (pendingPhotoFile) {
+        try { photoUrl = await uploadMemberPhoto(pendingPhotoFile, newId); }
+        catch { photoUrl = formData.photoUrl; }
+      }
       memberToSave = {
         ...formData as Member,
         id: newId,

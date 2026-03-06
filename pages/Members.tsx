@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import { usePermissions } from '../context/PermissionsContext';
 import Card from '../components/Card';
 import AIAnalysis from '../components/AIAnalysis';
@@ -147,6 +147,7 @@ const getDepartmentIcon = (dept: string, size = 10) => {
 
 const Members: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { canDelete } = usePermissions();
   const [searchParams] = useSearchParams();
   const [members, setMembers] = useState<Member[]>([]);
@@ -178,10 +179,24 @@ const Members: React.FC = () => {
       setMembers(m);
       setDiscipleshipPairs(p);
       setIsLoadingData(false);
-      const detailId = new URLSearchParams(window.location.search).get('detail');
-      if (detailId) {
-        const found = m.find(x => x.id === detailId);
-        if (found) { setSelectedMember(found); setIsDetailsOpen(true); }
+      // Ouvrir le formulaire d'édition si on revient depuis la page de détail
+      const editId = (location.state as any)?.editId;
+      if (editId) {
+        const found = m.find(x => x.id === editId);
+        if (found) {
+          setEditingMemberId(found.id);
+          setFormData({ ...found });
+          setSpouseSearch(found.spouseName || '');
+          setMotherSearch(found.motherName || '');
+          setFatherSearch(found.fatherName || '');
+          const bd = parseBirthDate(found.birthDate);
+          setBirthDay(bd.day); setBirthMonth(bd.month); setBirthYear(bd.year);
+          setInvitedBySearch(found.invitedBy || '');
+          const dm = m.find(x => x.id === found.assignedDiscipleMakerId);
+          setDiscipleMakerSearch(dm ? `${formatFirstName(dm.firstName)} ${dm.lastName.toUpperCase()}` : '');
+          setIsFormOpen(true);
+          window.history.replaceState({}, '', window.location.pathname);
+        }
       }
     };
     load();
@@ -345,9 +360,7 @@ const Members: React.FC = () => {
   }, [members]);
 
   const handleOpenDetails = (member: Member) => {
-    setSelectedMember(member);
-    setIsDetailsOpen(true);
-    navigate(`?detail=${member.id}`, { replace: true });
+    navigate(`/members/${member.id}`);
   };
 
   const handleEditClick = (member: Member) => {
@@ -1116,15 +1129,6 @@ const Members: React.FC = () => {
           </div>
         </div>
       )}
-
-      <MemberDetails 
-        member={selectedMember} 
-        isOpen={isDetailsOpen} 
-        onClose={() => { setIsDetailsOpen(false); navigate('', { replace: true }); }}
-        onEdit={handleEditClick}
-        onDelete={handleDeleteClick}
-        onPreviewPhoto={(url) => setPreviewImageUrl(url)}
-      />
 
       {isDeleteConfirmOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">

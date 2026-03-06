@@ -112,9 +112,10 @@ interface MemberDetailsProps {
   onDelete: (memberId: string) => void;
   onPreviewPhoto?: (url: string) => void;
   onUpdateMember?: (updated: Member) => void;
+  asPage?: boolean;
 }
 
-const MemberDetails: React.FC<MemberDetailsProps> = ({ member, isOpen, onClose, onEdit, onDelete, onPreviewPhoto, onUpdateMember }) => {
+const MemberDetails: React.FC<MemberDetailsProps> = ({ member, isOpen, onClose, onEdit, onDelete, onPreviewPhoto, onUpdateMember, asPage = false }) => {
   if (!member) return null;
 
   const [isCardModalOpen, setIsCardModalOpen] = useState(false);
@@ -138,14 +139,14 @@ const MemberDetails: React.FC<MemberDetailsProps> = ({ member, isOpen, onClose, 
   };
 
   useEffect(() => {
-    if (isOpen) {
+    if (isOpen || asPage) {
       getMembers().then(setAllMembers);
       getDepartmentActivities().then(setActivities);
       getDiscipleshipEnrollments().then(setEnrollments);
       getFinancialRecords().then(setFinancialRecords);
       getAttendanceSessions().then(setAttendanceSessions);
     }
-  }, [isOpen]);
+  }, [isOpen, asPage]);
 
   const spouseMember = useMemo(() => {
     if (!member.spouseName) return null;
@@ -322,22 +323,27 @@ const MemberDetails: React.FC<MemberDetailsProps> = ({ member, isOpen, onClose, 
 
   return (
     <>
-    <div className={cn(
+    <div className={!asPage ? cn(
       "fixed inset-0 z-[70] overflow-hidden transition-all duration-300 flex items-center justify-center p-4",
       isOpen ? "pointer-events-auto" : "pointer-events-none"
-    )}>
-      <div 
-        className={cn(
-          "absolute inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity duration-300",
-          isOpen ? "opacity-100" : "opacity-0"
-        )} 
-        onClick={onClose}
-      />
-      
-      <div className={cn(
-        "relative w-full max-w-xl bg-white shadow-2xl transition-all duration-300 transform flex flex-col rounded-2xl overflow-hidden max-h-[90vh]",
-        isOpen ? "scale-100 opacity-100" : "scale-95 opacity-0"
-      )}>
+    ) : undefined}>
+      {!asPage && (
+        <div
+          className={cn(
+            "absolute inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity duration-300",
+            isOpen ? "opacity-100" : "opacity-0"
+          )}
+          onClick={onClose}
+        />
+      )}
+
+      <div className={asPage
+        ? "flex flex-col bg-white rounded-2xl overflow-hidden border border-slate-100 shadow-sm"
+        : cn(
+          "relative w-full max-w-xl bg-white shadow-2xl transition-all duration-300 transform flex flex-col rounded-2xl overflow-hidden max-h-[90vh]",
+          isOpen ? "scale-100 opacity-100" : "scale-95 opacity-0"
+        )
+      }>
         {/* Fixed Header Section */}
         <div className="relative px-10 py-12 bg-gradient-to-br from-indigo-600 to-indigo-800 shrink-0 overflow-hidden">
           <div className="absolute top-0 right-0 p-8 opacity-10 pointer-events-none">
@@ -345,13 +351,15 @@ const MemberDetails: React.FC<MemberDetailsProps> = ({ member, isOpen, onClose, 
           </div>
           <div className="absolute -top-12 -left-12 w-48 h-48 bg-white/5 rounded-full blur-3xl pointer-events-none"></div>
 
-          <button 
-            onClick={onClose}
-            className="absolute top-6 right-6 p-2 bg-white/10 hover:bg-white/20 rounded-full text-white transition-colors z-20"
-          >
-            <X size={20} />
-          </button>
-          
+          {!asPage && (
+            <button
+              onClick={onClose}
+              className="absolute top-6 right-6 p-2 bg-white/10 hover:bg-white/20 rounded-full text-white transition-colors z-20"
+            >
+              <X size={20} />
+            </button>
+          )}
+
           <div className="relative z-10 flex items-center gap-6">
             <div className="rounded-2xl bg-white p-1 shadow-2xl border border-white/20 shrink-0">
               <Avatar
@@ -381,7 +389,7 @@ const MemberDetails: React.FC<MemberDetailsProps> = ({ member, isOpen, onClose, 
         </div>
 
         {/* Scrollable Content Section */}
-        <div className="flex-1 overflow-y-auto p-10 custom-scrollbar bg-slate-50/30 space-y-8 pb-24">
+        <div className={asPage ? "p-10 bg-slate-50/30 space-y-8 pb-10" : "flex-1 overflow-y-auto p-10 custom-scrollbar bg-slate-50/30 space-y-8 pb-24"}>
           
           {/* Section: Identité Civile */}
           <div className="space-y-4">

@@ -230,6 +230,49 @@ const App: React.FC = () => {
       });
     }
 
+    // 4. Rappels : visiteurs sans affectation
+    if (settings.enableFollowUps) {
+      const unassignedVisitors = visitors.filter(v =>
+        v.status !== VisitorStatus.MEMBRE &&
+        (!v.followUpHistory || v.followUpHistory.length === 0)
+      );
+      if (unassignedVisitors.length > 0) {
+        const n = unassignedVisitors.length;
+        newNotifications.push({
+          id: `unassigned-visitors-${todayStr}`,
+          type: 'followup',
+          title: 'Visiteurs sans affectation',
+          message: `${n} visiteur${n > 1 ? 's' : ''} n'${n > 1 ? 'ont' : 'a'} pas encore été pris en charge. Pensez à les affecter.`,
+          date: todayStr,
+          isRead: false,
+          link: 'visitors',
+        });
+      }
+    }
+
+    // 5. Rappels : absents sans responsable assigné
+    if (settings.enableFollowUps) {
+      const savedAssignments: Record<string, string> = (await getAppConfig('attendance_assignments')) || {};
+      const recentSessions = [...attendance]
+        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+        .slice(0, 3);
+      const unassignedKeys = recentSessions.flatMap(session =>
+        (session.absentMembers || []).map(id => `${id}_${session.date}`)
+      ).filter(key => !savedAssignments[key]);
+      if (unassignedKeys.length > 0) {
+        const n = unassignedKeys.length;
+        newNotifications.push({
+          id: `unassigned-absents-${todayStr}`,
+          type: 'followup',
+          title: 'Absents sans responsable',
+          message: `${n} absent${n > 1 ? 's' : ''} sur les dernières séances n'${n > 1 ? 'ont' : 'a'} pas encore de responsable assigné.`,
+          date: todayStr,
+          isRead: false,
+          link: 'attendance',
+        });
+      }
+    }
+
     // Persister et filtrer
     await Promise.all(newNotifications.map(n => upsertNotification(n)));
 
@@ -251,7 +294,7 @@ const App: React.FC = () => {
   }, [isAuthenticated, generateNotifications]);
 
   const unreadCount = useMemo(() => notifications.filter(n => !n.isRead).length, [notifications]);
-  const notificationsContextValue = useMemo(() => ({ addNotification }), [addNotification]);
+  const notificationsContextValue = useMemo(() => ({ addNotification, refreshNotifications: generateNotifications }), [addNotification, generateNotifications]);
 
   // PWA app icon badge
   useEffect(() => {

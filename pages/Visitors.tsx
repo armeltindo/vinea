@@ -68,7 +68,7 @@ const formatToUIDate = (isoDate: string | undefined) => {
 
 const Visitors: React.FC = () => {
   const navigate = useNavigate();
-  const { addNotification } = useNotifications();
+  const { addNotification, refreshNotifications } = useNotifications();
   const { canDelete } = usePermissions();
   const [availableStatuses, setAvailableStatuses] = useState<string[]>(Object.values(VisitorStatus));
   const [statusFilter, setStatusFilter] = useState<string>('Tous les statuts');
@@ -625,6 +625,7 @@ const Visitors: React.FC = () => {
             link: 'visitors',
             targetId: id,
           });
+          refreshNotifications();
         }}
         onDeleteFollowUp={async (id, entryId) => {
           let updatedHistory: FollowUpEntry[] = [];

@@ -44,7 +44,7 @@ type CriticalFilter = 'all' | 'critical' | 'normal';
 
 const SuiviAbsents: React.FC = () => {
   const navigate = useNavigate();
-  const { addNotification } = useNotifications();
+  const { addNotification, refreshNotifications } = useNotifications();
 
   // ── Données
   const [history, setHistory] = useState<any[]>([]);
@@ -208,6 +208,8 @@ const SuiviAbsents: React.FC = () => {
         link: 'attendance',
         targetId: personId,
       });
+      // Rafraîchir après un court délai pour laisser setAppConfig persister l'affectation
+      setTimeout(() => refreshNotifications(), 500);
     }
   };
 

@@ -320,6 +320,7 @@ const Settings: React.FC = () => {
   const [saveSuccess, setSaveSuccess] = useState(false);
   const logoInputRef = useRef<HTMLInputElement>(null);
   const adminAvatarInputRef = useRef<HTMLInputElement>(null);
+  const [pendingAvatarFile, setPendingAvatarFile] = useState<File | null>(null);
   const importBaseInputRef = useRef<HTMLInputElement>(null);
   
   const [churchInfo, setChurchInfo] = useState({
@@ -572,6 +573,16 @@ const Settings: React.FC = () => {
     // matchingUser peut être absent si c'est un nouvel utilisateur → on utilise des valeurs par défaut
     if (adminInfoLoaded.current && currentAdminId.current) {
       const matchingUser = adminUsers.find(u => u.id === currentAdminId.current);
+      let avatarUrl = adminInfo.avatar;
+      if (pendingAvatarFile) {
+        try {
+          avatarUrl = await uploadAdminAvatar(pendingAvatarFile);
+          setAdminInfo(prev => ({ ...prev, avatar: avatarUrl }));
+          setPendingAvatarFile(null);
+        } catch (err) {
+          console.error('Avatar upload error:', err);
+        }
+      }
       await upsertAdminUser({
         id: currentAdminId.current,
         full_name: adminInfo.fullName,
@@ -580,7 +591,7 @@ const Settings: React.FC = () => {
         email: adminInfo.email,
         role: matchingUser?.role ?? 'Super Admin',
         status: matchingUser?.status ?? 'Actif',
-        avatar: adminInfo.avatar,
+        avatar: avatarUrl,
         last_active: matchingUser?.lastActive ?? new Date().toISOString(),
         permissions: matchingUser?.permissions ?? AVAILABLE_MODULES.map(m => m.id),
       });
@@ -745,11 +756,14 @@ const Settings: React.FC = () => {
     }
   };
 
-  const handleAdminAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleAdminAvatarUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    setPendingAvatarFile(file);
+    setAdminInfo(prev => ({ ...prev, avatar: URL.createObjectURL(file) }));
+  };
 
-    // Redimensionner côté client (max 256×256, WebP 85%)
+  const uploadAdminAvatar = async (file: File): Promise<string> => {
     const blob = await new Promise<Blob>((resolve, reject) => {
       const img = new Image();
       const url = URL.createObjectURL(file);
@@ -765,22 +779,14 @@ const Settings: React.FC = () => {
       img.onerror = reject;
       img.src = url;
     });
-
-    // Créer le bucket s'il n'existe pas encore (ignoré s'il existe déjà)
     await supabase.storage.createBucket('avatars', { public: true }).catch(() => {});
-
     const fileName = `avatar-${currentAdminId.current || 'default'}.webp`;
     const { error } = await supabase.storage
       .from('avatars')
       .upload(fileName, blob, { upsert: true, contentType: 'image/webp' });
-
-    if (error) {
-      console.error('Avatar upload error:', error.message);
-      return;
-    }
-
+    if (error) throw new Error(error.message);
     const { data } = supabase.storage.from('avatars').getPublicUrl(fileName);
-    setAdminInfo(prev => ({ ...prev, avatar: data.publicUrl }));
+    return data.publicUrl;
   };
 
   const handleExportFullData = async () => {

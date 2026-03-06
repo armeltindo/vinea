@@ -1,19 +1,20 @@
 import React, { useState, useMemo, useRef } from 'react';
 import { supabase } from '../lib/supabase';
 import { getAdminUserByEmail } from '../lib/db';
-import { 
-  Mail, 
-  Lock, 
-  Sparkles, 
-  ArrowRight, 
-  Loader2, 
-  ChevronLeft, 
-  CheckCircle2, 
-  Eye, 
-  EyeOff, 
+import {
+  Mail,
+  Lock,
+  Sparkles,
+  ArrowRight,
+  Loader2,
+  ChevronLeft,
+  CheckCircle2,
+  Eye,
+  EyeOff,
   Quote,
   AlertCircle,
-  ShieldAlert
+  ShieldAlert,
+  Users
 } from 'lucide-react';
 import { cn } from '../utils';
 import Logo from '../components/Logo';
@@ -731,6 +732,17 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
                 </button>
               </div>
             )}
+          </div>
+
+          {/* Member space link */}
+          <div className="mt-5 text-center">
+            <a
+              href="/mon-espace"
+              className="inline-flex items-center gap-2 text-sm font-medium text-slate-500 hover:text-indigo-600 transition-colors"
+            >
+              <Users size={15} />
+              Accéder à l'espace membre
+            </a>
           </div>
         </div>
       </div>

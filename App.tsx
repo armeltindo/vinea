@@ -294,17 +294,6 @@ const App: React.FC = () => {
     }
   }, [isAuthenticated, generateNotifications]);
 
-  const unreadCount = useMemo(() => notifications.filter(n => !n.isRead).length, [notifications]);
-  const notificationsContextValue = useMemo(() => ({ addNotification, refreshNotifications: generateNotifications }), [addNotification, generateNotifications]);
-
-  // PWA app icon badge
-  useEffect(() => {
-    if ('setAppBadge' in navigator) {
-      if (unreadCount > 0) (navigator as any).setAppBadge(unreadCount);
-      else (navigator as any).clearAppBadge();
-    }
-  }, [unreadCount]);
-
   // Expose addNotification to pages via context
   const addNotification = useCallback((notif: Notification) => {
     upsertNotification(notif);
@@ -319,6 +308,17 @@ const App: React.FC = () => {
       });
     }
   }, []);
+
+  const unreadCount = useMemo(() => notifications.filter(n => !n.isRead).length, [notifications]);
+  const notificationsContextValue = useMemo(() => ({ addNotification, refreshNotifications: generateNotifications }), [addNotification, generateNotifications]);
+
+  // PWA app icon badge
+  useEffect(() => {
+    if ('setAppBadge' in navigator) {
+      if (unreadCount > 0) (navigator as any).setAppBadge(unreadCount);
+      else (navigator as any).clearAppBadge();
+    }
+  }, [unreadCount]);
 
   // Persister les IDs lus (après chargement initial)
   useEffect(() => {

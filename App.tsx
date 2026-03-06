@@ -5,6 +5,7 @@ import Sidebar from './components/Sidebar';
 import LogoutModal from './components/LogoutModal';
 import QuickActionModal from './components/QuickActionModal';
 import Avatar from './components/Avatar';
+import InstallPrompt from './components/InstallPrompt';
 
 // Dashboard chargé en priorité (page par défaut après connexion)
 import Dashboard from './pages/Dashboard';
@@ -690,6 +691,8 @@ const App: React.FC = () => {
           20%, 40%, 60%, 80% { transform: rotate(-10deg); }
         }
       `}</style>
+
+      <InstallPrompt />
 
       {/* Toast accès refusé */}
       {accessToast && (

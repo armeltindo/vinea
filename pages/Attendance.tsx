@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { usePermissions } from '../context/PermissionsContext';
 import Card from '../components/Card';
 import AIAnalysis from '../components/AIAnalysis';
@@ -105,6 +106,7 @@ interface AbsentEntry {
 
 const Attendance: React.FC = () => {
   const { canDelete } = usePermissions();
+  const navigate = useNavigate();
   const [history, setHistory] = useState<any[]>([]);
   const [members, setMembers] = useState<Member[]>([]);
   const [visitors, setVisitors] = useState<Visitor[]>([]);
@@ -478,6 +480,14 @@ const Attendance: React.FC = () => {
         <div className="flex gap-2">
           <button onClick={handleAnalyze} disabled={isAnalyzing || history.length === 0} className="flex items-center gap-2 px-4 py-2 bg-indigo-50 text-indigo-700 border border-indigo-100 rounded-xl text-xs font-medium disabled:opacity-50 transition-all hover:bg-indigo-100">
             <Sparkles size={16} /> {isAnalyzing ? '...' : 'Analyse Stratégique'}
+          </button>
+          <button onClick={() => navigate('/attendance/suivi-absents')} className="flex items-center gap-2 px-4 py-2 bg-rose-50 text-rose-600 border border-rose-100 rounded-xl text-xs font-medium transition-all hover:bg-rose-100">
+            <UserX size={16} /> Suivi des Absents
+            {allAbsentsList.filter(e => !assignments[`${e.person.id}_${e.serviceDate}`]).length > 0 && (
+              <span className="bg-rose-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
+                {allAbsentsList.filter(e => !assignments[`${e.person.id}_${e.serviceDate}`]).length}
+              </span>
+            )}
           </button>
           <button onClick={() => { setEditingRecordId(null); setIsFormOpen(true); }} className="flex items-center gap-2 px-5 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-semibold hover:bg-indigo-700 transition-all shadow-lg active:scale-95">
             <Plus size={18} /> Faire le Relevé

@@ -153,9 +153,10 @@ interface PersonDetailModalProps {
   target: ModalTarget;
   onClose: () => void;
   onUpdate: (updated: Member | Visitor) => void;
+  session: MemberSession;
 }
 
-const PersonDetailModal: React.FC<PersonDetailModalProps> = ({ target, onClose, onUpdate }) => {
+const PersonDetailModal: React.FC<PersonDetailModalProps> = ({ target, onClose, onUpdate, session }) => {
   const { person, type } = target;
   const isMember = type === 'member';
 
@@ -195,7 +196,7 @@ const PersonDetailModal: React.FC<PersonDetailModalProps> = ({ target, onClose, 
   };
 
   const handleAdd = async (t: FollowUpEntry['type'], note: string, nextStep: string) => {
-    const entry: FollowUpEntry = { id: generateId(), date: new Date().toISOString().split('T')[0], type: t, note, nextStep: nextStep || undefined };
+    const entry: FollowUpEntry = { id: generateId(), date: new Date().toISOString().split('T')[0], type: t, note, nextStep: nextStep || undefined, submittedBy: { firstName: session.firstName, lastName: session.lastName } };
     await persist([...history, entry]);
     setShowAddForm(false);
   };
@@ -357,7 +358,12 @@ const PersonDetailModal: React.FC<PersonDetailModalProps> = ({ target, onClose, 
                         <ChevronRight size={10} /> {entry.nextStep}
                       </p>
                     )}
-                    <p className="text-[10px] text-slate-400 mt-1">{formatDateShort(entry.date)}</p>
+                    <p className="text-[10px] text-slate-400 mt-1">
+                      {formatDateShort(entry.date)}
+                      {entry.submittedBy && (
+                        <span className="ml-1">· par {entry.submittedBy.firstName} {entry.submittedBy.lastName}</span>
+                      )}
+                    </p>
                   </div>
                   <div className="flex gap-1 shrink-0">
                     <button
@@ -502,9 +508,10 @@ interface AbsentCardProps {
   absenceDates: string[];
   onReportSaved: (updated: Member) => void;
   onOpenDetail: (member: Member) => void;
+  session: MemberSession;
 }
 
-const AbsentCard: React.FC<AbsentCardProps> = ({ member, absenceDates, onReportSaved, onOpenDetail }) => {
+const AbsentCard: React.FC<AbsentCardProps> = ({ member, absenceDates, onReportSaved, onOpenDetail, session }) => {
   const [showForm, setShowForm] = useState(false);
   const [saved, setSaved] = useState(false);
 
@@ -515,6 +522,7 @@ const AbsentCard: React.FC<AbsentCardProps> = ({ member, absenceDates, onReportS
       type,
       note,
       nextStep: nextStep || undefined,
+      submittedBy: { firstName: session.firstName, lastName: session.lastName },
     };
     const updatedHistory = [...(member.followUpHistory ?? []), entry];
     await updateMember(member.id, { followUpHistory: updatedHistory });
@@ -587,9 +595,10 @@ interface VisitorCardProps {
   visitor: Visitor;
   onReportSaved: (updated: Visitor) => void;
   onOpenDetail: (visitor: Visitor) => void;
+  session: MemberSession;
 }
 
-const VisitorCard: React.FC<VisitorCardProps> = ({ visitor, onReportSaved, onOpenDetail }) => {
+const VisitorCard: React.FC<VisitorCardProps> = ({ visitor, onReportSaved, onOpenDetail, session }) => {
   const [showForm, setShowForm] = useState(false);
   const [saved, setSaved] = useState(false);
   const [expanded, setExpanded] = useState(false);
@@ -604,6 +613,7 @@ const VisitorCard: React.FC<VisitorCardProps> = ({ visitor, onReportSaved, onOpe
       type,
       note,
       nextStep: nextStep || undefined,
+      submittedBy: { firstName: session.firstName, lastName: session.lastName },
     };
     const updatedHistory = [...history, entry];
     await updateVisitor(visitor.id, { followUpHistory: updatedHistory });
@@ -988,6 +998,7 @@ const ExerciceSpirituelGroupe: React.FC = () => {
                           setAbsentDisciples(prev => prev.map(a => a.member.id === updated.id ? { ...a, member: updated } : a));
                         }}
                         onOpenDetail={openMemberDetail}
+                        session={session!}
                       />
                     ))}
                   </>
@@ -1021,6 +1032,7 @@ const ExerciceSpirituelGroupe: React.FC = () => {
                           setVisitors(prev => prev.map(v => v.id === updated.id ? updated : v))
                         }
                         onOpenDetail={openVisitorDetail}
+                        session={session!}
                       />
                     ))}
                   </>
@@ -1036,6 +1048,7 @@ const ExerciceSpirituelGroupe: React.FC = () => {
           target={detailModal}
           onClose={() => setDetailModal(null)}
           onUpdate={handleModalUpdate}
+          session={session!}
         />
       )}
     </div>

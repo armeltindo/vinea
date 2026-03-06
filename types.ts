@@ -155,6 +155,7 @@ export interface FollowUpEntry {
   note: string;
   nextStep?: string;
   nextStepDate?: string;
+  submittedBy?: { firstName: string; lastName: string };
 }
 
 export interface VisitorQualification {

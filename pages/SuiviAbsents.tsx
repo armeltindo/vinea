@@ -93,9 +93,9 @@ const SuiviAbsents: React.FC = () => {
     load();
   }, []);
 
-  // ── Persistance assignments / suivi
-  useEffect(() => { setAppConfig('attendance_assignments', assignments); }, [assignments]);
-  useEffect(() => { setAppConfig('attendance_followup_history', followUpHistory); }, [followUpHistory]);
+  // ── Persistance assignments / suivi (skip on initial mount before data is loaded)
+  useEffect(() => { if (!loading) setAppConfig('attendance_assignments', assignments); }, [assignments, loading]);
+  useEffect(() => { if (!loading) setAppConfig('attendance_followup_history', followUpHistory); }, [followUpHistory, loading]);
 
   // ── Dérivés
   const sortedHistory = useMemo(() =>

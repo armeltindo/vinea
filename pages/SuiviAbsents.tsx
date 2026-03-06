@@ -14,6 +14,7 @@ import {
 } from '../lib/db';
 import { Member, MemberType, Visitor } from '../types';
 import { cn, generateId, getInitials, formatFirstName } from '../utils';
+import { useNotifications } from '../context/NotificationsContext';
 
 // ─── Types ───────────────────────────────────────────────────
 
@@ -43,6 +44,7 @@ type CriticalFilter = 'all' | 'critical' | 'normal';
 
 const SuiviAbsents: React.FC = () => {
   const navigate = useNavigate();
+  const { addNotification } = useNotifications();
 
   // ── Données
   const [history, setHistory] = useState<any[]>([]);
@@ -193,6 +195,20 @@ const SuiviAbsents: React.FC = () => {
   // ── Actions
   const handleAssign = (personId: string, date: string, staffId: string) => {
     setAssignments(prev => ({ ...prev, [`${personId}_${date}`]: staffId }));
+    const person = allPeople.find(p => p.id === personId);
+    const staff = staffMembers.find(s => s.id === staffId);
+    if (person && staff) {
+      addNotification({
+        id: `assign-absent-${personId}-${date}`,
+        type: 'assignment',
+        title: 'Absent affecté',
+        message: `${formatFirstName(person.firstName)} ${person.lastName.toUpperCase()} a été affecté(e) à ${formatFirstName(staff.firstName)} ${staff.lastName.toUpperCase()} pour le suivi.`,
+        date: new Date().toISOString().split('T')[0],
+        isRead: false,
+        link: 'attendance',
+        targetId: personId,
+      });
+    }
   };
 
   const openFollowUp = (person: Member | Visitor, date: string) => {

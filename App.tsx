@@ -6,6 +6,7 @@ import LogoutModal from './components/LogoutModal';
 import QuickActionModal from './components/QuickActionModal';
 import Avatar from './components/Avatar';
 import InstallPrompt from './components/InstallPrompt';
+import { NotificationsContext } from './context/NotificationsContext';
 
 // Dashboard chargé en priorité (page par défaut après connexion)
 import Dashboard from './pages/Dashboard';
@@ -53,6 +54,7 @@ import {
   Cake,
   CalendarDays,
   UserCheck,
+  UserPlus2,
   Zap,
   Info,
   ArrowRight,
@@ -250,6 +252,29 @@ const App: React.FC = () => {
 
   const unreadCount = useMemo(() => notifications.filter(n => !n.isRead).length, [notifications]);
 
+  // PWA app icon badge
+  useEffect(() => {
+    if ('setAppBadge' in navigator) {
+      if (unreadCount > 0) (navigator as any).setAppBadge(unreadCount);
+      else (navigator as any).clearAppBadge();
+    }
+  }, [unreadCount]);
+
+  // Expose addNotification to pages via context
+  const addNotification = useCallback((notif: Notification) => {
+    upsertNotification(notif);
+    setNotifications(prev => {
+      if (prev.some(n => n.id === notif.id)) return prev;
+      return [notif, ...prev];
+    });
+    // Browser push notification (if permission granted)
+    if (typeof window !== 'undefined' && 'Notification' in window && window.Notification.permission === 'granted') {
+      navigator.serviceWorker?.ready.then(sw => {
+        sw.showNotification(notif.title, { body: notif.message, tag: notif.id, icon: '/icons/icon-192x192.png' });
+      });
+    }
+  }, []);
+
   const markAsRead = (id: string) => {
     const updatedIds = [...readNotificationIds, id];
     setReadNotificationIds(updatedIds);
@@ -380,6 +405,10 @@ const App: React.FC = () => {
   }, []);
 
   const handleLogin = (email: string, role: string, permissions: string[], name?: string) => {
+    // Request browser notification permission on login
+    if ('Notification' in window && window.Notification.permission === 'default') {
+      window.Notification.requestPermission();
+    }
     setIsAuthenticated(true);
     setCurrentUserRole(role);
     setRawPermissions(permissions);
@@ -566,9 +595,10 @@ const App: React.FC = () => {
                                  n.type === 'birthday' ? "bg-pink-50 text-pink-500" :
                                  n.type === 'event' ? "bg-amber-50 text-amber-500" :
                                  n.type === 'followup' ? "bg-blue-50 text-blue-500" :
+                                 n.type === 'assignment' ? "bg-emerald-50 text-emerald-600" :
                                  "bg-slate-50 text-slate-500"
                                )}>
-                                  {n.type === 'birthday' ? <Cake size={18}/> : n.type === 'event' ? <CalendarDays size={18}/> : n.type === 'followup' ? <UserCheck size={18}/> : <Info size={18}/>}
+                                  {n.type === 'birthday' ? <Cake size={18}/> : n.type === 'event' ? <CalendarDays size={18}/> : n.type === 'followup' ? <UserCheck size={18}/> : n.type === 'assignment' ? <UserPlus2 size={18}/> : <Info size={18}/>}
                                </div>
                                <div className="flex-1 min-w-0">
                                   <div className="flex justify-between items-start gap-2">
@@ -651,6 +681,7 @@ const App: React.FC = () => {
         </header>
 
         <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto">
+          <NotificationsContext.Provider value={{ addNotification }}>
           <PermissionsContext.Provider value={{ canDelete, canWrite }}>
             <React.Suspense fallback={pageFallback}>
               <Routes>
@@ -678,6 +709,7 @@ const App: React.FC = () => {
               </Routes>
             </React.Suspense>
           </PermissionsContext.Provider>
+          </NotificationsContext.Provider>
         </div>
 
         <LogoutModal isOpen={showLogoutConfirm} onClose={() => setShowLogoutConfirm(false)} onConfirm={handleConfirmLogout} />

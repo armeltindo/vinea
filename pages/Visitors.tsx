@@ -48,6 +48,7 @@ import { Visitor, VisitorStatus, VisitorQualification, Member, MemberType, Membe
 import { analyzePageData } from '../lib/gemini';
 import { cn, generateId, getInitials, formatFirstName } from '../utils';
 import { getMembers, createMember, getVisitors, createVisitor, updateVisitor, deleteVisitor, getAppConfig } from '../lib/db';
+import { useNotifications } from '../context/NotificationsContext';
 
 const QUALIFICATION_ITEMS = [
   { id: 'seekingChurch', label: 'Cherche une église', icon: <Target size={14} /> },
@@ -67,6 +68,7 @@ const formatToUIDate = (isoDate: string | undefined) => {
 
 const Visitors: React.FC = () => {
   const navigate = useNavigate();
+  const { addNotification } = useNotifications();
   const { canDelete } = usePermissions();
   const [availableStatuses, setAvailableStatuses] = useState<string[]>(Object.values(VisitorStatus));
   const [statusFilter, setStatusFilter] = useState<string>('Tous les statuts');
@@ -604,12 +606,25 @@ const Visitors: React.FC = () => {
         onConvertToMember={handleOpenConvertModal}
         onAddFollowUp={async (id, entry) => {
           let updatedHistory: FollowUpEntry[] = [];
+          let visitorName = '';
           setVisitors(prev => prev.map(v => {
             if (v.id !== id) return v;
+            visitorName = `${formatFirstName(v.firstName)} ${v.lastName.toUpperCase()}`;
             updatedHistory = [entry, ...(v.followUpHistory || [])];
             return { ...v, followUpHistory: updatedHistory };
           }));
           await updateVisitor(id, { followUpHistory: updatedHistory });
+          const by = entry.submittedBy ? `${formatFirstName(entry.submittedBy.firstName)} ${entry.submittedBy.lastName.toUpperCase()}` : 'Admin';
+          addNotification({
+            id: `assign-visitor-${id}-${entry.id}`,
+            type: 'assignment',
+            title: 'Suivi visiteur assigné',
+            message: `Un suivi (${entry.type}) pour ${visitorName} a été confié à ${by}.`,
+            date: new Date().toISOString().split('T')[0],
+            isRead: false,
+            link: 'visitors',
+            targetId: id,
+          });
         }}
         onDeleteFollowUp={async (id, entryId) => {
           let updatedHistory: FollowUpEntry[] = [];

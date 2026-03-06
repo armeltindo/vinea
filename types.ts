@@ -45,7 +45,7 @@ export enum ActivityStatus {
 
 export interface Notification {
   id: string;
-  type: 'birthday' | 'event' | 'followup' | 'system';
+  type: 'birthday' | 'event' | 'followup' | 'system' | 'assignment';
   title: string;
   message: string;
   date: string;

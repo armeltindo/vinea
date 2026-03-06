@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import { usePermissions } from '../context/PermissionsContext';
+import { useNotifications } from '../context/NotificationsContext';
 import Card from '../components/Card';
 import AIAnalysis from '../components/AIAnalysis';
 import Avatar from '../components/Avatar';
@@ -149,6 +150,7 @@ const Members: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { canDelete } = usePermissions();
+  const { addNotification } = useNotifications();
   const [searchParams] = useSearchParams();
   const [members, setMembers] = useState<Member[]>([]);
   const [discipleshipPairs, setDiscipleshipPairs] = useState<any[]>([]);
@@ -607,6 +609,21 @@ const Members: React.FC = () => {
     const newMentorId = memberToSave.assignedDiscipleMakerId || '';
     const oldMentorId = editingMemberId ? (members.find(m => m.id === editingMemberId)?.assignedDiscipleMakerId || '') : '';
     if (newMentorId !== oldMentorId) {
+      if (newMentorId) {
+        const mentor = members.find(m => m.id === newMentorId);
+        if (mentor) {
+          addNotification({
+            id: `assign-member-dm-${memberToSave.id}-${newMentorId}`,
+            type: 'assignment',
+            title: 'Disciple-maker assigné',
+            message: `${formatFirstName(memberToSave.firstName)} ${memberToSave.lastName.toUpperCase()} a été confié(e) à ${formatFirstName(mentor.firstName)} ${mentor.lastName.toUpperCase()}.`,
+            date: new Date().toISOString().split('T')[0],
+            isRead: false,
+            link: 'members',
+            targetId: memberToSave.id,
+          });
+        }
+      }
       const allPairs = await getDiscipleshipPairs();
       const existingPair = allPairs.find(p => p.discipleId === memberToSave.id);
       if (newMentorId) {

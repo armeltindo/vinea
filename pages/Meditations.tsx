@@ -111,11 +111,6 @@ const Meditations: React.FC = () => {
   useEffect(() => {
     getMeditations().then(m => {
       setMeditations(m);
-      const detailId = new URLSearchParams(window.location.search).get('detail');
-      if (detailId) {
-        const found = m.find((x: any) => x.id === detailId);
-        if (found) { setReadingMeditation(found); setIsThemeExpandedDetail(false); }
-      }
     });
   }, []);
 
@@ -125,16 +120,12 @@ const Meditations: React.FC = () => {
   const [analysis, setAnalysis] = useState<string | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [generatingMap, setGeneratingMap] = useState<Record<string, boolean>>({});
-  const [scrollProgress, setScrollProgress] = useState(0);
-  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [isImportSuccessOpen, setIsImportSuccessOpen] = useState(false);
   const [importCount, setImportCount] = useState(0);
   const importInputRef = useRef<HTMLInputElement>(null);
 
-  const [readingMeditation, setReadingMeditation] = useState<any>(null);
-  const [isThemeExpandedDetail, setIsThemeExpandedDetail] = useState(false);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -149,14 +140,6 @@ const Meditations: React.FC = () => {
     excerpt: ''
   });
 
-
-  const handleScroll = () => {
-    if (scrollContainerRef.current) {
-      const { scrollTop, scrollHeight, clientHeight } = scrollContainerRef.current;
-      const progress = (scrollTop / (scrollHeight - clientHeight)) * 100;
-      setScrollProgress(progress);
-    }
-  };
 
   const availableYears = useMemo(() => {
     const years = meditations.map(m => new Date(m.date).getFullYear().toString());
@@ -301,14 +284,10 @@ const Meditations: React.FC = () => {
     if (meditationToDeleteId) {
       setMeditations(prev => prev.filter(m => m.id !== meditationToDeleteId));
       setIsDeleteConfirmOpen(false);
-      setReadingMeditation(null);
-      navigate('', { replace: true });
       await deleteMeditation(meditationToDeleteId);
       setMeditationToDeleteId(null);
     }
   };
-
-  const THEME_MAX_LENGTH = 60;
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500 pb-20">
@@ -344,7 +323,7 @@ const Meditations: React.FC = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         {filteredMeditations.length > 0 ? filteredMeditations.map((med) => (
-          <div key={med.id} onClick={() => { setReadingMeditation(med); setIsThemeExpandedDetail(false); navigate(`?detail=${med.id}`, { replace: true }); if(!med.isRead) { setMeditations(prev => prev.map(m => m.id === med.id ? {...m, isRead: true} : m)); updateMeditation(med.id, { isRead: true }); } }} className={cn("group relative flex flex-col bg-white border-2 rounded-2xl shadow-sm hover:shadow-xl transition-all cursor-pointer overflow-hidden min-h-[480px]", med.isRead ? "border-emerald-100" : "border-slate-100 hover:border-indigo-400")}>
+          <div key={med.id} onClick={() => navigate(`/meditations/${med.id}`)} className={cn("group relative flex flex-col bg-white border-2 rounded-2xl shadow-sm hover:shadow-xl transition-all cursor-pointer overflow-hidden min-h-[480px]", med.isRead ? "border-emerald-100" : "border-slate-100 hover:border-indigo-400")}>
             <div className={cn("h-1.5 w-full", med.isRead ? "bg-emerald-500" : "bg-slate-100 group-hover:bg-indigo-500")} />
             <div className="p-8 flex flex-col h-full space-y-6">
               <div className="flex justify-between items-start">
@@ -441,182 +420,6 @@ const Meditations: React.FC = () => {
           </div>
         )}
       </div>
-
-      {readingMeditation && (
-        <div className="fixed inset-0 z-[150] overflow-hidden flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity duration-500" onClick={() => { setReadingMeditation(null); navigate('', { replace: true }); }} />
-          <div className="relative w-full max-w-4xl bg-white shadow-2xl animate-in zoom-in-95 duration-500 flex flex-col rounded-2xl overflow-hidden max-h-[90vh]">
-            
-            {/* Reading Progress Top Bar */}
-            <div className="absolute top-0 left-0 right-0 h-1.5 bg-slate-100 z-[160] rounded-t-[3rem]">
-              <div className="h-full bg-indigo-500 transition-all duration-300" style={{ width: `${scrollProgress}%` }} />
-            </div>
-
-            {/* Majestic Header */}
-            <div className="px-10 py-16 bg-slate-950 text-white shrink-0 relative overflow-hidden">
-              <div className="absolute top-0 right-0 p-8 opacity-10 pointer-events-none">
-                <Leaf size={240} className="rotate-45 text-indigo-400" />
-              </div>
-              <button 
-                onClick={() => { setReadingMeditation(null); navigate('', { replace: true }); }}
-                className="absolute top-8 left-8 p-3 bg-white/10 hover:bg-white/20 rounded-full text-white backdrop-blur-md z-10 transition-all hover:scale-110 active:scale-95"
-              >
-                <ArrowLeft size={20} />
-              </button>
-              
-              <div className="relative z-10 space-y-6">
-                <div className="flex items-center gap-3">
-                  <span className="px-3 py-1 bg-indigo-600 text-white rounded-full text-xs font-medium shadow-lg shadow-indigo-900/40">
-                    Vinea Devotional
-                  </span>
-                  <span className="text-xs text-slate-400 flex items-center gap-2 tracking-wide">
-                    <Calendar size={12} className="text-indigo-400" />
-                    Date : {new Date(readingMeditation.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
-                  </span>
-                </div>
-                <div>
-                  <p className="text-xs font-semibold text-indigo-400 mb-2">Thème de l'étude</p>
-                  <h3 className="text-xl font-semibold leading-snug max-w-2xl drop-shadow-md text-white transition-all duration-300">
-                    {readingMeditation.title.length > THEME_MAX_LENGTH ? (
-                      <>
-                        <span 
-                          className="cursor-pointer hover:opacity-80 transition-opacity"
-                          onClick={() => setIsThemeExpandedDetail(!isThemeExpandedDetail)}
-                        >
-                          {isThemeExpandedDetail ? readingMeditation.title : readingMeditation.title.substring(0, THEME_MAX_LENGTH)}
-                        </span>
-                        {!isThemeExpandedDetail && (
-                          <button 
-                            onClick={() => setIsThemeExpandedDetail(true)}
-                            className="text-indigo-400 hover:text-indigo-300 ml-2 transition-colors inline-block focus:outline-none select-none"
-                            title="Afficher tout le thème"
-                          >
-                            ...
-                          </button>
-                        )}
-                        {isThemeExpandedDetail && (
-                          <button 
-                            onClick={() => setIsThemeExpandedDetail(false)}
-                            className="text-indigo-400 hover:text-indigo-300 ml-2 text-xs font-medium transition-colors inline-block focus:outline-none select-none align-middle"
-                            title="Réduire"
-                          >
-                            [Réduire]
-                          </button>
-                        )}
-                      </>
-                    ) : (
-                      readingMeditation.title || "Étude biblique"
-                    )}
-                  </h3>
-                </div>
-                <div className="flex items-center gap-4 text-xs font-semibold text-indigo-300">
-                  <Clock size={14} /> Temps de lecture : ~5 minutes
-                </div>
-              </div>
-            </div>
-
-            {/* Reading Area */}
-            <div 
-              ref={scrollContainerRef} 
-              onScroll={handleScroll} 
-              className="flex-1 overflow-y-auto p-12 custom-scrollbar bg-white space-y-16"
-            >
-              <div className="max-w-2xl mx-auto space-y-16">
-                
-                {/* I. LA PAROLE (Versets) */}
-                <div className="space-y-6">
-                  <div className="flex items-center gap-3">
-                     <div className="h-0.5 w-8 bg-indigo-600"></div>
-                     <h4 className="text-xs font-medium text-slate-500">Versets de référence</h4>
-                  </div>
-                  <div className="p-10 bg-slate-50 border border-slate-200 rounded-2xl text-3xl font-serif italic text-slate-900 leading-relaxed text-center group shadow-inner relative overflow-hidden">
-                     <div className="absolute top-0 right-0 p-6 opacity-5 pointer-events-none group-hover:scale-110 transition-transform">
-                        <Quote size={80} />
-                     </div>
-                     "{readingMeditation.scripture || "Verset non renseigné"}"
-                  </div>
-                </div>
-
-                {/* II. RÉFLEXION (Résumé) */}
-                <div className="space-y-6">
-                  <div className="flex items-center gap-3">
-                     <div className="h-0.5 w-8 bg-indigo-600"></div>
-                     <h4 className="text-xs font-medium text-slate-500">Résumé & Réflexion</h4>
-                  </div>
-                  <div className="text-xl text-slate-700 font-medium leading-[1.8] text-justify first-letter:text-6xl first-letter:font-semibold first-letter:text-indigo-600 first-letter:mr-3 first-letter:float-left whitespace-pre-wrap italic bg-gradient-to-b from-white to-slate-50/50 p-4 rounded-3xl">
-                    {readingMeditation.excerpt || "Contenu en attente de rédaction..."}
-                  </div>
-                </div>
-
-                {/* III. ACTION (Questions) */}
-                {readingMeditation.questions && (
-                  <div className="space-y-6">
-                    <div className="flex items-center gap-3">
-                      <div className="h-0.5 w-8 bg-indigo-600"></div>
-                      <h4 className="text-xs font-medium text-slate-500">Questions de réflexion</h4>
-                    </div>
-                    <div className="bg-indigo-50/50 p-10 rounded-2xl border border-indigo-100/50 space-y-8 shadow-sm">
-                      <div className="space-y-6">
-                        {readingMeditation.questions.split('\n').filter(q => q.trim()).map((q, idx) => (
-                          <div key={idx} className="flex gap-5 group">
-                            <span className="w-10 h-10 rounded-2xl bg-white border border-indigo-200 flex items-center justify-center shrink-0 text-sm font-semibold text-indigo-600 shadow-md transition-transform group-hover:scale-110 group-hover:bg-indigo-600 group-hover:text-white group-hover:border-indigo-600">
-                              {idx + 1}
-                            </span>
-                            <p className="text-lg italic font-medium text-slate-800 leading-relaxed group-hover:text-indigo-950 transition-colors pt-1">
-                              {q.trim()}
-                            </p>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* IV. FOOTER ACTIONS */}
-                <div className="pt-10 border-t border-slate-100 flex flex-col md:flex-row items-center justify-between gap-6 pb-20">
-                  <button 
-                    onClick={() => { const newLikes = readingMeditation.likes + 1; setMeditations(prev => prev.map(m => m.id === readingMeditation.id ? {...m, likes: newLikes} : m)); updateMeditation(readingMeditation.id, { likes: newLikes }); }}
-                    className="flex items-center gap-3 px-8 py-4 bg-rose-50 text-rose-600 rounded-[1.5rem] border border-rose-100 hover:bg-rose-100 transition-all shadow-sm active:scale-95 group"
-                  >
-                    <Heart size={20} className={cn(readingMeditation.likes > 0 && "fill-rose-500", "group-hover:scale-110 transition-transform")} />
-                    <span className="text-xs font-medium">{readingMeditation.likes} Likes</span>
-                  </button>
-                  
-                  <div className="flex gap-3 w-full md:w-auto">
-                    <button 
-                      onClick={() => {
-                        const text = `📖 *VINEA DEVOTIONAL*\n*${readingMeditation.title.toUpperCase()}*\n\n🕊️ *LA PAROLE*\n"${readingMeditation.scripture}"\n\n💡 *RÉFLEXION*\n${readingMeditation.excerpt}\n\n🙏 *ACTION*\n${readingMeditation.questions}`;
-                        window.open(`https://wa.me/?text=${encodeURIComponent(text)}`);
-                      }}
-                      className="flex-1 md:flex-none flex items-center justify-center gap-3 px-10 py-5 bg-emerald-600 text-white rounded-[1.8rem] text-xs font-medium hover:bg-emerald-700 shadow-2xl shadow-emerald-200 transition-all active:scale-95"
-                    >
-                      <MessageCircle size={20} /> Diffuser sur WhatsApp
-                    </button>
-                    <button 
-                      onClick={() => {
-                        navigator.clipboard.writeText(readingMeditation.excerpt);
-                        alert("Texte copié avec succès !");
-                      }}
-                      className="p-5 bg-slate-100 text-slate-500 rounded-[1.5rem] hover:bg-slate-200 transition-all shadow-sm active:scale-95"
-                      title="Copier le résumé"
-                    >
-                      <Copy size={20} />
-                    </button>
-                    {canDelete('meditations') && (
-                    <button
-                      onClick={() => { setMeditationToDeleteId(readingMeditation.id); setIsDeleteConfirmOpen(true); }}
-                      className="p-5 bg-rose-50 text-rose-600 rounded-[1.5rem] border border-rose-100 hover:bg-rose-100 transition-all shadow-sm active:scale-95"
-                    >
-                      <Trash2 size={20} />
-                    </button>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
 
       {isFormOpen && (
         <div className="fixed inset-0 z-[180] flex items-center justify-center p-4 overflow-hidden">

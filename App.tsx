@@ -26,6 +26,7 @@ const SuiviAbsents = React.lazy(() => import('./pages/SuiviAbsents'));
 const MemberDetailPage = React.lazy(() => import('./pages/MemberDetailPage'));
 const ServiceDetailPage = React.lazy(() => import('./pages/ServiceDetailPage'));
 const MeetingDetailPage = React.lazy(() => import('./pages/MeetingDetailPage'));
+const MeditationDetailPage = React.lazy(() => import('./pages/MeditationDetailPage'));
 const Meditations = React.lazy(() => import('./pages/Meditations'));
 const Meetings = React.lazy(() => import('./pages/Meetings'));
 const Events = React.lazy(() => import('./pages/Events'));
@@ -657,6 +658,7 @@ const App: React.FC = () => {
                 <Route path="/members/:id" element={canAccessRoute('members') ? <MemberDetailPage /> : <Navigate to="/" replace />} />
                 <Route path="/services/:id" element={canAccessRoute('services') ? <ServiceDetailPage /> : <Navigate to="/" replace />} />
                 <Route path="/meetings/:id" element={canAccessRoute('meetings') ? <MeetingDetailPage /> : <Navigate to="/" replace />} />
+                <Route path="/meditations/:id" element={canAccessRoute('meditations') ? <MeditationDetailPage /> : <Navigate to="/" replace />} />
                 <Route path="/visitors" element={canAccessRoute('visitors') ? <Visitors /> : <Navigate to="/" replace />} />
                 <Route path="/spiritual" element={canAccessRoute('spiritual') ? <SpiritualGrowth /> : <Navigate to="/" replace />} />
                 <Route path="/discipleship" element={canAccessRoute('discipleship') ? <Discipleship /> : <Navigate to="/" replace />} />

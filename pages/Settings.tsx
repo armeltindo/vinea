@@ -779,8 +779,6 @@ const Settings: React.FC = () => {
       img.onerror = reject;
       img.src = url;
     });
-    await supabase.storage.createBucket('avatars', { public: true }).catch(() => {});
-    await supabase.storage.updateBucket('avatars', { public: true }).catch(() => {});
     const fileName = `avatar-${currentAdminId.current || 'default'}.webp`;
     const { error } = await supabase.storage
       .from('avatars')

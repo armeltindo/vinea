@@ -357,3 +357,26 @@ CREATE POLICY "Authenticated users can read members" ON members FOR SELECT USING
 
 ALTER TABLE financial_records ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Authenticated users can read financial_records" ON financial_records FOR SELECT USING (auth.role() = 'authenticated');
+
+-- 18. STORAGE BUCKETS
+-- Run this in the Supabase SQL Editor (requires service role privileges)
+-- Or create buckets manually in the Supabase Dashboard → Storage
+INSERT INTO storage.buckets (id, name, public)
+VALUES
+  ('members', 'members', true),
+  ('avatars', 'avatars', true)
+ON CONFLICT (id) DO NOTHING;
+
+-- Allow authenticated users to upload to the members bucket
+CREATE POLICY "Authenticated users can upload member photos" ON storage.objects
+  FOR INSERT TO authenticated WITH CHECK (bucket_id = 'members');
+
+CREATE POLICY "Public read access to member photos" ON storage.objects
+  FOR SELECT USING (bucket_id = 'members');
+
+-- Allow authenticated users to upload to the avatars bucket
+CREATE POLICY "Authenticated users can upload avatars" ON storage.objects
+  FOR INSERT TO authenticated WITH CHECK (bucket_id = 'avatars');
+
+CREATE POLICY "Public read access to avatars" ON storage.objects
+  FOR SELECT USING (bucket_id = 'avatars');

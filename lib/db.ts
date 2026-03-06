@@ -1481,6 +1481,15 @@ export const getDailyExerciseDatesByMemberId = async (
   return (data ?? []).map((r: any) => r.date);
 };
 
+export const deleteDailyExercise = async (memberId: string, date: string): Promise<void> => {
+  const { error } = await supabase
+    .from('daily_spiritual_exercises')
+    .delete()
+    .eq('member_id', memberId)
+    .eq('date', date);
+  if (error) console.error('deleteDailyExercise:', error.message);
+};
+
 /**
  * Vérifie si un membre est mentor dans au moins un binôme actif.
  * Utilisé par le portail pour déterminer si le membre est un faiseur de disciples.

@@ -28,6 +28,7 @@ interface VisitorDetailsProps {
   onEdit: (visitor: Visitor) => void;
   onDelete: (id: string) => void;
   onAddFollowUp: (visitorId: string, entry: FollowUpEntry) => void;
+  onDeleteFollowUp?: (visitorId: string, entryId: string) => void;
   onConvertToMember?: (visitor: Visitor) => void;
 }
 
@@ -40,8 +41,8 @@ const QUALIFICATION_META = [
   { id: 'wantsToServe', label: 'Souhaite servir', icon: <Briefcase size={12} />, color: 'bg-slate-50 text-slate-600 border-slate-100' },
 ];
 
-const VisitorDetails: React.FC<VisitorDetailsProps> = ({ 
-  visitor, isOpen, onClose, onEdit, onDelete, onAddFollowUp, onConvertToMember
+const VisitorDetails: React.FC<VisitorDetailsProps> = ({
+  visitor, isOpen, onClose, onEdit, onDelete, onAddFollowUp, onDeleteFollowUp, onConvertToMember
 }) => {
   const [aiSuggestion, setAiSuggestion] = useState<string | null>(null);
   const [isSuggesting, setIsSuggesting] = useState(false);
@@ -372,7 +373,18 @@ const VisitorDetails: React.FC<VisitorDetailsProps> = ({
                     <div className="bg-white border border-slate-100 rounded-2xl p-4 shadow-sm">
                       <div className="flex justify-between items-start mb-2">
                         <span className="text-xs font-semibold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded uppercase">{entry.type}</span>
-                        <span className="text-xs font-bold text-slate-400">{new Date(entry.date).toLocaleDateString('fr-FR')}</span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-bold text-slate-400">{new Date(entry.date).toLocaleDateString('fr-FR')}</span>
+                          {onDeleteFollowUp && (
+                            <button
+                              onClick={() => onDeleteFollowUp(visitor.id, entry.id)}
+                              className="p-1 rounded-lg text-slate-300 hover:text-rose-500 hover:bg-rose-50 transition-colors"
+                              title="Supprimer"
+                            >
+                              <Trash2 size={12} />
+                            </button>
+                          )}
+                        </div>
                       </div>
                       <p className="text-sm text-slate-700 font-medium">{entry.note}</p>
                     </div>

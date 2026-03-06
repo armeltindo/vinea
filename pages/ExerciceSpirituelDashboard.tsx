@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Calendar, Save, LogOut, CheckCircle2, AlertCircle, Loader2, Bell, Users } from 'lucide-react';
+import { Calendar, Save, LogOut, CheckCircle2, AlertCircle, Loader2, Bell, Users, Trash2 } from 'lucide-react';
 import {
   getSpiritualExerciseTypes,
   getDailyExerciseByDate,
   getDailyExercises,
   upsertDailyExercise,
+  deleteDailyExercise,
 } from '../lib/db';
 import { SpiritualExerciseType, DailyExercise, MemberSession } from '../types';
 import { cn } from '../utils';
@@ -155,6 +156,13 @@ const ExerciceSpirituelDashboard: React.FC = () => {
     setSaveSuccess(true);
     await loadAllExercises(session.memberId);
     setTimeout(() => setSaveSuccess(false), 2500);
+  };
+
+  const handleDeleteExercise = async (memberId: string, date: string) => {
+    await deleteDailyExercise(memberId, date);
+    setAllExercises(prev => prev.filter(e => e.date !== date));
+    setSubmittedDates(prev => { const s = new Set(prev); s.delete(date); return s; });
+    if (selectedDate === date) { setFormValues({}); setDetailValues({}); }
   };
 
   const handleLogout = () => {
@@ -442,22 +450,33 @@ const ExerciceSpirituelDashboard: React.FC = () => {
             </h3>
             <div className="space-y-2">
               {allExercises.slice(0, 7).map(ex => (
-                <button
+                <div
                   key={ex.id}
-                  onClick={() => setSelectedDate(ex.date)}
                   className={cn(
-                    "w-full flex items-center justify-between px-4 py-3 rounded-xl text-xs font-medium transition-all border",
+                    "flex items-center gap-2 px-4 py-3 rounded-xl text-xs font-medium transition-all border",
                     selectedDate === ex.date
                       ? "bg-indigo-50 border-indigo-200 text-indigo-700"
-                      : "bg-slate-50 border-transparent text-slate-600 hover:bg-slate-100"
+                      : "bg-slate-50 border-transparent text-slate-600"
                   )}
                 >
-                  <span className="flex items-center gap-2">
-                    <CheckCircle2 size={14} className="text-emerald-500" />
-                    {formatDateLong(ex.date)}
-                  </span>
-                  <span className="text-slate-400">{ex.entries.length} entrée(s)</span>
-                </button>
+                  <button
+                    onClick={() => setSelectedDate(ex.date)}
+                    className="flex-1 flex items-center justify-between text-left"
+                  >
+                    <span className="flex items-center gap-2">
+                      <CheckCircle2 size={14} className="text-emerald-500" />
+                      {formatDateLong(ex.date)}
+                    </span>
+                    <span className="text-slate-400">{ex.entries.length} entrée(s)</span>
+                  </button>
+                  <button
+                    onClick={() => session && handleDeleteExercise(session.memberId, ex.date)}
+                    className="p-1.5 rounded-lg text-slate-300 hover:text-rose-500 hover:bg-rose-50 transition-colors shrink-0"
+                    title="Supprimer"
+                  >
+                    <Trash2 size={13} />
+                  </button>
+                </div>
               ))}
             </div>
           </div>

@@ -49,10 +49,10 @@ import {
   Loader2
 } from 'lucide-react';
 import MemberCardModal from './MemberCardModal';
-import { Member, MemberStatus, Department, DepartmentActivity, ActivityStatus, FinancialRecord, AttendanceSession, OperationType } from '../types';
+import { Member, MemberStatus, Department, DepartmentActivity, ActivityStatus, FinancialRecord, AttendanceSession, OperationType, FollowUpEntry } from '../types';
 import { formatPhone } from '../constants';
 import { cn, getInitials, getDisplayNickname, formatFirstName } from '../utils';
-import { getMembers, getDepartmentActivities, getDiscipleshipEnrollments, getFinancialRecords, getAttendanceSessions, generateMemberUsername, activateMemberAccount } from '../lib/db';
+import { getMembers, getDepartmentActivities, getDiscipleshipEnrollments, getFinancialRecords, getAttendanceSessions, generateMemberUsername, activateMemberAccount, updateMember } from '../lib/db';
 import Avatar from './Avatar';
 
 const MOIS = ['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
@@ -111,9 +111,10 @@ interface MemberDetailsProps {
   onEdit: (member: Member) => void;
   onDelete: (memberId: string) => void;
   onPreviewPhoto?: (url: string) => void;
+  onUpdateMember?: (updated: Member) => void;
 }
 
-const MemberDetails: React.FC<MemberDetailsProps> = ({ member, isOpen, onClose, onEdit, onDelete, onPreviewPhoto }) => {
+const MemberDetails: React.FC<MemberDetailsProps> = ({ member, isOpen, onClose, onEdit, onDelete, onPreviewPhoto, onUpdateMember }) => {
   if (!member) return null;
 
   const [isCardModalOpen, setIsCardModalOpen] = useState(false);
@@ -125,6 +126,16 @@ const MemberDetails: React.FC<MemberDetailsProps> = ({ member, isOpen, onClose, 
   const [isActivatingAccount, setIsActivatingAccount] = useState(false);
   const [accountModal, setAccountModal] = useState<{ username: string; password: string } | null>(null);
   const [copiedField, setCopiedField] = useState<string | null>(null);
+  const [localFollowUp, setLocalFollowUp] = useState<FollowUpEntry[]>(member.followUpHistory ?? []);
+
+  useEffect(() => { setLocalFollowUp(member.followUpHistory ?? []); }, [member.id, member.followUpHistory]);
+
+  const handleDeleteMemberFollowUp = async (entryId: string) => {
+    const updated = localFollowUp.filter(e => e.id !== entryId);
+    setLocalFollowUp(updated);
+    await updateMember(member.id, { followUpHistory: updated });
+    if (onUpdateMember) onUpdateMember({ ...member, followUpHistory: updated });
+  };
 
   useEffect(() => {
     if (isOpen) {
@@ -848,6 +859,36 @@ const MemberDetails: React.FC<MemberDetailsProps> = ({ member, isOpen, onClose, 
                   "{member.notes}"
                 </div>
              </div>
+          )}
+
+          {/* Comptes rendus de suivi */}
+          {localFollowUp.length > 0 && (
+            <div className="space-y-2">
+              <h4 className="text-xs font-medium text-slate-500 flex items-center gap-2">
+                <HistoryIcon size={14} className="text-indigo-600" /> Comptes rendus de suivi ({localFollowUp.length})
+              </h4>
+              <div className="space-y-2">
+                {[...localFollowUp].reverse().map(entry => (
+                  <div key={entry.id} className="flex items-start gap-3 p-3 bg-white border border-slate-100 rounded-xl shadow-sm">
+                    <span className="px-2 py-0.5 bg-indigo-100 text-indigo-600 rounded-lg text-xs font-medium shrink-0 mt-0.5">{entry.type}</span>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs text-slate-700">{entry.note}</p>
+                      {entry.nextStep && (
+                        <p className="text-xs text-indigo-500 mt-0.5">→ {entry.nextStep}</p>
+                      )}
+                      <p className="text-[10px] text-slate-400 mt-0.5">{new Date(entry.date).toLocaleDateString('fr-FR')}</p>
+                    </div>
+                    <button
+                      onClick={() => handleDeleteMemberFollowUp(entry.id)}
+                      className="p-1.5 rounded-lg text-slate-300 hover:text-rose-500 hover:bg-rose-50 transition-colors shrink-0"
+                      title="Supprimer"
+                    >
+                      <Trash2 size={13} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
           )}
         </div>
 

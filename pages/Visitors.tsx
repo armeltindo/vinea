@@ -611,6 +611,15 @@ const Visitors: React.FC = () => {
           }));
           await updateVisitor(id, { followUpHistory: updatedHistory });
         }}
+        onDeleteFollowUp={async (id, entryId) => {
+          let updatedHistory: FollowUpEntry[] = [];
+          setVisitors(prev => prev.map(v => {
+            if (v.id !== id) return v;
+            updatedHistory = (v.followUpHistory || []).filter(e => e.id !== entryId);
+            return { ...v, followUpHistory: updatedHistory };
+          }));
+          await updateVisitor(id, { followUpHistory: updatedHistory });
+        }}
       />
 
       {isFormOpen && (

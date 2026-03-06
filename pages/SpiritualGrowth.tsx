@@ -31,13 +31,14 @@ import {
   Lock,
   Zap,
   Star,
-  Edit
+  Edit,
+  Trash2
 } from 'lucide-react';
 import { analyzePageData } from '../lib/gemini';
 import { cn, generateId, formatFirstName, getInitials, getDisplayNickname } from '../utils';
 import { Member, MemberType, SpiritualExerciseDef, YearlySpiritualGoals, MonthlySpiritualPoint, SpiritualObjective, DailyExercise } from '../types';
 import { SPIRITUAL_EXERCISES_LIST } from '../constants';
-import { getMembers, getSpiritualGoals, getSpiritualPoints, upsertSpiritualGoals, upsertSpiritualPoints, getDailyExercisesCountByMemberIds, getDailyExercises } from '../lib/db';
+import { getMembers, getSpiritualGoals, getSpiritualPoints, upsertSpiritualGoals, upsertSpiritualPoints, getDailyExercisesCountByMemberIds, getDailyExercises, deleteDailyExercise } from '../lib/db';
 
 const MONTHS = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
 
@@ -111,6 +112,11 @@ const SpiritualGrowth: React.FC = () => {
     const exs = await getDailyExercises(member.id);
     setPortalDetailExercises(exs);
     setPortalDetailLoading(false);
+  };
+
+  const handleDeletePortalExercise = async (memberId: string, date: string) => {
+    await deleteDailyExercise(memberId, date);
+    setPortalDetailExercises(prev => prev.filter(e => e.date !== date));
   };
 
   const today = new Date();
@@ -431,9 +437,18 @@ const SpiritualGrowth: React.FC = () => {
               ) : (
                 portalDetailExercises.map(ex => (
                   <div key={ex.id} className="bg-slate-50 border border-slate-100 rounded-2xl p-4 space-y-2">
-                    <p className="text-xs font-semibold text-slate-600">
-                      {new Date(ex.date).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}
-                    </p>
+                    <div className="flex items-center justify-between">
+                      <p className="text-xs font-semibold text-slate-600">
+                        {new Date(ex.date).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}
+                      </p>
+                      <button
+                        onClick={() => portalDetailMember && handleDeletePortalExercise(portalDetailMember.id, ex.date)}
+                        className="p-1.5 rounded-lg text-slate-300 hover:text-rose-500 hover:bg-rose-50 transition-colors"
+                        title="Supprimer"
+                      >
+                        <Trash2 size={13} />
+                      </button>
+                    </div>
                     <div className="flex flex-wrap gap-2">
                       {ex.entries.map(e => (
                         <span key={e.id} className={cn(

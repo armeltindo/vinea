@@ -536,7 +536,7 @@ const Attendance: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <Card title="Évolution de Participation" className="lg:col-span-2" icon={<BarChartIcon size={18} />}>
           <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-4">
-             <div className="flex items-center gap-4">
+             <div className="flex items-center gap-4 flex-wrap">
                 <div className="flex items-center gap-2">
                    <div className="w-2.5 h-2.5 rounded-full bg-indigo-600"></div>
                    <span className="text-xs font-medium text-slate-500">Hommes</span>
@@ -548,6 +548,10 @@ const Attendance: React.FC = () => {
                 <div className="flex items-center gap-2">
                    <div className="w-2.5 h-2.5 rounded-full bg-indigo-100"></div>
                    <span className="text-xs font-medium text-slate-500">Enfants</span>
+                </div>
+                <div className="flex items-center gap-2">
+                   <div className="w-2.5 h-2.5 rounded-full bg-emerald-500"></div>
+                   <span className="text-xs font-medium text-slate-500">Nouveaux</span>
                 </div>
              </div>
              
@@ -594,10 +598,11 @@ const Attendance: React.FC = () => {
                   <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 10, fontWeight: 'bold'}} tickFormatter={(val) => new Date(val).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' })} />
                   <YAxis axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 10, fontWeight: 'bold'}} />
                   <Tooltip />
-                  <Bar dataKey="men" stackId="a" fill="#4f46e5" radius={[0, 0, 0, 0]} barSize={40} />
-                  <Bar dataKey="women" stackId="a" fill="#818cf8" radius={[0, 0, 0, 0]} barSize={40} />
-                  <Bar dataKey="children" stackId="a" fill="#c7d2fe" radius={[12, 12, 0, 0]} barSize={40} />
-                  <Line type="monotone" dataKey="total" stroke="#4f46e5" strokeWidth={3} dot={{ r: 4 }} />
+                  <Bar dataKey="men" stackId="a" fill="#4f46e5" radius={[0, 0, 0, 0]} barSize={40} name="Hommes" />
+                  <Bar dataKey="women" stackId="a" fill="#818cf8" radius={[0, 0, 0, 0]} barSize={40} name="Femmes" />
+                  <Bar dataKey="children" stackId="a" fill="#c7d2fe" radius={[12, 12, 0, 0]} barSize={40} name="Enfants" />
+                  <Line type="monotone" dataKey="total" stroke="#4f46e5" strokeWidth={3} dot={{ r: 4 }} name="Total" />
+                  <Line type="monotone" dataKey="newCount" stroke="#10b981" strokeWidth={2} strokeDasharray="5 3" dot={{ r: 4, fill: '#10b981' }} name="Nouveaux" />
                 </ComposedChart>
               </ResponsiveContainer>
             ) : (

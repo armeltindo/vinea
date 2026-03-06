@@ -1,4 +1,34 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <rect width="512" height="512" rx="80" fill="#1e40af"/>
-  <text x="256" y="340" font-size="280" text-anchor="middle" font-family="serif" fill="white">V</text>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="512" y2="512" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#4338CA"/>
+      <stop offset="1" stop-color="#7C3AED"/>
+    </linearGradient>
+    <linearGradient id="shimmer" x1="0" y1="0" x2="0" y2="410" gradientUnits="userSpaceOnUse">
+      <stop stop-color="white" stop-opacity="0.12"/>
+      <stop offset="1" stop-color="white" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background squircle -->
+  <rect width="512" height="512" rx="143" fill="url(#bg)"/>
+  <rect width="512" height="512" rx="143" fill="url(#shimmer)"/>
+
+  <!-- Cross — vertical bar -->
+  <line x1="256" y1="72" x2="256" y2="282" stroke="white" stroke-width="41" stroke-linecap="round"/>
+  <!-- Cross — horizontal bar -->
+  <line x1="159" y1="154" x2="353" y2="154" stroke="white" stroke-width="41" stroke-linecap="round"/>
+
+  <!-- Community: 3 person silhouettes -->
+  <!-- Left person -->
+  <circle cx="154" cy="358" r="28" fill="white" fill-opacity="0.82"/>
+  <ellipse cx="154" cy="420" rx="46" ry="25" fill="white" fill-opacity="0.72"/>
+
+  <!-- Center person (elevated) -->
+  <circle cx="256" cy="342" r="31" fill="white"/>
+  <ellipse cx="256" cy="406" rx="49" ry="27" fill="white"/>
+
+  <!-- Right person -->
+  <circle cx="358" cy="358" r="28" fill="white" fill-opacity="0.82"/>
+  <ellipse cx="358" cy="420" rx="46" ry="25" fill="white" fill-opacity="0.72"/>
 </svg>

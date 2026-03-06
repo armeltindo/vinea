@@ -65,6 +65,7 @@ import { Member, MemberStatus, MemberType, Department } from '../types';
 import { analyzePageData } from '../lib/gemini';
 import { cn, generateId, getInitials, getDisplayNickname, formatFirstName } from '../utils';
 import { getMembers, createMember, updateMember, deleteMember, getDiscipleshipPairs, createDiscipleshipPair, updateDiscipleshipPair, deleteDiscipleshipPair, getAppConfig, syncMemberToDepartments } from '../lib/db';
+import { supabase } from '../lib/supabase';
 
 // Helper pour convertir YYYY-MM-DD en DD-MM-YYYY
 const formatToUIDate = (isoDate: string | undefined) => {
@@ -215,6 +216,7 @@ const Members: React.FC = () => {
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [memberToDeleteId, setMemberToDeleteId] = useState<string | null>(null);
   const [editingMemberId, setEditingMemberId] = useState<string | null>(null);
+  const [pendingPhotoFile, setPendingPhotoFile] = useState<File | null>(null);
   const [analysis, setAnalysis] = useState<string | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
@@ -549,12 +551,32 @@ const Members: React.FC = () => {
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setFormData(prev => ({ ...prev, photoUrl: reader.result as string }));
-      };
-      reader.readAsDataURL(file);
+      setPendingPhotoFile(file);
+      setFormData(prev => ({ ...prev, photoUrl: URL.createObjectURL(file) }));
     }
+  };
+
+  const uploadMemberPhoto = async (file: File, memberId: string): Promise<string> => {
+    const blob = await new Promise<Blob>((resolve, reject) => {
+      const img = new Image();
+      const url = URL.createObjectURL(file);
+      img.onload = () => {
+        URL.revokeObjectURL(url);
+        const scale = Math.min(256 / img.width, 256 / img.height, 1);
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.round(img.width * scale);
+        canvas.height = Math.round(img.height * scale);
+        canvas.getContext('2d')!.drawImage(img, 0, 0, canvas.width, canvas.height);
+        canvas.toBlob(b => b ? resolve(b) : reject(new Error('toBlob failed')), 'image/webp', 0.85);
+      };
+      img.onerror = reject;
+      img.src = url;
+    });
+    await supabase.storage.createBucket('members', { public: true }).catch(() => {});
+    const fileName = `photo-${memberId}.webp`;
+    await supabase.storage.from('members').upload(fileName, blob, { upsert: true, contentType: 'image/webp' });
+    const { data } = supabase.storage.from('members').getPublicUrl(fileName);
+    return data.publicUrl;
   };
 
   const toggleDepartment = (dept: string) => {
@@ -585,14 +607,22 @@ const Members: React.FC = () => {
       const existing = members.find(m => m.id === editingMemberId)!;
       previousDepts = existing.departments ?? [];
       const isDiscipleMaker = ![MemberType.MEMBRE_SIMPLE, MemberType.ENFANT].includes((formData.type ?? existing.type) as MemberType);
-      memberToSave = { ...existing, ...formData, firstName: formattedFirstName, lastName: formattedLastName, isDiscipleMaker } as Member;
+      const photoUrl = pendingPhotoFile
+        ? await uploadMemberPhoto(pendingPhotoFile, editingMemberId)
+        : formData.photoUrl;
+      memberToSave = { ...existing, ...formData, photoUrl, firstName: formattedFirstName, lastName: formattedLastName, isDiscipleMaker } as Member;
       newMembersList = newMembersList.map(m => m.id === editingMemberId ? memberToSave : m);
       await updateMember(editingMemberId, memberToSave);
     } else {
+      const newId = generateId();
       const isDiscipleMaker = ![MemberType.MEMBRE_SIMPLE, MemberType.ENFANT].includes(formData.type as MemberType);
+      const photoUrl = pendingPhotoFile
+        ? await uploadMemberPhoto(pendingPhotoFile, newId)
+        : formData.photoUrl;
       memberToSave = {
         ...formData as Member,
-        id: generateId(),
+        id: newId,
+        photoUrl,
         firstName: formattedFirstName,
         lastName: formattedLastName,
         emergencyContact: formData.emergencyContact || { name: '', phone: '', relation: '' },
@@ -673,6 +703,7 @@ const Members: React.FC = () => {
     }
 
     setMembers(newMembersList);
+    setPendingPhotoFile(null);
     setIsFormOpen(false);
     setEditingMemberId(null);
     setFormData(initialState);
@@ -687,6 +718,7 @@ const Members: React.FC = () => {
   const closeForm = () => {
     setIsFormOpen(false);
     setEditingMemberId(null);
+    setPendingPhotoFile(null);
     setFormData(initialState);
     setSpouseSearch('');
     setIsSpouseDropdownOpen(false);

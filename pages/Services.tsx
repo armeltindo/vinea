@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { usePermissions } from '../context/PermissionsContext';
 import Card from '../components/Card';
 import { 
@@ -64,7 +64,6 @@ import {
 } from 'lucide-react';
 import { SERVICES_LIST } from '../constants';
 import { cn, generateId } from '../utils';
-import { analyzeSermon, generateSocialSummary, suggestSermonTags } from '../lib/gemini';
 import { ChurchService } from '../types';
 import { getChurchServices, createChurchService, updateChurchService, deleteChurchService, getAppConfig } from '../lib/db';
 
@@ -135,6 +134,7 @@ const getServiceIcon = (type: string, size = 14) => {
 
 const Services: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { canDelete } = usePermissions();
   const [services, setServices] = useState<ChurchService[]>([]);
 
@@ -145,10 +145,16 @@ const Services: React.FC = () => {
     Promise.all([getChurchServices(), getAppConfig('service_types')]).then(([s, serviceTypes]) => {
       setServices(s);
       if (serviceTypes && Array.isArray(serviceTypes) && serviceTypes.length > 0) setAvailableServiceTypes(serviceTypes);
-      const detailId = new URLSearchParams(window.location.search).get('detail');
-      if (detailId) {
-        const found = s.find((x: ChurchService) => x.id === detailId);
-        if (found) { setSelectedService(found); setIsDetailsOpen(true); }
+      // Ouvrir le formulaire d'édition si on revient depuis la page de détail
+      const editId = (location.state as any)?.editId;
+      if (editId) {
+        const found = s.find((x: ChurchService) => x.id === editId);
+        if (found) {
+          setEditingId(found.id);
+          setFormData(found);
+          setIsFormOpen(true);
+          window.history.replaceState({}, '', window.location.pathname);
+        }
       }
     });
   }, []);
@@ -156,15 +162,7 @@ const Services: React.FC = () => {
   const [selectedSeries, setSelectedSeries] = useState<string | null>(null);
   const [serviceToDeleteId, setServiceToDeleteId] = useState<string | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [selectedService, setSelectedService] = useState<ChurchService | null>(null);
-  const [isDetailsOpen, setIsDetailsOpen] = useState(false);
-  const [isThemeExpanded, setIsThemeExpanded] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  const [isAnalyzingSermon, setIsAnalyzingSermon] = useState(false);
-  const [isGeneratingSocial, setIsGeneratingSocial] = useState(false);
-  const [isSuggestingTags, setIsSuggestingTags] = useState(false);
-  const [hasCopied, setHasCopied] = useState(false);
-  const [hasCopiedSocial, setHasCopiedSocial] = useState(false);
   const [statsPeriod, setStatsPeriod] = useState(currentYearStr);
 
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
@@ -259,66 +257,6 @@ const Services: React.FC = () => {
     resetForm();
   };
 
-  const handleRunAiAnalysis = async (service: ChurchService) => {
-    if (!service.content) return;
-    setIsAnalyzingSermon(true);
-    const analysis = await analyzeSermon(service.theme, service.content);
-    if (analysis) {
-      const updated = { ...service, aiAnalysis: analysis };
-      setServices(services.map(s => s.id === service.id ? updated : s));
-      setSelectedService(updated);
-      await updateChurchService(service.id, { aiAnalysis: analysis });
-    }
-    setIsAnalyzingSermon(false);
-  };
-
-  const handleGenerateSocial = async (service: ChurchService) => {
-    if (!service.content) return;
-    setIsGeneratingSocial(true);
-    const summary = await generateSocialSummary(service.theme, service.content);
-    if (summary) {
-      const updated = { ...service, socialSummary: summary };
-      setServices(services.map(s => s.id === service.id ? updated : s));
-      setSelectedService(updated);
-      await updateChurchService(service.id, { socialSummary: summary });
-    }
-    setIsGeneratingSocial(false);
-  };
-
-  const handleSuggestTags = async (service: ChurchService) => {
-    if (!service.content) return;
-    setIsSuggestingTags(true);
-    const tags = await suggestSermonTags(service.content);
-    if (tags) {
-      const updated = { ...service, tags: tags };
-      setServices(services.map(s => s.id === service.id ? updated : s));
-      setSelectedService(updated);
-      await updateChurchService(service.id, { tags });
-    }
-    setIsSuggestingTags(false);
-  };
-
-  const handleCopySermon = (text: string) => {
-    navigator.clipboard.writeText(text);
-    setHasCopied(true);
-    setTimeout(() => setHasCopied(false), 2000);
-  };
-
-  const handleCopySocial = (text: string) => {
-    navigator.clipboard.writeText(text);
-    setHasCopiedSocial(true);
-    setTimeout(() => setHasCopiedSocial(false), 2000);
-  };
-
-  const handlePrint = () => {
-    window.print();
-  };
-
-  const handleWhatsApp = (targetPhone?: string, text?: string) => {
-    const url = `https://wa.me/${targetPhone ? targetPhone.replace(/\D/g, '') : ''}?text=${encodeURIComponent(text || '')}`;
-    window.open(url, '_blank');
-  };
-
   const resetForm = () => {
     setFormData({
       date: new Date().toISOString().split('T')[0],
@@ -343,9 +281,6 @@ const Services: React.FC = () => {
   const confirmDelete = async () => {
     if (serviceToDeleteId) {
       setServices(services.filter(s => s.id !== serviceToDeleteId));
-      setIsDetailsOpen(false);
-      navigate('', { replace: true });
-      setSelectedService(null);
       await deleteChurchService(serviceToDeleteId);
       setServiceToDeleteId(null);
     }
@@ -460,8 +395,6 @@ const Services: React.FC = () => {
     e.target.value = '';
   };
 
-  const THEME_MAX_LENGTH = 60;
-
   return (
     <div className="space-y-6 animate-in fade-in duration-500 pb-20 print:bg-white print:p-0">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 print:hidden">
@@ -518,7 +451,7 @@ const Services: React.FC = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 print:hidden">
         {filteredServices.length > 0 ? filteredServices.map((service) => (
-          <div key={service.id} onClick={() => { setSelectedService(service); setIsDetailsOpen(true); setIsThemeExpanded(false); navigate(`?detail=${service.id}`, { replace: true }); }} className="group relative flex flex-col bg-white border border-slate-200 rounded-2xl shadow-sm hover:border-indigo-400 hover:shadow-xl transition-all duration-300 overflow-hidden cursor-pointer active:scale-[0.98]">
+          <div key={service.id} onClick={() => navigate(`/services/${service.id}`)} className="group relative flex flex-col bg-white border border-slate-200 rounded-2xl shadow-sm hover:border-indigo-400 hover:shadow-xl transition-all duration-300 overflow-hidden cursor-pointer active:scale-[0.98]">
             <div className="h-1.5 w-full bg-slate-100 group-hover:bg-indigo-500 transition-colors" />
             <div className="p-8 space-y-6 flex-1 flex flex-col">
               <div className="flex justify-between items-start"><div className="flex items-center gap-2 px-3 py-1.5 bg-slate-50 border border-slate-100 rounded-2xl group-hover:bg-indigo-50 group-hover:border-indigo-100 transition-colors">{getServiceIcon(service.serviceType, 12)}<span className="text-xs font-medium text-slate-500 group-hover:text-indigo-600">{service.serviceType}</span></div><div className="px-3 py-1.5 bg-slate-50 rounded-2xl text-xs text-slate-400">{new Date(service.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' })}</div></div>
@@ -530,245 +463,6 @@ const Services: React.FC = () => {
           <div className="col-span-full py-24 text-center bg-white rounded-2xl border border-dashed border-slate-200"><Quote size={48} className="mx-auto text-slate-100 mb-4" /><p className="text-sm font-bold text-slate-400 italic">{searchTerm || selectedType || selectedSeries ? "Aucune prédication trouvée." : "Aucune prédication enregistrée."}</p></div>
         )}
       </div>
-
-      {isDetailsOpen && selectedService && (
-        <div className="fixed inset-0 z-[150] overflow-hidden flex items-center justify-center p-4 print:static print:z-0">
-          <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity print:hidden" onClick={() => { setIsDetailsOpen(false); navigate('', { replace: true }); }} />
-          <div className="relative w-full max-w-5xl bg-white shadow-2xl animate-in zoom-in-95 duration-300 flex flex-col rounded-2xl overflow-hidden max-h-[90vh] print:rounded-none print:shadow-none print:w-full print:max-w-none print:max-h-none">
-
-            {/* ─── Header ─── */}
-            <div className="px-10 py-10 bg-slate-900 text-white shrink-0 relative overflow-hidden print:bg-white print:text-slate-900 print:py-8 print:border-b-2 print:border-slate-100">
-              <div className="absolute top-0 right-0 p-8 opacity-10 print:hidden pointer-events-none"><Church size={220} /></div>
-              <div className="absolute -top-24 -left-24 w-64 h-64 bg-indigo-600/20 rounded-full blur-[80px] pointer-events-none"></div>
-              <button onClick={() => { setIsDetailsOpen(false); navigate('', { replace: true }); }} className="absolute top-6 left-6 p-2 bg-white/10 hover:bg-white/20 rounded-full text-white transition-colors print:hidden z-20"><ArrowLeft size={24} /></button>
-
-              <div className="relative z-10 space-y-5">
-                {/* Type + Série */}
-                <div className="flex flex-wrap gap-2">
-                  <span className="px-4 py-1.5 bg-indigo-600 text-white rounded-full text-xs font-medium shadow-lg shadow-indigo-900/20 print:border print:border-slate-200">{selectedService.serviceType}</span>
-                  {selectedService.series && <span className="px-4 py-1.5 bg-white/10 backdrop-blur-md rounded-full text-xs font-medium border border-white/10 print:text-indigo-600 print:bg-indigo-50">Série : {selectedService.series}</span>}
-                </div>
-
-                {/* Thème */}
-                <h3 className="text-3xl font-bold leading-tight max-w-3xl print:text-3xl transition-all duration-300">
-                  {selectedService.theme.length > THEME_MAX_LENGTH ? (
-                    <>
-                      <span className="cursor-pointer hover:opacity-80 transition-opacity" onClick={() => setIsThemeExpanded(!isThemeExpanded)}>
-                        {isThemeExpanded ? selectedService.theme : selectedService.theme.substring(0, THEME_MAX_LENGTH)}
-                      </span>
-                      {!isThemeExpanded && (
-                        <button onClick={() => setIsThemeExpanded(true)} className="text-indigo-400 hover:text-indigo-300 ml-2 transition-colors inline-block focus:outline-none select-none" title="Afficher tout le thème">...</button>
-                      )}
-                      {isThemeExpanded && (
-                        <button onClick={() => setIsThemeExpanded(false)} className="text-indigo-400 hover:text-indigo-300 ml-2 text-xs font-medium transition-colors inline-block focus:outline-none select-none align-middle" title="Réduire">[Réduire]</button>
-                      )}
-                    </>
-                  ) : selectedService.theme}
-                </h3>
-
-                {/* Métadonnées en pills */}
-                <div className="flex flex-wrap items-center gap-2.5">
-                  <div className="flex items-center gap-2 bg-white/8 px-3 py-1.5 rounded-xl border border-white/10">
-                    <Calendar size={13} className="text-indigo-400 shrink-0" />
-                    <span className="text-xs font-medium text-slate-200 print:text-slate-900">{new Date(selectedService.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
-                  </div>
-                  {selectedService.time && (
-                    <div className="flex items-center gap-2 bg-white/8 px-3 py-1.5 rounded-xl border border-white/10">
-                      <Clock size={13} className="text-indigo-400 shrink-0" />
-                      <span className="text-xs font-medium text-slate-200 print:text-slate-900">{selectedService.time}</span>
-                    </div>
-                  )}
-                  <div className="flex items-center gap-2 bg-white/8 px-3 py-1.5 rounded-xl border border-white/10">
-                    <Mic2 size={13} className="text-indigo-400 shrink-0" />
-                    <span className="text-xs font-medium text-slate-200 print:text-slate-900">{selectedService.speaker}</span>
-                  </div>
-                  {selectedService.attendance && (
-                    <div className="flex items-center gap-2 bg-white/8 px-3 py-1.5 rounded-xl border border-white/10">
-                      <Users size={13} className="text-emerald-400 shrink-0" />
-                      <span className="text-xs font-medium text-slate-200 print:text-slate-900">{selectedService.attendance} fidèles</span>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            {/* ─── Body: 2-column layout ─── */}
-            <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
-
-              {/* Colonne principale */}
-              <div className="flex-1 overflow-y-auto p-8 lg:p-10 space-y-6 custom-scrollbar bg-slate-50/30 print:bg-white print:overflow-visible">
-
-                {/* Fondement Biblique */}
-                <div className="bg-indigo-600 p-7 rounded-2xl text-white shadow-lg shadow-indigo-100 relative overflow-hidden group print:border print:border-slate-200 print:bg-white print:text-slate-900">
-                  <div className="absolute -top-4 -right-4 p-8 opacity-10 group-hover:rotate-12 transition-transform pointer-events-none"><Quote size={80} /></div>
-                  <div className="flex items-center gap-2 mb-3">
-                    <BookMarked size={13} className="text-indigo-200 print:text-indigo-600" />
-                    <h4 className="text-xs font-medium text-indigo-200 print:text-slate-500">Fondement Biblique</h4>
-                  </div>
-                  <p className="text-xl font-semibold italic leading-snug print:text-slate-900">"{selectedService.scripture || 'Verset non spécifié'}"</p>
-                </div>
-
-                {/* Texte intégral */}
-                <div className="bg-white p-8 lg:p-10 rounded-2xl border border-slate-100 shadow-sm relative group print:p-0 print:border-none print:shadow-none">
-                  <div className="absolute top-6 right-6 print:hidden">
-                    <button onClick={() => handleCopySermon(selectedService.content)} className="p-2.5 bg-slate-50 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all" title="Copier le texte">
-                      {hasCopied ? <Check size={18} className="text-emerald-500" /> : <Copy size={18} />}
-                    </button>
-                  </div>
-                  <div className="flex items-center gap-3 mb-8 print:hidden">
-                    <div className="w-1 h-6 bg-indigo-600 rounded-full"></div>
-                    <h4 className="text-xs font-medium text-slate-500">Texte intégral</h4>
-                  </div>
-                  <div className="text-slate-700 font-medium leading-[1.85] whitespace-pre-wrap text-base first-letter:text-5xl first-letter:font-semibold first-letter:text-indigo-600 first-letter:mr-3 first-letter:float-left print:text-base">
-                    {selectedService.content}
-                  </div>
-                  {selectedService.tags && selectedService.tags.length > 0 && (
-                    <div className="mt-10 pt-6 border-t border-slate-50 flex flex-wrap gap-2 print:hidden">
-                      {selectedService.tags.map(tag => (
-                        <span key={tag} className="px-3 py-1.5 bg-slate-50 text-slate-500 rounded-xl text-xs font-medium border border-slate-100 hover:border-indigo-200 hover:text-indigo-600 transition-colors">#{tag}</span>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Barre latérale outils */}
-              <div className="lg:w-80 xl:w-96 shrink-0 overflow-y-auto border-t lg:border-t-0 lg:border-l border-slate-100 bg-white p-6 space-y-4 custom-scrollbar print:hidden">
-
-                {/* Fiche du culte */}
-                <div className="bg-slate-50 rounded-2xl p-5 space-y-3 border border-slate-100">
-                  <h4 className="text-xs font-semibold text-slate-500 flex items-center gap-2"><Info size={13} className="text-indigo-500" /> Fiche du culte</h4>
-                  <div className="space-y-2.5">
-                    {selectedService.time && (
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 bg-white rounded-xl flex items-center justify-center border border-slate-200 shrink-0"><Clock size={14} className="text-indigo-500" /></div>
-                        <div><p className="text-xs text-slate-400">Heure</p><p className="text-xs font-semibold text-slate-700">{selectedService.time}</p></div>
-                      </div>
-                    )}
-                    {selectedService.moderator && (
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 bg-white rounded-xl flex items-center justify-center border border-slate-200 shrink-0"><User size={14} className="text-slate-500" /></div>
-                        <div><p className="text-xs text-slate-400">Modérateur</p><p className="text-xs font-semibold text-slate-700">{selectedService.moderator}</p></div>
-                      </div>
-                    )}
-                    {selectedService.worshipLeader && (
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 bg-white rounded-xl flex items-center justify-center border border-slate-200 shrink-0"><Music size={14} className="text-indigo-400" /></div>
-                        <div><p className="text-xs text-slate-400">Louange</p><p className="text-xs font-semibold text-slate-700">{selectedService.worshipLeader}</p></div>
-                      </div>
-                    )}
-                    {selectedService.attendance && (
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 bg-white rounded-xl flex items-center justify-center border border-slate-200 shrink-0"><Users size={14} className="text-emerald-500" /></div>
-                        <div><p className="text-xs text-slate-400">Participation</p><p className="text-xs font-semibold text-emerald-600">{selectedService.attendance} fidèles</p></div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* Assistant Social */}
-                <div className="bg-emerald-600 p-5 rounded-2xl text-white shadow-lg shadow-emerald-100 space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Share2 size={14} className="text-emerald-100" />
-                      <h4 className="text-xs font-medium text-emerald-100">Assistant Social</h4>
-                    </div>
-                    <button onClick={() => handleGenerateSocial(selectedService)} disabled={isGeneratingSocial} className="p-1.5 bg-white/10 hover:bg-white/20 rounded-xl transition-all">
-                      {isGeneratingSocial ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />}
-                    </button>
-                  </div>
-                  {selectedService.socialSummary ? (
-                    <div className="space-y-3 animate-in zoom-in-95">
-                      <div className="p-4 bg-white/10 backdrop-blur-md rounded-xl text-xs text-white font-medium leading-relaxed italic border border-white/20">"{selectedService.socialSummary}"</div>
-                      <div className="flex gap-2">
-                        <button onClick={() => handleCopySocial(selectedService.socialSummary)} className="flex-1 py-2.5 bg-white text-emerald-700 rounded-xl text-xs font-medium hover:bg-emerald-50 transition-all flex items-center justify-center gap-1.5 shadow-md">
-                          {hasCopiedSocial ? <CheckCircle2 size={13} /> : <Copy size={13} />} Copier
-                        </button>
-                        <button onClick={() => handleWhatsApp(undefined, selectedService.socialSummary)} className="p-2.5 bg-emerald-500 text-white rounded-xl border border-white/20 hover:bg-emerald-400">
-                          <Send size={14} />
-                        </button>
-                      </div>
-                    </div>
-                  ) : (
-                    <p className="text-xs text-emerald-100 font-medium italic opacity-80 leading-relaxed">Générez un résumé social avec l'IA.</p>
-                  )}
-                </div>
-
-                {/* Analyse IA */}
-                <div className="bg-white rounded-2xl border-2 border-indigo-50 p-5 space-y-4 relative overflow-hidden">
-                  <div className="absolute top-0 right-0 p-4 opacity-[0.05] pointer-events-none"><BrainCircuit size={80} className="text-indigo-600" /></div>
-                  <div className="flex items-center justify-between relative z-10">
-                    <div className="flex items-center gap-2">
-                      <Sparkles size={14} className="text-indigo-600" />
-                      <h4 className="text-xs font-medium text-slate-500">Analyse de fond</h4>
-                    </div>
-                    {!selectedService.aiAnalysis && (
-                      <button onClick={() => handleRunAiAnalysis(selectedService)} disabled={isAnalyzingSermon} className="px-3 py-1.5 bg-indigo-600 text-white rounded-full text-xs font-medium hover:bg-indigo-700 transition-all disabled:opacity-50">
-                        {isAnalyzingSermon ? <Loader2 size={12} className="animate-spin" /> : 'Analyser'}
-                      </button>
-                    )}
-                  </div>
-                  {selectedService.aiAnalysis ? (
-                    <div className="text-xs text-slate-600 font-medium leading-relaxed whitespace-pre-wrap bg-slate-50 p-4 rounded-xl border border-slate-100 animate-in fade-in slide-in-from-bottom-2">{selectedService.aiAnalysis}</div>
-                  ) : (
-                    <div className="text-center py-4 space-y-3">
-                      <div className="w-10 h-10 bg-slate-50 rounded-2xl flex items-center justify-center mx-auto text-slate-200"><MessageSquareText size={20} /></div>
-                      <p className="text-xs text-slate-400 font-medium">Gemini peut extraire les points clés.</p>
-                    </div>
-                  )}
-                  {!selectedService.tags?.length && !isSuggestingTags && (
-                    <button onClick={() => handleSuggestTags(selectedService)} className="w-full py-2 text-xs font-medium text-slate-300 hover:text-indigo-400 transition-colors">Extraire thématiques</button>
-                  )}
-                </div>
-
-                {/* Replay & Multimédia */}
-                {(selectedService.youtubeLink || selectedService.facebookLink || selectedService.audioLink) && (
-                  <div className="bg-white rounded-2xl border border-slate-100 p-5 space-y-4">
-                    <h4 className="text-xs font-medium text-slate-500 flex items-center gap-2"><Globe size={13} className="text-indigo-500" /> Replay & Multimédia</h4>
-                    <div className="space-y-2">
-                      {selectedService.youtubeLink && (
-                        <a href={selectedService.youtubeLink} target="_blank" rel="noopener noreferrer" className="flex items-center justify-between p-3 bg-rose-50 text-rose-600 rounded-xl hover:bg-rose-100 transition-all group/link">
-                          <div className="flex items-center gap-2.5">
-                            <div className="w-8 h-8 bg-white rounded-xl flex items-center justify-center shadow-sm group-hover/link:scale-110 transition-transform"><Youtube size={16} /></div>
-                            <span className="text-xs font-medium">YouTube Live</span>
-                          </div>
-                          <ExternalLink size={12} className="opacity-40" />
-                        </a>
-                      )}
-                      {selectedService.facebookLink && (
-                        <a href={selectedService.facebookLink} target="_blank" rel="noopener noreferrer" className="flex items-center justify-between p-3 bg-blue-50 text-blue-600 rounded-xl hover:bg-blue-100 transition-all group/link">
-                          <div className="flex items-center gap-2.5">
-                            <div className="w-8 h-8 bg-white rounded-xl flex items-center justify-center shadow-sm group-hover/link:scale-110 transition-transform"><Facebook size={16} /></div>
-                            <span className="text-xs font-medium">Facebook Watch</span>
-                          </div>
-                          <ExternalLink size={12} className="opacity-40" />
-                        </a>
-                      )}
-                      {selectedService.audioLink && (
-                        <a href={selectedService.audioLink} target="_blank" rel="noopener noreferrer" className="flex items-center justify-between p-3 bg-emerald-50 text-emerald-600 rounded-xl hover:bg-emerald-100 transition-all group/link">
-                          <div className="flex items-center gap-2.5">
-                            <div className="w-8 h-8 bg-white rounded-xl flex items-center justify-center shadow-sm group-hover/link:scale-110 transition-transform"><Headphones size={16} /></div>
-                            <span className="text-xs font-medium">Podcast Audio</span>
-                          </div>
-                          <ExternalLink size={12} className="opacity-40" />
-                        </a>
-                      )}
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Footer */}
-            <div className="p-8 border-t border-slate-100 bg-white flex flex-wrap items-center gap-3 shrink-0 print:hidden shadow-[0_-20px_40px_-20px_rgba(0,0,0,0.05)]">
-              <button onClick={handlePrint} className="px-6 py-3.5 bg-slate-900 text-white rounded-2xl text-xs font-medium hover:bg-slate-800 transition-all flex items-center justify-center gap-2 shadow-lg"><Printer size={16} /> Imprimer</button>
-              <div className="flex-1"></div>
-              <button onClick={() => { setEditingId(selectedService.id); setFormData(selectedService); setIsDetailsOpen(false); navigate('', { replace: true }); setIsFormOpen(true); }} className="px-5 py-3.5 bg-indigo-50 text-indigo-600 border border-indigo-100 rounded-2xl text-xs font-medium hover:bg-indigo-100 transition-all flex items-center justify-center gap-2"><Edit size={15} /> Modifier</button>
-              {canDelete('services') && <button onClick={() => { setServiceToDeleteId(selectedService.id); }} className="px-5 py-3.5 bg-rose-50 text-rose-600 border border-rose-100 rounded-2xl text-xs font-medium hover:bg-rose-100 transition-all flex items-center justify-center gap-2"><Trash2 size={15} /></button>}
-            </div>
-          </div>
-        </div>
-      )}
 
       {isFormOpen && (
         <div className="fixed inset-0 z-[180] overflow-hidden flex items-center justify-center p-4">

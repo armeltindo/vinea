@@ -1,3 +1,15 @@
+/**
+ * Normalise une URL Supabase Storage pour s'assurer qu'elle utilise le chemin public.
+ * Corrige les URLs stockées sans "/public/" (ex: /object/members/...) en /object/public/members/...
+ */
+export const normalizeStorageUrl = (url: string | null | undefined): string | undefined => {
+  if (!url) return undefined;
+  // Already correct public URL
+  if (url.includes('/object/public/')) return url;
+  // Fix missing /public/ segment: /storage/v1/object/{bucket}/... → /storage/v1/object/public/{bucket}/...
+  return url.replace(/\/storage\/v1\/object\/(?!public\/)/, '/storage/v1/object/public/');
+};
+
 export const cn = (...classes: (string | boolean | undefined)[]) => {
   return classes.filter(Boolean).join(' ');
 };

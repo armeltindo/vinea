@@ -4,6 +4,7 @@
  * Gère la conversion camelCase (TypeScript) ↔ snake_case (PostgreSQL).
  */
 import { supabase } from './supabase';
+import { normalizeStorageUrl } from '../utils';
 import {
   Member, Visitor, FinancialRecord, DonationCampaign, DonationPromise,
   AttendanceSession, ChurchService, DepartmentInfo, DepartmentActivity,
@@ -49,7 +50,7 @@ function dbToMember(row: any): Member {
     source: row.source ?? '',
     invitedBy: row.invited_by ?? undefined,
     assignedDiscipleMakerId: row.assigned_disciple_maker_id ?? undefined,
-    photoUrl: row.photo_url ?? undefined,
+    photoUrl: normalizeStorageUrl(row.photo_url),
     motherId: row.mother_id ?? undefined,
     motherName: row.mother_name ?? undefined,
     fatherId: row.father_id ?? undefined,
@@ -1041,7 +1042,7 @@ export const getAdminUsers = async (): Promise<any[]> => {
     .select('*')
     .order('created_at', { ascending: false });
   if (error) { console.error('getAdminUsers:', error.message); return []; }
-  return data ?? [];
+  return (data ?? []).map((u: any) => ({ ...u, avatar: normalizeStorageUrl(u.avatar) ?? u.avatar }));
 };
 
 export const getAdminUserByEmail = async (email: string): Promise<any | null> => {
@@ -1051,7 +1052,8 @@ export const getAdminUserByEmail = async (email: string): Promise<any | null> =>
     .ilike('email', email)
     .maybeSingle();
   if (error) { console.error('getAdminUserByEmail:', error.message); return null; }
-  return data;
+  if (!data) return null;
+  return { ...data, avatar: normalizeStorageUrl(data.avatar) ?? data.avatar };
 };
 
 export const upsertAdminUser = async (u: any): Promise<void> => {

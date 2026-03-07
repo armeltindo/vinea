@@ -52,7 +52,7 @@ import MemberCardModal from './MemberCardModal';
 import { Member, MemberStatus, Department, DepartmentActivity, ActivityStatus, FinancialRecord, AttendanceSession, OperationType, FollowUpEntry } from '../types';
 import { formatPhone } from '../constants';
 import { cn, getInitials, getDisplayNickname, formatFirstName } from '../utils';
-import { getMembers, getDepartmentActivities, getDiscipleshipEnrollments, getFinancialRecords, getAttendanceSessions, generateMemberUsername, activateMemberAccount, updateMember } from '../lib/db';
+import { getMembers, getDepartmentActivities, getDiscipleshipEnrollments, getDiscipleshipPairs, getFinancialRecords, getAttendanceSessions, generateMemberUsername, activateMemberAccount, updateMember } from '../lib/db';
 import Avatar from './Avatar';
 
 const MOIS = ['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
@@ -121,6 +121,7 @@ const MemberDetails: React.FC<MemberDetailsProps> = ({ member, isOpen, onClose, 
 
   const [isCardModalOpen, setIsCardModalOpen] = useState(false);
   const [allMembers, setAllMembers] = useState<Member[]>([]);
+  const [discipleshipPairs, setDiscipleshipPairs] = useState<any[]>([]);
   const [activities, setActivities] = useState<DepartmentActivity[]>([]);
   const [enrollments, setEnrollments] = useState<any[]>([]);
   const [financialRecords, setFinancialRecords] = useState<FinancialRecord[]>([]);
@@ -142,12 +143,13 @@ const MemberDetails: React.FC<MemberDetailsProps> = ({ member, isOpen, onClose, 
   useEffect(() => {
     if (isOpen || asPage) {
       getMembers().then(setAllMembers);
+      getDiscipleshipPairs().then(setDiscipleshipPairs);
       getDepartmentActivities().then(setActivities);
       getDiscipleshipEnrollments().then(setEnrollments);
       getFinancialRecords().then(setFinancialRecords);
       getAttendanceSessions().then(setAttendanceSessions);
     }
-  }, [isOpen, asPage]);
+  }, [isOpen, asPage, member.id]);
 
   const spouseMember = useMemo(() => {
     if (!member.spouseName) return null;
@@ -206,9 +208,20 @@ const MemberDetails: React.FC<MemberDetailsProps> = ({ member, isOpen, onClose, 
   }, [member.id, member.firstName, member.lastName, allMembers]);
 
   const mentorMember = useMemo(() => {
-    if (!member.assignedDiscipleMakerId) return null;
-    return allMembers.find(m => m.id === member.assignedDiscipleMakerId) ?? null;
-  }, [member.assignedDiscipleMakerId, allMembers]);
+    // Primary: use the field stored on the member record
+    if (member.assignedDiscipleMakerId) {
+      const found = allMembers.find(m => m.id === member.assignedDiscipleMakerId);
+      if (found) return found;
+    }
+    // Fallback: look up via the discipleship_pairs table (handles sync gaps)
+    const activePair = discipleshipPairs.find(
+      p => p.discipleId === member.id && p.status === 'Actif'
+    );
+    if (activePair) {
+      return allMembers.find(m => m.id === activePair.mentorId) ?? null;
+    }
+    return null;
+  }, [member.assignedDiscipleMakerId, member.id, allMembers, discipleshipPairs]);
 
   const handleActivateAccount = async () => {
     setIsActivatingAccount(true);

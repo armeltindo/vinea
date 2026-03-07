@@ -163,7 +163,25 @@ const MemberEditModal: React.FC<MemberEditModalProps> = ({
     selectedFatherIdRef.current = member?.fatherId || '';
     setInvitedBySearch(member?.invitedBy || '');
     const dm = allMembers.find(m => m.id === member?.assignedDiscipleMakerId);
-    setDiscipleMakerSearch(dm ? `${formatFirstName(dm.firstName)} ${dm.lastName.toUpperCase()}` : '');
+    if (dm) {
+      setDiscipleMakerSearch(`${formatFirstName(dm.firstName)} ${dm.lastName.toUpperCase()}`);
+    } else if (member?.id) {
+      // Fallback: look up the mentor from the discipleship_pairs table
+      getDiscipleshipPairs().then(pairs => {
+        const pair = pairs.find(p => p.discipleId === member.id && p.status === 'Actif');
+        if (pair) {
+          const mentor = allMembers.find(m => m.id === pair.mentorId);
+          if (mentor) {
+            setDiscipleMakerSearch(`${formatFirstName(mentor.firstName)} ${mentor.lastName.toUpperCase()}`);
+            setFormData(prev => ({ ...prev, assignedDiscipleMakerId: mentor.id }));
+          }
+        } else {
+          setDiscipleMakerSearch('');
+        }
+      });
+    } else {
+      setDiscipleMakerSearch('');
+    }
   }, [member?.id]);
 
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {

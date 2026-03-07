@@ -1,21 +1,21 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import Card from '../components/Card';
 import AIAnalysis from '../components/AIAnalysis';
-import { 
-  Flame, 
-  Target, 
-  Plus, 
-  Search, 
-  History, 
-  CheckCircle2, 
-  Sparkles, 
-  X, 
-  Save, 
-  Loader2, 
-  Trophy, 
-  TrendingUp, 
-  AlertTriangle, 
-  ListChecks, 
+import {
+  Flame,
+  Target,
+  Plus,
+  Search,
+  History,
+  CheckCircle2,
+  Sparkles,
+  X,
+  Save,
+  Loader2,
+  Trophy,
+  TrendingUp,
+  AlertTriangle,
+  ListChecks,
   CheckCircle,
   Check,
   ShieldCheck,
@@ -32,7 +32,8 @@ import {
   Zap,
   Star,
   Edit,
-  Trash2
+  Trash2,
+  Smartphone
 } from 'lucide-react';
 import { analyzePageData } from '../lib/gemini';
 import { cn, generateId, formatFirstName, getInitials, getDisplayNickname } from '../utils';
@@ -382,6 +383,72 @@ const SpiritualGrowth: React.FC = () => {
                       <span className={cn('px-2.5 py-1 rounded-lg text-xs font-bold', color7)}>{c7}/7j</span>
                       <span className={cn('px-2.5 py-1 rounded-lg text-xs font-bold', color30)}>{c30}/30j</span>
                     </div>
+                  </div>
+                );
+              })}
+            </div>
+          </Card>
+        );
+      })()}
+
+      {/* Portail membres — bilans mensuels */}
+      {(() => {
+        const portalMembers = members.filter(m => m.memberAccountActive);
+        const portalGoals = yearlyGoals.filter(g => g.year === currentYear && portalMembers.some(m => m.id === g.memberId));
+        if (portalGoals.length === 0) return null;
+        const prevMonth = today.getMonth() - 1 < 0 ? 11 : today.getMonth() - 1;
+        return (
+          <Card
+            title="Portail — Bilans Mensuels"
+            subtitle="Bilans soumis par les membres via leur espace personnel"
+            icon={<Smartphone size={18} className="text-emerald-500" />}
+          >
+            <div className="space-y-2">
+              {portalMembers.filter(m => portalGoals.some(g => g.memberId === m.id)).map(m => {
+                const memberPoints = monthlyPoints
+                  .filter(p => p.memberId === m.id && p.year === currentYear)
+                  .sort((a, b) => a.month - b.month);
+                const hasCurrentBilan = memberPoints.some(p => p.month === prevMonth);
+                return (
+                  <div
+                    key={m.id}
+                    onClick={() => { setSelectedMemberId(m.id); setIsHistoryModalOpen(true); }}
+                    className="flex items-center gap-3 px-4 py-3 rounded-xl bg-slate-50 border border-slate-100 hover:bg-emerald-50 hover:border-emerald-200 transition-colors cursor-pointer"
+                  >
+                    <div className="w-9 h-9 rounded-xl overflow-hidden border border-slate-200 shrink-0">
+                      {m.photoUrl ? (
+                        <img src={m.photoUrl} alt="" className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full bg-emerald-100 flex items-center justify-center text-xs font-bold text-emerald-600">
+                          {m.firstName.charAt(0)}{m.lastName.charAt(0)}
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-slate-800 truncate">{m.firstName} {m.lastName}</p>
+                      <div className="flex gap-1.5 mt-1 flex-wrap">
+                        {memberPoints.length > 0
+                          ? memberPoints.slice(-4).map(p => (
+                            <span
+                              key={p.id}
+                              className={cn(
+                                'text-xs px-2 py-0.5 rounded-full font-semibold',
+                                p.score >= 4 ? 'bg-emerald-100 text-emerald-700' : p.score >= 2 ? 'bg-amber-100 text-amber-700' : 'bg-rose-100 text-rose-600'
+                              )}
+                            >
+                              {MONTHS[p.month].substring(0, 3)}. {p.score}
+                            </span>
+                          ))
+                          : <span className="text-xs text-slate-300 italic">Aucun bilan soumis</span>
+                        }
+                      </div>
+                    </div>
+                    <span className={cn(
+                      'text-xs font-bold px-2.5 py-1 rounded-lg shrink-0',
+                      hasCurrentBilan ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-600'
+                    )}>
+                      {hasCurrentBilan ? 'À jour' : 'En attente'}
+                    </span>
                   </div>
                 );
               })}

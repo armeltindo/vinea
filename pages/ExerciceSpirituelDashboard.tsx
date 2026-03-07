@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Calendar, Save, LogOut, CheckCircle2, AlertCircle, Loader2, Bell, Users, Trash2 } from 'lucide-react';
+import { Calendar, Save, LogOut, CheckCircle2, AlertCircle, Loader2, Bell, Users, Trash2, ClipboardCheck } from 'lucide-react';
 import {
   getSpiritualExerciseTypes,
   getDailyExerciseByDate,
@@ -215,6 +215,13 @@ const ExerciceSpirituelDashboard: React.FC = () => {
               Mes exercices spirituels
             </button>
             <button
+              onClick={() => navigate('/mon-espace/bilan')}
+              className="w-full py-4 bg-indigo-500/40 text-white border border-white/20 rounded-2xl text-sm font-bold hover:bg-indigo-500/60 transition-all flex items-center justify-center gap-2"
+            >
+              <ClipboardCheck size={18} />
+              Objectifs & Bilan mensuel
+            </button>
+            <button
               onClick={() => handleRoleChoice('dm')}
               className="w-full py-4 bg-indigo-500/40 text-white border border-white/20 rounded-2xl text-sm font-bold hover:bg-indigo-500/60 transition-all flex items-center justify-center gap-2"
             >
@@ -265,6 +272,13 @@ const ExerciceSpirituelDashboard: React.FC = () => {
               </span>
             </button>
           )}
+          <button
+            onClick={() => navigate('/mon-espace/bilan')}
+            className="px-3 py-2 bg-white/20 hover:bg-white/30 border border-white/30 rounded-xl text-xs font-bold transition-colors flex items-center gap-1.5"
+          >
+            <ClipboardCheck size={14} />
+            Bilan
+          </button>
           {session.isDiscipleMaker && (
             <button
               onClick={() => navigate('/mon-espace/groupe')}

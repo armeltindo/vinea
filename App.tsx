@@ -15,6 +15,7 @@ import Dashboard from './pages/Dashboard';
 const ExerciceSpirituelLogin = React.lazy(() => import('./pages/ExerciceSpirituelLogin'));
 const ExerciceSpirituelDashboard = React.lazy(() => import('./pages/ExerciceSpirituelDashboard'));
 const ExerciceSpirituelGroupe = React.lazy(() => import('./pages/ExerciceSpirituelGroupe'));
+const MonEspaceBilan = React.lazy(() => import('./pages/MonEspaceBilan'));
 
 // Autres pages chargées à la demande (code splitting)
 const Members = React.lazy(() => import('./pages/Members'));
@@ -536,6 +537,7 @@ const App: React.FC = () => {
           <Route path="/mon-espace" element={<ExerciceSpirituelLogin />} />
           <Route path="/mon-espace/dashboard" element={<ExerciceSpirituelDashboard />} />
           <Route path="/mon-espace/groupe" element={<ExerciceSpirituelGroupe />} />
+          <Route path="/mon-espace/bilan" element={<MonEspaceBilan />} />
           <Route path="*" element={<Navigate to="/mon-espace" replace />} />
         </Routes>
       </React.Suspense>

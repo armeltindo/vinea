@@ -162,12 +162,9 @@ const ServiceEditModal: React.FC<ServiceEditModalProps> = ({
   }, [allServices]);
 
   const validateForm = () => {
-    const newErrors: Record<string, string> = {};
-    if (!formData.theme.trim()) newErrors.theme = 'Le titre est requis';
-    if (!formData.speaker.trim()) newErrors.speaker = "L'orateur est requis";
-    if (!formData.content.trim()) newErrors.content = 'Le texte de la prédication est requis';
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    // Tous les champs sont facultatifs lors d'une programmation anticipée
+    setErrors({});
+    return true;
   };
 
   const handlePersonnelChange = (role: keyof ServicePersonnel, val: ServicePersonnelItem | undefined) => {
@@ -228,18 +225,18 @@ const ServiceEditModal: React.FC<ServiceEditModalProps> = ({
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-xs font-medium text-slate-500 ml-1">Thème</label>
-              <input type="text" required placeholder="Ex: La grâce" value={formData.theme} onChange={(e) => setFormData({...formData, theme: e.target.value})} className={cn('w-full px-5 py-3.5 bg-white border rounded-2xl outline-none text-sm font-semibold shadow-sm transition-all', errors.theme ? 'border-rose-300' : 'border-slate-200 focus:border-indigo-400')} />
+              <label className="text-xs font-medium text-slate-500 ml-1">Thème <span className="text-slate-300">(facultatif)</span></label>
+              <input type="text" placeholder="Ex: La grâce — peut être renseigné plus tard" value={formData.theme} onChange={(e) => setFormData({...formData, theme: e.target.value})} className="w-full px-5 py-3.5 bg-white border border-slate-200 rounded-2xl outline-none text-sm font-semibold shadow-sm focus:border-indigo-400 transition-all" />
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-1.5"><label className="text-xs font-medium text-slate-500 ml-1">Orateur</label><input type="text" placeholder="Pasteur..." value={formData.speaker} onChange={(e) => setFormData({...formData, speaker: e.target.value})} className="w-full px-4 py-3.5 bg-white border border-slate-200 rounded-2xl outline-none text-sm font-bold" /></div>
-              <div className="space-y-1.5"><label className="text-xs font-medium text-slate-500 ml-1">Versets</label><input type="text" placeholder="Jean 3:16" value={formData.scripture || ''} onChange={(e) => setFormData({...formData, scripture: e.target.value})} className="w-full px-4 py-3.5 bg-white border border-slate-200 rounded-2xl outline-none text-sm font-bold" /></div>
+              <div className="space-y-1.5"><label className="text-xs font-medium text-slate-500 ml-1">Orateur <span className="text-slate-300">(facultatif)</span></label><input type="text" placeholder="Pasteur..." value={formData.speaker} onChange={(e) => setFormData({...formData, speaker: e.target.value})} className="w-full px-4 py-3.5 bg-white border border-slate-200 rounded-2xl outline-none text-sm font-bold" /></div>
+              <div className="space-y-1.5"><label className="text-xs font-medium text-slate-500 ml-1">Versets <span className="text-slate-300">(facultatif)</span></label><input type="text" placeholder="Jean 3:16" value={formData.scripture || ''} onChange={(e) => setFormData({...formData, scripture: e.target.value})} className="w-full px-4 py-3.5 bg-white border border-slate-200 rounded-2xl outline-none text-sm font-bold" /></div>
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-xs font-medium text-slate-500 ml-1">Contenu</label>
-              <textarea rows={10} required placeholder="Notes..." value={formData.content} onChange={(e) => setFormData({...formData, content: e.target.value})} className={cn('w-full px-5 py-4 bg-white border rounded-xl outline-none text-sm font-medium resize-none shadow-sm transition-all', errors.content ? 'border-rose-300' : 'border-slate-200 focus:border-indigo-400')} />
+              <label className="text-xs font-medium text-slate-500 ml-1">Contenu <span className="text-slate-300">(facultatif)</span></label>
+              <textarea rows={6} placeholder="Notes de prédication — peut être renseigné plus tard" value={formData.content} onChange={(e) => setFormData({...formData, content: e.target.value})} className="w-full px-5 py-4 bg-white border border-slate-200 rounded-xl outline-none text-sm font-medium resize-none shadow-sm focus:border-indigo-400 transition-all" />
             </div>
 
             {/* ── Section Programmation du personnel ── */}

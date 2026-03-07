@@ -304,13 +304,13 @@ function churchServiceToDb(s: Partial<ChurchService>): Record<string, unknown> {
   if (s.time !== undefined) db.time = s.time;
   if (s.serviceType !== undefined) db.service_type = s.serviceType;
   if (s.series !== undefined) db.series = s.series ?? null;
-  if (s.speaker !== undefined) db.speaker = s.speaker;
+  if (s.speaker !== undefined) db.speaker = s.speaker ?? null;
   if (s.worshipLeader !== undefined) db.worship_leader = s.worshipLeader ?? null;
   if (s.praiseLeader !== undefined) db.praise_leader = s.praiseLeader ?? null;
   if (s.moderator !== undefined) db.moderator = s.moderator ?? null;
-  if (s.theme !== undefined) db.theme = s.theme;
-  if (s.scripture !== undefined) db.scripture = s.scripture;
-  if (s.content !== undefined) db.content = s.content;
+  if (s.theme !== undefined) db.theme = s.theme ?? null;
+  if (s.scripture !== undefined) db.scripture = s.scripture ?? null;
+  if (s.content !== undefined) db.content = s.content ?? null;
   if (s.aiAnalysis !== undefined) db.ai_analysis = s.aiAnalysis ?? null;
   if (s.socialSummary !== undefined) db.social_summary = s.socialSummary ?? null;
   if (s.tags !== undefined) db.tags = s.tags;

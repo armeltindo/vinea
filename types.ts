@@ -332,13 +332,13 @@ export interface ChurchService {
   time: string;
   serviceType: string;
   series?: string;
-  speaker: string;
+  speaker?: string;
   worshipLeader?: string;
   praiseLeader?: string;
   moderator?: string;
-  theme: string;
-  scripture: string;
-  content: string;
+  theme?: string;
+  scripture?: string;
+  content?: string;
   aiAnalysis?: string;
   socialSummary?: string;
   tags?: string[];

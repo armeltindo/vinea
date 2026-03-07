@@ -142,7 +142,12 @@ const ExerciceSpirituelDashboard: React.FC = () => {
     try {
       const s: MemberSession = JSON.parse(raw);
       setSession(s);
-      setRoleChoice(s.isDiscipleMaker ? null : 'member');
+      if (s.isDiscipleMaker) {
+        const saved = localStorage.getItem('vinea_member_role_choice') as 'member' | null;
+        setRoleChoice(saved ?? null);
+      } else {
+        setRoleChoice('member');
+      }
     } catch {
       navigate('/mon-espace');
     }
@@ -364,7 +369,7 @@ const ExerciceSpirituelDashboard: React.FC = () => {
           <p className="text-indigo-200 text-sm mb-8">Que souhaitez-vous faire ?</p>
           <div className="space-y-3">
             <button
-              onClick={() => setRoleChoice('member')}
+              onClick={() => { localStorage.setItem('vinea_member_role_choice', 'member'); setRoleChoice('member'); }}
               className="w-full py-4 bg-white text-indigo-700 rounded-2xl text-sm font-bold hover:bg-indigo-50 transition-all shadow-lg flex items-center justify-center gap-2"
             >
               <Calendar size={18} />

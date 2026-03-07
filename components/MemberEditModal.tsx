@@ -358,7 +358,10 @@ const MemberEditModal: React.FC<MemberEditModalProps> = ({
                 <label className="text-xs font-medium text-slate-500 ml-1 flex items-center gap-2"><Baby size={12} className="text-pink-400" /> Mère</label>
                 <div className="relative group">
                   <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
-                  <input type="text" value={motherSearch} onChange={(e) => { setMotherSearch(e.target.value); setFormData(prev => ({...prev, motherName: e.target.value, motherId: ''})); setIsMotherDropdownOpen(true); }} onFocus={() => setIsMotherDropdownOpen(true)} onBlur={() => setTimeout(() => setIsMotherDropdownOpen(false), 150)} placeholder="Chercher un membre ou saisir le nom..." className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl outline-none text-sm font-bold focus:bg-white focus:border-pink-300 transition-all shadow-sm" />
+                  <input type="text" value={motherSearch} onChange={(e) => { setMotherSearch(e.target.value); setIsMotherDropdownOpen(true); }} onFocus={() => setIsMotherDropdownOpen(true)} onBlur={() => setTimeout(() => { setIsMotherDropdownOpen(false); if (!formData.motherId) { setMotherSearch(''); setFormData(prev => ({...prev, motherName: '', motherId: ''})); } else { const sel = allMembers.find(m => m.id === formData.motherId); if (sel) setMotherSearch(`${formatFirstName(sel.firstName)} ${sel.lastName.toUpperCase()}`); } }, 150)} placeholder="Rechercher un membre enregistré..." className="w-full pl-10 pr-8 py-3 bg-slate-50 border border-slate-200 rounded-2xl outline-none text-sm font-bold focus:bg-white focus:border-pink-300 transition-all shadow-sm" />
+                  {formData.motherId && (
+                    <button type="button" onClick={() => { setFormData(prev => ({...prev, motherName: '', motherId: ''})); setMotherSearch(''); }} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"><X size={14} /></button>
+                  )}
                 </div>
                 {isMotherDropdownOpen && motherSearch.length >= 2 && (
                   <div className="absolute z-30 left-0 right-0 top-full mt-1 max-h-40 overflow-y-auto bg-white border border-slate-200 rounded-2xl shadow-xl custom-scrollbar">
@@ -377,7 +380,10 @@ const MemberEditModal: React.FC<MemberEditModalProps> = ({
                 <label className="text-xs font-medium text-slate-500 ml-1 flex items-center gap-2"><Baby size={12} className="text-blue-400" /> Père</label>
                 <div className="relative group">
                   <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
-                  <input type="text" value={fatherSearch} onChange={(e) => { setFatherSearch(e.target.value); setFormData(prev => ({...prev, fatherName: e.target.value, fatherId: ''})); setIsFatherDropdownOpen(true); }} onFocus={() => setIsFatherDropdownOpen(true)} onBlur={() => setTimeout(() => setIsFatherDropdownOpen(false), 150)} placeholder="Chercher un membre ou saisir le nom..." className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl outline-none text-sm font-bold focus:bg-white focus:border-blue-300 transition-all shadow-sm" />
+                  <input type="text" value={fatherSearch} onChange={(e) => { setFatherSearch(e.target.value); setIsFatherDropdownOpen(true); }} onFocus={() => setIsFatherDropdownOpen(true)} onBlur={() => setTimeout(() => { setIsFatherDropdownOpen(false); if (!formData.fatherId) { setFatherSearch(''); setFormData(prev => ({...prev, fatherName: '', fatherId: ''})); } else { const sel = allMembers.find(m => m.id === formData.fatherId); if (sel) setFatherSearch(`${formatFirstName(sel.firstName)} ${sel.lastName.toUpperCase()}`); } }, 150)} placeholder="Rechercher un membre enregistré..." className="w-full pl-10 pr-8 py-3 bg-slate-50 border border-slate-200 rounded-2xl outline-none text-sm font-bold focus:bg-white focus:border-blue-300 transition-all shadow-sm" />
+                  {formData.fatherId && (
+                    <button type="button" onClick={() => { setFormData(prev => ({...prev, fatherName: '', fatherId: ''})); setFatherSearch(''); }} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"><X size={14} /></button>
+                  )}
                 </div>
                 {isFatherDropdownOpen && fatherSearch.length >= 2 && (
                   <div className="absolute z-30 left-0 right-0 top-full mt-1 max-h-40 overflow-y-auto bg-white border border-slate-200 rounded-2xl shadow-xl custom-scrollbar">

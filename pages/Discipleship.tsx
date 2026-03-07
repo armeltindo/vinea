@@ -381,6 +381,11 @@ const Discipleship: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 space-y-6">
            <Card title="Binômes Mentorat" icon={<Users size={18} className="text-indigo-600" />} subtitle="Relation un-à-un">
+             {filteredPairs.length > 0 && searchQuery && (
+               <p className="text-xs text-slate-400 font-medium mb-3">
+                 {filteredPairs.length} binôme{filteredPairs.length > 1 ? 's' : ''} trouvé{filteredPairs.length > 1 ? 's' : ''}
+               </p>
+             )}
              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                {filteredPairs.length > 0 ? filteredPairs.map((pair) => {
                  const discipleMember = getMemberInfo(pair.discipleId);

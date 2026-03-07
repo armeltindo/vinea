@@ -923,7 +923,7 @@ const Planning: React.FC = () => {
                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
                        <input 
                           type="text" 
-                          placeholder="RECHERCHER UN MEMBRE..." 
+                          placeholder="Rechercher un membre..."
                           value={presidentSearch} 
                           onChange={e => { 
                             setPresidentSearch(e.target.value); 
@@ -955,7 +955,7 @@ const Planning: React.FC = () => {
                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
                        <input
                           type="text"
-                          placeholder="RECHERCHER UN MEMBRE..."
+                          placeholder="Rechercher un membre..."
                           value={assistantSearch}
                           onChange={e => {
                             setAssistantSearch(e.target.value);
@@ -1013,7 +1013,7 @@ const Planning: React.FC = () => {
                     <label className="text-xs font-medium text-slate-500 ml-1 flex items-center gap-2"><Activity size={12} className="text-amber-600" /> Responsable *</label>
                     <div className="relative group">
                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
-                       <input type="text" required placeholder="RECHERCHER LE RESPONSABLE..." value={responsibleSearch} onChange={e => { setResponsibleSearch(e.target.value); if (!e.target.value) setActivityFormData({...activityFormData, responsibleId: ''}); }} className="w-full pl-12 pr-4 py-4 bg-white border border-slate-200 rounded-2xl outline-none text-sm font-normal tracking-wide shadow-sm focus:border-amber-400 transition-all" />
+                       <input type="text" required placeholder="Rechercher le responsable..." value={responsibleSearch} onChange={e => { setResponsibleSearch(e.target.value); if (!e.target.value) setActivityFormData({...activityFormData, responsibleId: ''}); }} className="w-full pl-12 pr-4 py-4 bg-white border border-slate-200 rounded-2xl outline-none text-sm font-normal tracking-wide shadow-sm focus:border-amber-400 transition-all" />
                     </div>
                     {responsibleSearch && !activityFormData.responsibleId && (
                       <div className="absolute z-30 left-0 right-0 top-full mt-1 max-h-40 overflow-y-auto bg-white border border-slate-200 rounded-2xl shadow-2xl">

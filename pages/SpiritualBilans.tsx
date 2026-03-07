@@ -134,7 +134,7 @@ const SpiritualBilans: React.FC = () => {
         <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-emerald-600 transition-colors" size={18} />
         <input
           type="text"
-          placeholder="RECHERCHER UN MEMBRE..."
+          placeholder="Rechercher un membre..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           className="w-full pl-12 pr-4 py-3.5 bg-white border border-slate-200 rounded-2xl outline-none text-sm font-normal tracking-wide focus:border-emerald-400 focus:ring-4 focus:ring-emerald-500/5 transition-all shadow-sm"
@@ -142,6 +142,11 @@ const SpiritualBilans: React.FC = () => {
       </div>
 
       {/* Members list */}
+      {filteredMembers.length > 0 && searchTerm && (
+        <p className="text-xs text-slate-400 font-medium -mt-2">
+          {filteredMembers.length} membre{filteredMembers.length > 1 ? 's' : ''} trouvé{filteredMembers.length > 1 ? 's' : ''}
+        </p>
+      )}
       <div className="space-y-2">
         {filteredMembers.length === 0 ? (
           <div className="py-24 text-center bg-slate-50/50 border border-dashed border-slate-200 rounded-2xl">

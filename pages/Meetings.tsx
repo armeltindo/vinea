@@ -199,6 +199,12 @@ const Meetings: React.FC = () => {
             </div>
           </div>
 
+          {filteredMeetings.length > 0 && (searchTerm || selectedCategory !== 'Toutes') && (
+            <p className="text-xs text-slate-400 font-medium -mt-2">
+              {filteredMeetings.length} réunion{filteredMeetings.length > 1 ? 's' : ''} trouvée{filteredMeetings.length > 1 ? 's' : ''}
+            </p>
+          )}
+
           <div className="space-y-4">
             {filteredMeetings.length > 0 ? filteredMeetings.map((meeting) => (
               <div key={meeting.id} onClick={() => navigate(`/meetings/${meeting.id}`)} className="bg-white border border-slate-200 rounded-xl overflow-hidden flex flex-col md:flex-row hover:border-indigo-300 transition-all group shadow-sm cursor-pointer active:scale-[0.99]">

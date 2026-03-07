@@ -234,13 +234,19 @@ const Departments: React.FC = () => {
 
       <AIAnalysis analysis={analysis} isLoading={isAnalyzing} />
 
-      <div className="flex bg-white p-1 rounded-2xl border border-slate-200 shadow-sm w-fit">
-        <button onClick={() => setActiveView('depts')} className={cn("px-6 py-2 rounded-xl text-xs font-medium transition-all", activeView === 'depts' ? "bg-indigo-600 text-white shadow-lg" : "text-slate-400 hover:text-slate-600")}>
-          <Briefcase size={14} className="inline mr-2" /> Liste des Départements
-        </button>
-        <button onClick={() => setActiveView('planning')} className={cn("px-6 py-2 rounded-xl text-xs font-medium transition-all", activeView === 'planning' ? "bg-indigo-600 text-white shadow-lg" : "text-slate-400 hover:text-slate-600")}>
-          <ListChecks size={14} className="inline mr-2" /> Planning des Activités
-        </button>
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+        <div className="flex bg-white p-1 rounded-2xl border border-slate-200 shadow-sm w-fit">
+          <button onClick={() => setActiveView('depts')} className={cn("px-6 py-2 rounded-xl text-xs font-medium transition-all", activeView === 'depts' ? "bg-indigo-600 text-white shadow-lg" : "text-slate-400 hover:text-slate-600")}>
+            <Briefcase size={14} className="inline mr-2" /> Liste des Départements
+          </button>
+          <button onClick={() => setActiveView('planning')} className={cn("px-6 py-2 rounded-xl text-xs font-medium transition-all", activeView === 'planning' ? "bg-indigo-600 text-white shadow-lg" : "text-slate-400 hover:text-slate-600")}>
+            <ListChecks size={14} className="inline mr-2" /> Planning des Activités
+          </button>
+        </div>
+        <div className="relative group">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-600 transition-colors" size={14} />
+          <input type="text" placeholder="Rechercher..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="pl-9 pr-3 py-2 text-xs font-medium border border-slate-200 rounded-xl outline-none focus:ring-4 focus:ring-indigo-500/5 transition-all bg-white shadow-sm w-48 md:w-64" />
+        </div>
       </div>
 
       {activeView === 'depts' ? (

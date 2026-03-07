@@ -846,6 +846,11 @@ const Finances: React.FC = () => {
 
           {view === 'journal' ? (
             <div className="space-y-4">
+              {filteredOperations.length > 0 && (
+                <p className="text-xs text-slate-400 font-medium">
+                  {filteredOperations.length} opération{filteredOperations.length > 1 ? 's' : ''}{searchTerm || typeFilter !== 'Tous' || selectedCategoryFilter ? ' trouvée' + (filteredOperations.length > 1 ? 's' : '') : ''}
+                </p>
+              )}
               {filteredOperations.length > 0 ? filteredOperations.map((op, idx) => {
                 const member = members.find(m => m.id === op.memberId);
                 const campaign = campaigns.find(c => c.id === op.campaignId);

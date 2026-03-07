@@ -677,7 +677,7 @@ const Visitors: React.FC = () => {
                   <label className="text-xs font-medium text-slate-500 ml-1 mb-1 block">Désigner un Mentor</label>
                   <div className="relative group">
                     <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
-                    <input type="text" value={parrainSearch} onChange={(e) => { setParrainSearch(e.target.value); if (!e.target.value) setFormData({...formData, parrainId: ''}); }} placeholder="RECHERCHER UN MEMBRE..." className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:border-indigo-300 outline-none text-sm font-normal transition-all" />
+                    <input type="text" value={parrainSearch} onChange={(e) => { setParrainSearch(e.target.value); if (!e.target.value) setFormData({...formData, parrainId: ''}); }} placeholder="Rechercher un membre..." className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:border-indigo-300 outline-none text-sm font-normal transition-all" />
                     {parrainSearch && !formData.parrainId && (
                       <div className="absolute z-20 left-0 right-0 top-full mt-1 bg-white border border-slate-200 rounded-xl shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 max-h-40 overflow-y-auto">
                         {filteredMembersForParrain.map(m => (

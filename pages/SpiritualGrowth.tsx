@@ -185,6 +185,11 @@ const SpiritualGrowth: React.FC = () => {
           </button>
         </div>
 
+        {filteredPortalMembers.length > 0 && portalSearchTerm && (
+          <p className="text-xs text-slate-400 font-medium mb-3">
+            {filteredPortalMembers.length} membre{filteredPortalMembers.length > 1 ? 's' : ''} trouvé{filteredPortalMembers.length > 1 ? 's' : ''}
+          </p>
+        )}
         {filteredPortalMembers.length === 0 ? (
           <div className="py-16 text-center bg-slate-50/50 border border-dashed border-slate-200 rounded-2xl">
             <div className="w-16 h-16 bg-white rounded-3xl flex items-center justify-center mx-auto mb-4 shadow-sm border border-slate-100">

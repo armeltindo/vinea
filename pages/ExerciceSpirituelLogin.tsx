@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Phone, User, LogIn, Loader2, AlertCircle, Sparkles, Quote } from 'lucide-react';
 import { getMemberByPhoneAndLastName, normalizeForLogin } from '../lib/db';
@@ -126,6 +126,19 @@ const ExerciceSpirituelLogin: React.FC = () => {
   const [error, setError] = useState('');
   const [step, setStep] = useState<'form' | 'greeting'>('form');
   const [foundMember, setFoundMember] = useState<MemberSession | null>(null);
+
+  // Si une session valide existe déjà, rediriger directement vers le dashboard
+  useEffect(() => {
+    const raw = localStorage.getItem('vinea_member_session');
+    if (raw) {
+      try {
+        JSON.parse(raw); // valider le JSON
+        navigate('/mon-espace/dashboard', { replace: true });
+      } catch {
+        localStorage.removeItem('vinea_member_session');
+      }
+    }
+  }, [navigate]);
 
   const selectedVerse = useMemo(() => {
     const dayIndex = Math.floor((Date.now() + 3600000) / 86400000);

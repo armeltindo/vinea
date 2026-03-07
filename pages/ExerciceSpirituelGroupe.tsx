@@ -730,13 +730,13 @@ const ExerciceSpirituelGroupe: React.FC = () => {
   // ── Vérifier session ────────────────────────────────────────
   useEffect(() => {
     const raw = localStorage.getItem('vinea_member_session');
-    if (!raw) { navigate('/mon-espace'); return; }
+    if (!raw) { navigate('/mon-espace', { replace: true }); return; }
     try {
       const s: MemberSession = JSON.parse(raw);
-      if (!s.isDiscipleMaker) { navigate('/mon-espace/dashboard'); return; }
+      if (!s.isDiscipleMaker) { navigate('/mon-espace/dashboard', { replace: true }); return; }
       setSession(s);
     } catch {
-      navigate('/mon-espace');
+      navigate('/mon-espace', { replace: true });
     }
   }, [navigate]);
 

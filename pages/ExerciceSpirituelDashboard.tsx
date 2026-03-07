@@ -138,7 +138,7 @@ const ExerciceSpirituelDashboard: React.FC = () => {
   // ── Session ──────────────────────────────────────────────
   useEffect(() => {
     const raw = localStorage.getItem('vinea_member_session');
-    if (!raw) { navigate('/mon-espace'); return; }
+    if (!raw) { navigate('/mon-espace', { replace: true }); return; }
     try {
       const s: MemberSession = JSON.parse(raw);
       setSession(s);
@@ -149,7 +149,7 @@ const ExerciceSpirituelDashboard: React.FC = () => {
         setRoleChoice('member');
       }
     } catch {
-      navigate('/mon-espace');
+      navigate('/mon-espace', { replace: true });
     }
   }, [navigate]);
 

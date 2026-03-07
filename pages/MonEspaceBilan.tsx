@@ -49,11 +49,11 @@ const MonEspaceBilan: React.FC = () => {
   // Session check
   useEffect(() => {
     const raw = localStorage.getItem('vinea_member_session');
-    if (!raw) { navigate('/mon-espace'); return; }
+    if (!raw) { navigate('/mon-espace', { replace: true }); return; }
     try {
       setSession(JSON.parse(raw));
     } catch {
-      navigate('/mon-espace');
+      navigate('/mon-espace', { replace: true });
     }
   }, [navigate]);
 

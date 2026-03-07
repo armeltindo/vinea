@@ -4,7 +4,8 @@ import { Member, MemberType, MemberStatus, Department } from '../types';
 import {
   X, User, Save, Camera, Edit, Search, Heart, Baby, Calendar,
   BookOpen, Plus, Phone, Shield, Check, UserCheck,
-  Flame, Music, Zap, Coins, HandHeart, Users, Palette, Briefcase
+  Flame, Music, Zap, Coins, HandHeart, Users, Palette, Briefcase,
+  Loader2, AlertCircle
 } from 'lucide-react';
 import { cn, generateId, getInitials, formatFirstName } from '../utils';
 import {
@@ -108,6 +109,8 @@ const MemberEditModal: React.FC<MemberEditModalProps> = ({
   const { addNotification } = useNotifications();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [pendingPhotoFile, setPendingPhotoFile] = useState<File | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const [errors, setErrors] = useState<{ firstName?: string; lastName?: string; submit?: string }>({});
 
   const buildInitial = (m: Member | null): Partial<Member> =>
     m ? { ...m } : {
@@ -206,105 +209,132 @@ const MemberEditModal: React.FC<MemberEditModalProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.lastName || !formData.firstName) return;
 
-    const formattedFirstName = formatFirstName(formData.firstName);
-    const formattedLastName = formData.lastName.toUpperCase();
-    const currentMemberFullName = `${formattedFirstName} ${formattedLastName}`;
-
-    let savedMember: Member;
-    let previousDepts: string[] = [];
-
-    if (member) {
-      previousDepts = member.departments ?? [];
-      const isDiscipleMaker = ![MemberType.MEMBRE_SIMPLE, MemberType.ENFANT].includes(
-        (formData.type ?? member.type) as MemberType
-      );
-      let photoUrl = formData.photoUrl;
-      if (pendingPhotoFile) {
-        try { photoUrl = await uploadMemberPhoto(pendingPhotoFile, member.id); }
-        catch { photoUrl = formData.photoUrl; }
-      }
-      savedMember = { ...member, ...formData, photoUrl, firstName: formattedFirstName, lastName: formattedLastName, isDiscipleMaker } as Member;
-      await updateMember(member.id, savedMember);
-    } else {
-      const newId = generateId();
-      const isDiscipleMaker = ![MemberType.MEMBRE_SIMPLE, MemberType.ENFANT].includes(formData.type as MemberType);
-      let photoUrl = formData.photoUrl;
-      if (pendingPhotoFile) {
-        try { photoUrl = await uploadMemberPhoto(pendingPhotoFile, newId); }
-        catch { photoUrl = formData.photoUrl; }
-      }
-      savedMember = {
-        ...formData as Member,
-        id: newId, photoUrl,
-        firstName: formattedFirstName, lastName: formattedLastName,
-        emergencyContact: formData.emergencyContact || { name: '', phone: '', relation: '' },
-        source: formData.source || 'Direct',
-        isDiscipleMaker,
-        baptized: formData.baptized || !!formData.baptizedDate,
-        whatsapp: formData.whatsapp || false,
-        whatsappPhone: formData.whatsappPhone || '',
-        departments: formData.departments || [],
-        profession: formData.profession || '',
-      };
-      await createMember(savedMember);
+    // Validation
+    const newErrors: typeof errors = {};
+    if (!formData.firstName?.trim()) newErrors.firstName = 'Le prénom est requis';
+    if (!formData.lastName?.trim()) newErrors.lastName = 'Le nom est requis';
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return;
     }
+    setErrors({});
+    setIsSaving(true);
 
-    // Sync discipleship pairs
-    const newMentorId = savedMember.assignedDiscipleMakerId || '';
-    const oldMentorId = member?.assignedDiscipleMakerId || '';
-    if (newMentorId !== oldMentorId) {
-      if (newMentorId) {
-        const mentor = allMembers.find(m => m.id === newMentorId);
-        if (mentor) {
-          addNotification({
-            id: `assign-member-dm-${savedMember.id}-${newMentorId}`,
-            type: 'assignment',
-            title: 'Disciple-maker assigné',
-            message: `${formatFirstName(savedMember.firstName)} ${savedMember.lastName.toUpperCase()} a été confié(e) à ${formatFirstName(mentor.firstName)} ${mentor.lastName.toUpperCase()}.`,
-            date: new Date().toISOString().split('T')[0],
-            isRead: false,
-            link: 'members',
-            targetId: savedMember.id,
-          });
+    try {
+      const formattedFirstName = formatFirstName(formData.firstName!);
+      const formattedLastName = formData.lastName!.toUpperCase();
+      const currentMemberFullName = `${formattedFirstName} ${formattedLastName}`;
+
+      let savedMember: Member;
+      let previousDepts: string[] = [];
+
+      if (member) {
+        previousDepts = member.departments ?? [];
+        const isDiscipleMaker = ![MemberType.MEMBRE_SIMPLE, MemberType.ENFANT].includes(
+          (formData.type ?? member.type) as MemberType
+        );
+        let photoUrl = formData.photoUrl;
+        if (pendingPhotoFile) {
+          try { photoUrl = await uploadMemberPhoto(pendingPhotoFile, member.id); }
+          catch { photoUrl = formData.photoUrl; }
+        }
+        savedMember = { ...member, ...formData, photoUrl, firstName: formattedFirstName, lastName: formattedLastName, isDiscipleMaker } as Member;
+        await updateMember(member.id, savedMember);
+      } else {
+        const newId = generateId();
+        const isDiscipleMaker = ![MemberType.MEMBRE_SIMPLE, MemberType.ENFANT].includes(formData.type as MemberType);
+        let photoUrl = formData.photoUrl;
+        if (pendingPhotoFile) {
+          try { photoUrl = await uploadMemberPhoto(pendingPhotoFile, newId); }
+          catch { photoUrl = formData.photoUrl; }
+        }
+        savedMember = {
+          ...formData as Member,
+          id: newId, photoUrl,
+          firstName: formattedFirstName, lastName: formattedLastName,
+          emergencyContact: formData.emergencyContact || { name: '', phone: '', relation: '' },
+          source: formData.source || 'Direct',
+          isDiscipleMaker,
+          baptized: formData.baptized || !!formData.baptizedDate,
+          whatsapp: formData.whatsapp || false,
+          whatsappPhone: formData.whatsappPhone || '',
+          departments: formData.departments || [],
+          profession: formData.profession || '',
+        };
+        await createMember(savedMember);
+      }
+
+      // Sync discipleship pairs
+      const newMentorId = savedMember.assignedDiscipleMakerId || '';
+      const oldMentorId = member?.assignedDiscipleMakerId || '';
+      if (newMentorId !== oldMentorId) {
+        if (newMentorId) {
+          const mentor = allMembers.find(m => m.id === newMentorId);
+          if (mentor) {
+            addNotification({
+              id: `assign-member-dm-${savedMember.id}-${newMentorId}`,
+              type: 'assignment',
+              title: 'Disciple-maker assigné',
+              message: `${formatFirstName(savedMember.firstName)} ${savedMember.lastName.toUpperCase()} a été confié(e) à ${formatFirstName(mentor.firstName)} ${mentor.lastName.toUpperCase()}.`,
+              date: new Date().toISOString().split('T')[0],
+              isRead: false,
+              link: 'members',
+              targetId: savedMember.id,
+            });
+          }
+        }
+        const allPairs = await getDiscipleshipPairs();
+        const existingPair = allPairs.find(p => p.discipleId === savedMember.id);
+        if (newMentorId) {
+          if (existingPair) {
+            await updateDiscipleshipPair(existingPair.id, { mentorId: newMentorId });
+          } else {
+            await createDiscipleshipPair({
+              id: generateId(), mentorId: newMentorId, discipleId: savedMember.id,
+              startDate: new Date().toISOString().split('T')[0],
+              progress: 0, status: 'Actif', lastMeeting: '',
+            });
+          }
+        } else if (existingPair) {
+          await deleteDiscipleshipPair(existingPair.id);
         }
       }
-      const allPairs = await getDiscipleshipPairs();
-      const existingPair = allPairs.find(p => p.discipleId === savedMember.id);
-      if (newMentorId) {
-        if (existingPair) {
-          await updateDiscipleshipPair(existingPair.id, { mentorId: newMentorId });
-        } else {
-          await createDiscipleshipPair({
-            id: generateId(), mentorId: newMentorId, discipleId: savedMember.id,
-            startDate: new Date().toISOString().split('T')[0],
-            progress: 0, status: 'Actif', lastMeeting: '',
-          });
+
+      // Sync departments
+      await syncMemberToDepartments(savedMember.id, savedMember.departments ?? [], previousDepts);
+
+      // Spouse sync
+      if (formData.maritalStatus === 'Marié(e)' && formData.spouseName) {
+        const spouseSearchLower = formData.spouseName.toLowerCase();
+        const spouse = allMembers.find(m => {
+          if (m.id === savedMember.id) return false;
+          const fullName = `${formatFirstName(m.firstName)} ${m.lastName.toUpperCase()}`.toLowerCase();
+          const nickname = (m.nickname || '').toLowerCase();
+          return fullName === spouseSearchLower || nickname === spouseSearchLower;
+        });
+        if (spouse) {
+          await updateMember(spouse.id, { maritalStatus: 'Marié(e)', spouseName: currentMemberFullName });
         }
-      } else if (existingPair) {
-        await deleteDiscipleshipPair(existingPair.id);
       }
-    }
 
-    // Sync departments
-    await syncMemberToDepartments(savedMember.id, savedMember.departments ?? [], previousDepts);
-
-    // Spouse sync
-    if (formData.maritalStatus === 'Marié(e)' && formData.spouseName) {
-      const spouseSearchLower = formData.spouseName.toLowerCase();
-      const spouse = allMembers.find(m => {
-        if (m.id === savedMember.id) return false;
-        const fullName = `${formatFirstName(m.firstName)} ${m.lastName.toUpperCase()}`.toLowerCase();
-        const nickname = (m.nickname || '').toLowerCase();
-        return fullName === spouseSearchLower || nickname === spouseSearchLower;
+      addNotification({
+        id: `member-saved-${savedMember.id}-${Date.now()}`,
+        type: 'system',
+        title: member ? 'Membre mis à jour' : 'Membre ajouté',
+        message: `${formattedFirstName} ${formattedLastName} a été ${member ? 'mis à jour' : 'ajouté(e)'} avec succès.`,
+        date: new Date().toISOString().split('T')[0],
+        isRead: false,
+        link: 'members',
+        targetId: savedMember.id,
       });
-      if (spouse) {
-        await updateMember(spouse.id, { maritalStatus: 'Marié(e)', spouseName: currentMemberFullName });
-      }
-    }
 
-    onSave(savedMember);
+      onSave(savedMember);
+    } catch (err) {
+      setErrors({ submit: 'Une erreur est survenue lors de l\'enregistrement. Veuillez réessayer.' });
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -337,8 +367,28 @@ const MemberEditModal: React.FC<MemberEditModalProps> = ({
             <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-4">
               <div className="flex items-center gap-2 mb-2"><User size={16} className="text-indigo-600" /><h4 className="text-xs font-medium text-slate-500">Identité</h4></div>
               <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1.5"><label className="text-xs font-medium text-slate-500 ml-1">Prénoms</label><input type="text" required value={formData.firstName || ''} onChange={(e) => setFormData(prev => ({...prev, firstName: e.target.value}))} placeholder="Prénoms" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:border-indigo-300 outline-none text-sm font-bold" /></div>
-                <div className="space-y-1.5"><label className="text-xs font-medium text-slate-500 ml-1">Nom</label><input type="text" required value={formData.lastName || ''} onChange={(e) => setFormData(prev => ({...prev, lastName: e.target.value.toUpperCase()}))} placeholder="NOM" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:border-indigo-300 outline-none text-sm font-bold" /></div>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium text-slate-500 ml-1">Prénoms <span className="text-rose-400">*</span></label>
+                  <input
+                    type="text"
+                    value={formData.firstName || ''}
+                    onChange={(e) => { setFormData(prev => ({...prev, firstName: e.target.value})); if (errors.firstName) setErrors(prev => ({...prev, firstName: undefined})); }}
+                    placeholder="Prénoms"
+                    className={cn("w-full px-4 py-3 bg-slate-50 border rounded-2xl focus:bg-white outline-none text-sm font-bold transition-all", errors.firstName ? "border-rose-400 bg-rose-50 focus:border-rose-400" : "border-slate-200 focus:border-indigo-300")}
+                  />
+                  {errors.firstName && <p className="text-xs text-rose-500 flex items-center gap-1 ml-1"><AlertCircle size={11} /> {errors.firstName}</p>}
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium text-slate-500 ml-1">Nom <span className="text-rose-400">*</span></label>
+                  <input
+                    type="text"
+                    value={formData.lastName || ''}
+                    onChange={(e) => { setFormData(prev => ({...prev, lastName: e.target.value.toUpperCase()})); if (errors.lastName) setErrors(prev => ({...prev, lastName: undefined})); }}
+                    placeholder="NOM"
+                    className={cn("w-full px-4 py-3 bg-slate-50 border rounded-2xl focus:bg-white outline-none text-sm font-bold transition-all", errors.lastName ? "border-rose-400 bg-rose-50 focus:border-rose-400" : "border-slate-200 focus:border-indigo-300")}
+                  />
+                  {errors.lastName && <p className="text-xs text-rose-500 flex items-center gap-1 ml-1"><AlertCircle size={11} /> {errors.lastName}</p>}
+                </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1.5"><label className="text-xs font-medium text-slate-500 ml-1">Rôle / Fonction</label><select value={formData.type} onChange={(e) => setFormData(prev => ({...prev, type: e.target.value as MemberType}))} className="w-full px-4 py-3 bg-indigo-50 border-none rounded-2xl outline-none text-xs font-semibold text-indigo-700">{availableRoles.map(role => <option key={role} value={role}>{role}</option>)}</select></div>
@@ -558,9 +608,18 @@ const MemberEditModal: React.FC<MemberEditModalProps> = ({
             </div>
           </div>
 
-          <div className="pt-8 flex gap-4">
-            <button type="button" onClick={onClose} className="flex-1 py-3.5 bg-white border border-slate-200 text-slate-500 rounded-2xl text-sm font-medium hover:bg-slate-50 transition-all">Annuler</button>
-            <button type="submit" className="flex-1 py-3.5 bg-indigo-600 text-white rounded-2xl text-sm font-semibold hover:bg-indigo-700 transition-all shadow-xl shadow-indigo-200 flex items-center justify-center gap-2"><Save size={14} /> Enregistrer</button>
+          {errors.submit && (
+            <div className="flex items-center gap-3 px-4 py-3 bg-rose-50 border border-rose-200 rounded-2xl text-xs text-rose-600 font-medium">
+              <AlertCircle size={16} className="shrink-0" />
+              {errors.submit}
+            </div>
+          )}
+
+          <div className="pt-2 flex gap-4">
+            <button type="button" onClick={onClose} disabled={isSaving} className="flex-1 py-3.5 bg-white border border-slate-200 text-slate-500 rounded-2xl text-sm font-medium hover:bg-slate-50 transition-all disabled:opacity-50">Annuler</button>
+            <button type="submit" disabled={isSaving} className="flex-1 py-3.5 bg-indigo-600 text-white rounded-2xl text-sm font-semibold hover:bg-indigo-700 transition-all shadow-xl shadow-indigo-200 flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed">
+              {isSaving ? <><Loader2 size={16} className="animate-spin" /> Enregistrement...</> : <><Save size={14} /> Enregistrer</>}
+            </button>
           </div>
         </form>
       </div>

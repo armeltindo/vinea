@@ -315,15 +315,17 @@ export interface ServicePersonnelItem {
 }
 
 export interface ServicePersonnel {
-  moderateur?: ServicePersonnelItem;
-  priereOuverture?: ServicePersonnelItem;
-  adoration?: ServicePersonnelItem;
-  annonces?: ServicePersonnelItem;
-  accueil?: ServicePersonnelItem;
-  conducteurOuvriers?: ServicePersonnelItem;
-  conducteurFons?: ServicePersonnelItem;
-  conducteurEnfants?: ServicePersonnelItem;
-  conducteurAdolescents?: ServicePersonnelItem;
+  moderateur?: ServicePersonnelItem[];
+  priereOuverture?: ServicePersonnelItem[];
+  adoration?: ServicePersonnelItem[];
+  annonces?: ServicePersonnelItem[];
+  accueil?: ServicePersonnelItem[];
+  conducteurOuvriers?: ServicePersonnelItem[];
+  conducteurFons?: ServicePersonnelItem[];
+  conducteurEnfants?: ServicePersonnelItem[];
+  conducteurAdolescents?: ServicePersonnelItem[];
+  interpretationFon?: ServicePersonnelItem[];
+  interpretationPasteur?: ServicePersonnelItem[];
 }
 
 export interface ChurchService {

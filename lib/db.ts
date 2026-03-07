@@ -272,6 +272,26 @@ function attendanceToDb(a: any): Record<string, unknown> {
   return db;
 }
 
+function normalizePersonnelField(val: any): import('../types').ServicePersonnelItem[] | undefined {
+  if (!val) return undefined;
+  if (Array.isArray(val)) return val.length > 0 ? val : undefined;
+  if (val.memberId) return [val]; // backward-compat: old single-item format
+  return undefined;
+}
+
+function normalizeServicePersonnel(raw: any): import('../types').ServicePersonnel | undefined {
+  if (!raw) return undefined;
+  const keys = ['moderateur','priereOuverture','adoration','annonces','accueil',
+    'conducteurOuvriers','conducteurFons','conducteurEnfants','conducteurAdolescents',
+    'interpretationFon','interpretationPasteur'];
+  const result: any = {};
+  for (const key of keys) {
+    const normalized = normalizePersonnelField(raw[key]);
+    if (normalized) result[key] = normalized;
+  }
+  return Object.keys(result).length > 0 ? result : undefined;
+}
+
 function dbToChurchService(row: any): ChurchService {
   return {
     id: row.id,
@@ -293,7 +313,7 @@ function dbToChurchService(row: any): ChurchService {
     facebookLink: row.facebook_link ?? undefined,
     audioLink: row.audio_link ?? undefined,
     attendance: row.attendance ?? undefined,
-    servicePersonnel: row.service_personnel ?? undefined,
+    servicePersonnel: normalizeServicePersonnel(row.service_personnel),
   };
 }
 
@@ -641,9 +661,9 @@ export const getServicesByMemberId = async (memberId: string): Promise<ChurchSer
     .filter((s: ChurchService) => {
       const p = s.servicePersonnel;
       if (!p) return false;
-      return [p.moderateur, p.priereOuverture, p.adoration, p.annonces, p.accueil,
-              p.conducteurOuvriers, p.conducteurFons, p.conducteurEnfants, p.conducteurAdolescents]
-        .some(item => item?.memberId === memberId);
+      return Object.values(p).some(items =>
+        Array.isArray(items) && items.some(item => item.memberId === memberId)
+      );
     });
 };
 
@@ -661,23 +681,28 @@ export const createMemberAssignmentNotifications = async (
     conducteurFons: 'Conducteur groupe des fons',
     conducteurEnfants: 'Conducteur groupe des enfants',
     conducteurAdolescents: 'Conducteur groupe des adolescents',
+    interpretationFon: 'Interprétation - Fon',
+    interpretationPasteur: 'Interprétation - Pasteur',
   };
   const dateStr = new Date(service.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
 
   for (const [role, label] of Object.entries(roleLabels)) {
-    const item = (personnel as any)[role];
-    if (!item?.memberId) continue;
-    const notif = {
-      id: `service-assignment-${service.id}-${item.memberId}-${role}`,
-      type: 'assignment' as const,
-      title: 'Activité programmée',
-      message: `Vous êtes programmé(e) comme ${label} pour le ${service.serviceType} du ${dateStr}.`,
-      date: new Date().toISOString().split('T')[0],
-      isRead: false,
-      link: `services/${service.id}`,
-      targetId: item.memberId,
-    };
-    await upsertNotification(notif);
+    const raw = (personnel as any)[role];
+    const items: any[] = Array.isArray(raw) ? raw : raw?.memberId ? [raw] : [];
+    for (const item of items) {
+      if (!item?.memberId) continue;
+      const notif = {
+        id: `service-assignment-${service.id}-${item.memberId}-${role}`,
+        type: 'assignment' as const,
+        title: 'Activité programmée',
+        message: `Vous êtes programmé(e) comme ${label} pour le ${service.serviceType} du ${dateStr}.`,
+        date: new Date().toISOString().split('T')[0],
+        isRead: false,
+        link: `services/${service.id}`,
+        targetId: item.memberId,
+      };
+      await upsertNotification(notif);
+    }
   }
 };
 

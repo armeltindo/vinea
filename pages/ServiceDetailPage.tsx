@@ -340,7 +340,7 @@ const ServiceDetailPage: React.FC = () => {
                   </div>
                 </div>
               )}
-              {!service.moderator && !service.worshipLeader && !service.attendance && !Object.values(service.servicePersonnel ?? {}).some(v => v?.memberId) && (
+              {!service.moderator && !service.worshipLeader && !service.attendance && !Object.values(service.servicePersonnel ?? {}).some(v => Array.isArray(v) ? v.length > 0 : v?.memberId) && (
                 <p className="text-xs text-slate-400 italic">Aucune information complémentaire.</p>
               )}
             </div>
@@ -358,8 +358,16 @@ const ServiceDetailPage: React.FC = () => {
               conducteurFons: 'Conducteur groupe des fons',
               conducteurEnfants: 'Conducteur groupe des enfants',
               conducteurAdolescents: 'Conducteur groupe des adolescents',
+              interpretationFon: 'Interprétation - Fon',
+              interpretationPasteur: 'Interprétation - Pasteur',
             };
-            const entries = Object.entries(service.servicePersonnel ?? {}).filter(([, v]) => v?.memberId);
+            // Flatten all (role, item) pairs, handling both array and legacy single-item format
+            const entries: { role: string; item: { memberId: string; memberName: string } }[] = [];
+            for (const [role, val] of Object.entries(service.servicePersonnel ?? {})) {
+              const arr = Array.isArray(val) ? val : val?.memberId ? [val] : [];
+              for (const item of arr) entries.push({ role, item });
+            }
+            const totalAssigned = entries.length;
             return (
               <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
                 <div className="px-5 py-4 border-b border-slate-50 flex items-center justify-between">
@@ -367,30 +375,30 @@ const ServiceDetailPage: React.FC = () => {
                     <UserCheck size={13} className="text-amber-500" />
                     <h4 className="text-xs font-semibold text-slate-600">Programmation des activités</h4>
                   </div>
-                  {entries.length > 0 && (
-                    <span className="px-2 py-0.5 bg-amber-100 text-amber-700 text-xs font-bold rounded-full">{entries.length}</span>
+                  {totalAssigned > 0 && (
+                    <span className="px-2 py-0.5 bg-amber-100 text-amber-700 text-xs font-bold rounded-full">{totalAssigned}</span>
                   )}
                 </div>
                 <div className="p-5">
-                  {entries.length === 0 ? (
+                  {totalAssigned === 0 ? (
                     <p className="text-xs text-slate-400 italic">Aucune affectation enregistrée.</p>
                   ) : (
                     <div className="space-y-2.5">
-                      {entries.map(([role, item]) => {
-                        const member = members.find(m => m.id === item!.memberId);
+                      {entries.map(({ role, item }, idx) => {
+                        const member = members.find(m => m.id === item.memberId);
                         return (
-                          <div key={role} className="flex items-center gap-3">
+                          <div key={`${role}-${item.memberId}-${idx}`} className="flex items-center gap-3">
                             <div className="w-8 h-8 rounded-xl overflow-hidden shrink-0 border border-slate-100">
                               {member?.photoUrl ? (
                                 <img src={member.photoUrl} alt="" className="w-full h-full object-cover" />
                               ) : (
                                 <div className="w-full h-full bg-amber-100 flex items-center justify-center text-xs font-bold text-amber-700">
-                                  {item!.memberName.charAt(0)}
+                                  {item.memberName.charAt(0)}
                                 </div>
                               )}
                             </div>
                             <div className="min-w-0 flex-1">
-                              <p className="text-xs font-semibold text-slate-800 truncate">{item!.memberName}</p>
+                              <p className="text-xs font-semibold text-slate-800 truncate">{item.memberName}</p>
                               <p className="text-[10px] text-slate-400 truncate">{ROLE_LABELS[role] ?? role}</p>
                             </div>
                           </div>

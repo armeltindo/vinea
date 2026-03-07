@@ -14,12 +14,15 @@ const ROLE_LABELS: Record<string, string> = {
   conducteurFons: 'Conducteur groupe des fons',
   conducteurEnfants: 'Conducteur groupe des enfants',
   conducteurAdolescents: 'Conducteur groupe des adolescents',
+  interpretationFon: 'Interprétation - Fon',
+  interpretationPasteur: 'Interprétation - Pasteur',
 };
 
 const getMemberRoleInService = (memberId: string, personnel?: ServicePersonnel): string | null => {
   if (!personnel) return null;
-  for (const [role, item] of Object.entries(personnel)) {
-    if ((item as any)?.memberId === memberId) return ROLE_LABELS[role] ?? role;
+  for (const [role, items] of Object.entries(personnel)) {
+    const arr: any[] = Array.isArray(items) ? items : items ? [items] : [];
+    if (arr.some((item: any) => item?.memberId === memberId)) return ROLE_LABELS[role] ?? role;
   }
   return null;
 };

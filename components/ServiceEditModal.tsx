@@ -25,28 +25,33 @@ const ROLE_CONFIG: { key: keyof ServicePersonnel; label: string }[] = [
   { key: 'conducteurFons', label: 'Conducteur groupe des fons' },
   { key: 'conducteurEnfants', label: 'Conducteur groupe des enfants' },
   { key: 'conducteurAdolescents', label: 'Conducteur groupe des adolescents' },
+  { key: 'interpretationFon', label: 'Interprétation - Fon' },
+  { key: 'interpretationPasteur', label: 'Interprétation - Pasteur' },
 ];
 
-interface MemberSearchProps {
+interface MultiMemberSearchProps {
   label: string;
   members: Member[];
-  value?: ServicePersonnelItem;
-  onChange: (val: ServicePersonnelItem | undefined) => void;
+  values: ServicePersonnelItem[];
+  onChange: (vals: ServicePersonnelItem[]) => void;
 }
 
-const MemberSearchField: React.FC<MemberSearchProps> = ({ label, members, value, onChange }) => {
+const MultiMemberSearchField: React.FC<MultiMemberSearchProps> = ({ label, members, values, onChange }) => {
   const [query, setQuery] = useState('');
   const [open, setOpen] = useState(false);
   const wrapRef = useRef<HTMLDivElement>(null);
 
+  const selectedIds = useMemo(() => new Set(values.map(v => v.memberId)), [values]);
+
   const filtered = useMemo(() => {
-    if (!query.trim()) return members.slice(0, 8);
     const q = query.toLowerCase();
-    return members.filter(m =>
-      `${m.firstName} ${m.lastName}`.toLowerCase().includes(q) ||
-      `${m.lastName} ${m.firstName}`.toLowerCase().includes(q)
-    ).slice(0, 8);
-  }, [query, members]);
+    return members
+      .filter(m => !selectedIds.has(m.id))
+      .filter(m => !query.trim() ||
+        `${m.firstName} ${m.lastName}`.toLowerCase().includes(q) ||
+        `${m.lastName} ${m.firstName}`.toLowerCase().includes(q)
+      ).slice(0, 8);
+  }, [query, members, selectedIds]);
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -57,78 +62,64 @@ const MemberSearchField: React.FC<MemberSearchProps> = ({ label, members, value,
   }, []);
 
   const handleSelect = (m: Member) => {
-    onChange({ memberId: m.id, memberName: `${m.firstName} ${m.lastName}` });
+    onChange([...values, { memberId: m.id, memberName: `${m.firstName} ${m.lastName}` }]);
     setQuery('');
     setOpen(false);
   };
 
-  const handleClear = () => {
-    onChange(undefined);
-    setQuery('');
+  const handleRemove = (memberId: string) => {
+    onChange(values.filter(v => v.memberId !== memberId));
   };
 
   return (
-    <div className="space-y-1" ref={wrapRef}>
+    <div className="space-y-1.5" ref={wrapRef}>
       <label className="text-xs font-medium text-slate-500 ml-1">{label}</label>
-      {value ? (
-        <div className="flex items-center gap-2 px-3 py-2 bg-indigo-50 border border-indigo-200 rounded-xl">
-          {(() => {
-            const member = members.find(m => m.id === value.memberId);
-            const parts = value.memberName.trim().split(/\s+/);
+      {values.length > 0 && (
+        <div className="flex flex-wrap gap-1.5">
+          {values.map(v => {
+            const member = members.find(m => m.id === v.memberId);
+            const parts = v.memberName.trim().split(/\s+/);
             return (
-              <Avatar
-                firstName={parts[0]}
-                lastName={parts.slice(1).join(' ')}
-                photoUrl={member?.photoUrl}
-                size="xs"
-                shape="circle"
-              />
-            );
-          })()}
-          <span className="text-xs font-semibold text-indigo-800 flex-1 truncate">{value.memberName}</span>
-          <button type="button" onClick={handleClear} className="text-indigo-400 hover:text-indigo-600 shrink-0">
-            <X size={12} />
-          </button>
-        </div>
-      ) : (
-        <div className="relative">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={13} />
-            <input
-              type="text"
-              placeholder="Rechercher un membre..."
-              value={query}
-              onChange={e => { setQuery(e.target.value); setOpen(true); }}
-              onFocus={() => setOpen(true)}
-              className="w-full pl-8 pr-3 py-2 bg-white border border-slate-200 rounded-xl outline-none text-xs font-medium shadow-sm focus:border-indigo-300"
-            />
-          </div>
-          {open && filtered.length > 0 && (
-            <div className="absolute z-50 w-full mt-1 bg-white border border-slate-200 rounded-xl shadow-xl overflow-hidden max-h-44 overflow-y-auto">
-              {filtered.map(m => (
-                <button
-                  key={m.id}
-                  type="button"
-                  onClick={() => handleSelect(m)}
-                  className="w-full flex items-center gap-2 px-3 py-2 hover:bg-indigo-50 text-left transition-colors"
-                >
-                  <Avatar
-                    firstName={m.firstName}
-                    lastName={m.lastName}
-                    photoUrl={m.photoUrl}
-                    size="sm"
-                    shape="circle"
-                  />
-                  <div className="min-w-0">
-                    <p className="text-xs font-semibold text-slate-800 truncate">{m.firstName} {m.lastName}</p>
-                    {m.type && <p className="text-xs text-slate-400 truncate">{m.type}</p>}
-                  </div>
+              <div key={v.memberId} className="flex items-center gap-1.5 px-2.5 py-1.5 bg-indigo-50 border border-indigo-200 rounded-xl">
+                <Avatar firstName={parts[0]} lastName={parts.slice(1).join(' ')} photoUrl={member?.photoUrl} size="xs" shape="circle" />
+                <span className="text-xs font-semibold text-indigo-800">{v.memberName}</span>
+                <button type="button" onClick={() => handleRemove(v.memberId)} className="text-indigo-400 hover:text-indigo-600 ml-0.5">
+                  <X size={11} />
                 </button>
-              ))}
-            </div>
-          )}
+              </div>
+            );
+          })}
         </div>
       )}
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={13} />
+        <input
+          type="text"
+          placeholder={values.length > 0 ? 'Ajouter un membre...' : 'Rechercher un membre...'}
+          value={query}
+          onChange={e => { setQuery(e.target.value); setOpen(true); }}
+          onFocus={() => setOpen(true)}
+          className="w-full pl-8 pr-3 py-2 bg-white border border-slate-200 rounded-xl outline-none text-xs font-medium shadow-sm focus:border-indigo-300"
+        />
+        {open && filtered.length > 0 && (
+          <div className="absolute z-50 w-full mt-1 bg-white border border-slate-200 rounded-xl shadow-xl overflow-hidden max-h-44 overflow-y-auto">
+            {filtered.map(m => (
+              <button
+                key={m.id}
+                type="button"
+                onClick={() => handleSelect(m)}
+                className="w-full flex items-center gap-2 px-3 py-2 hover:bg-indigo-50 text-left transition-colors"
+              >
+                <Avatar firstName={m.firstName} lastName={m.lastName} photoUrl={m.photoUrl} size="sm" shape="circle" />
+                <div className="min-w-0">
+                  <p className="text-xs font-semibold text-slate-800 truncate">{m.firstName} {m.lastName}</p>
+                  {m.type && <p className="text-xs text-slate-400 truncate">{m.type}</p>}
+                </div>
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 };
@@ -182,10 +173,10 @@ const ServiceEditModal: React.FC<ServiceEditModalProps> = ({
     return true;
   };
 
-  const handlePersonnelChange = (role: keyof ServicePersonnel, val: ServicePersonnelItem | undefined) => {
+  const handlePersonnelChange = (role: keyof ServicePersonnel, vals: ServicePersonnelItem[]) => {
     setFormData(prev => ({
       ...prev,
-      servicePersonnel: { ...prev.servicePersonnel, [role]: val ?? undefined },
+      servicePersonnel: { ...prev.servicePersonnel, [role]: vals.length > 0 ? vals : undefined },
     }));
   };
 
@@ -211,7 +202,7 @@ const ServiceEditModal: React.FC<ServiceEditModalProps> = ({
     onSave(saved);
   };
 
-  const assignedCount = Object.values(formData.servicePersonnel ?? {}).filter(v => v?.memberId).length;
+  const assignedCount = Object.values(formData.servicePersonnel ?? {}).reduce((acc, items) => acc + (items?.length ?? 0), 0);
 
   return (
     <div className="fixed inset-0 z-[180] overflow-hidden flex items-center justify-center p-4">
@@ -275,16 +266,16 @@ const ServiceEditModal: React.FC<ServiceEditModalProps> = ({
                 {showPersonnel && (
                   <div className="bg-white border border-slate-100 rounded-2xl p-6 shadow-sm space-y-4">
                     <p className="text-xs text-slate-500 font-medium italic">
-                      Assignez les membres programmés pour chaque activité. Ils recevront une notification dans leur espace.
+                      Assignez les membres programmés pour chaque activité. Plusieurs personnes peuvent être ajoutées par rôle. Ils recevront une notification dans leur espace.
                     </p>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       {ROLE_CONFIG.map(({ key, label }) => (
-                        <MemberSearchField
+                        <MultiMemberSearchField
                           key={key}
                           label={label}
                           members={members}
-                          value={(formData.servicePersonnel as any)?.[key]}
-                          onChange={val => handlePersonnelChange(key, val)}
+                          values={(formData.servicePersonnel as any)?.[key] ?? []}
+                          onChange={vals => handlePersonnelChange(key, vals)}
                         />
                       ))}
                     </div>

@@ -38,6 +38,7 @@ const Settings = React.lazy(() => import('./pages/Settings'));
 const Admin = React.lazy(() => import('./pages/Admin'));
 const Login = React.lazy(() => import('./pages/Login'));
 const SpiritualGrowth = React.lazy(() => import('./pages/SpiritualGrowth'));
+const SpiritualBilans = React.lazy(() => import('./pages/SpiritualBilans'));
 import { supabase } from './lib/supabase';
 import { getAdminUserByEmail, getMembers, getVisitors, getAttendanceSessions, getChurchEvents, upsertNotification, getChurchSettings, getAppConfig, setAppConfig } from './lib/db';
 import { setCurrencyCache } from './constants';
@@ -748,6 +749,7 @@ const App: React.FC = () => {
                 <Route path="/meditations/:id" element={canAccessRoute('meditations') ? <MeditationDetailPage /> : <Navigate to="/" replace />} />
                 <Route path="/visitors" element={canAccessRoute('visitors') ? <Visitors /> : <Navigate to="/" replace />} />
                 <Route path="/spiritual" element={canAccessRoute('spiritual') ? <SpiritualGrowth /> : <Navigate to="/" replace />} />
+                <Route path="/spiritual/bilans-mensuels" element={canAccessRoute('spiritual') ? <SpiritualBilans /> : <Navigate to="/" replace />} />
                 <Route path="/discipleship" element={canAccessRoute('discipleship') ? <Discipleship /> : <Navigate to="/" replace />} />
                 <Route path="/attendance" element={canAccessRoute('attendance') ? <Attendance /> : <Navigate to="/" replace />} />
                 <Route path="/attendance/suivi-absents" element={canAccessRoute('attendance') ? <SuiviAbsents /> : <Navigate to="/" replace />} />

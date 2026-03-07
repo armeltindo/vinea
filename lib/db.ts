@@ -1136,7 +1136,19 @@ export const getAdminUserByEmail = async (email: string): Promise<any | null> =>
 
 export const upsertAdminUser = async (u: any): Promise<void> => {
   const { error } = await supabase.from('admin_users').upsert(u, { onConflict: 'id' });
-  if (error) console.error('upsertAdminUser:', error.message);
+  if (error) {
+    // If the migration adding first_name/last_name columns hasn't been applied yet,
+    // fall back to saving without those columns so the rest of the data is not lost.
+    // Fix: run supabase/migrations/20250301000000_add_admin_users_name_columns.sql
+    if (error.message.includes('first_name') || error.message.includes('last_name')) {
+      const { first_name, last_name, ...fallback } = u;
+      const { error: e2 } = await supabase.from('admin_users').upsert(fallback, { onConflict: 'id' });
+      if (e2) console.error('upsertAdminUser (fallback):', e2.message);
+      else console.warn('upsertAdminUser: saved without first_name/last_name — apply the pending migration to enable full name fields.');
+    } else {
+      console.error('upsertAdminUser:', error.message);
+    }
+  }
 };
 
 export const deleteAdminUser = async (id: string): Promise<void> => {

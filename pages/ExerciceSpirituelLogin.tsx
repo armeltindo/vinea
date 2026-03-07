@@ -127,7 +127,7 @@ const ExerciceSpirituelLogin: React.FC = () => {
   const [foundMember, setFoundMember] = useState<MemberSession | null>(null);
 
   const selectedVerse = useMemo(() => {
-    const dayIndex = Math.floor(Date.now() / 86400000);
+    const dayIndex = Math.floor((Date.now() + 3600000) / 86400000);
     return VERSES[dayIndex % VERSES.length];
   }, []);
 

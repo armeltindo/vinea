@@ -408,7 +408,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
   const currentYear = new Date().getFullYear();
   
   const selectedVerse = useMemo(() => {
-    const dayIndex = Math.floor(Date.now() / 86400000);
+    const dayIndex = Math.floor((Date.now() + 3600000) / 86400000);
     return VERSES[dayIndex % VERSES.length];
   }, []);
 

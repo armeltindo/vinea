@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import {
   Calendar, Save, LogOut, CheckCircle2, AlertCircle, Loader2, Bell, Users,
   Trash2, ClipboardCheck, Target, Flame, CheckCircle, Lock, ArrowLeft,
-  Plus, ChevronRight, Church, UserCheck
+  Plus, ChevronRight, UserCheck
 } from 'lucide-react';
 import {
   getSpiritualExerciseTypes,
@@ -22,33 +22,10 @@ import {
 import {
   SpiritualExerciseType, DailyExercise, MemberSession,
   YearlySpiritualGoals, MonthlySpiritualPoint, SpiritualObjective,
-  ChurchService, ServicePersonnel
+  ChurchService
 } from '../types';
 import { SPIRITUAL_EXERCISES_LIST } from '../constants';
 import { cn, generateId } from '../utils';
-
-const ROLE_LABELS: Record<string, string> = {
-  moderateur: 'Modérateur',
-  priereOuverture: "Prière d'ouverture",
-  adoration: 'Adoration',
-  annonces: 'Annonces',
-  accueil: 'Accueil',
-  conducteurOuvriers: 'Conducteur groupe des ouvriers',
-  conducteurFons: 'Conducteur groupe des fons',
-  conducteurEnfants: 'Conducteur groupe des enfants',
-  conducteurAdolescents: 'Conducteur groupe des adolescents',
-  interpretationFon: 'Interprétation - Fon',
-  interpretationPasteur: 'Interprétation - Pasteur',
-};
-
-const getMemberRoleInService = (memberId: string, personnel?: ServicePersonnel): string | null => {
-  if (!personnel) return null;
-  for (const [role, items] of Object.entries(personnel)) {
-    const arr: any[] = Array.isArray(items) ? items : items ? [items] : [];
-    if (arr.some((item: any) => item?.memberId === memberId)) return ROLE_LABELS[role] ?? role;
-  }
-  return null;
-};
 
 // ─── Helpers ────────────────────────────────────────────────
 
@@ -913,7 +890,7 @@ const ExerciceSpirituelDashboard: React.FC = () => {
             <span className="text-xs font-bold leading-tight text-center">Définir<br/>exercices</span>
           </button>
           <button
-            onClick={() => setActiveView('activites')}
+            onClick={() => navigate('/mon-espace/activites')}
             className="flex flex-col items-center gap-2 p-4 bg-amber-500 text-white rounded-2xl shadow-lg shadow-amber-200 hover:bg-amber-600 transition-all active:scale-95 relative"
           >
             {assignedServices.filter(s => new Date(s.date) >= new Date()).length > 0 && (
@@ -942,75 +919,6 @@ const ExerciceSpirituelDashboard: React.FC = () => {
             <p className="text-lg font-black text-violet-600">{enabledObjectives.length}</p>
             <p className="text-[10px] text-slate-400 font-semibold">Exercices</p>
           </div>
-        </div>
-
-        {/* ── Mes Activités Programmées ── */}
-        <div className="space-y-3">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-xl bg-amber-100 flex items-center justify-center">
-              <Church size={15} className="text-amber-600" />
-            </div>
-            <div>
-              <h2 className="text-sm font-bold text-slate-800">Mes activités programmées</h2>
-              <p className="text-xs text-slate-400">
-                {assignedServices.length > 0 ? `${assignedServices.length} culte(s) avec une affectation` : 'Aucune affectation pour le moment'}
-              </p>
-            </div>
-            {assignmentNotifs.filter(n => !n.isRead).length > 0 && (
-              <span className="ml-auto px-2 py-0.5 bg-amber-500 text-white text-xs font-bold rounded-full">
-                {assignmentNotifs.filter(n => !n.isRead).length} nouveau(x)
-              </span>
-            )}
-          </div>
-          {assignedServices.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-6 px-4 bg-amber-50 border border-amber-100 rounded-2xl text-center">
-              <Church size={28} className="text-amber-300 mb-2" />
-              <p className="text-xs text-slate-500">Vous n'avez pas encore d'affectation à un culte ou une activité.</p>
-            </div>
-          ) : (
-            <div className="space-y-2">
-              {assignedServices
-                .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-                .slice(0, 5)
-                .map(service => {
-                  const role = session ? getMemberRoleInService(session.memberId, service.servicePersonnel) : null;
-                  const isPast = new Date(service.date) < new Date();
-                  return (
-                    <div
-                      key={service.id}
-                      className={cn(
-                        'flex items-center gap-3 px-4 py-3 rounded-2xl border',
-                        isPast ? 'bg-slate-50 border-slate-100' : 'bg-amber-50 border-amber-200'
-                      )}
-                    >
-                      <div className={cn(
-                        'w-9 h-9 rounded-xl flex items-center justify-center shrink-0',
-                        isPast ? 'bg-slate-200' : 'bg-amber-500'
-                      )}>
-                        <UserCheck size={15} className={isPast ? 'text-slate-500' : 'text-white'} />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-xs font-bold text-slate-800 truncate">{service.serviceType}</p>
-                        <p className="text-xs text-slate-500">
-                          {new Date(service.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
-                          {service.time ? ` · ${service.time}` : ''}
-                        </p>
-                        {role && (
-                          <p className={cn('text-xs font-semibold mt-0.5', isPast ? 'text-slate-400' : 'text-amber-700')}>
-                            {role}
-                          </p>
-                        )}
-                      </div>
-                      {!isPast && (
-                        <span className="px-2 py-1 bg-amber-500 text-white text-xs font-bold rounded-lg shrink-0">
-                          À venir
-                        </span>
-                      )}
-                    </div>
-                  );
-                })}
-            </div>
-          )}
         </div>
 
         {/* ── Notification d'affectation (nouvelles) ── */}

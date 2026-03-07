@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { usePermissions } from '../context/PermissionsContext';
 import Card from '../components/Card';
@@ -112,6 +112,7 @@ const Attendance: React.FC = () => {
   const [visitors, setVisitors] = useState<Visitor[]>([]);
   const [churchName, setChurchName] = useState('Vinea');
   const [assignments, setAssignments] = useState<Record<string, string>>({});
+  const hasLoaded = useRef(false);
 
   const [availableServices, setAvailableServices] = useState<string[]>(SERVICES_LIST);
   const [analysis, setAnalysis] = useState<string | null>(null);
@@ -201,6 +202,7 @@ const Attendance: React.FC = () => {
       setMembers(m);
       setVisitors(v);
       if (settings?.name) setChurchName(settings.name);
+      hasLoaded.current = true;
       if (savedAssignments) setAssignments(savedAssignments);
       if (savedFollowUp) setFollowUpHistory(savedFollowUp);
       if (serviceTypes && Array.isArray(serviceTypes) && serviceTypes.length > 0) {
@@ -212,8 +214,8 @@ const Attendance: React.FC = () => {
     load();
   }, []);
 
-  useEffect(() => { setAppConfig('attendance_followup_history', followUpHistory); }, [followUpHistory]);
-  useEffect(() => { setAppConfig('attendance_assignments', assignments); }, [assignments]);
+  useEffect(() => { if (hasLoaded.current) setAppConfig('attendance_followup_history', followUpHistory); }, [followUpHistory]);
+  useEffect(() => { if (hasLoaded.current) setAppConfig('attendance_assignments', assignments); }, [assignments]);
 
   const chronortedHistory = useMemo(() => {
     return [...history].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());

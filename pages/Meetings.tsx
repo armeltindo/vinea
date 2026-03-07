@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { usePermissions } from '../context/PermissionsContext';
+import MeetingEditModal, { Meeting } from '../components/MeetingEditModal';
 import Card from '../components/Card';
 import AIAnalysis from '../components/AIAnalysis';
 import { 
@@ -12,38 +13,13 @@ import {
   Maximize2
 } from 'lucide-react';
 import { analyzePageData } from '../lib/gemini';
-import { cn, generateId, getInitials, formatFirstName } from '../utils';
+import { cn, getInitials, formatFirstName } from '../utils';
 import { Member, MemberType } from '../types';
-import { getMeetings, createMeeting, updateMeeting, deleteMeeting, getMembers } from '../lib/db';
+import { getMeetings, deleteMeeting, getMembers } from '../lib/db';
 
-interface MeetingDecision {
-  id: string;
-  label: string;
-  status: 'À faire' | 'En cours' | 'Réalisé';
-  assignedTo?: string;
-}
-
-interface Meeting {
-  id: string;
-  title: string;
-  date: string;
-  time: string;
-  location: string;
-  category: string;
-  status: 'Programmé' | 'Terminé';
-  attendeeIds: string[];
-  absenteeIds: string[];
-  priority: 'Haute' | 'Moyenne' | 'Basse';
-  summary?: string;
-  decisions?: MeetingDecision[];
-  aiPV?: string;
-}
-
-const CATEGORIES = ['Conseil', 'Département', 'Ouvriers', 'Jeunesse', 'Finances', 'Social'];
 
 const Meetings: React.FC = () => {
   const navigate = useNavigate();
-  const location = useLocation();
   const { canDelete } = usePermissions();
   const [meetings, setMeetings] = useState<Meeting[]>([]);
   const [members, setMembers] = useState<Member[]>([]);
@@ -55,16 +31,6 @@ const Meetings: React.FC = () => {
     ]).then(([mtgs, mbrs]) => {
       setMeetings(mtgs as any);
       setMembers(mbrs);
-      const editId = (location.state as any)?.editId;
-      if (editId) {
-        const found = (mtgs as any[]).find(x => x.id === editId);
-        if (found) {
-          setEditingMeetingId(found.id);
-          setFormData(found);
-          setIsFormOpen(true);
-          window.history.replaceState({}, '', window.location.pathname);
-        }
-      }
     });
   }, []);
 
@@ -76,25 +42,9 @@ const Meetings: React.FC = () => {
   // Nouvel état pour le suivi des présences
   const [isAttendanceTrackerOpen, setIsAttendanceTrackerOpen] = useState(false);
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [editingMeeting, setEditingMeeting] = useState<Meeting | null>(null);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [meetingToDeleteId, setMeetingToDeleteId] = useState<string | null>(null);
-  const [attendeeSearch, setAttendeeSearch] = useState('');
-  const [absenteeSearch, setAbsenteeSearch] = useState('');
-  const [editingMeetingId, setEditingMeetingId] = useState<string | null>(null);
-
-  const [formData, setFormData] = useState<Omit<Meeting, 'id' | 'status'>>({
-    title: '',
-    date: new Date().toISOString().split('T')[0],
-    time: '18:00',
-    location: '',
-    category: CATEGORIES[0],
-    attendeeIds: [],
-    absenteeIds: [],
-    priority: 'Moyenne',
-    summary: '',
-    decisions: []
-  });
 
   const pendingDecisions = useMemo(() => {
     return meetings.flatMap(m => (m.decisions || []).filter(d => d.status !== 'Réalisé').map(d => ({ ...d, meetingTitle: m.title, meetingId: m.id })));
@@ -164,42 +114,14 @@ const Meetings: React.FC = () => {
     }).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   }, [meetings, searchTerm, selectedCategory]);
 
-  const handleFormSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-    if (editingMeetingId) {
-      setMeetings(meetings.map(m => m.id === editingMeetingId ? { ...m, ...formData } : m));
-      await updateMeeting(editingMeetingId, formData);
-    } else {
-      const newMeeting: Meeting = { ...formData, id: generateId(), status: 'Programmé' };
-      setMeetings([newMeeting, ...meetings]);
-      await createMeeting(newMeeting);
-    }
+  const handleModalSave = (saved: Meeting) => {
+    setMeetings(prev =>
+      prev.find(m => m.id === saved.id)
+        ? prev.map(m => m.id === saved.id ? saved : m)
+        : [saved, ...prev]
+    );
     setIsFormOpen(false);
-    setIsSubmitting(false);
-    setEditingMeetingId(null);
-  };
-
-  const toggleAttendeeInForm = (id: string) => {
-    setFormData(prev => ({
-      ...prev,
-      attendeeIds: prev.attendeeIds.includes(id) 
-        ? prev.attendeeIds.filter(i => i !== id) 
-        : [...prev.attendeeIds, id],
-      // Un membre ne peut pas être présent et absent en même temps
-      absenteeIds: prev.absenteeIds.filter(i => i !== id)
-    }));
-  };
-
-  const toggleAbsenteeInForm = (id: string) => {
-    setFormData(prev => ({
-      ...prev,
-      absenteeIds: prev.absenteeIds.includes(id) 
-        ? prev.absenteeIds.filter(i => i !== id) 
-        : [...prev.absenteeIds, id],
-      // Un membre ne peut pas être absent et présent en même temps
-      attendeeIds: prev.attendeeIds.filter(i => i !== id)
-    }));
+    setEditingMeeting(null);
   };
 
   const confirmDelete = async () => {
@@ -232,7 +154,7 @@ const Meetings: React.FC = () => {
           <button onClick={handleAnalyze} disabled={isAnalyzing || meetings.length === 0} className="flex items-center gap-2 px-4 py-2 bg-indigo-50 text-indigo-700 border border-indigo-100 rounded-xl text-sm font-semibold hover:bg-indigo-100 transition-all disabled:opacity-50">
             <Sparkles size={16} /> {isAnalyzing ? 'Analyse...' : 'Synthèse Stratégique IA'}
           </button>
-          <button onClick={() => { setEditingMeetingId(null); setFormData({ title: '', date: new Date().toISOString().split('T')[0], time: '18:00', location: '', category: CATEGORIES[0], attendeeIds: [], absenteeIds: [], priority: 'Moyenne', summary: '', decisions: [] }); setIsFormOpen(true); }} className="flex items-center gap-2 px-5 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-semibold hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-200">
+          <button onClick={() => { setEditingMeeting(null); setIsFormOpen(true); }} className="flex items-center gap-2 px-5 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-semibold hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-200">
             <Plus size={18} /> Nouvelle Réunion
           </button>
         </div>
@@ -512,98 +434,17 @@ const Meetings: React.FC = () => {
         </div>
       )}
 
-      {/* Modal: Nouvelle Réunion / Formulaire complet - Centré */}
+
+      {/* Modal: Nouvelle Réunion / Formulaire complet */}
       {isFormOpen && (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity" onClick={() => !isSubmitting && setIsFormOpen(false)} />
-          <div className="relative w-full max-w-lg bg-white rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
-            <div className="bg-indigo-600 p-8 text-white shrink-0 flex items-center justify-between">
-              <div><h3 className="text-xl font-semibold">{editingMeetingId ? 'Mise à jour' : 'Planification'}</h3><p className="text-xs text-indigo-200 mt-0.5">Registre administratif Vinea</p></div>
-              <button onClick={() => setIsFormOpen(false)} className="p-2 hover:bg-white/10 rounded-full transition-colors"><X size={24} /></button>
-            </div>
-            
-            <form onSubmit={handleFormSubmit} className="flex-1 overflow-y-auto p-10 space-y-10 custom-scrollbar bg-slate-50/30 pb-20">
-              <div className="space-y-6">
-                 <div className="space-y-1.5"><label className="text-xs font-medium text-slate-500 ml-1">Objet de la réunion</label><input type="text" required value={formData.title} onChange={(e) => setFormData({...formData, title: e.target.value})} placeholder="Ex: Conseil de Trésorerie" className="w-full px-5 py-3.5 bg-white border border-slate-200 rounded-2xl outline-none text-sm font-semibold shadow-sm" /></div>
-                 
-                 <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-1.5"><label className="text-xs font-medium text-slate-500 ml-1">Date</label><input type="date" required value={formData.date} onChange={(e) => setFormData({...formData, date: e.target.value})} className="w-full px-4 py-3 bg-white border border-slate-200 rounded-2xl text-sm font-bold" /></div>
-                    <div className="space-y-1.5"><label className="text-xs font-medium text-slate-500 ml-1">Heure</label><input type="time" required value={formData.time} onChange={(e) => setFormData({...formData, time: e.target.value})} className="w-full px-4 py-3 bg-white border border-slate-200 rounded-2xl text-sm font-bold" /></div>
-                 </div>
-
-                 <div className="space-y-1.5"><label className="text-xs font-medium text-slate-500 ml-1">Localisation / Plateforme</label><input type="text" required value={formData.location} onChange={(e) => setFormData({...formData, location: e.target.value})} placeholder="Ex: Salle Vinea ou Google Meet" className="w-full px-5 py-3.5 bg-white border border-slate-200 rounded-2xl outline-none text-sm font-semibold shadow-sm" /></div>
-
-                 <div className="space-y-1.5">
-                   <label className="text-xs font-medium text-slate-500 ml-1">Catégorie</label>
-                   <select value={formData.category} onChange={(e) => setFormData({...formData, category: e.target.value})} className="w-full px-5 py-3.5 bg-white border border-slate-200 rounded-2xl outline-none text-sm font-normal shadow-sm">
-                     {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
-                   </select>
-                 </div>
-
-                 <div className="space-y-4">
-                    <div className="flex justify-between items-center">
-                      <h4 className="text-xs font-medium text-slate-700 flex items-center gap-2"><UsersRound size={16} className="text-indigo-600" /> Participants Présents</h4>
-                      <span className="text-xs font-semibold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded">Quorum : {calculateQuorum(formData.attendeeIds)}%</span>
-                    </div>
-                    <div className="relative group"><Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={14} /><input type="text" placeholder="Chercher un membre présent..." value={attendeeSearch} onChange={(e) => setAttendeeSearch(e.target.value)} className="w-full pl-9 pr-4 py-2 text-sm font-normal bg-white border border-slate-200 rounded-xl outline-none shadow-inner" /></div>
-                    <div className="max-h-48 overflow-y-auto custom-scrollbar border border-slate-100 rounded-2xl bg-white shadow-sm">
-                       {members.filter(m => m.type !== MemberType.MEMBRE_SIMPLE && `${m.firstName} ${m.lastName}`.toLowerCase().includes(attendeeSearch.toLowerCase())).map(m => (
-                         <div key={m.id} onClick={() => toggleAttendeeInForm(m.id)} className={cn("flex items-center justify-between p-3 border-b border-slate-50 last:border-0 cursor-pointer transition-colors", formData.attendeeIds.includes(m.id) ? "bg-indigo-50/50" : "hover:bg-slate-50")}>
-                            <div className="flex items-center gap-3">
-                              <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center text-xs font-medium shadow-sm overflow-hidden", formData.attendeeIds.includes(m.id) ? "bg-indigo-600 text-white" : "bg-slate-100 text-slate-400")}>
-                                 {m.photoUrl ? (
-                                   <img src={m.photoUrl} alt="" className="w-full h-full object-cover" />
-                                 ) : (
-                                   getInitials(m.firstName, m.lastName)
-                                 )}
-                              </div>
-                              <span className={cn("text-xs font-semibolder", formData.attendeeIds.includes(m.id) ? "text-indigo-700" : "text-slate-600")}>{m.firstName} {m.lastName}</span>
-                            </div>
-                            {formData.attendeeIds.includes(m.id) && <Check size={14} className="text-indigo-600" strokeWidth={4} />}
-                         </div>
-                       ))}
-                    </div>
-                 </div>
-
-                 <div className="space-y-4">
-                    <h4 className="text-xs font-medium text-slate-700 flex items-center gap-2"><UserX size={16} className="text-rose-500" /> Absents / Excusés</h4>
-                    <div className="relative group"><Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={14} /><input type="text" placeholder="Chercher un membre absent..." value={absenteeSearch} onChange={(e) => setAbsenteeSearch(e.target.value)} className="w-full pl-9 pr-4 py-2 text-sm font-normal bg-white border border-slate-200 rounded-xl outline-none shadow-inner" /></div>
-                    <div className="max-h-48 overflow-y-auto custom-scrollbar border border-slate-100 rounded-2xl bg-white shadow-sm">
-                       {members.filter(m => m.type !== MemberType.MEMBRE_SIMPLE && `${m.firstName} ${m.lastName}`.toLowerCase().includes(absenteeSearch.toLowerCase())).map(m => (
-                         <div key={m.id} onClick={() => toggleAbsenteeInForm(m.id)} className={cn("flex items-center justify-between p-3 border-b border-slate-50 last:border-0 cursor-pointer transition-colors", formData.absenteeIds.includes(m.id) ? "bg-rose-50/50" : "hover:bg-slate-50")}>
-                            <div className="flex items-center gap-3">
-                              <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center text-xs font-medium shadow-sm overflow-hidden", formData.absenteeIds.includes(m.id) ? "bg-rose-600 text-white" : "bg-slate-100 text-slate-400")}>
-                                 {m.photoUrl ? (
-                                   <img src={m.photoUrl} alt="" className="w-full h-full object-cover" />
-                                 ) : (
-                                   getInitials(m.firstName, m.lastName)
-                                 )}
-                              </div>
-                              <span className={cn("text-xs font-semibolder", formData.absenteeIds.includes(m.id) ? "text-rose-700" : "text-slate-600")}>{m.firstName} {m.lastName}</span>
-                            </div>
-                            {formData.absenteeIds.includes(m.id) && <Check size={14} className="text-rose-600" strokeWidth={4} />}
-                         </div>
-                       ))}
-                    </div>
-                 </div>
-
-                 <div className="space-y-1.5">
-                   <label className="text-xs font-medium text-slate-500 ml-1">Notes / Résumé de séance</label>
-                   <textarea rows={6} value={formData.summary} onChange={(e) => setFormData({...formData, summary: e.target.value})} placeholder="Points abordés, ambiance, remarques..." className="w-full px-5 py-4 bg-white border border-slate-200 rounded-xl outline-none text-sm font-medium resize-none shadow-sm" />
-                 </div>
-              </div>
-
-              <div className="pt-8 flex gap-4 p-10 bg-white border-t border-slate-100 rounded-b-[3rem] shrink-0">
-                <button type="button" onClick={() => setIsFormOpen(false)} className="flex-1 py-3.5 bg-white border border-slate-200 text-slate-500 rounded-2xl text-sm font-medium shadow-sm">Annuler</button>
-                <button type="submit" disabled={isSubmitting} className="flex-[2] py-3.5 bg-indigo-600 text-white rounded-2xl text-sm font-semibold shadow-xl shadow-indigo-100 flex items-center justify-center gap-3 active:scale-95 disabled:opacity-50">
-                  {isSubmitting ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
-                  {editingMeetingId ? 'Mettre à jour' : 'Enregistrer'}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
+        <MeetingEditModal
+          meeting={editingMeeting}
+          allMembers={members}
+          onSave={handleModalSave}
+          onClose={() => { setIsFormOpen(false); setEditingMeeting(null); }}
+        />
       )}
+
 
       {/* Modal: Confirmation Suppression */}
       {isDeleteConfirmOpen && (

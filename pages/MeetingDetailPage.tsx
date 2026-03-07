@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import MeetingEditModal, { Meeting as MeetingType } from '../components/MeetingEditModal';
 import {
   ArrowLeft, UsersRound, FileText, Clock, MapPin, Users, Loader2, Trash2,
   Plus, Check, ClipboardCheck, PenTool, Sparkles, MessageSquareText,
@@ -58,6 +59,7 @@ const MeetingDetailPage: React.FC = () => {
   const [newDecisionLabel, setNewDecisionLabel] = useState('');
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [pvCopied, setPvCopied] = useState(false);
+  const [isEditOpen, setIsEditOpen] = useState(false);
 
   useEffect(() => {
     Promise.all([
@@ -254,7 +256,7 @@ const MeetingDetailPage: React.FC = () => {
             {/* Actions */}
             <div className="flex items-center gap-2 shrink-0">
               <button
-                onClick={() => navigate('/meetings', { state: { editId: meeting.id } })}
+                onClick={() => setIsEditOpen(true)}
                 className="flex items-center gap-1.5 px-3 py-2 bg-indigo-500/30 hover:bg-indigo-500/40 rounded-xl text-white text-xs font-medium transition-all border border-indigo-400/20"
               >
                 <Edit size={13} /> Modifier
@@ -558,6 +560,16 @@ const MeetingDetailPage: React.FC = () => {
 
         </div>
       </div>
+
+      {/* Edit modal */}
+      {isEditOpen && meeting && (
+        <MeetingEditModal
+          meeting={meeting as unknown as MeetingType}
+          allMembers={members}
+          onSave={(saved) => { setMeeting(saved as unknown as Meeting); setIsEditOpen(false); }}
+          onClose={() => setIsEditOpen(false)}
+        />
+      )}
 
       {/* Delete confirm */}
       {isDeleteConfirmOpen && (

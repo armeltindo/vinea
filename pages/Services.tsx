@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
+import ServiceEditModal from '../components/ServiceEditModal';
 import { usePermissions } from '../context/PermissionsContext';
 import Card from '../components/Card';
 import { 
@@ -38,13 +39,12 @@ import {
   ChevronLeft, 
   ArrowLeft, 
   CalendarDays, 
-  Loader2, 
-  Quote, 
-  Copy, 
-  Sparkles, 
-  FileText, 
-  Save, 
-  Youtube, 
+  Loader2,
+  Quote,
+  Copy,
+  Sparkles,
+  FileText,
+  Youtube,
   Facebook, 
   Headphones, 
   Printer, 
@@ -65,7 +65,7 @@ import {
 import { SERVICES_LIST } from '../constants';
 import { cn, generateId } from '../utils';
 import { ChurchService } from '../types';
-import { getChurchServices, createChurchService, updateChurchService, deleteChurchService, getAppConfig } from '../lib/db';
+import { getChurchServices, createChurchService, deleteChurchService, getAppConfig } from '../lib/db';
 
 const formatToUIDate = (isoDate: string | undefined) => {
   if (!isoDate) return '';
@@ -134,7 +134,6 @@ const getServiceIcon = (type: string, size = 14) => {
 
 const Services: React.FC = () => {
   const navigate = useNavigate();
-  const location = useLocation();
   const { canDelete } = usePermissions();
   const [services, setServices] = useState<ChurchService[]>([]);
 
@@ -145,17 +144,6 @@ const Services: React.FC = () => {
     Promise.all([getChurchServices(), getAppConfig('service_types')]).then(([s, serviceTypes]) => {
       setServices(s);
       if (serviceTypes && Array.isArray(serviceTypes) && serviceTypes.length > 0) setAvailableServiceTypes(serviceTypes);
-      // Ouvrir le formulaire d'édition si on revient depuis la page de détail
-      const editId = (location.state as any)?.editId;
-      if (editId) {
-        const found = s.find((x: ChurchService) => x.id === editId);
-        if (found) {
-          setEditingId(found.id);
-          setFormData(found);
-          setIsFormOpen(true);
-          window.history.replaceState({}, '', window.location.pathname);
-        }
-      }
     });
   }, []);
   const [selectedType, setSelectedType] = useState<string | null>(null);
@@ -202,80 +190,21 @@ const Services: React.FC = () => {
     return { totalCount, totalAttendance, topSpeaker, digitalRate, periodLabel };
   }, [services, statsPeriod]);
 
-  const [formData, setFormData] = useState<Omit<ChurchService, 'id'>>({
-    date: new Date().toISOString().split('T')[0],
-    time: '09:00',
-    serviceType: 'Culte de dimanche',
-    series: '',
-    theme: '',
-    scripture: '',
-    speaker: '',
-    moderator: '',
-    worshipLeader: '',
-    content: '',
-    attendance: undefined,
-    youtubeLink: '',
-    facebookLink: '',
-    audioLink: '',
-    tags: []
-  });
-
-  const [errors, setErrors] = useState<Record<string, string>>({});
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingService, setEditingService] = useState<ChurchService | null>(null);
 
   const seriesList = useMemo(() => {
     const set = new Set(services.map(s => s.series).filter(Boolean));
     return Array.from(set).sort();
   }, [services]);
 
-  const validateForm = () => {
-    const newErrors: any = {};
-    if (!formData.theme.trim()) newErrors.theme = "Le titre est requis";
-    if (!formData.speaker.trim()) newErrors.speaker = "L'orateur est requis";
-    if (!formData.content.trim()) newErrors.content = "Le texte de la prédication est requis";
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const handleFormSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!validateForm()) return;
-    setIsSubmitting(true);
-    if (editingId) {
-      const updated = { ...services.find(s => s.id === editingId)!, ...formData };
-      setServices(services.map(s => s.id === editingId ? updated : s));
-      await updateChurchService(editingId, formData);
-    } else {
-      const newService: ChurchService = { ...formData as ChurchService, id: generateId() };
-      setServices([newService, ...services]);
-      await createChurchService(newService);
-    }
+  const handleModalSave = (saved: ChurchService) => {
+    setServices(prev =>
+      prev.find(s => s.id === saved.id)
+        ? prev.map(s => s.id === saved.id ? saved : s)
+        : [saved, ...prev]
+    );
     setIsFormOpen(false);
-    setEditingId(null);
-    setIsSubmitting(false);
-    resetForm();
-  };
-
-  const resetForm = () => {
-    setFormData({
-      date: new Date().toISOString().split('T')[0],
-      time: '09:00',
-      serviceType: 'Culte de dimanche',
-      series: '',
-      theme: '',
-      scripture: '',
-      speaker: '',
-      moderator: '',
-      worshipLeader: '',
-      content: '',
-      attendance: undefined,
-      youtubeLink: '',
-      facebookLink: '',
-      audioLink: '',
-      tags: []
-    });
-    setErrors({});
+    setEditingService(null);
   };
 
   const confirmDelete = async () => {
@@ -409,7 +338,7 @@ const Services: React.FC = () => {
           <button onClick={handleExportServices} className="flex items-center gap-2 px-5 py-2.5 bg-white border border-slate-200 text-slate-600 rounded-2xl text-xs font-medium hover:bg-slate-50 transition-all shadow-sm group">
             <Download size={16} className="group-hover:translate-y-0.5 transition-transform" /> Exporter
           </button>
-          <button onClick={() => { setEditingId(null); resetForm(); setIsFormOpen(true); }} className="flex items-center justify-center gap-2 px-6 py-2.5 bg-indigo-600 text-white rounded-2xl text-sm font-semibold hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-200">
+          <button onClick={() => { setEditingService(null); setIsFormOpen(true); }} className="flex items-center justify-center gap-2 px-6 py-2.5 bg-indigo-600 text-white rounded-2xl text-sm font-semibold hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-200">
             <Plus size={18} /> Enregistrer
           </button>
         </div>
@@ -465,19 +394,13 @@ const Services: React.FC = () => {
       </div>
 
       {isFormOpen && (
-        <div className="fixed inset-0 z-[180] overflow-hidden flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity" onClick={() => !isSubmitting && setIsFormOpen(false)}></div>
-          <div className="relative w-full max-w-3xl bg-white shadow-2xl animate-in zoom-in-95 duration-300 flex flex-col rounded-2xl overflow-hidden max-h-[90vh]">
-            <div className="px-10 py-8 border-b border-slate-100 flex items-center justify-between bg-indigo-600 rounded-t-[3rem] text-white shrink-0">
-              <div><h3 className="text-xl font-semibold tracking-tight">{editingId ? 'Modifier' : 'Nouveau'}</h3><p className="text-xs text-indigo-200 mt-0.5">Vinea Homiletic Centre</p></div>
-              <button onClick={() => { setIsFormOpen(false); setEditingId(null); }} disabled={isSubmitting} className="p-2.5 hover:bg-white/10 rounded-full transition-colors disabled:opacity-50"><X size={20} /></button>
-            </div>
-            <form onSubmit={handleFormSubmit} className="flex-1 overflow-y-auto p-10 space-y-8 custom-scrollbar bg-slate-50/30">
-              <div className="space-y-6"><div className="grid grid-cols-1 md:grid-cols-3 gap-4"><div className="space-y-1.5"><label className="text-xs font-medium text-slate-500 ml-1">Date</label><input type="date" value={formData.date} onChange={(e) => setFormData({...formData, date: e.target.value})} className="w-full px-4 py-3 bg-white border border-slate-200 rounded-2xl outline-none text-sm font-bold shadow-sm" /></div><div className="space-y-1.5"><label className="text-xs font-medium text-slate-500 ml-1">Heure</label><input type="time" value={formData.time} onChange={(e) => setFormData({...formData, time: e.target.value})} className="w-full px-4 py-3 bg-white border border-slate-200 rounded-2xl outline-none text-sm font-bold shadow-sm" /></div><div className="space-y-1.5"><label className="text-xs font-medium text-slate-500 ml-1">Type</label><select value={formData.serviceType} onChange={(e) => setFormData({...formData, serviceType: e.target.value})} className="w-full px-4 py-3 bg-white border border-slate-200 rounded-2xl outline-none text-sm font-normal shadow-sm">{availableServiceTypes.map(type => <option key={type} value={type}>{type}</option>)}</select></div></div><div className="space-y-1.5"><label className="text-xs font-medium text-slate-500 ml-1">Série</label><input type="text" placeholder="Ex: Fondements" list="series-suggestions" value={formData.series} onChange={(e) => setFormData({...formData, series: e.target.value})} className="w-full px-4 py-3.5 bg-white border border-slate-200 rounded-2xl outline-none text-sm font-bold shadow-sm" /><datalist id="series-suggestions">{seriesList.map(s => <option key={s} value={s} />)}</datalist></div><div className="space-y-1.5"><label className="text-xs font-medium text-slate-500 ml-1">Thème</label><input type="text" required placeholder="Ex: La grâce" value={formData.theme} onChange={(e) => setFormData({...formData, theme: e.target.value})} className={cn("w-full px-5 py-3.5 bg-white border rounded-2xl outline-none text-sm font-semibold shadow-sm transition-all", (errors as any).theme ? "border-rose-300" : "border-slate-200 focus:border-indigo-400")} /></div><div className="grid grid-cols-1 md:grid-cols-2 gap-4"><div className="space-y-1.5"><label className="text-xs font-medium text-slate-500 ml-1">Orateur</label><input type="text" placeholder="Pasteur..." value={formData.speaker} onChange={(e) => setFormData({...formData, speaker: e.target.value})} className="w-full px-4 py-3.5 bg-white border border-slate-200 rounded-2xl outline-none text-sm font-bold" /></div><div className="space-y-1.5"><label className="text-xs font-medium text-slate-500 ml-1">Versets</label><input type="text" placeholder="Jean 3:16" value={formData.scripture} onChange={(e) => setFormData({...formData, scripture: e.target.value})} className="w-full px-4 py-3.5 bg-white border border-slate-200 rounded-2xl outline-none text-sm font-bold" /></div></div><div className="space-y-1.5"><label className="text-xs font-medium text-slate-500 ml-1">Contenu</label><textarea rows={10} required placeholder="Notes..." value={formData.content} onChange={(e) => setFormData({...formData, content: e.target.value})} className={cn("w-full px-5 py-4 bg-white border rounded-xl outline-none text-sm font-medium resize-none shadow-sm transition-all", (errors as any).content ? "border-rose-300" : "border-slate-200 focus:border-indigo-400")} /></div><div className="space-y-4 pt-4 border-t border-slate-200"><h4 className="text-xs font-medium text-slate-700 flex items-center gap-2"><Layout size={14} className="text-indigo-600" /> Hub Multimédia</h4><div className="grid grid-cols-1 md:grid-cols-3 gap-4"><div className="space-y-1.5"><label className="text-xs font-medium text-slate-500 flex items-center gap-1.5 ml-1"><Youtube size={12}/> YouTube</label><input type="url" value={formData.youtubeLink} onChange={(e) => setFormData({...formData, youtubeLink: e.target.value})} placeholder="https://..." className="w-full px-4 py-2 bg-white border border-slate-200 rounded-xl outline-none text-xs" /></div><div className="space-y-1.5"><label className="text-xs font-medium text-slate-500 flex items-center gap-1.5 ml-1"><Facebook size={12}/> Facebook</label><input type="url" value={formData.facebookLink} onChange={(e) => setFormData({...formData, facebookLink: e.target.value})} placeholder="https://..." className="w-full px-4 py-2 bg-white border border-slate-200 rounded-xl outline-none text-xs" /></div><div className="space-y-1.5"><label className="text-xs font-medium text-slate-500 flex items-center gap-1.5 ml-1"><Headphones size={12}/> Audio</label><input type="url" value={formData.audioLink} onChange={(e) => setFormData({...formData, audioLink: e.target.value})} placeholder="https://..." className="w-full px-4 py-2 bg-white border border-slate-200 rounded-xl outline-none text-xs" /></div></div></div></div>
-                <div className="pt-4 flex gap-4"><button type="button" onClick={() => setIsFormOpen(false)} className="flex-1 py-3.5 bg-white border border-slate-200 text-slate-500 rounded-2xl text-sm font-medium shadow-sm">Annuler</button><button type="submit" disabled={isSubmitting} className="flex-1 py-4 bg-indigo-600 text-white rounded-2xl text-xs font-medium shadow-xl shadow-indigo-100 flex items-center justify-center gap-3">{isSubmitting ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}{isSubmitting ? '...' : 'Publier'}</button></div>
-            </form>
-          </div>
-        </div>
+        <ServiceEditModal
+          service={editingService}
+          allServices={services}
+          availableServiceTypes={availableServiceTypes}
+          onSave={handleModalSave}
+          onClose={() => { setIsFormOpen(false); setEditingService(null); }}
+        />
       )}
 
       {serviceToDeleteId && (

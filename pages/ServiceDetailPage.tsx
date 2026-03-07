@@ -7,7 +7,9 @@ import {
   Edit, Trash2, Info, MessageSquareText, BrainCircuit, Send,
   CheckCircle2, AlertTriangle, Tags
 } from 'lucide-react';
-import { getChurchServices, updateChurchService, deleteChurchService } from '../lib/db';
+import { getChurchServices, updateChurchService, deleteChurchService, getAppConfig } from '../lib/db';
+import ServiceEditModal from '../components/ServiceEditModal';
+import { SERVICES_LIST } from '../constants';
 import { analyzeSermon, generateSocialSummary, suggestSermonTags } from '../lib/gemini';
 import { ChurchService } from '../types';
 import { cn } from '../utils';
@@ -21,8 +23,11 @@ const ServiceDetailPage: React.FC = () => {
   const { canDelete } = usePermissions();
 
   const [service, setService] = useState<ChurchService | null>(null);
+  const [allServices, setAllServices] = useState<ChurchService[]>([]);
+  const [availableServiceTypes, setAvailableServiceTypes] = useState(SERVICES_LIST);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
+  const [isEditOpen, setIsEditOpen] = useState(false);
 
   const [isThemeExpanded, setIsThemeExpanded] = useState(false);
   const [hasCopied, setHasCopied] = useState(false);
@@ -33,13 +38,21 @@ const ServiceDetailPage: React.FC = () => {
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
 
   useEffect(() => {
-    getChurchServices().then(services => {
+    Promise.all([getChurchServices(), getAppConfig('service_types')]).then(([services, serviceTypes]) => {
       const found = services.find(s => s.id === id) ?? null;
       setService(found);
+      setAllServices(services);
       setNotFound(!found);
       setLoading(false);
+      if (serviceTypes && Array.isArray(serviceTypes) && serviceTypes.length > 0) setAvailableServiceTypes(serviceTypes);
     });
   }, [id]);
+
+  const handleEditSave = (updated: ChurchService) => {
+    setService(updated);
+    setAllServices(prev => prev.map(s => s.id === updated.id ? updated : s));
+    setIsEditOpen(false);
+  };
 
   const handleRunAiAnalysis = async () => {
     if (!service?.content) return;
@@ -161,7 +174,7 @@ const ServiceDetailPage: React.FC = () => {
                 <Printer size={13} /> Imprimer
               </button>
               <button
-                onClick={() => navigate('/services', { state: { editId: service.id } })}
+                onClick={() => setIsEditOpen(true)}
                 className="flex items-center gap-1.5 px-3 py-2 bg-indigo-500/30 hover:bg-indigo-500/40 rounded-xl text-white text-xs font-medium transition-all border border-indigo-400/20"
               >
                 <Edit size={13} /> Modifier
@@ -464,6 +477,16 @@ const ServiceDetailPage: React.FC = () => {
 
         </div>
       </div>
+
+      {isEditOpen && service && (
+        <ServiceEditModal
+          service={service}
+          allServices={allServices}
+          availableServiceTypes={availableServiceTypes}
+          onSave={handleEditSave}
+          onClose={() => setIsEditOpen(false)}
+        />
+      )}
 
       {/* ── Confirmation suppression ── */}
       {isDeleteConfirmOpen && (

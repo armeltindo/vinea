@@ -739,11 +739,15 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
           <div className="mt-5 text-center">
             <a
               href="/mon-espace"
-              className="inline-flex items-center gap-2 text-sm font-medium text-slate-500 hover:text-indigo-600 transition-colors"
+              className="group inline-flex items-center justify-between gap-3 w-full px-5 py-3.5 rounded-xl bg-gradient-to-r from-white to-indigo-50 border border-indigo-100 shadow-xl shadow-indigo-900/40 text-sm font-semibold text-indigo-700 hover:from-indigo-50 hover:to-indigo-100 hover:border-indigo-200 hover:scale-[1.01] active:scale-[0.99] transition-all duration-150"
             >
-              <Users size={15} />
-              Accéder à l'espace membre
+              <div className="flex items-center gap-2">
+                <Users size={15} className="text-indigo-500" />
+                <span>Accéder à l'espace membre</span>
+              </div>
+              <ArrowRight size={15} className="text-indigo-400 group-hover:translate-x-0.5 transition-transform" />
             </a>
+            <p className="text-[11px] text-slate-400 mt-2">Accès réservé aux membres enregistrés</p>
           </div>
         </div>
       </div>

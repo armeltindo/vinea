@@ -64,8 +64,8 @@ import {
 } from 'lucide-react';
 import { SERVICES_LIST } from '../constants';
 import { cn, generateId } from '../utils';
-import { ChurchService } from '../types';
-import { getChurchServices, createChurchService, deleteChurchService, getAppConfig } from '../lib/db';
+import { ChurchService, Member } from '../types';
+import { getChurchServices, createChurchService, deleteChurchService, getAppConfig, getMembers } from '../lib/db';
 
 const formatToUIDate = (isoDate: string | undefined) => {
   if (!isoDate) return '';
@@ -136,14 +136,16 @@ const Services: React.FC = () => {
   const navigate = useNavigate();
   const { canDelete } = usePermissions();
   const [services, setServices] = useState<ChurchService[]>([]);
+  const [members, setMembers] = useState<Member[]>([]);
 
   const currentYearStr = new Date().getFullYear().toString();
   const [availableServiceTypes, setAvailableServiceTypes] = useState(SERVICES_LIST);
 
   useEffect(() => {
-    Promise.all([getChurchServices(), getAppConfig('service_types')]).then(([s, serviceTypes]) => {
+    Promise.all([getChurchServices(), getAppConfig('service_types'), getMembers()]).then(([s, serviceTypes, m]) => {
       setServices(s);
       if (serviceTypes && Array.isArray(serviceTypes) && serviceTypes.length > 0) setAvailableServiceTypes(serviceTypes);
+      setMembers(m);
     });
   }, []);
   const [selectedType, setSelectedType] = useState<string | null>(null);
@@ -398,6 +400,7 @@ const Services: React.FC = () => {
           service={editingService}
           allServices={services}
           availableServiceTypes={availableServiceTypes}
+          members={members}
           onSave={handleModalSave}
           onClose={() => { setIsFormOpen(false); setEditingService(null); }}
         />

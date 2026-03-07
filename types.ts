@@ -309,6 +309,23 @@ export interface DonationPromise {
   notes?: string;
 }
 
+export interface ServicePersonnelItem {
+  memberId: string;
+  memberName: string;
+}
+
+export interface ServicePersonnel {
+  moderateur?: ServicePersonnelItem;
+  priereOuverture?: ServicePersonnelItem;
+  adoration?: ServicePersonnelItem;
+  annonces?: ServicePersonnelItem;
+  accueil?: ServicePersonnelItem;
+  conducteurOuvriers?: ServicePersonnelItem;
+  conducteurFons?: ServicePersonnelItem;
+  conducteurEnfants?: ServicePersonnelItem;
+  conducteurAdolescents?: ServicePersonnelItem;
+}
+
 export interface ChurchService {
   id: string;
   date: string;
@@ -329,6 +346,7 @@ export interface ChurchService {
   facebookLink?: string;
   audioLink?: string;
   attendance?: number;
+  servicePersonnel?: ServicePersonnel;
 }
 
 export interface AttendanceSession {

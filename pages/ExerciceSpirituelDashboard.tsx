@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import {
   Calendar, Save, LogOut, CheckCircle2, AlertCircle, Loader2, Bell, Users,
   Trash2, ClipboardCheck, Target, Flame, CheckCircle, Lock, ArrowLeft,
-  Plus, ChevronRight
+  Plus, ChevronRight, Church, UserCheck
 } from 'lucide-react';
 import {
   getSpiritualExerciseTypes,
@@ -15,13 +15,37 @@ import {
   upsertSpiritualGoals,
   getSpiritualPoints,
   upsertSpiritualPoints,
+  getServicesByMemberId,
+  getMemberAssignmentNotifications,
+  markNotificationRead,
 } from '../lib/db';
 import {
   SpiritualExerciseType, DailyExercise, MemberSession,
-  YearlySpiritualGoals, MonthlySpiritualPoint, SpiritualObjective
+  YearlySpiritualGoals, MonthlySpiritualPoint, SpiritualObjective,
+  ChurchService, ServicePersonnel
 } from '../types';
 import { SPIRITUAL_EXERCISES_LIST } from '../constants';
 import { cn, generateId } from '../utils';
+
+const ROLE_LABELS: Record<string, string> = {
+  moderateur: 'Modérateur',
+  priereOuverture: "Prière d'ouverture",
+  adoration: 'Adoration',
+  annonces: 'Annonces',
+  accueil: 'Accueil',
+  conducteurOuvriers: 'Conducteur groupe des ouvriers',
+  conducteurFons: 'Conducteur groupe des fons',
+  conducteurEnfants: 'Conducteur groupe des enfants',
+  conducteurAdolescents: 'Conducteur groupe des adolescents',
+};
+
+const getMemberRoleInService = (memberId: string, personnel?: ServicePersonnel): string | null => {
+  if (!personnel) return null;
+  for (const [role, item] of Object.entries(personnel)) {
+    if ((item as any)?.memberId === memberId) return ROLE_LABELS[role] ?? role;
+  }
+  return null;
+};
 
 // ─── Helpers ────────────────────────────────────────────────
 
@@ -100,6 +124,10 @@ const ExerciceSpirituelDashboard: React.FC = () => {
   const [bilanSaved, setBilanSaved] = useState(false);
   const [loadingGoals, setLoadingGoals] = useState(true);
 
+  // ── Assigned services state ──
+  const [assignedServices, setAssignedServices] = useState<ChurchService[]>([]);
+  const [assignmentNotifs, setAssignmentNotifs] = useState<any[]>([]);
+
   // ── UI state ──
   const [activeView, setActiveView] = useState<ActiveView>(null);
   const [historyTab, setHistoryTab] = useState<HistoryTab>('exercices');
@@ -145,6 +173,18 @@ const ExerciceSpirituelDashboard: React.FC = () => {
   useEffect(() => {
     if (session) loadAllExercises(session.memberId);
   }, [session, loadAllExercises]);
+
+  // ── Load assigned services & notifications ────────────────
+  useEffect(() => {
+    if (!session) return;
+    Promise.all([
+      getServicesByMemberId(session.memberId),
+      getMemberAssignmentNotifications(session.memberId),
+    ]).then(([services, notifs]) => {
+      setAssignedServices(services);
+      setAssignmentNotifs(notifs);
+    });
+  }, [session]);
 
   // ── Load goals & bilan ────────────────────────────────────
   useEffect(() => {
@@ -873,6 +913,93 @@ const ExerciceSpirituelDashboard: React.FC = () => {
             <p className="text-[10px] text-slate-400 font-semibold">Exercices</p>
           </div>
         </div>
+
+        {/* ── Mes Activités Programmées ── */}
+        {assignedServices.length > 0 && (
+          <div className="space-y-3">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-xl bg-amber-100 flex items-center justify-center">
+                <Church size={15} className="text-amber-600" />
+              </div>
+              <div>
+                <h2 className="text-sm font-bold text-slate-800">Mes activités programmées</h2>
+                <p className="text-xs text-slate-400">{assignedServices.length} culte(s) avec une affectation</p>
+              </div>
+              {assignmentNotifs.filter(n => !n.isRead).length > 0 && (
+                <span className="ml-auto px-2 py-0.5 bg-amber-500 text-white text-xs font-bold rounded-full">
+                  {assignmentNotifs.filter(n => !n.isRead).length} nouveau(x)
+                </span>
+              )}
+            </div>
+            <div className="space-y-2">
+              {assignedServices
+                .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+                .slice(0, 5)
+                .map(service => {
+                  const role = session ? getMemberRoleInService(session.memberId, service.servicePersonnel) : null;
+                  const isPast = new Date(service.date) < new Date();
+                  return (
+                    <div
+                      key={service.id}
+                      className={cn(
+                        'flex items-center gap-3 px-4 py-3 rounded-2xl border',
+                        isPast ? 'bg-slate-50 border-slate-100' : 'bg-amber-50 border-amber-200'
+                      )}
+                    >
+                      <div className={cn(
+                        'w-9 h-9 rounded-xl flex items-center justify-center shrink-0',
+                        isPast ? 'bg-slate-200' : 'bg-amber-500'
+                      )}>
+                        <UserCheck size={15} className={isPast ? 'text-slate-500' : 'text-white'} />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-bold text-slate-800 truncate">{service.serviceType}</p>
+                        <p className="text-xs text-slate-500">
+                          {new Date(service.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
+                          {service.time ? ` · ${service.time}` : ''}
+                        </p>
+                        {role && (
+                          <p className={cn('text-xs font-semibold mt-0.5', isPast ? 'text-slate-400' : 'text-amber-700')}>
+                            {role}
+                          </p>
+                        )}
+                      </div>
+                      {!isPast && (
+                        <span className="px-2 py-1 bg-amber-500 text-white text-xs font-bold rounded-lg shrink-0">
+                          À venir
+                        </span>
+                      )}
+                    </div>
+                  );
+                })}
+            </div>
+          </div>
+        )}
+
+        {/* ── Notification d'affectation (nouvelles) ── */}
+        {assignmentNotifs.filter(n => !n.isRead).length > 0 && (
+          <div className="bg-indigo-50 border border-indigo-200 rounded-2xl p-4 space-y-2">
+            <div className="flex items-center gap-2 mb-1">
+              <Bell size={14} className="text-indigo-600" />
+              <p className="text-xs font-bold text-indigo-800">Nouvelles affectations</p>
+            </div>
+            {assignmentNotifs.filter(n => !n.isRead).map(notif => (
+              <div key={notif.id} className="flex items-start gap-2 p-2 bg-white rounded-xl border border-indigo-100">
+                <CheckCircle2 size={13} className="text-indigo-500 mt-0.5 shrink-0" />
+                <p className="text-xs text-slate-700 flex-1">{notif.message}</p>
+                <button
+                  onClick={() => {
+                    markNotificationRead(notif.id);
+                    setAssignmentNotifs(prev => prev.map(n => n.id === notif.id ? { ...n, isRead: true } : n));
+                  }}
+                  className="text-indigo-400 hover:text-indigo-600 shrink-0 text-[10px] font-semibold"
+                >
+                  Lu
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
 
         {/* ── Onglets historiques ── */}
         <div className="space-y-3">

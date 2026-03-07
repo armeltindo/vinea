@@ -1,22 +1,128 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { X, Save, Loader2, Layout, Youtube, Facebook, Headphones } from 'lucide-react';
-import { createChurchService, updateChurchService } from '../lib/db';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { X, Save, Loader2, Layout, Youtube, Facebook, Headphones, Users, Search, UserCheck, ChevronDown } from 'lucide-react';
+import { createChurchService, updateChurchService, createMemberAssignmentNotifications } from '../lib/db';
 import { cn, generateId } from '../utils';
-import { ChurchService } from '../types';
+import { ChurchService, Member, ServicePersonnel, ServicePersonnelItem } from '../types';
 import { SERVICES_LIST } from '../constants';
 
 interface ServiceEditModalProps {
   service: ChurchService | null; // null = creating new
   allServices: ChurchService[];   // for seriesList suggestions
   availableServiceTypes?: string[];
+  members?: Member[];
   onSave: (saved: ChurchService) => void;
   onClose: () => void;
 }
+
+const ROLE_CONFIG: { key: keyof ServicePersonnel; label: string }[] = [
+  { key: 'moderateur', label: 'Modérateur' },
+  { key: 'priereOuverture', label: "Prière d'ouverture" },
+  { key: 'adoration', label: 'Adoration' },
+  { key: 'annonces', label: 'Annonces' },
+  { key: 'accueil', label: 'Accueil' },
+  { key: 'conducteurOuvriers', label: 'Conducteur groupe des ouvriers' },
+  { key: 'conducteurFons', label: 'Conducteur groupe des fons' },
+  { key: 'conducteurEnfants', label: 'Conducteur groupe des enfants' },
+  { key: 'conducteurAdolescents', label: 'Conducteur groupe des adolescents' },
+];
+
+interface MemberSearchProps {
+  label: string;
+  members: Member[];
+  value?: ServicePersonnelItem;
+  onChange: (val: ServicePersonnelItem | undefined) => void;
+}
+
+const MemberSearchField: React.FC<MemberSearchProps> = ({ label, members, value, onChange }) => {
+  const [query, setQuery] = useState('');
+  const [open, setOpen] = useState(false);
+  const wrapRef = useRef<HTMLDivElement>(null);
+
+  const filtered = useMemo(() => {
+    if (!query.trim()) return members.slice(0, 8);
+    const q = query.toLowerCase();
+    return members.filter(m =>
+      `${m.firstName} ${m.lastName}`.toLowerCase().includes(q) ||
+      `${m.lastName} ${m.firstName}`.toLowerCase().includes(q)
+    ).slice(0, 8);
+  }, [query, members]);
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  const handleSelect = (m: Member) => {
+    onChange({ memberId: m.id, memberName: `${m.firstName} ${m.lastName}` });
+    setQuery('');
+    setOpen(false);
+  };
+
+  const handleClear = () => {
+    onChange(undefined);
+    setQuery('');
+  };
+
+  return (
+    <div className="space-y-1" ref={wrapRef}>
+      <label className="text-xs font-medium text-slate-500 ml-1">{label}</label>
+      {value ? (
+        <div className="flex items-center gap-2 px-3 py-2 bg-indigo-50 border border-indigo-200 rounded-xl">
+          <div className="w-6 h-6 rounded-full bg-indigo-600 flex items-center justify-center text-white text-xs font-bold shrink-0">
+            {value.memberName.charAt(0)}
+          </div>
+          <span className="text-xs font-semibold text-indigo-800 flex-1 truncate">{value.memberName}</span>
+          <button type="button" onClick={handleClear} className="text-indigo-400 hover:text-indigo-600 shrink-0">
+            <X size={12} />
+          </button>
+        </div>
+      ) : (
+        <div className="relative">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={13} />
+            <input
+              type="text"
+              placeholder="Rechercher un membre..."
+              value={query}
+              onChange={e => { setQuery(e.target.value); setOpen(true); }}
+              onFocus={() => setOpen(true)}
+              className="w-full pl-8 pr-3 py-2 bg-white border border-slate-200 rounded-xl outline-none text-xs font-medium shadow-sm focus:border-indigo-300"
+            />
+          </div>
+          {open && filtered.length > 0 && (
+            <div className="absolute z-50 w-full mt-1 bg-white border border-slate-200 rounded-xl shadow-xl overflow-hidden max-h-44 overflow-y-auto">
+              {filtered.map(m => (
+                <button
+                  key={m.id}
+                  type="button"
+                  onClick={() => handleSelect(m)}
+                  className="w-full flex items-center gap-2 px-3 py-2 hover:bg-indigo-50 text-left transition-colors"
+                >
+                  <div className="w-6 h-6 rounded-full bg-slate-200 flex items-center justify-center text-slate-600 text-xs font-bold shrink-0">
+                    {m.firstName.charAt(0)}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-xs font-semibold text-slate-800 truncate">{m.firstName} {m.lastName}</p>
+                    {m.type && <p className="text-xs text-slate-400 truncate">{m.type}</p>}
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
 
 const ServiceEditModal: React.FC<ServiceEditModalProps> = ({
   service,
   allServices,
   availableServiceTypes = SERVICES_LIST,
+  members = [],
   onSave,
   onClose,
 }) => {
@@ -36,6 +142,7 @@ const ServiceEditModal: React.FC<ServiceEditModalProps> = ({
     facebookLink: '',
     audioLink: '',
     tags: [],
+    servicePersonnel: {},
   });
 
   const [formData, setFormData] = useState<Omit<ChurchService, 'id'>>(
@@ -43,6 +150,7 @@ const ServiceEditModal: React.FC<ServiceEditModalProps> = ({
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [showPersonnel, setShowPersonnel] = useState(false);
 
   useEffect(() => {
     setFormData(service ? { ...service } : emptyForm());
@@ -62,6 +170,13 @@ const ServiceEditModal: React.FC<ServiceEditModalProps> = ({
     return Object.keys(newErrors).length === 0;
   };
 
+  const handlePersonnelChange = (role: keyof ServicePersonnel, val: ServicePersonnelItem | undefined) => {
+    setFormData(prev => ({
+      ...prev,
+      servicePersonnel: { ...prev.servicePersonnel, [role]: val ?? undefined },
+    }));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validateForm()) return;
@@ -74,9 +189,17 @@ const ServiceEditModal: React.FC<ServiceEditModalProps> = ({
       saved = { ...formData as ChurchService, id: generateId() };
       await createChurchService(saved);
     }
+
+    // Send notifications to assigned members
+    if (saved.servicePersonnel && Object.values(saved.servicePersonnel).some(v => v?.memberId)) {
+      await createMemberAssignmentNotifications(saved, saved.servicePersonnel);
+    }
+
     setIsSubmitting(false);
     onSave(saved);
   };
+
+  const assignedCount = Object.values(formData.servicePersonnel ?? {}).filter(v => v?.memberId).length;
 
   return (
     <div className="fixed inset-0 z-[180] overflow-hidden flex items-center justify-center p-4">
@@ -118,6 +241,45 @@ const ServiceEditModal: React.FC<ServiceEditModalProps> = ({
               <label className="text-xs font-medium text-slate-500 ml-1">Contenu</label>
               <textarea rows={10} required placeholder="Notes..." value={formData.content} onChange={(e) => setFormData({...formData, content: e.target.value})} className={cn('w-full px-5 py-4 bg-white border rounded-xl outline-none text-sm font-medium resize-none shadow-sm transition-all', errors.content ? 'border-rose-300' : 'border-slate-200 focus:border-indigo-400')} />
             </div>
+
+            {/* ── Section Programmation du personnel ── */}
+            {members.length > 0 && (
+              <div className="space-y-4 pt-4 border-t border-slate-200">
+                <button
+                  type="button"
+                  onClick={() => setShowPersonnel(v => !v)}
+                  className="w-full flex items-center justify-between px-4 py-3 bg-white border border-slate-200 rounded-2xl shadow-sm hover:border-indigo-300 transition-colors"
+                >
+                  <div className="flex items-center gap-2">
+                    <Users size={15} className="text-indigo-600" />
+                    <span className="text-xs font-semibold text-slate-700">Programmation des activités</span>
+                    {assignedCount > 0 && (
+                      <span className="px-2 py-0.5 bg-indigo-600 text-white text-xs rounded-full font-bold">{assignedCount}</span>
+                    )}
+                  </div>
+                  <ChevronDown size={14} className={cn('text-slate-400 transition-transform', showPersonnel && 'rotate-180')} />
+                </button>
+
+                {showPersonnel && (
+                  <div className="bg-white border border-slate-100 rounded-2xl p-6 shadow-sm space-y-4">
+                    <p className="text-xs text-slate-500 font-medium italic">
+                      Assignez les membres programmés pour chaque activité. Ils recevront une notification dans leur espace.
+                    </p>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {ROLE_CONFIG.map(({ key, label }) => (
+                        <MemberSearchField
+                          key={key}
+                          label={label}
+                          members={members}
+                          value={(formData.servicePersonnel as any)?.[key]}
+                          onChange={val => handlePersonnelChange(key, val)}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
 
             <div className="space-y-4 pt-4 border-t border-slate-200">
               <h4 className="text-xs font-medium text-slate-700 flex items-center gap-2"><Layout size={14} className="text-indigo-600" /> Hub Multimédia</h4>

@@ -178,8 +178,16 @@ CREATE TABLE church_services (
     facebook_link TEXT,
     audio_link TEXT,
     attendance INTEGER,
+    -- Personnel programmé pour les activités du culte (JSONB)
+    -- Structure : { moderateur, priereOuverture, adoration, annonces, accueil,
+    --               conducteurOuvriers, conducteurFons, conducteurEnfants, conducteurAdolescents }
+    -- Chaque rôle : { memberId: string, memberName: string }
+    service_personnel JSONB DEFAULT NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
+
+-- Migration pour les bases existantes :
+-- ALTER TABLE church_services ADD COLUMN IF NOT EXISTS service_personnel JSONB DEFAULT NULL;
 
 -- 7. PRÉSENCES ET ABSENCES
 CREATE TABLE attendance_sessions (

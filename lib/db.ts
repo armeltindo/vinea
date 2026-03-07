@@ -9,7 +9,7 @@ import {
   Member, Visitor, FinancialRecord, DonationCampaign, DonationPromise,
   AttendanceSession, ChurchService, DepartmentInfo, DepartmentActivity,
   OperationType, PaymentMethod, MemberStatus, MemberType, VisitorStatus, ActivityStatus,
-  SpiritualExerciseType, DailyExercise, DailyExerciseEntry
+  SpiritualExerciseType, DailyExercise, DailyExerciseEntry, ServicePersonnel
 } from '../types';
 
 // ─────────────────────────────────────────────
@@ -293,6 +293,7 @@ function dbToChurchService(row: any): ChurchService {
     facebookLink: row.facebook_link ?? undefined,
     audioLink: row.audio_link ?? undefined,
     attendance: row.attendance ?? undefined,
+    servicePersonnel: row.service_personnel ?? undefined,
   };
 }
 
@@ -317,6 +318,7 @@ function churchServiceToDb(s: Partial<ChurchService>): Record<string, unknown> {
   if (s.facebookLink !== undefined) db.facebook_link = s.facebookLink ?? null;
   if (s.audioLink !== undefined) db.audio_link = s.audioLink ?? null;
   if (s.attendance !== undefined) db.attendance = s.attendance ?? null;
+  if (s.servicePersonnel !== undefined) db.service_personnel = s.servicePersonnel ?? null;
   return db;
 }
 
@@ -626,6 +628,57 @@ export const updateChurchService = async (id: string, s: Partial<ChurchService>)
 export const deleteChurchService = async (id: string): Promise<void> => {
   const { error } = await supabase.from('church_services').delete().eq('id', id);
   if (error) console.error('deleteChurchService:', error.message);
+};
+
+export const getServicesByMemberId = async (memberId: string): Promise<ChurchService[]> => {
+  const { data, error } = await supabase
+    .from('church_services')
+    .select('*')
+    .order('date', { ascending: false });
+  if (error) { console.error('getServicesByMemberId:', error.message); return []; }
+  return (data ?? [])
+    .map(dbToChurchService)
+    .filter((s: ChurchService) => {
+      const p = s.servicePersonnel;
+      if (!p) return false;
+      return [p.moderateur, p.priereOuverture, p.adoration, p.annonces, p.accueil,
+              p.conducteurOuvriers, p.conducteurFons, p.conducteurEnfants, p.conducteurAdolescents]
+        .some(item => item?.memberId === memberId);
+    });
+};
+
+export const createMemberAssignmentNotifications = async (
+  service: ChurchService,
+  personnel: ServicePersonnel
+): Promise<void> => {
+  const roleLabels: Record<string, string> = {
+    moderateur: 'Modérateur',
+    priereOuverture: "Prière d'ouverture",
+    adoration: 'Adoration',
+    annonces: 'Annonces',
+    accueil: 'Accueil',
+    conducteurOuvriers: 'Conducteur groupe des ouvriers',
+    conducteurFons: 'Conducteur groupe des fons',
+    conducteurEnfants: 'Conducteur groupe des enfants',
+    conducteurAdolescents: 'Conducteur groupe des adolescents',
+  };
+  const dateStr = new Date(service.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
+
+  for (const [role, label] of Object.entries(roleLabels)) {
+    const item = (personnel as any)[role];
+    if (!item?.memberId) continue;
+    const notif = {
+      id: `service-assignment-${service.id}-${item.memberId}-${role}`,
+      type: 'assignment' as const,
+      title: 'Activité programmée',
+      message: `Vous êtes programmé(e) comme ${label} pour le ${service.serviceType} du ${dateStr}.`,
+      date: new Date().toISOString().split('T')[0],
+      isRead: false,
+      link: `services/${service.id}`,
+      targetId: item.memberId,
+    };
+    await upsertNotification(notif);
+  }
 };
 
 // ─────────────────────────────────────────────
@@ -1097,6 +1150,20 @@ export const markAllNotificationsRead = async (): Promise<void> => {
     .update({ is_read: true })
     .eq('is_read', false);
   if (error) console.error('markAllNotificationsRead:', error.message);
+};
+
+export const getMemberAssignmentNotifications = async (memberId: string): Promise<any[]> => {
+  const { data, error } = await supabase
+    .from('system_notifications')
+    .select('*')
+    .eq('type', 'assignment')
+    .eq('target_id', memberId)
+    .order('created_at', { ascending: false });
+  if (error) { console.error('getMemberAssignmentNotifications:', error.message); return []; }
+  return (data ?? []).map((row: any) => ({
+    id: row.id, type: row.type, title: row.title, message: row.message,
+    date: row.date, isRead: row.is_read ?? false, link: row.link, targetId: row.target_id,
+  }));
 };
 
 export const upsertNotification = async (n: any): Promise<void> => {

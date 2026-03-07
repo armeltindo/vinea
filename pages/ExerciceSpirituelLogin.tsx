@@ -4,6 +4,7 @@ import { Phone, User, LogIn, Loader2, AlertCircle, Sparkles, Quote } from 'lucid
 import { getMemberByPhoneAndLastName, normalizeForLogin } from '../lib/db';
 import { MemberSession, MemberType } from '../types';
 import { cn } from '../utils';
+import Logo from '../components/Logo';
 
 const VERSES = [
   { text: "Tout ce que vous faites, faites-le de bon coeur, comme pour le Seigneur et non pour des hommes,", ref: "Colossiens 3:23" },
@@ -192,8 +193,8 @@ const ExerciceSpirituelLogin: React.FC = () => {
       <div className="relative w-full max-w-md">
         {/* Logo / Titre */}
         <div className="text-center mb-8">
-          <div className="w-16 h-16 bg-white/10 backdrop-blur-md rounded-2xl flex items-center justify-center mx-auto mb-4 border border-white/20 shadow-xl">
-            <span className="text-2xl font-black text-white">V</span>
+          <div className="w-16 h-16 mx-auto mb-4 shadow-xl">
+            <Logo className="w-full h-full" />
           </div>
           <h1 className="text-2xl font-bold text-white">Mon Espace - MIDC</h1>
           <p className="text-indigo-200 text-sm mt-1 font-medium">Portail Membres — Vinea</p>

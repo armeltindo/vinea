@@ -819,12 +819,10 @@ const Attendance: React.FC = () => {
                   <p className="text-xs font-semibold text-indigo-600 mb-1">Total</p>
                   <p className="text-2xl font-semibold text-indigo-700">{selectedRecord.total}</p>
                 </div>
-                {(selectedRecord.newCount ?? 0) > 0 && (
-                  <div className="col-span-2 bg-emerald-50/30 p-6 rounded-xl border border-emerald-100 shadow-sm text-center">
-                    <p className="text-xs font-semibold text-emerald-600 mb-1">Nouveaux</p>
-                    <p className="text-2xl font-semibold text-emerald-700">+{selectedRecord.newCount}</p>
-                  </div>
-                )}
+                <div className="col-span-2 bg-emerald-50/30 p-6 rounded-xl border border-emerald-100 shadow-sm text-center">
+                  <p className="text-xs font-semibold text-emerald-600 mb-1">Nouveaux</p>
+                  <p className="text-2xl font-semibold text-emerald-700">{(selectedRecord.newCount ?? 0) > 0 ? `+${selectedRecord.newCount}` : '0'}</p>
+                </div>
               </div>
 
               {(selectedRecord.newCount ?? 0) > 0 && selectedRecord.newVisitorNames?.trim() && (

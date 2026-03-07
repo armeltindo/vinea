@@ -370,9 +370,9 @@ const ExerciceSpirituelDashboard: React.FC = () => {
         )}
         <div>
           <h1 className="text-sm font-bold leading-tight">
-            {activeView === 'exercices' ? 'Exercices du jour'
-              : activeView === 'bilan' ? 'Bilan mensuel'
-              : activeView === 'objectifs' ? 'Mes objectifs'
+            {activeView === 'exercices' ? 'Points journaliers'
+              : activeView === 'bilan' ? 'Points mensuels'
+              : activeView === 'objectifs' ? 'Définir mes exercices'
               : 'Mon Espace - MIDC'}
           </h1>
           <p className="text-indigo-200 text-xs">
@@ -798,9 +798,9 @@ const ExerciceSpirituelDashboard: React.FC = () => {
   // ════════════════════════════════════════════════════════════
   // ── VUE PAR DÉFAUT : Accueil + Historiques ────────────────
   // ════════════════════════════════════════════════════════════
-  const historyTabs: { id: HistoryTab; label: string; count: number }[] = [
-    { id: 'exercices', label: 'Exercices', count: allExercises.length },
-    { id: 'bilans', label: 'Bilans', count: monthlyPoints.length },
+  const historyTabs: { id: HistoryTab; label: string; count: number; color: string }[] = [
+    { id: 'exercices', label: 'Exercices journaliers', count: allExercises.length, color: 'indigo' },
+    { id: 'bilans', label: 'Points mensuels', count: monthlyPoints.length, color: 'emerald' },
   ];
 
   return (
@@ -836,7 +836,7 @@ const ExerciceSpirituelDashboard: React.FC = () => {
             <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center">
               <Plus size={20} />
             </div>
-            <span className="text-xs font-bold leading-tight text-center">Exercices<br/>du jour</span>
+            <span className="text-xs font-bold leading-tight text-center">Points<br/>journaliers</span>
           </button>
           <button
             onClick={() => setActiveView('bilan')}
@@ -845,7 +845,7 @@ const ExerciceSpirituelDashboard: React.FC = () => {
             <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center">
               <ClipboardCheck size={20} />
             </div>
-            <span className="text-xs font-bold leading-tight text-center">Bilan<br/>mensuel</span>
+            <span className="text-xs font-bold leading-tight text-center">Points<br/>mensuels</span>
           </button>
           <button
             onClick={() => setActiveView('objectifs')}
@@ -854,7 +854,7 @@ const ExerciceSpirituelDashboard: React.FC = () => {
             <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center">
               <Target size={20} />
             </div>
-            <span className="text-xs font-bold leading-tight text-center">Mes<br/>objectifs</span>
+            <span className="text-xs font-bold leading-tight text-center">Définir<br/>exercices</span>
           </button>
         </div>
 
@@ -862,42 +862,40 @@ const ExerciceSpirituelDashboard: React.FC = () => {
         <div className="grid grid-cols-3 gap-3 text-center">
           <div className="bg-white rounded-2xl border border-slate-100 shadow-sm py-3 px-2">
             <p className="text-lg font-black text-indigo-600">{allExercises.length}</p>
-            <p className="text-[10px] text-slate-400 font-semibold">Exercices</p>
+            <p className="text-[10px] text-slate-400 font-semibold">Journaliers</p>
           </div>
           <div className="bg-white rounded-2xl border border-slate-100 shadow-sm py-3 px-2">
             <p className="text-lg font-black text-emerald-600">{monthlyPoints.length}</p>
-            <p className="text-[10px] text-slate-400 font-semibold">Bilans</p>
+            <p className="text-[10px] text-slate-400 font-semibold">Mensuels</p>
           </div>
           <div className="bg-white rounded-2xl border border-slate-100 shadow-sm py-3 px-2">
             <p className="text-lg font-black text-violet-600">{enabledObjectives.length}</p>
-            <p className="text-[10px] text-slate-400 font-semibold">Objectifs</p>
+            <p className="text-[10px] text-slate-400 font-semibold">Exercices</p>
           </div>
         </div>
 
         {/* ── Onglets historiques ── */}
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-          {/* Tab bar */}
-          <div className="flex border-b border-slate-100">
+        <div className="space-y-3">
+          {/* Tab bar pill style */}
+          <div className="flex gap-2 bg-slate-100 p-1 rounded-2xl">
             {historyTabs.map(tab => (
               <button
                 key={tab.id}
                 onClick={() => setHistoryTab(tab.id)}
                 className={cn(
-                  'flex-1 py-3.5 text-xs font-bold flex items-center justify-center gap-2 transition-all border-b-2',
+                  'flex-1 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5',
                   historyTab === tab.id
-                    ? tab.id === 'exercices'
-                      ? 'border-indigo-600 text-indigo-600 bg-indigo-50/50'
-                      : 'border-emerald-600 text-emerald-600 bg-emerald-50/50'
-                    : 'border-transparent text-slate-400 hover:text-slate-600'
+                    ? 'bg-white shadow-sm text-slate-800'
+                    : 'text-slate-500 hover:text-slate-700'
                 )}
               >
                 {tab.label}
                 {tab.count > 0 && (
                   <span className={cn(
-                    'text-[10px] font-bold px-1.5 py-0.5 rounded-full',
+                    'w-5 h-5 rounded-full text-[10px] flex items-center justify-center font-black',
                     historyTab === tab.id
-                      ? tab.id === 'exercices' ? 'bg-indigo-100 text-indigo-600' : 'bg-emerald-100 text-emerald-600'
-                      : 'bg-slate-100 text-slate-400'
+                      ? tab.id === 'bilans' ? 'bg-emerald-100 text-emerald-600' : 'bg-indigo-100 text-indigo-600'
+                      : 'bg-slate-200 text-slate-500'
                   )}>
                     {tab.count}
                   </span>
@@ -905,6 +903,7 @@ const ExerciceSpirituelDashboard: React.FC = () => {
               </button>
             ))}
           </div>
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
 
           {/* ── Onglet Exercices ── */}
           {historyTab === 'exercices' && (
@@ -979,6 +978,7 @@ const ExerciceSpirituelDashboard: React.FC = () => {
                 ))}
             </div>
           )}
+          </div>
         </div>
       </div>
     </div>

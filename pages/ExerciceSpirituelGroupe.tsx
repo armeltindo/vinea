@@ -854,7 +854,10 @@ const ExerciceSpirituelGroupe: React.FC = () => {
       {/* Header */}
       <header className="bg-indigo-700 text-white px-4 py-3 flex items-center justify-between shadow-lg">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl overflow-hidden border border-white/30 shrink-0">
+          <button
+            onClick={() => navigate('/mon-espace/dashboard')}
+            className="w-9 h-9 rounded-xl overflow-hidden border border-white/30 shrink-0 cursor-pointer"
+          >
             {session.photoUrl ? (
               <img src={session.photoUrl} alt="" className="w-full h-full object-cover" />
             ) : (
@@ -862,7 +865,7 @@ const ExerciceSpirituelGroupe: React.FC = () => {
                 {session.firstName.charAt(0)}{session.lastName.charAt(0)}
               </div>
             )}
-          </div>
+          </button>
           <div>
             <h1 className="text-sm font-bold leading-tight">Mon groupe de discipolat</h1>
             <p className="text-indigo-200 text-xs">

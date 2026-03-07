@@ -416,7 +416,15 @@ const ExerciceSpirituelDashboard: React.FC = () => {
             <ArrowLeft size={18} />
           </button>
         ) : (
-          <div className="w-9 h-9 rounded-xl overflow-hidden border border-white/30 shrink-0">
+          <button
+            onClick={() => {
+              if (session.isDiscipleMaker) {
+                localStorage.removeItem('vinea_member_role_choice');
+                setRoleChoice(null);
+              }
+            }}
+            className="w-9 h-9 rounded-xl overflow-hidden border border-white/30 shrink-0 cursor-pointer"
+          >
             {session.photoUrl ? (
               <img src={session.photoUrl} alt="" className="w-full h-full object-cover" />
             ) : (
@@ -424,7 +432,7 @@ const ExerciceSpirituelDashboard: React.FC = () => {
                 {session.firstName.charAt(0)}{session.lastName.charAt(0)}
               </div>
             )}
-          </div>
+          </button>
         )}
         <div>
           <h1 className="text-sm font-bold leading-tight">

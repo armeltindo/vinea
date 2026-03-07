@@ -130,6 +130,7 @@ const Attendance: React.FC = () => {
     women: 0,
     children: 0,
     newCount: 0,
+    newVisitorNames: '',
     notes: '',
     absentMembers: [] as string[]
   });
@@ -448,6 +449,7 @@ const Attendance: React.FC = () => {
         women: 0,
         children: 0,
         newCount: 0,
+        newVisitorNames: '',
         notes: '',
         absentMembers: []
       });
@@ -463,6 +465,7 @@ const Attendance: React.FC = () => {
       women: record.women || 0,
       children: record.children || 0,
       newCount: record.newCount || 0,
+      newVisitorNames: record.newVisitorNames || '',
       notes: record.notes || '',
       absentMembers: record.absentMembers || []
     });
@@ -817,12 +820,30 @@ const Attendance: React.FC = () => {
                   <p className="text-2xl font-semibold text-indigo-700">{selectedRecord.total}</p>
                 </div>
                 {(selectedRecord.newCount ?? 0) > 0 && (
-                  <div className="col-span-2 bg-white p-6 rounded-xl border border-emerald-100 shadow-sm text-center bg-emerald-50/30">
+                  <div className="col-span-2 bg-emerald-50/30 p-6 rounded-xl border border-emerald-100 shadow-sm text-center">
                     <p className="text-xs font-semibold text-emerald-600 mb-1">Nouveaux</p>
                     <p className="text-2xl font-semibold text-emerald-700">+{selectedRecord.newCount}</p>
                   </div>
                 )}
               </div>
+
+              {(selectedRecord.newCount ?? 0) > 0 && selectedRecord.newVisitorNames?.trim() && (
+                <div className="space-y-3">
+                  <h4 className="text-xs font-medium text-slate-500 flex items-center gap-2">
+                    <UserCheck size={14} className="text-emerald-500" /> Nouveaux ({selectedRecord.newCount})
+                  </h4>
+                  <div className="grid grid-cols-1 gap-2">
+                    {selectedRecord.newVisitorNames.split('\n').filter((n: string) => n.trim()).map((name: string, i: number) => (
+                      <div key={i} className="flex items-center gap-3 p-3.5 bg-white border border-emerald-100 rounded-2xl">
+                        <div className="w-8 h-8 rounded-xl bg-emerald-100 flex items-center justify-center text-emerald-600 font-bold text-xs shrink-0">
+                          {name.trim().charAt(0).toUpperCase()}
+                        </div>
+                        <p className="text-xs font-semibold text-slate-800">{name.trim()}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {selectedRecord.notes && (
                 <div className="bg-white p-6 rounded-xl border border-slate-100 shadow-sm space-y-2">
@@ -1308,6 +1329,18 @@ const Attendance: React.FC = () => {
                               className="w-full px-4 py-3 bg-emerald-50 border border-emerald-200 rounded-xl text-sm font-semibold text-emerald-700 text-center [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                             />
                           </div>
+                          {(attendanceForm.newCount > 0) && (
+                            <div className="space-y-1.5">
+                              <label className="text-xs font-medium text-slate-500 ml-1">Noms des nouveaux (un par ligne)</label>
+                              <textarea
+                                rows={3}
+                                value={attendanceForm.newVisitorNames}
+                                onChange={e => setAttendanceForm({...attendanceForm, newVisitorNames: e.target.value})}
+                                placeholder="Jean Dupont&#10;Marie Martin..."
+                                className="w-full px-4 py-3 bg-emerald-50/50 border border-emerald-200 rounded-xl text-xs text-emerald-900 resize-none outline-none focus:border-emerald-400 transition-colors"
+                              />
+                            </div>
+                          )}
                        </div>
                        <div className="pt-3 border-t border-slate-50 flex justify-between items-center">
                           <span className="text-xs font-medium text-slate-500">Total calculé :</span>

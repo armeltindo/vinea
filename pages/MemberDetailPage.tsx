@@ -112,6 +112,7 @@ const MemberDetailPage: React.FC = () => {
         onDelete={handleDelete}
         onPreviewPhoto={(url) => setPreviewImageUrl(url)}
         onUpdateMember={(updated) => setMember(updated)}
+        onNavigateToMember={(id) => navigate(`/members/${id}`)}
       />
 
       {/* Modale de modification */}

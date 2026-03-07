@@ -112,10 +112,11 @@ interface MemberDetailsProps {
   onDelete: (memberId: string) => void;
   onPreviewPhoto?: (url: string) => void;
   onUpdateMember?: (updated: Member) => void;
+  onNavigateToMember?: (memberId: string) => void;
   asPage?: boolean;
 }
 
-const MemberDetails: React.FC<MemberDetailsProps> = ({ member, isOpen, onClose, onEdit, onDelete, onPreviewPhoto, onUpdateMember, asPage = false }) => {
+const MemberDetails: React.FC<MemberDetailsProps> = ({ member, isOpen, onClose, onEdit, onDelete, onPreviewPhoto, onUpdateMember, onNavigateToMember, asPage = false }) => {
   if (!member) return null;
 
   const [isCardModalOpen, setIsCardModalOpen] = useState(false);
@@ -493,7 +494,10 @@ const MemberDetails: React.FC<MemberDetailsProps> = ({ member, isOpen, onClose, 
                   </div>
                 )}
                 {member.motherName && (
-                  <div className="col-span-2 bg-pink-50/60 border border-pink-100/60 p-4 rounded-xl flex items-center gap-4">
+                  <div
+                    className={cn("col-span-2 bg-pink-50/60 border border-pink-100/60 p-4 rounded-xl flex items-center gap-4", motherMember && onNavigateToMember && "cursor-pointer hover:bg-pink-100/60 transition-colors")}
+                    onClick={motherMember && onNavigateToMember ? () => onNavigateToMember(motherMember.id) : undefined}
+                  >
                     {motherMember ? (
                       <Avatar firstName={motherMember.firstName} lastName={motherMember.lastName} photoUrl={motherMember.photoUrl} size="lg" shape="card" />
                     ) : (
@@ -501,13 +505,16 @@ const MemberDetails: React.FC<MemberDetailsProps> = ({ member, isOpen, onClose, 
                     )}
                     <div>
                       <p className="text-xs font-medium text-slate-400">Mère</p>
-                      <p className="text-sm font-semibold text-slate-800">{member.motherName}</p>
+                      <p className={cn("text-sm font-semibold text-slate-800", motherMember && onNavigateToMember && "text-pink-700")}>{member.motherName}</p>
                       {motherMember && <p className="text-xs text-slate-400">{motherMember.status} · {motherMember.type}</p>}
                     </div>
                   </div>
                 )}
                 {member.fatherName && (
-                  <div className="col-span-2 bg-blue-50/60 border border-blue-100/60 p-4 rounded-xl flex items-center gap-4">
+                  <div
+                    className={cn("col-span-2 bg-blue-50/60 border border-blue-100/60 p-4 rounded-xl flex items-center gap-4", fatherMember && onNavigateToMember && "cursor-pointer hover:bg-blue-100/60 transition-colors")}
+                    onClick={fatherMember && onNavigateToMember ? () => onNavigateToMember(fatherMember.id) : undefined}
+                  >
                     {fatherMember ? (
                       <Avatar firstName={fatherMember.firstName} lastName={fatherMember.lastName} photoUrl={fatherMember.photoUrl} size="lg" shape="card" />
                     ) : (
@@ -515,7 +522,7 @@ const MemberDetails: React.FC<MemberDetailsProps> = ({ member, isOpen, onClose, 
                     )}
                     <div>
                       <p className="text-xs font-medium text-slate-400">Père</p>
-                      <p className="text-sm font-semibold text-slate-800">{member.fatherName}</p>
+                      <p className={cn("text-sm font-semibold text-slate-800", fatherMember && onNavigateToMember && "text-blue-700")}>{member.fatherName}</p>
                       {fatherMember && <p className="text-xs text-slate-400">{fatherMember.status} · {fatherMember.type}</p>}
                     </div>
                   </div>
@@ -622,7 +629,10 @@ const MemberDetails: React.FC<MemberDetailsProps> = ({ member, isOpen, onClose, 
                   <BookOpen size={14} className="text-indigo-600" />
                   <h4 className="text-xs font-semibold text-slate-600">Disciple-maker assigné</h4>
                 </div>
-                <div className="p-6 flex items-center gap-5">
+                <div
+                  className={cn("p-6 flex items-center gap-5", onNavigateToMember && "cursor-pointer hover:bg-indigo-50/40 transition-colors")}
+                  onClick={onNavigateToMember ? () => onNavigateToMember(mentorMember.id) : undefined}
+                >
                   <Avatar firstName={mentorMember.firstName} lastName={mentorMember.lastName} photoUrl={mentorMember.photoUrl} size="lg" shape="card" />
                   <div className="flex-1 min-w-0">
                     <p className="text-xs font-semibold text-indigo-500 uppercase tracking-wide">Mentor</p>
@@ -1006,7 +1016,10 @@ const MemberDetails: React.FC<MemberDetailsProps> = ({ member, isOpen, onClose, 
               {(member.motherName || member.fatherName) && (
                 <>
                   {member.motherName && (
-                    <div className="col-span-2 bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-4">
+                    <div
+                      className={cn("col-span-2 bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-4", motherMember && onNavigateToMember && "cursor-pointer hover:bg-pink-50/60 hover:border-pink-100 transition-colors")}
+                      onClick={motherMember && onNavigateToMember ? () => onNavigateToMember(motherMember.id) : undefined}
+                    >
                       {motherMember ? (
                         <Avatar
                           firstName={motherMember.firstName}
@@ -1022,13 +1035,16 @@ const MemberDetails: React.FC<MemberDetailsProps> = ({ member, isOpen, onClose, 
                       )}
                       <div className="flex-1">
                         <p className="text-xs font-medium text-slate-500">Mère</p>
-                        <p className="text-xs font-medium text-slate-800">{member.motherName}</p>
+                        <p className={cn("text-xs font-medium text-slate-800", motherMember && onNavigateToMember && "text-pink-700")}>{member.motherName}</p>
                         {motherMember && <p className="text-xs text-slate-400 mt-0.5">{motherMember.status} · {motherMember.type}</p>}
                       </div>
                     </div>
                   )}
                   {member.fatherName && (
-                    <div className="col-span-2 bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-4">
+                    <div
+                      className={cn("col-span-2 bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-4", fatherMember && onNavigateToMember && "cursor-pointer hover:bg-blue-50/60 hover:border-blue-100 transition-colors")}
+                      onClick={fatherMember && onNavigateToMember ? () => onNavigateToMember(fatherMember.id) : undefined}
+                    >
                       {fatherMember ? (
                         <Avatar
                           firstName={fatherMember.firstName}
@@ -1044,7 +1060,7 @@ const MemberDetails: React.FC<MemberDetailsProps> = ({ member, isOpen, onClose, 
                       )}
                       <div className="flex-1">
                         <p className="text-xs font-medium text-slate-500">Père</p>
-                        <p className="text-xs font-medium text-slate-800">{member.fatherName}</p>
+                        <p className={cn("text-xs font-medium text-slate-800", fatherMember && onNavigateToMember && "text-blue-700")}>{member.fatherName}</p>
                         {fatherMember && <p className="text-xs text-slate-400 mt-0.5">{fatherMember.status} · {fatherMember.type}</p>}
                       </div>
                     </div>
@@ -1191,7 +1207,10 @@ const MemberDetails: React.FC<MemberDetailsProps> = ({ member, isOpen, onClose, 
               <h4 className="text-xs font-medium text-slate-500 flex items-center gap-2">
                 <BookOpen size={14} className="text-indigo-600" /> Disciple-maker assigné
               </h4>
-              <div className="bg-indigo-50/60 border border-indigo-100 p-5 rounded-xl flex items-center gap-5">
+              <div
+                className={cn("bg-indigo-50/60 border border-indigo-100 p-5 rounded-xl flex items-center gap-5", onNavigateToMember && "cursor-pointer hover:bg-indigo-100/60 transition-colors")}
+                onClick={onNavigateToMember ? () => onNavigateToMember(mentorMember.id) : undefined}
+              >
                 <Avatar
                   firstName={mentorMember.firstName}
                   lastName={mentorMember.lastName}

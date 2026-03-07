@@ -1,33 +1,57 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Loader2, AlertTriangle, Trash2 } from 'lucide-react';
 import MemberDetails from '../components/MemberDetails';
-import { getMembers, deleteMember } from '../lib/db';
-import { Member } from '../types';
+import MemberEditModal from '../components/MemberEditModal';
+import { getMembers, deleteMember, getAppConfig } from '../lib/db';
+import { Member, MemberStatus, MemberType } from '../types';
+import { DEPARTMENTS as CONST_DEPARTMENTS } from '../constants';
 import { formatFirstName } from '../utils';
 
 const MemberDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const location = useLocation();
 
   const [member, setMember] = useState<Member | null>(null);
+  const [allMembers, setAllMembers] = useState<Member[]>([]);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
+  const [isEditOpen, setIsEditOpen] = useState(false);
   const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
 
+  const [availableRoles, setAvailableRoles] = useState<string[]>(Object.values(MemberType));
+  const [availableStatuses, setAvailableStatuses] = useState<string[]>(Object.values(MemberStatus));
+  const [availableDepartments, setAvailableDepartments] = useState<string[]>(CONST_DEPARTMENTS);
+
   useEffect(() => {
-    getMembers().then(members => {
+    const load = async () => {
+      const [members, depts, memberStatuses, memberRoles] = await Promise.all([
+        getMembers(),
+        getAppConfig('departments'),
+        getAppConfig('member_statuses'),
+        getAppConfig('member_roles'),
+      ]);
+      if (depts && Array.isArray(depts)) setAvailableDepartments(depts);
+      if (memberStatuses && Array.isArray(memberStatuses) && memberStatuses.length > 0) setAvailableStatuses(memberStatuses);
+      if (memberRoles && Array.isArray(memberRoles) && memberRoles.length > 0) setAvailableRoles(memberRoles);
+      setAllMembers(members);
       const found = members.find(m => m.id === id) ?? null;
       setMember(found);
       setNotFound(!found);
       setLoading(false);
-    });
+    };
+    load();
   }, [id]);
 
-  const handleEdit = (m: Member) => {
-    navigate('/members', { state: { editId: m.id } });
+  const handleEdit = (_m: Member) => {
+    setIsEditOpen(true);
+  };
+
+  const handleEditSave = (updated: Member) => {
+    setMember(updated);
+    setAllMembers(prev => prev.map(m => m.id === updated.id ? updated : m));
+    setIsEditOpen(false);
   };
 
   const handleDelete = () => {
@@ -89,6 +113,19 @@ const MemberDetailPage: React.FC = () => {
         onPreviewPhoto={(url) => setPreviewImageUrl(url)}
         onUpdateMember={(updated) => setMember(updated)}
       />
+
+      {/* Modale de modification */}
+      {isEditOpen && (
+        <MemberEditModal
+          member={member}
+          allMembers={allMembers}
+          availableRoles={availableRoles}
+          availableStatuses={availableStatuses}
+          availableDepartments={availableDepartments}
+          onSave={handleEditSave}
+          onClose={() => setIsEditOpen(false)}
+        />
+      )}
 
       {/* Confirmation suppression */}
       {isDeleteConfirmOpen && (

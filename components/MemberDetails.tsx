@@ -496,7 +496,10 @@ const MemberDetails: React.FC<MemberDetailsProps> = ({ member, isOpen, onClose, 
                   </div>
                 )}
                 {(member.maritalStatus.includes('Marié') || member.spouseName || member.weddingDate) && (
-                  <div className="col-span-2 bg-rose-50/60 border border-rose-100/60 p-4 rounded-xl flex items-center gap-4">
+                  <div
+                    className={cn("col-span-2 bg-rose-50/60 border border-rose-100/60 p-4 rounded-xl flex items-center gap-4", spouseMember && onNavigateToMember && "cursor-pointer hover:bg-rose-100/60 transition-colors")}
+                    onClick={spouseMember && onNavigateToMember ? () => onNavigateToMember(spouseMember.id) : undefined}
+                  >
                     {spouseMember ? (
                       <Avatar firstName={spouseMember.firstName} lastName={spouseMember.lastName} photoUrl={spouseMember.photoUrl} size="lg" shape="card" />
                     ) : (
@@ -504,7 +507,7 @@ const MemberDetails: React.FC<MemberDetailsProps> = ({ member, isOpen, onClose, 
                     )}
                     <div>
                       <p className="text-xs font-medium text-slate-400">Conjoint(e)</p>
-                      <p className="text-sm font-semibold text-slate-800">{member.spouseName || 'Non spécifié'}</p>
+                      <p className={cn("text-sm font-semibold text-slate-800", spouseMember && onNavigateToMember && "text-rose-700")}>{member.spouseName || 'Non spécifié'}</p>
                       {member.weddingDate && <p className="text-xs text-slate-400">Mariés le {new Date(member.weddingDate).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}</p>}
                     </div>
                   </div>
@@ -555,10 +558,14 @@ const MemberDetails: React.FC<MemberDetailsProps> = ({ member, isOpen, onClose, 
                 </div>
                 <div className="p-6 space-y-3">
                   {children.map(child => (
-                    <div key={child.id} className="flex items-center gap-4 p-3 bg-slate-50 rounded-xl">
+                    <div
+                      key={child.id}
+                      className={cn("flex items-center gap-4 p-3 bg-slate-50 rounded-xl", onNavigateToMember && "cursor-pointer hover:bg-purple-50/60 transition-colors")}
+                      onClick={onNavigateToMember ? () => onNavigateToMember(child.id) : undefined}
+                    >
                       <Avatar firstName={child.firstName} lastName={child.lastName} photoUrl={child.photoUrl} size="lg" shape="card" />
                       <div className="flex-1">
-                        <p className="text-xs font-semibold text-slate-800">{formatFirstName(child.firstName)} {child.lastName.toUpperCase()}</p>
+                        <p className={cn("text-xs font-semibold text-slate-800", onNavigateToMember && "text-purple-700")}>{formatFirstName(child.firstName)} {child.lastName.toUpperCase()}</p>
                         <p className="text-xs text-slate-400">{child.status} · {child.type}</p>
                       </div>
                     </div>
@@ -1002,7 +1009,10 @@ const MemberDetails: React.FC<MemberDetailsProps> = ({ member, isOpen, onClose, 
                 </div>
               )}
               {(member.maritalStatus.includes('Marié') || member.spouseName || member.weddingDate) && (
-                <div className="col-span-2 bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-4">
+                <div
+                  className={cn("col-span-2 bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-4", spouseMember && onNavigateToMember && "cursor-pointer hover:bg-rose-50/60 hover:border-rose-100 transition-colors")}
+                  onClick={spouseMember && onNavigateToMember ? () => onNavigateToMember(spouseMember.id) : undefined}
+                >
                   {spouseMember ? (
                     <Avatar
                       firstName={spouseMember.firstName}
@@ -1018,7 +1028,7 @@ const MemberDetails: React.FC<MemberDetailsProps> = ({ member, isOpen, onClose, 
                   )}
                   <div className="flex-1">
                     <p className="text-xs font-medium text-slate-500">Conjoint(e)</p>
-                    <p className="text-xs font-medium text-slate-800">{member.spouseName || 'Non spécifié'}</p>
+                    <p className={cn("text-xs font-medium text-slate-800", spouseMember && onNavigateToMember && "text-rose-700")}>{member.spouseName || 'Non spécifié'}</p>
                     {member.weddingDate && (
                       <p className="text-xs text-slate-400 mt-0.5">
                         Mariés le {new Date(member.weddingDate).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
@@ -1094,7 +1104,11 @@ const MemberDetails: React.FC<MemberDetailsProps> = ({ member, isOpen, onClose, 
               </h4>
               <div className="grid grid-cols-1 gap-3">
                 {children.map(child => (
-                  <div key={child.id} className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-4">
+                  <div
+                    key={child.id}
+                    className={cn("bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-4", onNavigateToMember && "cursor-pointer hover:bg-purple-50/60 hover:border-purple-100 transition-colors")}
+                    onClick={onNavigateToMember ? () => onNavigateToMember(child.id) : undefined}
+                  >
                     <Avatar
                       firstName={child.firstName}
                       lastName={child.lastName}
@@ -1103,7 +1117,7 @@ const MemberDetails: React.FC<MemberDetailsProps> = ({ member, isOpen, onClose, 
                       shape="card"
                     />
                     <div className="flex-1">
-                      <p className="text-xs font-medium text-slate-800">
+                      <p className={cn("text-xs font-medium text-slate-800", onNavigateToMember && "text-purple-700")}>
                         {formatFirstName(child.firstName)} {child.lastName.toUpperCase()}
                       </p>
                       <p className="text-xs text-slate-400 mt-0.5">{child.status} · {child.type}</p>

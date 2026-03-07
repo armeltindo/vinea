@@ -785,7 +785,7 @@ const Settings: React.FC = () => {
       .upload(fileName, blob, { upsert: true, contentType: 'image/webp' });
     if (error) throw new Error(error.message);
     const { data } = supabase.storage.from('avatars').getPublicUrl(fileName);
-    return data.publicUrl;
+    return `${data.publicUrl}?t=${Date.now()}`;
   };
 
   const handleExportFullData = async () => {

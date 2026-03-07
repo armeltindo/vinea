@@ -85,7 +85,7 @@ const uploadMemberPhoto = async (file: File, memberId: string): Promise<string> 
     .upload(fileName, blob, { upsert: true, contentType: 'image/webp' });
   if (uploadError) throw new Error(uploadError.message);
   const { data } = supabase.storage.from('members').getPublicUrl(fileName);
-  return data.publicUrl;
+  return `${data.publicUrl}?t=${Date.now()}`;
 };
 
 // ── Component ──────────────────────────────────────────────────────────────

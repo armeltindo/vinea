@@ -920,22 +920,29 @@ const ExerciceSpirituelDashboard: React.FC = () => {
         </div>
 
         {/* ── Mes Activités Programmées ── */}
-        {assignedServices.length > 0 && (
-          <div className="space-y-3">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-xl bg-amber-100 flex items-center justify-center">
-                <Church size={15} className="text-amber-600" />
-              </div>
-              <div>
-                <h2 className="text-sm font-bold text-slate-800">Mes activités programmées</h2>
-                <p className="text-xs text-slate-400">{assignedServices.length} culte(s) avec une affectation</p>
-              </div>
-              {assignmentNotifs.filter(n => !n.isRead).length > 0 && (
-                <span className="ml-auto px-2 py-0.5 bg-amber-500 text-white text-xs font-bold rounded-full">
-                  {assignmentNotifs.filter(n => !n.isRead).length} nouveau(x)
-                </span>
-              )}
+        <div className="space-y-3">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-xl bg-amber-100 flex items-center justify-center">
+              <Church size={15} className="text-amber-600" />
             </div>
+            <div>
+              <h2 className="text-sm font-bold text-slate-800">Mes activités programmées</h2>
+              <p className="text-xs text-slate-400">
+                {assignedServices.length > 0 ? `${assignedServices.length} culte(s) avec une affectation` : 'Aucune affectation pour le moment'}
+              </p>
+            </div>
+            {assignmentNotifs.filter(n => !n.isRead).length > 0 && (
+              <span className="ml-auto px-2 py-0.5 bg-amber-500 text-white text-xs font-bold rounded-full">
+                {assignmentNotifs.filter(n => !n.isRead).length} nouveau(x)
+              </span>
+            )}
+          </div>
+          {assignedServices.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-6 px-4 bg-amber-50 border border-amber-100 rounded-2xl text-center">
+              <Church size={28} className="text-amber-300 mb-2" />
+              <p className="text-xs text-slate-500">Vous n'avez pas encore d'affectation à un culte ou une activité.</p>
+            </div>
+          ) : (
             <div className="space-y-2">
               {assignedServices
                 .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
@@ -978,8 +985,8 @@ const ExerciceSpirituelDashboard: React.FC = () => {
                   );
                 })}
             </div>
-          </div>
-        )}
+          )}
+        </div>
 
         {/* ── Notification d'affectation (nouvelles) ── */}
         {showNotifs && assignmentNotifs.filter(n => !n.isRead).length > 0 && (

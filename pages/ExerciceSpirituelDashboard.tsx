@@ -83,7 +83,7 @@ const calculateScore = (results: Record<string, boolean>) => {
   return score;
 };
 
-type ActiveView = null | 'exercices' | 'bilan' | 'objectifs' | 'activites';
+type ActiveView = null | 'exercices' | 'bilan' | 'objectifs';
 type HistoryTab = 'exercices' | 'bilans';
 
 // ─── Page principale ─────────────────────────────────────────
@@ -383,7 +383,7 @@ const ExerciceSpirituelDashboard: React.FC = () => {
               Mon groupe de discipolat
             </button>
             <button
-              onClick={() => { localStorage.setItem('vinea_member_role_choice', 'member'); setRoleChoice('member'); setActiveView('activites'); }}
+              onClick={() => navigate('/mon-espace/activites')}
               className="w-full py-4 bg-amber-500/30 text-white border border-amber-400/30 rounded-2xl text-sm font-bold hover:bg-amber-500/50 transition-all flex items-center justify-center gap-2"
             >
               <UserCheck size={18} />
@@ -844,93 +844,6 @@ const ExerciceSpirituelDashboard: React.FC = () => {
             </button>
           </div>
         )}
-      </div>
-    );
-  }
-
-  // ════════════════════════════════════════════════════════════
-  // ── VUE : Mes activités programmées ──────────────────────
-  // ════════════════════════════════════════════════════════════
-  if (activeView === 'activites') {
-    const upcoming = assignedServices.filter(s => new Date(s.date) >= new Date()).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-    const past = assignedServices.filter(s => new Date(s.date) < new Date()).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-    return (
-      <div className="min-h-screen bg-slate-50 flex flex-col">
-        {header}
-        <div className="max-w-2xl mx-auto w-full px-4 py-6 space-y-6 flex-1">
-          {assignedServices.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-16 text-center">
-              <div className="w-20 h-20 rounded-3xl bg-amber-100 flex items-center justify-center mb-4">
-                <Church size={36} className="text-amber-400" />
-              </div>
-              <p className="text-sm font-semibold text-slate-600 mb-1">Aucune activité programmée</p>
-              <p className="text-xs text-slate-400">Vous n'êtes pas encore affecté(e) à un culte ou une activité.</p>
-            </div>
-          ) : (
-            <>
-              {upcoming.length > 0 && (
-                <div className="space-y-3">
-                  <div className="flex items-center gap-2">
-                    <span className="px-2.5 py-1 bg-amber-500 text-white text-xs font-bold rounded-lg">À venir</span>
-                    <span className="text-xs text-slate-400">{upcoming.length} activité(s)</span>
-                  </div>
-                  <div className="space-y-2">
-                    {upcoming.map(service => {
-                      const role = session ? getMemberRoleInService(session.memberId, service.servicePersonnel) : null;
-                      return (
-                        <div key={service.id} className="flex items-start gap-3 px-4 py-4 bg-amber-50 border border-amber-200 rounded-2xl">
-                          <div className="w-10 h-10 rounded-xl bg-amber-500 flex items-center justify-center shrink-0">
-                            <UserCheck size={17} className="text-white" />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-bold text-slate-800">{service.serviceType}</p>
-                            <p className="text-xs text-slate-500 mt-0.5">
-                              {new Date(service.date).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
-                              {service.time ? ` · ${service.time}` : ''}
-                            </p>
-                            {service.theme && <p className="text-xs text-slate-600 mt-1 italic truncate">{service.theme}</p>}
-                            {role && (
-                              <span className="inline-block mt-1.5 px-2.5 py-1 bg-amber-200 text-amber-800 text-xs font-semibold rounded-lg">
-                                {role}
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-              {past.length > 0 && (
-                <div className="space-y-3">
-                  <div className="flex items-center gap-2">
-                    <span className="px-2.5 py-1 bg-slate-200 text-slate-600 text-xs font-bold rounded-lg">Passées</span>
-                    <span className="text-xs text-slate-400">{past.length} activité(s)</span>
-                  </div>
-                  <div className="space-y-2">
-                    {past.map(service => {
-                      const role = session ? getMemberRoleInService(session.memberId, service.servicePersonnel) : null;
-                      return (
-                        <div key={service.id} className="flex items-start gap-3 px-4 py-3 bg-slate-50 border border-slate-100 rounded-2xl">
-                          <div className="w-9 h-9 rounded-xl bg-slate-200 flex items-center justify-center shrink-0">
-                            <UserCheck size={15} className="text-slate-500" />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-xs font-bold text-slate-700">{service.serviceType}</p>
-                            <p className="text-xs text-slate-400 mt-0.5">
-                              {new Date(service.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
-                            </p>
-                            {role && <p className="text-xs text-slate-400 mt-0.5">{role}</p>}
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-            </>
-          )}
-        </div>
       </div>
     );
   }

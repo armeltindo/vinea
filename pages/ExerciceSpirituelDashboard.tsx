@@ -1,15 +1,27 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Calendar, Save, LogOut, CheckCircle2, AlertCircle, Loader2, Bell, Users, Trash2, ClipboardCheck } from 'lucide-react';
+import {
+  Calendar, Save, LogOut, CheckCircle2, AlertCircle, Loader2, Bell, Users,
+  Trash2, ClipboardCheck, Target, Flame, CheckCircle, Lock, ArrowLeft,
+  Plus, ChevronRight
+} from 'lucide-react';
 import {
   getSpiritualExerciseTypes,
   getDailyExerciseByDate,
   getDailyExercises,
   upsertDailyExercise,
   deleteDailyExercise,
+  getSpiritualGoals,
+  upsertSpiritualGoals,
+  getSpiritualPoints,
+  upsertSpiritualPoints,
 } from '../lib/db';
-import { SpiritualExerciseType, DailyExercise, MemberSession } from '../types';
-import { cn } from '../utils';
+import {
+  SpiritualExerciseType, DailyExercise, MemberSession,
+  YearlySpiritualGoals, MonthlySpiritualPoint, SpiritualObjective
+} from '../types';
+import { SPIRITUAL_EXERCISES_LIST } from '../constants';
+import { cn, generateId } from '../utils';
 
 // ─── Helpers ────────────────────────────────────────────────
 
@@ -38,11 +50,26 @@ const formatDateLong = (dateStr: string): string => {
   return `${parseInt(d)} ${months[parseInt(m) - 1]} ${y}`;
 };
 
+const MONTHS = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
+
+const calculateScore = (results: Record<string, boolean>) => {
+  const normalKeys = Object.keys(results).filter(k => k !== 'retraites_nb' && k !== 'retraites_hr');
+  let score = normalKeys.filter(k => results[k] === true).length;
+  if (results['retraites_nb'] === true || results['retraites_hr'] === true) score += 1;
+  return score;
+};
+
+type ActiveView = null | 'exercices' | 'bilan' | 'objectifs';
+type HistoryTab = 'exercices' | 'bilans';
+
 // ─── Page principale ─────────────────────────────────────────
 
 const ExerciceSpirituelDashboard: React.FC = () => {
   const navigate = useNavigate();
   const [session, setSession] = useState<MemberSession | null>(null);
+  const [roleChoice, setRoleChoice] = useState<'member' | 'dm' | null>(null);
+
+  // ── Daily exercises state ──
   const [exerciseTypes, setExerciseTypes] = useState<SpiritualExerciseType[]>([]);
   const [selectedDate, setSelectedDate] = useState(yesterday());
   const [formValues, setFormValues] = useState<Record<string, string | boolean>>({});
@@ -54,61 +81,96 @@ const ExerciceSpirituelDashboard: React.FC = () => {
   const [loadingForm, setLoadingForm] = useState(false);
   const [notifications, setNotifications] = useState<string[]>([]);
   const [showNotifs, setShowNotifs] = useState(false);
-  const [roleChoice, setRoleChoice] = useState<'member' | 'dm' | null>(null);
 
-  // ── Vérifier session ────────────────────────────────────────
+  // ── Goals & bilan state ──
+  const [objectives, setObjectives] = useState<SpiritualObjective[]>([]);
+  const [currentGoals, setCurrentGoals] = useState<YearlySpiritualGoals | null>(null);
+  const [savingGoals, setSavingGoals] = useState(false);
+  const [goalsSaved, setGoalsSaved] = useState(false);
+  const [monthlyPoints, setMonthlyPoints] = useState<MonthlySpiritualPoint[]>([]);
+  const [selectedMonth, setSelectedMonth] = useState(() => {
+    const m = new Date().getMonth() - 1;
+    return m < 0 ? 11 : m;
+  });
+  const [selectedYear, setSelectedYear] = useState(() =>
+    new Date().getMonth() === 0 ? new Date().getFullYear() - 1 : new Date().getFullYear()
+  );
+  const [results, setResults] = useState<Record<string, boolean>>({});
+  const [savingBilan, setSavingBilan] = useState(false);
+  const [bilanSaved, setBilanSaved] = useState(false);
+  const [loadingGoals, setLoadingGoals] = useState(true);
+
+  // ── UI state ──
+  const [activeView, setActiveView] = useState<ActiveView>(null);
+  const [historyTab, setHistoryTab] = useState<HistoryTab>('exercices');
+
+  const currentYear = new Date().getFullYear();
+  const currentMonth = new Date().getMonth();
+
+  // ── Session ──────────────────────────────────────────────
   useEffect(() => {
     const raw = localStorage.getItem('vinea_member_session');
     if (!raw) { navigate('/mon-espace'); return; }
     try {
       const s: MemberSession = JSON.parse(raw);
       setSession(s);
-      // Les faiseurs de disciples voient toujours l'écran de choix au démarrage
-      if (s.isDiscipleMaker) {
-        setRoleChoice(null);
-      } else {
-        setRoleChoice('member');
-      }
+      setRoleChoice(s.isDiscipleMaker ? null : 'member');
     } catch {
       navigate('/mon-espace');
     }
   }, [navigate]);
 
-  // ── Charger les types d'exercices ───────────────────────────
+  // ── Load exercise types ───────────────────────────────────
   useEffect(() => {
     getSpiritualExerciseTypes().then(types =>
       setExerciseTypes(types.filter(t => t.active))
     );
   }, []);
 
-  // ── Charger tout l'historique du membre ─────────────────────
+  // ── Load all daily exercises ──────────────────────────────
   const loadAllExercises = useCallback(async (memberId: string) => {
     const all = await getDailyExercises(memberId);
     setAllExercises(all);
     setSubmittedDates(new Set(all.map(e => e.date)));
-
-    // Construire notifications pour jours manquants (7 derniers jours)
-    const today = toLocalDate(new Date());
     const missing: string[] = [];
     for (let i = 1; i <= 7; i++) {
       const d = new Date();
       d.setDate(d.getDate() - i);
       const ds = toLocalDate(d);
-      if (!all.some(e => e.date === ds)) {
-        missing.push(formatDate(ds));
-      }
+      if (!all.some(e => e.date === ds)) missing.push(formatDate(ds));
     }
-    if (missing.length > 0) {
-      setNotifications(missing);
-      setShowNotifs(true);
-    }
+    if (missing.length > 0) { setNotifications(missing); setShowNotifs(true); }
   }, []);
 
   useEffect(() => {
     if (session) loadAllExercises(session.memberId);
   }, [session, loadAllExercises]);
 
-  // ── Charger les données du jour sélectionné ─────────────────
+  // ── Load goals & bilan ────────────────────────────────────
+  useEffect(() => {
+    if (!session) return;
+    setLoadingGoals(true);
+    Promise.all([
+      getSpiritualGoals(session.memberId),
+      getSpiritualPoints(session.memberId),
+    ]).then(([goals, points]) => {
+      const yearGoal = (goals as YearlySpiritualGoals[]).find(g => g.year === currentYear) ?? null;
+      setCurrentGoals(yearGoal);
+      setObjectives(
+        yearGoal?.objectives ??
+        SPIRITUAL_EXERCISES_LIST.map(ex => ({
+          exerciseId: ex.id,
+          targetValue: ex.valueType === 'boolean' ? false : (ex.valueType === 'select' ? (ex.options?.[0] ?? '') : 0),
+          isEnabled: false,
+          notes: '',
+        }))
+      );
+      setMonthlyPoints(points as MonthlySpiritualPoint[]);
+      setLoadingGoals(false);
+    });
+  }, [session, currentYear]);
+
+  // ── Load selected date form ───────────────────────────────
   useEffect(() => {
     if (!session) return;
     setLoadingForm(true);
@@ -117,14 +179,9 @@ const ExerciceSpirituelDashboard: React.FC = () => {
         const vals: Record<string, string | boolean> = {};
         const details: Record<string, string> = {};
         exercise.entries.forEach(entry => {
-          if (entry.valueBool !== undefined && entry.valueBool !== null) {
-            vals[entry.typeId] = entry.valueBool;
-          } else if (entry.valueText !== undefined) {
-            vals[entry.typeId] = entry.valueText ?? '';
-          }
-          if (entry.detailText) {
-            details[entry.typeId] = entry.detailText;
-          }
+          if (entry.valueBool !== undefined && entry.valueBool !== null) vals[entry.typeId] = entry.valueBool;
+          else if (entry.valueText !== undefined) vals[entry.typeId] = entry.valueText ?? '';
+          if (entry.detailText) details[entry.typeId] = entry.detailText;
         });
         setFormValues(vals);
         setDetailValues(details);
@@ -136,21 +193,49 @@ const ExerciceSpirituelDashboard: React.FC = () => {
     });
   }, [session, selectedDate]);
 
-  const handleSave = async () => {
+  // ── Sync bilan results when month/year changes ─────────────
+  useEffect(() => {
+    const existing = monthlyPoints.find(p => p.month === selectedMonth && p.year === selectedYear);
+    if (existing) {
+      setResults({ ...existing.results });
+    } else {
+      const init: Record<string, boolean> = {};
+      (currentGoals?.objectives ?? []).filter(o => o.isEnabled).forEach(o => { init[o.exerciseId] = false; });
+      setResults(init);
+    }
+  }, [selectedMonth, selectedYear, monthlyPoints, currentGoals]);
+
+  const enabledObjectives = useMemo(() => objectives.filter(o => o.isEnabled), [objectives]);
+
+  const isFutureMonth = useMemo(() => {
+    if (selectedYear > currentYear) return true;
+    if (selectedYear === currentYear && selectedMonth > currentMonth) return true;
+    return false;
+  }, [selectedMonth, selectedYear, currentYear, currentMonth]);
+
+  const isDeadlinePassed = useMemo(() => {
+    const deadline = new Date(selectedYear + 1, 0, 15, 23, 59, 59);
+    return new Date() > deadline;
+  }, [selectedYear]);
+
+  const currentScore = useMemo(() => calculateScore(results), [results]);
+
+  const existingBilan = useMemo(
+    () => monthlyPoints.find(p => p.month === selectedMonth && p.year === selectedYear),
+    [monthlyPoints, selectedMonth, selectedYear]
+  );
+
+  // ── Handlers ──────────────────────────────────────────────
+  const handleSaveExercise = async () => {
     if (!session) return;
     setSaving(true);
     setSaveSuccess(false);
-
     const entries = exerciseTypes.map(type => {
       const val = formValues[type.id];
       const detail = detailValues[type.id];
-      if (type.fieldType === 'boolean') {
-        return { typeId: type.id, valueBool: val === true, detailText: detail || undefined };
-      } else {
-        return { typeId: type.id, valueText: String(val ?? ''), detailText: detail || undefined };
-      }
+      if (type.fieldType === 'boolean') return { typeId: type.id, valueBool: val === true, detailText: detail || undefined };
+      return { typeId: type.id, valueText: String(val ?? ''), detailText: detail || undefined };
     });
-
     await upsertDailyExercise(session.memberId, selectedDate, entries);
     setSaving(false);
     setSaveSuccess(true);
@@ -165,23 +250,55 @@ const ExerciceSpirituelDashboard: React.FC = () => {
     if (selectedDate === date) { setFormValues({}); setDetailValues({}); }
   };
 
+  const handleSaveGoals = async () => {
+    if (!session) return;
+    setSavingGoals(true);
+    const newGoals: YearlySpiritualGoals = {
+      id: currentGoals?.id || generateId(),
+      memberId: session.memberId,
+      year: currentYear,
+      objectives,
+      createdAt: currentGoals?.createdAt || new Date().toISOString(),
+    };
+    await upsertSpiritualGoals(newGoals);
+    setCurrentGoals(newGoals);
+    setSavingGoals(false);
+    setGoalsSaved(true);
+    setTimeout(() => setGoalsSaved(false), 2500);
+  };
+
+  const handleSaveBilan = async () => {
+    if (!session || isFutureMonth || isDeadlinePassed || enabledObjectives.length === 0) return;
+    setSavingBilan(true);
+    const score = calculateScore(results);
+    const newPoint: MonthlySpiritualPoint = {
+      id: existingBilan?.id || generateId(),
+      memberId: session.memberId,
+      month: selectedMonth,
+      year: selectedYear,
+      results,
+      score,
+      createdAt: existingBilan?.createdAt || new Date().toISOString(),
+    };
+    await upsertSpiritualPoints(newPoint);
+    setMonthlyPoints(prev => {
+      const filtered = prev.filter(p => !(p.month === selectedMonth && p.year === selectedYear));
+      return [newPoint, ...filtered];
+    });
+    setSavingBilan(false);
+    setBilanSaved(true);
+    setTimeout(() => setBilanSaved(false), 2500);
+  };
+
   const handleLogout = () => {
     localStorage.removeItem('vinea_member_session');
     localStorage.removeItem('vinea_member_role_choice');
     navigate('/mon-espace');
   };
 
-  const handleRoleChoice = (role: 'member' | 'dm') => {
-    if (role === 'dm') {
-      navigate('/mon-espace/groupe');
-    } else {
-      setRoleChoice('member');
-    }
-  };
-
   if (!session) return null;
 
-  // ── Écran de choix de rôle ───────────────────────────────────
+  // ── Écran de choix de rôle (DM uniquement) ───────────────
   if (session.isDiscipleMaker && roleChoice === null) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-indigo-800 to-violet-900 flex items-center justify-center p-4">
@@ -190,7 +307,6 @@ const ExerciceSpirituelDashboard: React.FC = () => {
           <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-violet-500/10 rounded-full blur-3xl" />
         </div>
         <div className="relative bg-white/10 backdrop-blur-md border border-white/20 rounded-3xl p-8 shadow-2xl w-full max-w-sm text-center">
-          {/* Avatar / Photo */}
           <div className="w-20 h-20 rounded-2xl overflow-hidden mx-auto mb-4 border-2 border-white/30 shadow-xl">
             {session.photoUrl ? (
               <img src={session.photoUrl} alt="" className="w-full h-full object-cover" />
@@ -208,21 +324,14 @@ const ExerciceSpirituelDashboard: React.FC = () => {
           <p className="text-indigo-200 text-sm mb-8">Que souhaitez-vous faire ?</p>
           <div className="space-y-3">
             <button
-              onClick={() => handleRoleChoice('member')}
+              onClick={() => setRoleChoice('member')}
               className="w-full py-4 bg-white text-indigo-700 rounded-2xl text-sm font-bold hover:bg-indigo-50 transition-all shadow-lg flex items-center justify-center gap-2"
             >
               <Calendar size={18} />
-              Mes exercices spirituels
+              Mon espace spirituel
             </button>
             <button
-              onClick={() => navigate('/mon-espace/bilan')}
-              className="w-full py-4 bg-indigo-500/40 text-white border border-white/20 rounded-2xl text-sm font-bold hover:bg-indigo-500/60 transition-all flex items-center justify-center gap-2"
-            >
-              <ClipboardCheck size={18} />
-              Objectifs & Bilan mensuel
-            </button>
-            <button
-              onClick={() => handleRoleChoice('dm')}
+              onClick={() => navigate('/mon-espace/groupe')}
               className="w-full py-4 bg-indigo-500/40 text-white border border-white/20 rounded-2xl text-sm font-bold hover:bg-indigo-500/60 transition-all flex items-center justify-center gap-2"
             >
               <Users size={18} />
@@ -237,13 +346,18 @@ const ExerciceSpirituelDashboard: React.FC = () => {
     );
   }
 
-  const isSubmittedDate = submittedDates.has(selectedDate);
-
-  return (
-    <div className="min-h-screen bg-slate-50">
-      {/* Header */}
-      <header className="bg-indigo-700 text-white px-4 py-3 flex items-center justify-between shadow-lg">
-        <div className="flex items-center gap-3">
+  // ── Header commun ─────────────────────────────────────────
+  const header = (
+    <header className="bg-indigo-700 text-white px-4 py-3 flex items-center justify-between shadow-lg shrink-0">
+      <div className="flex items-center gap-3">
+        {activeView !== null ? (
+          <button
+            onClick={() => setActiveView(null)}
+            className="p-2 rounded-xl bg-white/10 hover:bg-white/20 transition-colors"
+          >
+            <ArrowLeft size={18} />
+          </button>
+        ) : (
           <div className="w-9 h-9 rounded-xl overflow-hidden border border-white/30 shrink-0">
             {session.photoUrl ? (
               <img src={session.photoUrl} alt="" className="w-full h-full object-cover" />
@@ -253,235 +367,573 @@ const ExerciceSpirituelDashboard: React.FC = () => {
               </div>
             )}
           </div>
-          <div>
-            <h1 className="text-sm font-bold leading-tight">Mon Espace - MIDC</h1>
-            <p className="text-indigo-200 text-xs">
-              {session.gender === 'Masculin' ? 'Frère' : 'Sœur'} {session.firstName}
-            </p>
-          </div>
+        )}
+        <div>
+          <h1 className="text-sm font-bold leading-tight">
+            {activeView === 'exercices' ? 'Exercices du jour'
+              : activeView === 'bilan' ? 'Bilan mensuel'
+              : activeView === 'objectifs' ? 'Mes objectifs'
+              : 'Mon Espace - MIDC'}
+          </h1>
+          <p className="text-indigo-200 text-xs">
+            {session.gender === 'Masculin' ? 'Frère' : 'Sœur'} {session.firstName}
+          </p>
         </div>
-        <div className="flex items-center gap-2">
-          {notifications.length > 0 && (
-            <button
-              onClick={() => setShowNotifs(!showNotifs)}
-              className="relative p-2 rounded-xl bg-white/10 hover:bg-white/20 transition-colors"
-            >
-              <Bell size={18} />
-              <span className="absolute -top-1 -right-1 w-4 h-4 bg-rose-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center">
-                {notifications.length}
-              </span>
-            </button>
-          )}
+      </div>
+      <div className="flex items-center gap-2">
+        {activeView === null && notifications.length > 0 && (
           <button
-            onClick={() => navigate('/mon-espace/bilan')}
+            onClick={() => setShowNotifs(!showNotifs)}
+            className="relative p-2 rounded-xl bg-white/10 hover:bg-white/20 transition-colors"
+          >
+            <Bell size={18} />
+            <span className="absolute -top-1 -right-1 w-4 h-4 bg-rose-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center">
+              {notifications.length}
+            </span>
+          </button>
+        )}
+        {activeView === null && session.isDiscipleMaker && (
+          <button
+            onClick={() => navigate('/mon-espace/groupe')}
             className="px-3 py-2 bg-white/20 hover:bg-white/30 border border-white/30 rounded-xl text-xs font-bold transition-colors flex items-center gap-1.5"
           >
-            <ClipboardCheck size={14} />
-            Bilan
+            <Users size={14} />
+            Mon groupe
           </button>
-          {session.isDiscipleMaker && (
-            <button
-              onClick={() => navigate('/mon-espace/groupe')}
-              className="px-3 py-2 bg-white/20 hover:bg-white/30 border border-white/30 rounded-xl text-xs font-bold transition-colors flex items-center gap-1.5"
-            >
-              <Users size={14} />
-              Mon groupe
-            </button>
-          )}
-          <button
-            onClick={handleLogout}
-            className="p-2 rounded-xl bg-white/10 hover:bg-white/20 transition-colors"
-            title="Se déconnecter"
-          >
-            <LogOut size={18} />
-          </button>
-        </div>
-      </header>
+        )}
+        <button
+          onClick={handleLogout}
+          className="p-2 rounded-xl bg-white/10 hover:bg-white/20 transition-colors"
+          title="Se déconnecter"
+        >
+          <LogOut size={18} />
+        </button>
+      </div>
+    </header>
+  );
 
-      {/* Notification panneau */}
-      {showNotifs && notifications.length > 0 && (
-        <div className="mx-4 mt-4">
-          <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4">
-            <div className="flex items-start gap-3">
-              <AlertCircle size={18} className="text-amber-600 shrink-0 mt-0.5" />
-              <div>
-                <p className="text-xs font-bold text-amber-800 mb-1">
-                  Jours sans exercices spirituels soumis :
-                </p>
-                <ul className="space-y-0.5">
-                  {notifications.map(n => (
-                    <li key={n} className="text-xs text-amber-700">• {n}</li>
-                  ))}
-                </ul>
-                <button
-                  onClick={() => setShowNotifs(false)}
-                  className="mt-2 text-xs text-amber-600 font-medium hover:text-amber-800 transition-colors"
-                >
-                  Fermer
-                </button>
+  // ════════════════════════════════════════════════════════════
+  // ── VUE : Exercices quotidiens ────────────────────────────
+  // ════════════════════════════════════════════════════════════
+  if (activeView === 'exercices') {
+    const isSubmittedDate = submittedDates.has(selectedDate);
+    return (
+      <div className="min-h-screen bg-slate-50 flex flex-col">
+        {header}
+        <div className="max-w-2xl mx-auto w-full px-4 py-6 space-y-5 flex-1">
+          {/* Date picker */}
+          <div className="space-y-2">
+            <label className="text-xs font-semibold text-slate-500 flex items-center gap-2">
+              <Calendar size={14} />
+              Date de la soumission
+            </label>
+            <div className="flex items-center gap-3">
+              <input
+                type="date"
+                value={selectedDate}
+                max={toLocalDate(new Date())}
+                onChange={e => e.target.value && setSelectedDate(e.target.value)}
+                className="flex-1 px-4 py-3 bg-white border border-slate-200 rounded-2xl text-sm font-medium text-slate-700 focus:border-indigo-300 focus:ring-4 focus:ring-indigo-500/5 outline-none transition-all shadow-sm"
+              />
+              {isSubmittedDate && (
+                <span className="flex items-center gap-1 text-xs text-emerald-600 font-medium shrink-0">
+                  <CheckCircle2 size={13} /> Déjà soumis
+                </span>
+              )}
+            </div>
+          </div>
+
+          {/* Form */}
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+            <div className="px-6 py-4 border-b border-slate-100">
+              <h2 className="text-sm font-bold text-slate-800">
+                {isSubmittedDate ? 'Modifier mes exercices' : 'Saisir mes exercices'}
+              </h2>
+              <p className="text-xs text-slate-400 mt-0.5">Les champs avec ● apparaissent selon votre réponse</p>
+            </div>
+
+            {loadingForm ? (
+              <div className="flex items-center justify-center py-12">
+                <Loader2 size={24} className="animate-spin text-indigo-400" />
               </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      <div className="max-w-2xl mx-auto px-4 py-6 space-y-6">
-        {/* Sélecteur de date */}
-        <div className="space-y-2">
-          <label className="text-xs font-semibold text-slate-500 flex items-center gap-2">
-            <Calendar size={14} />
-            Date de la soumission
-          </label>
-          <div className="flex items-center gap-3">
-            <input
-              type="date"
-              value={selectedDate}
-              max={toLocalDate(new Date())}
-              onChange={e => e.target.value && setSelectedDate(e.target.value)}
-              className="flex-1 px-4 py-3 bg-white border border-slate-200 rounded-2xl text-sm font-medium text-slate-700 focus:border-indigo-300 focus:ring-4 focus:ring-indigo-500/5 outline-none transition-all shadow-sm"
-            />
-            {isSubmittedDate && (
-              <span className="flex items-center gap-1 text-xs text-emerald-600 font-medium shrink-0">
-                <CheckCircle2 size={13} /> Déjà soumis
-              </span>
-            )}
-          </div>
-        </div>
-
-        {/* Formulaire */}
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-          <div className="px-6 py-4 border-b border-slate-100">
-            <h2 className="text-sm font-bold text-slate-800">
-              {isSubmittedDate ? 'Modifier mes exercices' : 'Saisir mes exercices'}
-            </h2>
-            <p className="text-xs text-slate-400 mt-0.5">Les champs avec ● apparaissent selon votre réponse</p>
-          </div>
-
-          {loadingForm ? (
-            <div className="flex items-center justify-center py-12">
-              <Loader2 size={24} className="animate-spin text-indigo-400" />
-            </div>
-          ) : (
-            <div className="divide-y divide-slate-100">
-              {exerciseTypes.map(type => {
-                const val = formValues[type.id];
-                const detail = detailValues[type.id] ?? '';
-                const showDetail = type.hasDetail && (
-                  type.fieldType === 'boolean' ? val === true : (String(val ?? '').trim() !== '' && String(val ?? '') !== '0')
-                );
-
-                return (
-                  <div key={type.id} className="px-6 py-4 space-y-3">
-                    <div className="flex items-center justify-between gap-4">
-                      <label className="text-sm font-medium text-slate-700 flex-1">{type.label}</label>
-
-                      {type.fieldType === 'boolean' ? (
-                        <div className="flex gap-2 shrink-0">
-                          <button
-                            onClick={() => setFormValues(v => ({ ...v, [type.id]: true }))}
-                            className={cn(
-                              "px-4 py-2 rounded-xl text-xs font-semibold border transition-all",
-                              val === true
-                                ? "bg-emerald-600 text-white border-emerald-600 shadow-sm"
-                                : "bg-slate-50 text-slate-500 border-slate-200 hover:border-emerald-300"
-                            )}
-                          >
-                            Oui
-                          </button>
-                          <button
-                            onClick={() => {
-                              setFormValues(v => ({ ...v, [type.id]: false }));
-                              setDetailValues(d => ({ ...d, [type.id]: '' }));
-                            }}
-                            className={cn(
-                              "px-4 py-2 rounded-xl text-xs font-semibold border transition-all",
-                              val === false
-                                ? "bg-rose-500 text-white border-rose-500 shadow-sm"
-                                : "bg-slate-50 text-slate-500 border-slate-200 hover:border-rose-300"
-                            )}
-                          >
-                            Non
-                          </button>
+            ) : (
+              <div className="divide-y divide-slate-100">
+                {exerciseTypes.map(type => {
+                  const val = formValues[type.id];
+                  const detail = detailValues[type.id] ?? '';
+                  const showDetail = type.hasDetail && (
+                    type.fieldType === 'boolean' ? val === true : (String(val ?? '').trim() !== '' && String(val ?? '') !== '0')
+                  );
+                  return (
+                    <div key={type.id} className="px-6 py-4 space-y-3">
+                      <div className="flex items-center justify-between gap-4">
+                        <label className="text-sm font-medium text-slate-700 flex-1">{type.label}</label>
+                        {type.fieldType === 'boolean' ? (
+                          <div className="flex gap-2 shrink-0">
+                            <button
+                              onClick={() => setFormValues(v => ({ ...v, [type.id]: true }))}
+                              className={cn(
+                                "px-4 py-2 rounded-xl text-xs font-semibold border transition-all",
+                                val === true ? "bg-emerald-600 text-white border-emerald-600 shadow-sm" : "bg-slate-50 text-slate-500 border-slate-200 hover:border-emerald-300"
+                              )}
+                            >Oui</button>
+                            <button
+                              onClick={() => { setFormValues(v => ({ ...v, [type.id]: false })); setDetailValues(d => ({ ...d, [type.id]: '' })); }}
+                              className={cn(
+                                "px-4 py-2 rounded-xl text-xs font-semibold border transition-all",
+                                val === false ? "bg-rose-500 text-white border-rose-500 shadow-sm" : "bg-slate-50 text-slate-500 border-slate-200 hover:border-rose-300"
+                              )}
+                            >Non</button>
+                          </div>
+                        ) : (
+                          <input
+                            type="text"
+                            value={String(val ?? '')}
+                            onChange={e => setFormValues(v => ({ ...v, [type.id]: e.target.value }))}
+                            placeholder="..."
+                            className="w-36 px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium text-right focus:bg-white focus:border-indigo-300 focus:ring-4 focus:ring-indigo-500/5 outline-none transition-all"
+                          />
+                        )}
+                      </div>
+                      {showDetail && type.detailLabel && (
+                        <div className="ml-4 border-l-2 border-indigo-100 pl-4">
+                          <label className="text-xs text-slate-400 mb-1 block">{type.detailLabel}</label>
+                          <input
+                            type="text"
+                            value={detail}
+                            onChange={e => setDetailValues(d => ({ ...d, [type.id]: e.target.value }))}
+                            placeholder="Précisez..."
+                            className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:border-indigo-300 focus:ring-4 focus:ring-indigo-500/5 outline-none transition-all"
+                          />
                         </div>
-                      ) : (
-                        <input
-                          type="text"
-                          value={String(val ?? '')}
-                          onChange={e => setFormValues(v => ({ ...v, [type.id]: e.target.value }))}
-                          placeholder="..."
-                          className="w-36 px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium text-right focus:bg-white focus:border-indigo-300 focus:ring-4 focus:ring-indigo-500/5 outline-none transition-all"
-                        />
                       )}
                     </div>
+                  );
+                })}
+              </div>
+            )}
 
-                    {showDetail && type.detailLabel && (
-                      <div className="ml-4 border-l-2 border-indigo-100 pl-4">
-                        <label className="text-xs text-slate-400 mb-1 block">{type.detailLabel}</label>
-                        <input
-                          type="text"
-                          value={detail}
-                          onChange={e => setDetailValues(d => ({ ...d, [type.id]: e.target.value }))}
-                          placeholder="Précisez..."
-                          className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:border-indigo-300 focus:ring-4 focus:ring-indigo-500/5 outline-none transition-all"
-                        />
+            <div className="px-6 py-5 border-t border-slate-100 bg-slate-50/50">
+              <button
+                onClick={handleSaveExercise}
+                disabled={saving || loadingForm}
+                className={cn(
+                  "w-full py-4 rounded-2xl text-sm font-bold transition-all flex items-center justify-center gap-2 shadow-lg",
+                  saving || loadingForm ? "bg-slate-200 text-slate-400 cursor-not-allowed shadow-none"
+                    : saveSuccess ? "bg-emerald-600 text-white shadow-emerald-200"
+                    : "bg-indigo-600 text-white hover:bg-indigo-700 shadow-indigo-200"
+                )}
+              >
+                {saving ? <><Loader2 size={18} className="animate-spin" /> Enregistrement...</>
+                  : saveSuccess ? <><CheckCircle2 size={18} /> Enregistré !</>
+                  : <><Save size={18} /> {isSubmittedDate ? 'Mettre à jour' : 'Enregistrer'}</>}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ════════════════════════════════════════════════════════════
+  // ── VUE : Bilan mensuel ───────────────────────────────────
+  // ════════════════════════════════════════════════════════════
+  if (activeView === 'bilan') {
+    return (
+      <div className="min-h-screen bg-slate-50 flex flex-col">
+        {header}
+        {loadingGoals ? (
+          <div className="flex items-center justify-center py-24">
+            <Loader2 size={28} className="animate-spin text-indigo-400" />
+          </div>
+        ) : (
+          <div className="max-w-2xl mx-auto w-full px-4 py-6 space-y-4 flex-1">
+            {enabledObjectives.length === 0 ? (
+              <div className="bg-amber-50 border border-amber-200 rounded-2xl p-8 text-center">
+                <Target size={36} className="text-amber-400 mx-auto mb-3" />
+                <p className="text-sm font-semibold text-amber-800">Définissez d'abord vos objectifs</p>
+                <p className="text-xs text-amber-600 mt-1.5 leading-relaxed">
+                  Activez au moins un exercice dans <strong>Mes objectifs</strong> pour pouvoir soumettre un bilan mensuel.
+                </p>
+                <button
+                  onClick={() => setActiveView('objectifs')}
+                  className="mt-5 px-5 py-2.5 bg-amber-600 text-white rounded-xl text-xs font-semibold hover:bg-amber-700 transition-colors"
+                >
+                  Définir mes objectifs
+                </button>
+              </div>
+            ) : (
+              <>
+                <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 space-y-4">
+                  <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider">Période du bilan</h3>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1">
+                      <label className="text-xs font-medium text-slate-500">Mois</label>
+                      <select
+                        value={selectedMonth}
+                        onChange={e => setSelectedMonth(Number(e.target.value))}
+                        className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none"
+                      >
+                        {MONTHS.map((m, i) => {
+                          const disabled = (selectedYear === currentYear && i > currentMonth) || selectedYear > currentYear;
+                          return <option key={i} value={i} disabled={disabled}>{m}{disabled ? ' (futur)' : ''}</option>;
+                        })}
+                      </select>
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-xs font-medium text-slate-500">Année</label>
+                      <select
+                        value={selectedYear}
+                        onChange={e => setSelectedYear(Number(e.target.value))}
+                        className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none"
+                      >
+                        <option value={currentYear}>{currentYear}</option>
+                        {new Date().getMonth() === 0 && new Date().getDate() <= 15 && (
+                          <option value={currentYear - 1}>{currentYear - 1}</option>
+                        )}
+                      </select>
+                    </div>
+                  </div>
+                  {existingBilan && (
+                    <p className="text-xs text-emerald-600 font-medium flex items-center gap-1.5">
+                      <CheckCircle2 size={13} /> Bilan déjà soumis — vous pouvez le modifier
+                    </p>
+                  )}
+                </div>
+
+                {isDeadlinePassed ? (
+                  <div className="bg-white rounded-2xl border border-slate-200 p-10 text-center">
+                    <Lock size={36} className="text-slate-300 mx-auto mb-3" />
+                    <p className="text-sm font-semibold text-slate-500">Période expirée</p>
+                    <p className="text-xs text-slate-400 mt-1.5">
+                      Le délai de soumission pour {selectedYear} est expiré (limite : 15 janvier {selectedYear + 1}).
+                    </p>
+                  </div>
+                ) : isFutureMonth ? (
+                  <div className="bg-white rounded-2xl border border-slate-200 p-10 text-center">
+                    <Calendar size={36} className="text-slate-300 mx-auto mb-3" />
+                    <p className="text-sm font-semibold text-slate-500">Mois futur</p>
+                    <p className="text-xs text-slate-400 mt-1.5">L'évaluation ne peut pas être faite pour un mois à venir.</p>
+                  </div>
+                ) : (
+                  <>
+                    <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                      <div className="px-5 py-4 border-b border-slate-100">
+                        <h3 className="text-sm font-bold text-slate-800">Bilan de {MONTHS[selectedMonth]} {selectedYear}</h3>
+                        <p className="text-xs text-slate-400 mt-0.5">Cochez les exercices accomplis ce mois-ci</p>
+                      </div>
+                      <div className="divide-y divide-slate-100">
+                        {enabledObjectives.map(obj => {
+                          const ex = SPIRITUAL_EXERCISES_LIST.find(e => e.id === obj.exerciseId);
+                          if (!ex) return null;
+                          const isChecked = results[ex.id] === true;
+                          return (
+                            <button
+                              key={ex.id}
+                              onClick={() => setResults(prev => ({ ...prev, [ex.id]: !prev[ex.id] }))}
+                              className={cn('w-full flex items-center gap-4 px-5 py-4 text-left transition-all', isChecked ? 'bg-emerald-50' : 'hover:bg-slate-50')}
+                            >
+                              <div className={cn('w-8 h-8 rounded-xl flex items-center justify-center border-2 shrink-0 transition-all', isChecked ? 'bg-emerald-600 border-emerald-600 text-white' : 'bg-white border-slate-200 text-transparent')}>
+                                <CheckCircle size={16} strokeWidth={3} />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className={cn('text-sm font-semibold', isChecked ? 'text-emerald-800' : 'text-slate-700')}>{ex.label}</p>
+                                <p className="text-xs text-slate-400">Objectif : {ex.valueType === 'boolean' ? 'Fidélité' : `${obj.targetValue} ${ex.unit || ''}`}</p>
+                              </div>
+                              <span className={cn('text-xs font-semibold px-2.5 py-1 rounded-lg shrink-0', isChecked ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-400')}>
+                                {isChecked ? 'À jour' : 'Non'}
+                              </span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                      <div className="px-5 py-4 border-t border-slate-100 bg-slate-50/50 flex items-center justify-between">
+                        <div>
+                          <p className="text-xs text-slate-500">Exercices validés</p>
+                          <p className={cn('text-2xl font-bold', currentScore >= 4 ? 'text-emerald-600' : currentScore >= 2 ? 'text-amber-500' : 'text-rose-500')}>{currentScore}</p>
+                        </div>
+                        <p className="text-xs text-slate-400">sur {enabledObjectives.length} engagements</p>
+                      </div>
+                    </div>
+
+                    <button
+                      onClick={handleSaveBilan}
+                      disabled={savingBilan}
+                      className={cn(
+                        'w-full py-4 rounded-2xl text-sm font-bold transition-all flex items-center justify-center gap-2 shadow-lg',
+                        savingBilan ? 'bg-slate-200 text-slate-400 cursor-not-allowed shadow-none'
+                          : bilanSaved ? 'bg-emerald-600 text-white shadow-emerald-200'
+                          : 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-indigo-200'
+                      )}
+                    >
+                      {savingBilan ? <><Loader2 size={18} className="animate-spin" /> Enregistrement...</>
+                        : bilanSaved ? <><CheckCircle2 size={18} /> Bilan enregistré !</>
+                        : <><Save size={18} /> {existingBilan ? 'Mettre à jour le bilan' : 'Soumettre le bilan'}</>}
+                    </button>
+                  </>
+                )}
+              </>
+            )}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // ════════════════════════════════════════════════════════════
+  // ── VUE : Objectifs annuels ───────────────────────────────
+  // ════════════════════════════════════════════════════════════
+  if (activeView === 'objectifs') {
+    return (
+      <div className="min-h-screen bg-slate-50 flex flex-col">
+        {header}
+        {loadingGoals ? (
+          <div className="flex items-center justify-center py-24">
+            <Loader2 size={28} className="animate-spin text-indigo-400" />
+          </div>
+        ) : (
+          <div className="max-w-2xl mx-auto w-full px-4 py-6 space-y-4 flex-1">
+            <div className="bg-indigo-50 border border-indigo-100 rounded-2xl px-5 py-4">
+              <p className="text-sm font-semibold text-indigo-800 mb-1">Mes engagements {currentYear}</p>
+              <p className="text-xs text-indigo-500 leading-relaxed">
+                Activez les disciplines que vous souhaitez pratiquer cette année et définissez vos objectifs. Ces informations guideront vos bilans mensuels.
+              </p>
+            </div>
+
+            <div className="space-y-3">
+              {SPIRITUAL_EXERCISES_LIST.map(ex => {
+                const obj = objectives.find(o => o.exerciseId === ex.id) ?? {
+                  exerciseId: ex.id,
+                  targetValue: ex.valueType === 'boolean' ? false : (ex.valueType === 'select' ? (ex.options?.[0] ?? '') : 0),
+                  isEnabled: false,
+                  notes: '',
+                };
+                return (
+                  <div key={ex.id} className={cn('bg-white rounded-2xl border-2 transition-all overflow-hidden', obj.isEnabled ? 'border-indigo-200 shadow-sm' : 'border-slate-100')}>
+                    <div className="flex items-center justify-between px-5 py-4">
+                      <div className="flex items-center gap-3">
+                        <div className={cn('w-9 h-9 rounded-xl flex items-center justify-center shrink-0', obj.isEnabled ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-slate-400')}>
+                          <Flame size={16} />
+                        </div>
+                        <div>
+                          <p className="text-sm font-semibold text-slate-800">{ex.label}</p>
+                          <p className="text-xs text-slate-400">{ex.frequency}</p>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => setObjectives(prev => prev.map(o => o.exerciseId === ex.id ? { ...o, isEnabled: !o.isEnabled } : o))}
+                        className={cn('px-3 py-1.5 rounded-xl text-xs font-semibold transition-all shrink-0', obj.isEnabled ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-slate-500 hover:bg-slate-200')}
+                      >
+                        {obj.isEnabled ? 'Activé' : 'Activer'}
+                      </button>
+                    </div>
+
+                    {obj.isEnabled && (
+                      <div className="px-5 pb-5 space-y-3 border-t border-slate-100 pt-4">
+                        <div>
+                          <label className="text-xs font-medium text-slate-500 mb-1.5 block">Objectif {ex.unit ? `(${ex.unit})` : ''}</label>
+                          {ex.valueType === 'select' ? (
+                            <select
+                              value={String(obj.targetValue)}
+                              onChange={e => setObjectives(prev => prev.map(o => o.exerciseId === ex.id ? { ...o, targetValue: e.target.value } : o))}
+                              className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none"
+                            >
+                              {ex.options?.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                            </select>
+                          ) : ex.valueType === 'boolean' ? (
+                            <button
+                              onClick={() => setObjectives(prev => prev.map(o => o.exerciseId === ex.id ? { ...o, targetValue: !o.targetValue } : o))}
+                              className={cn('w-full py-2.5 rounded-xl text-xs font-semibold border transition-all', obj.targetValue ? 'bg-indigo-50 border-indigo-300 text-indigo-700' : 'bg-slate-50 border-slate-200 text-slate-400')}
+                            >
+                              {obj.targetValue ? 'Engagement ferme (Oui)' : 'Non activé'}
+                            </button>
+                          ) : (
+                            <input
+                              type="number"
+                              step={ex.valueType === 'decimal' ? '0.1' : '1'}
+                              value={String(obj.targetValue || '')}
+                              onChange={e => setObjectives(prev => prev.map(o => o.exerciseId === ex.id ? { ...o, targetValue: e.target.value } : o))}
+                              placeholder="0"
+                              className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none"
+                            />
+                          )}
+                        </div>
+                        <div>
+                          <label className="text-xs font-medium text-slate-500 mb-1.5 block">Note (facultatif)</label>
+                          <input
+                            type="text"
+                            value={obj.notes || ''}
+                            onChange={e => setObjectives(prev => prev.map(o => o.exerciseId === ex.id ? { ...o, notes: e.target.value } : o))}
+                            placeholder="Précisions..."
+                            className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none italic"
+                          />
+                        </div>
                       </div>
                     )}
                   </div>
                 );
               })}
             </div>
-          )}
 
-          <div className="px-6 py-5 border-t border-slate-100 bg-slate-50/50">
             <button
-              onClick={handleSave}
-              disabled={saving || loadingForm}
+              onClick={handleSaveGoals}
+              disabled={savingGoals}
               className={cn(
-                "w-full py-4 rounded-2xl text-sm font-bold transition-all flex items-center justify-center gap-2 shadow-lg",
-                saving || loadingForm
-                  ? "bg-slate-200 text-slate-400 cursor-not-allowed shadow-none"
-                  : saveSuccess
-                  ? "bg-emerald-600 text-white shadow-emerald-200"
-                  : "bg-indigo-600 text-white hover:bg-indigo-700 shadow-indigo-200"
+                'w-full py-4 rounded-2xl text-sm font-bold transition-all flex items-center justify-center gap-2 shadow-lg',
+                savingGoals ? 'bg-slate-200 text-slate-400 cursor-not-allowed shadow-none'
+                  : goalsSaved ? 'bg-emerald-600 text-white shadow-emerald-200'
+                  : 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-indigo-200'
               )}
             >
-              {saving ? (
-                <><Loader2 size={18} className="animate-spin" /> Enregistrement...</>
-              ) : saveSuccess ? (
-                <><CheckCircle2 size={18} /> Enregistré !</>
-              ) : (
-                <><Save size={18} /> {isSubmittedDate ? 'Mettre à jour' : 'Enregistrer'}</>
-              )}
+              {savingGoals ? <><Loader2 size={18} className="animate-spin" /> Enregistrement...</>
+                : goalsSaved ? <><CheckCircle2 size={18} /> Objectifs enregistrés !</>
+                : <><Save size={18} /> Enregistrer mes objectifs</>}
             </button>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // ════════════════════════════════════════════════════════════
+  // ── VUE PAR DÉFAUT : Accueil + Historiques ────────────────
+  // ════════════════════════════════════════════════════════════
+  const historyTabs: { id: HistoryTab; label: string; count: number }[] = [
+    { id: 'exercices', label: 'Exercices', count: allExercises.length },
+    { id: 'bilans', label: 'Bilans', count: monthlyPoints.length },
+  ];
+
+  return (
+    <div className="min-h-screen bg-slate-50 flex flex-col">
+      {header}
+
+      {/* Notification panel */}
+      {showNotifs && notifications.length > 0 && (
+        <div className="mx-4 mt-4">
+          <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4">
+            <div className="flex items-start gap-3">
+              <AlertCircle size={18} className="text-amber-600 shrink-0 mt-0.5" />
+              <div className="flex-1">
+                <p className="text-xs font-bold text-amber-800 mb-1">Jours sans exercices soumis :</p>
+                <ul className="space-y-0.5">
+                  {notifications.map(n => <li key={n} className="text-xs text-amber-700">• {n}</li>)}
+                </ul>
+                <button onClick={() => setShowNotifs(false)} className="mt-2 text-xs text-amber-600 font-medium hover:text-amber-800 transition-colors">Fermer</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className="max-w-2xl mx-auto w-full px-4 py-5 space-y-5 flex-1">
+
+        {/* ── 3 boutons d'action ── */}
+        <div className="grid grid-cols-3 gap-3">
+          <button
+            onClick={() => setActiveView('exercices')}
+            className="flex flex-col items-center gap-2 p-4 bg-indigo-600 text-white rounded-2xl shadow-lg shadow-indigo-200 hover:bg-indigo-700 transition-all active:scale-95"
+          >
+            <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center">
+              <Plus size={20} />
+            </div>
+            <span className="text-xs font-bold leading-tight text-center">Exercices<br/>du jour</span>
+          </button>
+          <button
+            onClick={() => setActiveView('bilan')}
+            className="flex flex-col items-center gap-2 p-4 bg-emerald-600 text-white rounded-2xl shadow-lg shadow-emerald-200 hover:bg-emerald-700 transition-all active:scale-95"
+          >
+            <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center">
+              <ClipboardCheck size={20} />
+            </div>
+            <span className="text-xs font-bold leading-tight text-center">Bilan<br/>mensuel</span>
+          </button>
+          <button
+            onClick={() => setActiveView('objectifs')}
+            className="flex flex-col items-center gap-2 p-4 bg-violet-600 text-white rounded-2xl shadow-lg shadow-violet-200 hover:bg-violet-700 transition-all active:scale-95"
+          >
+            <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center">
+              <Target size={20} />
+            </div>
+            <span className="text-xs font-bold leading-tight text-center">Mes<br/>objectifs</span>
+          </button>
+        </div>
+
+        {/* ── Stats rapides ── */}
+        <div className="grid grid-cols-3 gap-3 text-center">
+          <div className="bg-white rounded-2xl border border-slate-100 shadow-sm py-3 px-2">
+            <p className="text-lg font-black text-indigo-600">{allExercises.length}</p>
+            <p className="text-[10px] text-slate-400 font-semibold">Exercices</p>
+          </div>
+          <div className="bg-white rounded-2xl border border-slate-100 shadow-sm py-3 px-2">
+            <p className="text-lg font-black text-emerald-600">{monthlyPoints.length}</p>
+            <p className="text-[10px] text-slate-400 font-semibold">Bilans</p>
+          </div>
+          <div className="bg-white rounded-2xl border border-slate-100 shadow-sm py-3 px-2">
+            <p className="text-lg font-black text-violet-600">{enabledObjectives.length}</p>
+            <p className="text-[10px] text-slate-400 font-semibold">Objectifs</p>
           </div>
         </div>
 
-        {/* Historique récent */}
-        {allExercises.length > 0 && (
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
-            <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">
-              Historique récent
-            </h3>
-            <div className="space-y-2">
-              {allExercises.slice(0, 7).map(ex => (
+        {/* ── Onglets historiques ── */}
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+          {/* Tab bar */}
+          <div className="flex border-b border-slate-100">
+            {historyTabs.map(tab => (
+              <button
+                key={tab.id}
+                onClick={() => setHistoryTab(tab.id)}
+                className={cn(
+                  'flex-1 py-3.5 text-xs font-bold flex items-center justify-center gap-2 transition-all border-b-2',
+                  historyTab === tab.id
+                    ? tab.id === 'exercices'
+                      ? 'border-indigo-600 text-indigo-600 bg-indigo-50/50'
+                      : 'border-emerald-600 text-emerald-600 bg-emerald-50/50'
+                    : 'border-transparent text-slate-400 hover:text-slate-600'
+                )}
+              >
+                {tab.label}
+                {tab.count > 0 && (
+                  <span className={cn(
+                    'text-[10px] font-bold px-1.5 py-0.5 rounded-full',
+                    historyTab === tab.id
+                      ? tab.id === 'exercices' ? 'bg-indigo-100 text-indigo-600' : 'bg-emerald-100 text-emerald-600'
+                      : 'bg-slate-100 text-slate-400'
+                  )}>
+                    {tab.count}
+                  </span>
+                )}
+              </button>
+            ))}
+          </div>
+
+          {/* ── Onglet Exercices ── */}
+          {historyTab === 'exercices' && (
+            <div className="p-4 space-y-2">
+              {allExercises.length === 0 ? (
+                <div className="py-10 text-center">
+                  <Calendar size={32} className="text-slate-200 mx-auto mb-3" />
+                  <p className="text-xs font-semibold text-slate-400">Aucun exercice soumis</p>
+                  <button
+                    onClick={() => setActiveView('exercices')}
+                    className="mt-3 px-4 py-2 bg-indigo-600 text-white rounded-xl text-xs font-semibold hover:bg-indigo-700 transition-colors flex items-center gap-1.5 mx-auto"
+                  >
+                    <Plus size={13} /> Saisir mes exercices
+                  </button>
+                </div>
+              ) : allExercises.map(ex => (
                 <div
                   key={ex.id}
-                  className={cn(
-                    "flex items-center gap-2 px-4 py-3 rounded-xl text-xs font-medium transition-all border",
-                    selectedDate === ex.date
-                      ? "bg-indigo-50 border-indigo-200 text-indigo-700"
-                      : "bg-slate-50 border-transparent text-slate-600"
-                  )}
+                  className="flex items-center gap-2 px-4 py-3 rounded-xl text-xs font-medium bg-slate-50 border border-transparent text-slate-600 transition-all"
                 >
                   <button
-                    onClick={() => setSelectedDate(ex.date)}
+                    onClick={() => { setSelectedDate(ex.date); setActiveView('exercices'); }}
                     className="flex-1 flex items-center justify-between text-left"
                   >
                     <span className="flex items-center gap-2">
-                      <CheckCircle2 size={14} className="text-emerald-500" />
+                      <CheckCircle2 size={14} className="text-emerald-500 shrink-0" />
                       {formatDateLong(ex.date)}
                     </span>
-                    <span className="text-slate-400">{ex.entries.length} entrée(s)</span>
+                    <span className="text-slate-400 shrink-0 ml-2">{ex.entries.length} entrée(s)</span>
                   </button>
                   <button
                     onClick={() => session && handleDeleteExercise(session.memberId, ex.date)}
@@ -493,8 +945,41 @@ const ExerciceSpirituelDashboard: React.FC = () => {
                 </div>
               ))}
             </div>
-          </div>
-        )}
+          )}
+
+          {/* ── Onglet Bilans ── */}
+          {historyTab === 'bilans' && (
+            <div className="p-4 space-y-2">
+              {monthlyPoints.length === 0 ? (
+                <div className="py-10 text-center">
+                  <ClipboardCheck size={32} className="text-slate-200 mx-auto mb-3" />
+                  <p className="text-xs font-semibold text-slate-400">Aucun bilan soumis</p>
+                  <button
+                    onClick={() => setActiveView('bilan')}
+                    className="mt-3 px-4 py-2 bg-emerald-600 text-white rounded-xl text-xs font-semibold hover:bg-emerald-700 transition-colors flex items-center gap-1.5 mx-auto"
+                  >
+                    <Plus size={13} /> Soumettre un bilan
+                  </button>
+                </div>
+              ) : [...monthlyPoints]
+                .sort((a, b) => b.year - a.year || b.month - a.month)
+                .map(point => (
+                  <button
+                    key={point.id}
+                    onClick={() => { setSelectedMonth(point.month); setSelectedYear(point.year); setActiveView('bilan'); }}
+                    className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-medium bg-slate-50 border border-transparent text-slate-600 hover:bg-slate-100 transition-all"
+                  >
+                    <CheckCircle2 size={14} className="text-emerald-500 shrink-0" />
+                    <span className="flex-1 text-left">{MONTHS[point.month]} {point.year}</span>
+                    <span className={cn('font-bold', point.score >= 4 ? 'text-emerald-600' : point.score >= 2 ? 'text-amber-500' : 'text-rose-500')}>
+                      {point.score} ex.
+                    </span>
+                    <ChevronRight size={13} className="text-slate-300" />
+                  </button>
+                ))}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

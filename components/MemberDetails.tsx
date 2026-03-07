@@ -1179,7 +1179,7 @@ const MemberDetails: React.FC<MemberDetailsProps> = ({ member, isOpen, onClose, 
                   </p>
                   <div className="flex flex-wrap gap-2">
                     {member.skills.split(',').map((skill, idx) => (
-                      <span key={idx} className="px-3 py-1 bg-amber-50 text-amber-700 rounded-lg text-xs font-semibolder">
+                      <span key={idx} className="px-3 py-1 bg-amber-50 text-amber-700 rounded-lg text-xs font-semibold">
                         {skill.trim()}
                       </span>
                     ))}

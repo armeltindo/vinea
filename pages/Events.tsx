@@ -812,7 +812,7 @@ const Events: React.FC = () => {
                   <div className="mt-1 w-1.5 h-1.5 rounded-full bg-indigo-400 group-hover:scale-125 transition-transform"></div>
                   <div className="flex-1 min-w-0">
                     <p className="text-xs font-semibold text-slate-800 leading-tight tracking-tight truncate">{item.dept}</p>
-                    <p className="text-xs text-slate-500 mt-1 font-bolder truncate">
+                    <p className="text-xs text-slate-500 mt-1 font-medium truncate">
                       {item.eventName} • <span className="text-indigo-600">{item.status}</span>
                     </p>
                   </div>

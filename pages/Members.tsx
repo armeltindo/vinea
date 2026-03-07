@@ -633,11 +633,18 @@ const Members: React.FC = () => {
       <AIAnalysis analysis={analysis} isLoading={isAnalyzing} />
 
       <Card className="p-0 overflow-hidden border-slate-200 shadow-sm rounded-2xl animate-in fade-in slide-in-from-bottom-4 duration-500">
+        {filteredMembers.length > 0 && (
+          <div className="px-8 py-3 border-b border-slate-100 flex items-center justify-between bg-slate-50/30">
+            <span className="text-xs text-slate-400 font-medium">
+              {filteredMembers.length} membre{filteredMembers.length > 1 ? 's' : ''}{searchTerm || statusFilter !== 'Tous les statuts' || roleFilter !== 'Tous les rôles' ? ' trouvé' + (filteredMembers.length > 1 ? 's' : '') : ''}
+            </span>
+          </div>
+        )}
         <div className="overflow-x-auto custom-scrollbar">
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-slate-50/50 border-b border-slate-100">
-                <th 
+                <th
                   className="px-8 py-5 text-xs font-medium text-slate-500 cursor-pointer hover:text-indigo-600 transition-colors group"
                   onClick={toggleSort}
                 >

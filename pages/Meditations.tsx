@@ -334,7 +334,7 @@ const Meditations: React.FC = () => {
                       {generatingMap[`${med.id}-title`] ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} />} Générer Thème
                     </button>
                   ) : (
-                    <h4 className="text-xl font-semibold text-slate-900 group-hover:text-indigo-600 transition-colorser leading-tight">
+                    <h4 className="text-xl font-semibold text-slate-900 group-hover:text-indigo-600 transition-colors leading-tight">
                       {med.title}
                     </h4>
                   )}

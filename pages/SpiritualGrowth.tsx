@@ -170,7 +170,7 @@ const SpiritualGrowth: React.FC = () => {
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-violet-600 transition-colors" size={16} />
             <input
               type="text"
-              placeholder="RECHERCHER UN MEMBRE..."
+              placeholder="Rechercher un membre..."
               value={portalSearchTerm}
               onChange={(e) => setPortalSearchTerm(e.target.value)}
               className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl outline-none text-sm font-normal tracking-wide focus:bg-white focus:border-violet-400 focus:ring-4 focus:ring-violet-500/5 transition-all shadow-sm"

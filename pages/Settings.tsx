@@ -1459,7 +1459,7 @@ const Settings: React.FC = () => {
                            <ShieldCheck size={20} className="text-indigo-600" />
                            <div>
                               <p className="text-xs font-semibold text-indigo-700">Rôle : {adminInfo.role}</p>
-                              <p className="text-xs text-indigo-400 font-bolder">Privilèges maximum activés</p>
+                              <p className="text-xs text-indigo-400 font-medium">Privilèges maximum activés</p>
                            </div>
                          </div>
                          <div className="flex gap-2">

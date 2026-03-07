@@ -412,7 +412,7 @@ const Discipleship: React.FC = () => {
                        </span>
                      </div>
                      <div className="space-y-3 relative z-10">
-                        <div className="flex justify-between text-xs font-semibolder">
+                        <div className="flex justify-between text-xs font-semibold">
                            <span className="text-slate-500 truncate w-40">Mentor : {pair.mentorName}</span>
                            <span className="text-indigo-600">{pair.progress}%</span>
                         </div>

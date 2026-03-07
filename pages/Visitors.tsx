@@ -483,7 +483,7 @@ const Visitors: React.FC = () => {
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-600 transition-colors" size={20} />
             <input 
               type="text" 
-              placeholder="RECHERCHER UN VISITEUR..." 
+              placeholder="Rechercher un visiteur..."
               className="w-full pl-12 pr-4 py-3 bg-white border border-slate-200 rounded-xl focus:ring-4 focus:ring-indigo-500/5 focus:border-indigo-300 outline-none text-sm font-normal transition-all shadow-sm placeholder:text-slate-400/60"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
@@ -512,11 +512,18 @@ const Visitors: React.FC = () => {
       <AIAnalysis analysis={analysis} isLoading={isAnalyzing} />
 
       <Card className="p-0 overflow-hidden border-slate-200 shadow-sm rounded-2xl">
+        {filteredVisitors.length > 0 && (
+          <div className="px-8 py-3 border-b border-slate-100 flex items-center justify-between bg-slate-50/30">
+            <span className="text-xs text-slate-400 font-medium">
+              {filteredVisitors.length} visiteur{filteredVisitors.length > 1 ? 's' : ''}{searchTerm || statusFilter !== 'Tous les statuts' ? ' trouvé' + (filteredVisitors.length > 1 ? 's' : '') : ''}
+            </span>
+          </div>
+        )}
         <div className="overflow-x-auto custom-scrollbar">
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-slate-50/50 border-b border-slate-100">
-                <th 
+                <th
                   className="px-8 py-5 text-xs font-medium text-slate-500 cursor-pointer hover:text-indigo-600 transition-colors group"
                   onClick={toggleSort}
                 >

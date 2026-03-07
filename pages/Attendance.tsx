@@ -748,7 +748,7 @@ const Attendance: React.FC = () => {
                   <td className="px-8 py-5">
                     <div className="flex items-center gap-2">
                        <div className="w-1.5 h-1.5 rounded-full bg-indigo-500"></div>
-                       <span className="text-xs font-semibold text-slate-800er">{record.service}</span>
+                       <span className="text-xs font-semibold text-slate-800">{record.service}</span>
                     </div>
                   </td>
                   <td className="px-4 py-5 text-center text-xs font-bold text-blue-600">{record.men || 0}</td>
@@ -791,7 +791,7 @@ const Attendance: React.FC = () => {
             <div className="px-10 py-10 bg-indigo-600 text-white shrink-0 relative overflow-hidden">
               <div className="absolute top-0 right-0 p-8 opacity-10"><Users size={180} /></div>
               <button onClick={() => setIsRecordModalOpen(false)} className="absolute top-6 left-6 p-2 hover:bg-white/10 rounded-full text-white transition-colors text-white"><X size={20} /></button>
-              <div className="relative z-10 space-3 mt-4">
+              <div className="relative z-10 space-y-3 mt-4">
                 <span className="px-3 py-1 bg-white/20 backdrop-blur-md rounded-full text-xs font-medium">Fiche de Séance</span>
                 <h3 className="text-2xl font-semibold leading-tight">{selectedRecord.service}</h3>
                 <div className="flex items-center gap-3 text-indigo-100">
@@ -1342,7 +1342,7 @@ const Attendance: React.FC = () => {
                                      )}
                                   </div>
                                   <div className="flex flex-col">
-                                    <span className={cn("text-xs font-semibolder", attendanceForm.absentMembers.includes(p.id) ? "text-rose-700" : "text-slate-600")}>{p.firstName} {p.lastName}</span>
+                                    <span className={cn("text-xs font-semibold", attendanceForm.absentMembers.includes(p.id) ? "text-rose-700" : "text-slate-600")}>{p.firstName} {p.lastName}</span>
                                     {p.isVisitor && <span className="text-xs font-semibold text-rose-400">Visiteur</span>}
                                   </div>
                                </div>

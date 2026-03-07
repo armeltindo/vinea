@@ -258,7 +258,7 @@ const Meetings: React.FC = () => {
                 <div key={decision.id} className="flex items-start gap-4 p-3 bg-slate-50 rounded-2xl border border-transparent hover:border-slate-100 transition-all group">
                   <div className={cn("mt-1 w-2 h-2 rounded-full shadow-sm shrink-0", decision.status === 'En cours' ? "bg-blue-500" : "bg-amber-500")}></div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs font-semibold text-slate-800er truncate">{decision.label}</p>
+                    <p className="text-xs font-semibold text-slate-800 truncate">{decision.label}</p>
                     <p className="text-xs text-slate-400 mt-1">Réunion : {decision.meetingTitle}</p>
                   </div>
                   <button onClick={(e) => { e.stopPropagation(); navigate(`/meetings/${decision.meetingId}`); }} className="text-indigo-600 hover:text-indigo-800"><ChevronRight size={14}/></button>

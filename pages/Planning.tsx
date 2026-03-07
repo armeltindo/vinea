@@ -599,7 +599,7 @@ const Planning: React.FC = () => {
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-indigo-600 transition-colors" size={20} />
                 <input 
                   type="text" 
-                  placeholder="RECHERCHER UNE ACTIVITÉ OU UN PORTEUR..." 
+                  placeholder="Rechercher une activité ou un porteur..."
                   value={searchTerm} 
                   onChange={e => setSearchTerm(e.target.value)} 
                   className="w-full pl-12 pr-4 py-3.5 bg-slate-50 border border-slate-200 rounded-[1.5rem] text-sm font-normal outline-none focus:bg-white focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/5 transition-all" 
@@ -649,6 +649,13 @@ const Planning: React.FC = () => {
              </div>
           </div>
 
+          {filteredActivities.length > 0 && (
+            <div className="px-10 py-3 border-b border-slate-100 flex items-center bg-slate-50/30">
+              <span className="text-xs text-slate-400 font-medium">
+                {filteredActivities.length} activité{filteredActivities.length > 1 ? 's' : ''}{searchTerm || selectedDeptId || statusFilter !== 'Tous' ? ' trouvée' + (filteredActivities.length > 1 ? 's' : '') : ''}
+              </span>
+            </div>
+          )}
           <div className="overflow-x-auto custom-scrollbar">
             <table className="w-full text-left border-collapse">
               <thead>
@@ -711,7 +718,7 @@ const Planning: React.FC = () => {
                               )}
                            </div>
                            <div className="min-w-0">
-                              <p className="text-xs font-semibold text-slate-800er truncate max-w-[150px]">
+                              <p className="text-xs font-semibold text-slate-800 truncate max-w-[150px]">
                                 {respMember ? `${respMember.firstName} ${respMember.lastName}` : activity.responsibleId}
                               </p>
                            </div>
@@ -792,7 +799,7 @@ const Planning: React.FC = () => {
               <button onClick={() => { setIsActivityDetailsOpen(false); navigate('', { replace: true }); }} className="absolute top-4 left-4 p-2 bg-white/10 hover:bg-white/20 rounded-full text-white transition-all"><ChevronLeft size={24} /></button>
               <div className="relative z-10 space-y-2 mt-4">
                 <span className="px-3 py-1 bg-white/20 backdrop-blur-md rounded-full text-xs font-medium">Détail Activité</span>
-                <h3 className="text-2xl font-semibolder leading-tight">{selectedActivityForDetails.title}</h3>
+                <h3 className="text-2xl font-semibold leading-tight">{selectedActivityForDetails.title}</h3>
                 <div className="flex items-center gap-2">
                    <Briefcase size={12} />
                    <span className="text-xs font-medium">{departments.find(d => d.id === selectedActivityForDetails.deptId)?.name || 'Général'}</span>
@@ -1074,7 +1081,7 @@ const Planning: React.FC = () => {
               </div>
               <button onClick={() => { setIsDeptDetailsOpen(false); navigate('', { replace: true }); }} className="absolute top-4 left-4 p-2 bg-white/10 hover:bg-white/20 rounded-full text-white transition-all"><ChevronLeft size={24} /></button>
               <div className="relative z-10 space-y-2">
-                <h3 className="text-2xl font-semibolder leading-none">{selectedDeptForDetails.name}</h3>
+                <h3 className="text-2xl font-semibold leading-none">{selectedDeptForDetails.name}</h3>
                 <div className="text-sm font-bold text-white/90 leading-relaxed">
                   {selectedDeptForDetails.description.length > 80 ? (
                     <>

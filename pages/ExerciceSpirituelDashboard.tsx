@@ -167,7 +167,7 @@ const ExerciceSpirituelDashboard: React.FC = () => {
       const ds = toLocalDate(d);
       if (!all.some(e => e.date === ds)) missing.push(formatDate(ds));
     }
-    if (missing.length > 0) { setNotifications(missing); setShowNotifs(true); }
+    if (missing.length > 0) { setNotifications(missing); }
   }, []);
 
   useEffect(() => {
@@ -421,14 +421,14 @@ const ExerciceSpirituelDashboard: React.FC = () => {
         </div>
       </div>
       <div className="flex items-center gap-2">
-        {activeView === null && notifications.length > 0 && (
+        {activeView === null && (notifications.length > 0 || assignmentNotifs.filter(n => !n.isRead).length > 0) && (
           <button
             onClick={() => setShowNotifs(!showNotifs)}
             className="relative p-2 rounded-xl bg-white/10 hover:bg-white/20 transition-colors"
           >
             <Bell size={18} />
             <span className="absolute -top-1 -right-1 w-4 h-4 bg-rose-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center">
-              {notifications.length}
+              {notifications.length + assignmentNotifs.filter(n => !n.isRead).length}
             </span>
           </button>
         )}
@@ -977,7 +977,7 @@ const ExerciceSpirituelDashboard: React.FC = () => {
         )}
 
         {/* ── Notification d'affectation (nouvelles) ── */}
-        {assignmentNotifs.filter(n => !n.isRead).length > 0 && (
+        {showNotifs && assignmentNotifs.filter(n => !n.isRead).length > 0 && (
           <div className="bg-indigo-50 border border-indigo-200 rounded-2xl p-4 space-y-2">
             <div className="flex items-center gap-2 mb-1">
               <Bell size={14} className="text-indigo-600" />

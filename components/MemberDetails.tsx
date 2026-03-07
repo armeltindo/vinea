@@ -159,24 +159,40 @@ const MemberDetails: React.FC<MemberDetailsProps> = ({ member, isOpen, onClose, 
     );
   }, [member.spouseName, allMembers]);
 
+  const normName = (s: string) =>
+    s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
+
+  const findMemberByName = (name: string) => {
+    const n = normName(name);
+    return allMembers.find(m => {
+      const fn = formatFirstName(m.firstName);
+      const ln = m.lastName;
+      return (
+        normName(`${fn} ${ln}`) === n ||
+        normName(`${ln} ${fn}`) === n ||
+        normName(`${fn} ${ln.toUpperCase()}`) === n ||
+        normName(`${ln.toUpperCase()} ${fn}`) === n ||
+        (m.nickname ? normName(m.nickname) === n : false)
+      );
+    }) ?? null;
+  };
+
   const motherMember = useMemo(() => {
-    if (member.motherId) return allMembers.find(m => m.id === member.motherId) ?? null;
+    if (member.motherId) {
+      const byId = allMembers.find(m => m.id === member.motherId);
+      if (byId) return byId;
+    }
     if (!member.motherName) return null;
-    const n = member.motherName.toLowerCase();
-    return allMembers.find(m =>
-      `${formatFirstName(m.firstName)} ${m.lastName.toUpperCase()}`.toLowerCase() === n ||
-      (m.nickname && m.nickname.toLowerCase() === n)
-    ) ?? null;
+    return findMemberByName(member.motherName);
   }, [member.motherId, member.motherName, allMembers]);
 
   const fatherMember = useMemo(() => {
-    if (member.fatherId) return allMembers.find(m => m.id === member.fatherId) ?? null;
+    if (member.fatherId) {
+      const byId = allMembers.find(m => m.id === member.fatherId);
+      if (byId) return byId;
+    }
     if (!member.fatherName) return null;
-    const n = member.fatherName.toLowerCase();
-    return allMembers.find(m =>
-      `${formatFirstName(m.firstName)} ${m.lastName.toUpperCase()}`.toLowerCase() === n ||
-      (m.nickname && m.nickname.toLowerCase() === n)
-    ) ?? null;
+    return findMemberByName(member.fatherName);
   }, [member.fatherId, member.fatherName, allMembers]);
 
   const children = useMemo(() => {

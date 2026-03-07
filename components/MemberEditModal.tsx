@@ -146,6 +146,10 @@ const MemberEditModal: React.FC<MemberEditModalProps> = ({
   );
   const [isDiscipleMakerDropdownOpen, setIsDiscipleMakerDropdownOpen] = useState(false);
 
+  // Refs to avoid stale closure issues in onBlur handlers
+  const selectedMotherIdRef = useRef<string>(member?.motherId || '');
+  const selectedFatherIdRef = useRef<string>(member?.fatherId || '');
+
   // Reset form when member prop changes
   useEffect(() => {
     setFormData(buildInitial(member));
@@ -154,7 +158,9 @@ const MemberEditModal: React.FC<MemberEditModalProps> = ({
     setBirthDay(bd.day); setBirthMonth(bd.month); setBirthYear(bd.year);
     setSpouseSearch(member?.spouseName || '');
     setMotherSearch(member?.motherName || '');
+    selectedMotherIdRef.current = member?.motherId || '';
     setFatherSearch(member?.fatherName || '');
+    selectedFatherIdRef.current = member?.fatherId || '';
     setInvitedBySearch(member?.invitedBy || '');
     const dm = allMembers.find(m => m.id === member?.assignedDiscipleMakerId);
     setDiscipleMakerSearch(dm ? `${formatFirstName(dm.firstName)} ${dm.lastName.toUpperCase()}` : '');
@@ -358,15 +364,15 @@ const MemberEditModal: React.FC<MemberEditModalProps> = ({
                 <label className="text-xs font-medium text-slate-500 ml-1 flex items-center gap-2"><Baby size={12} className="text-pink-400" /> Mère</label>
                 <div className="relative group">
                   <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
-                  <input type="text" value={motherSearch} onChange={(e) => { setMotherSearch(e.target.value); setIsMotherDropdownOpen(true); }} onFocus={() => setIsMotherDropdownOpen(true)} onBlur={() => setTimeout(() => { setIsMotherDropdownOpen(false); if (!formData.motherId) { setMotherSearch(''); setFormData(prev => ({...prev, motherName: '', motherId: ''})); } else { const sel = allMembers.find(m => m.id === formData.motherId); if (sel) setMotherSearch(`${formatFirstName(sel.firstName)} ${sel.lastName.toUpperCase()}`); } }, 150)} placeholder="Rechercher un membre enregistré..." className="w-full pl-10 pr-8 py-3 bg-slate-50 border border-slate-200 rounded-2xl outline-none text-sm font-bold focus:bg-white focus:border-pink-300 transition-all shadow-sm" />
+                  <input type="text" value={motherSearch} onChange={(e) => { setMotherSearch(e.target.value); setIsMotherDropdownOpen(true); }} onFocus={() => setIsMotherDropdownOpen(true)} onBlur={() => setTimeout(() => { setIsMotherDropdownOpen(false); if (!selectedMotherIdRef.current) { setMotherSearch(''); setFormData(prev => ({...prev, motherName: '', motherId: ''})); } else { const sel = allMembers.find(m => m.id === selectedMotherIdRef.current); if (sel) setMotherSearch(`${formatFirstName(sel.firstName)} ${sel.lastName.toUpperCase()}`); } }, 150)} placeholder="Rechercher un membre enregistré..." className="w-full pl-10 pr-8 py-3 bg-slate-50 border border-slate-200 rounded-2xl outline-none text-sm font-bold focus:bg-white focus:border-pink-300 transition-all shadow-sm" />
                   {formData.motherId && (
-                    <button type="button" onClick={() => { setFormData(prev => ({...prev, motherName: '', motherId: ''})); setMotherSearch(''); }} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"><X size={14} /></button>
+                    <button type="button" onClick={() => { selectedMotherIdRef.current = ''; setFormData(prev => ({...prev, motherName: '', motherId: ''})); setMotherSearch(''); }} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"><X size={14} /></button>
                   )}
                 </div>
                 {isMotherDropdownOpen && motherSearch.length >= 2 && (
                   <div className="absolute z-30 left-0 right-0 top-full mt-1 max-h-40 overflow-y-auto bg-white border border-slate-200 rounded-2xl shadow-xl custom-scrollbar">
                     {allMembers.filter(m => { if (member && m.id === member.id) return false; const fullName = `${m.firstName} ${m.lastName}`.toLowerCase(); const nick = (m.nickname || '').toLowerCase(); const s = motherSearch.toLowerCase(); return fullName.includes(s) || nick.includes(s); }).map(m => (
-                      <button key={m.id} type="button" onClick={() => { const name = `${formatFirstName(m.firstName)} ${m.lastName.toUpperCase()}`; setFormData(prev => ({...prev, motherName: name, motherId: m.id})); setMotherSearch(name); setIsMotherDropdownOpen(false); }} className="w-full text-left px-4 py-3 text-xs font-medium hover:bg-pink-50 border-b border-slate-50 last:border-0 flex items-center gap-3">
+                      <button key={m.id} type="button" onClick={() => { const name = `${formatFirstName(m.firstName)} ${m.lastName.toUpperCase()}`; selectedMotherIdRef.current = m.id; setFormData(prev => ({...prev, motherName: name, motherId: m.id})); setMotherSearch(name); setIsMotherDropdownOpen(false); }} className="w-full text-left px-4 py-3 text-xs font-medium hover:bg-pink-50 border-b border-slate-50 last:border-0 flex items-center gap-3">
                         <div className="w-6 h-6 rounded-lg bg-slate-100 flex items-center justify-center overflow-hidden shrink-0 text-xs font-medium text-slate-500">{m.photoUrl ? <img src={m.photoUrl} alt="" className="w-full h-full object-cover" /> : getInitials(m.firstName, m.lastName)}</div>
                         <span className="text-slate-700">{formatFirstName(m.firstName)} {m.lastName.toUpperCase()}</span>
                       </button>
@@ -380,15 +386,15 @@ const MemberEditModal: React.FC<MemberEditModalProps> = ({
                 <label className="text-xs font-medium text-slate-500 ml-1 flex items-center gap-2"><Baby size={12} className="text-blue-400" /> Père</label>
                 <div className="relative group">
                   <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
-                  <input type="text" value={fatherSearch} onChange={(e) => { setFatherSearch(e.target.value); setIsFatherDropdownOpen(true); }} onFocus={() => setIsFatherDropdownOpen(true)} onBlur={() => setTimeout(() => { setIsFatherDropdownOpen(false); if (!formData.fatherId) { setFatherSearch(''); setFormData(prev => ({...prev, fatherName: '', fatherId: ''})); } else { const sel = allMembers.find(m => m.id === formData.fatherId); if (sel) setFatherSearch(`${formatFirstName(sel.firstName)} ${sel.lastName.toUpperCase()}`); } }, 150)} placeholder="Rechercher un membre enregistré..." className="w-full pl-10 pr-8 py-3 bg-slate-50 border border-slate-200 rounded-2xl outline-none text-sm font-bold focus:bg-white focus:border-blue-300 transition-all shadow-sm" />
+                  <input type="text" value={fatherSearch} onChange={(e) => { setFatherSearch(e.target.value); setIsFatherDropdownOpen(true); }} onFocus={() => setIsFatherDropdownOpen(true)} onBlur={() => setTimeout(() => { setIsFatherDropdownOpen(false); if (!selectedFatherIdRef.current) { setFatherSearch(''); setFormData(prev => ({...prev, fatherName: '', fatherId: ''})); } else { const sel = allMembers.find(m => m.id === selectedFatherIdRef.current); if (sel) setFatherSearch(`${formatFirstName(sel.firstName)} ${sel.lastName.toUpperCase()}`); } }, 150)} placeholder="Rechercher un membre enregistré..." className="w-full pl-10 pr-8 py-3 bg-slate-50 border border-slate-200 rounded-2xl outline-none text-sm font-bold focus:bg-white focus:border-blue-300 transition-all shadow-sm" />
                   {formData.fatherId && (
-                    <button type="button" onClick={() => { setFormData(prev => ({...prev, fatherName: '', fatherId: ''})); setFatherSearch(''); }} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"><X size={14} /></button>
+                    <button type="button" onClick={() => { selectedFatherIdRef.current = ''; setFormData(prev => ({...prev, fatherName: '', fatherId: ''})); setFatherSearch(''); }} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"><X size={14} /></button>
                   )}
                 </div>
                 {isFatherDropdownOpen && fatherSearch.length >= 2 && (
                   <div className="absolute z-30 left-0 right-0 top-full mt-1 max-h-40 overflow-y-auto bg-white border border-slate-200 rounded-2xl shadow-xl custom-scrollbar">
                     {allMembers.filter(m => { if (member && m.id === member.id) return false; const fullName = `${m.firstName} ${m.lastName}`.toLowerCase(); const nick = (m.nickname || '').toLowerCase(); const s = fatherSearch.toLowerCase(); return fullName.includes(s) || nick.includes(s); }).map(m => (
-                      <button key={m.id} type="button" onClick={() => { const name = `${formatFirstName(m.firstName)} ${m.lastName.toUpperCase()}`; setFormData(prev => ({...prev, fatherName: name, fatherId: m.id})); setFatherSearch(name); setIsFatherDropdownOpen(false); }} className="w-full text-left px-4 py-3 text-xs font-medium hover:bg-blue-50 border-b border-slate-50 last:border-0 flex items-center gap-3">
+                      <button key={m.id} type="button" onClick={() => { const name = `${formatFirstName(m.firstName)} ${m.lastName.toUpperCase()}`; selectedFatherIdRef.current = m.id; setFormData(prev => ({...prev, fatherName: name, fatherId: m.id})); setFatherSearch(name); setIsFatherDropdownOpen(false); }} className="w-full text-left px-4 py-3 text-xs font-medium hover:bg-blue-50 border-b border-slate-50 last:border-0 flex items-center gap-3">
                         <div className="w-6 h-6 rounded-lg bg-slate-100 flex items-center justify-center overflow-hidden shrink-0 text-xs font-medium text-slate-500">{m.photoUrl ? <img src={m.photoUrl} alt="" className="w-full h-full object-cover" /> : getInitials(m.firstName, m.lastName)}</div>
                         <span className="text-slate-700">{formatFirstName(m.firstName)} {m.lastName.toUpperCase()}</span>
                       </button>

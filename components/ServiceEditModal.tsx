@@ -3,6 +3,7 @@ import { X, Save, Loader2, Layout, Youtube, Facebook, Headphones, Users, Search,
 import { createChurchService, updateChurchService, createMemberAssignmentNotifications } from '../lib/db';
 import { cn, generateId } from '../utils';
 import { ChurchService, Member, ServicePersonnel, ServicePersonnelItem } from '../types';
+import Avatar from './Avatar';
 import { SERVICES_LIST } from '../constants';
 
 interface ServiceEditModalProps {
@@ -73,12 +74,15 @@ const MemberSearchField: React.FC<MemberSearchProps> = ({ label, members, value,
         <div className="flex items-center gap-2 px-3 py-2 bg-indigo-50 border border-indigo-200 rounded-xl">
           {(() => {
             const member = members.find(m => m.id === value.memberId);
-            return member?.photoUrl ? (
-              <img src={member.photoUrl} alt="" className="w-6 h-6 rounded-full object-cover shrink-0" />
-            ) : (
-              <div className="w-6 h-6 rounded-full bg-indigo-600 flex items-center justify-center text-white text-xs font-bold shrink-0">
-                {value.memberName.charAt(0)}
-              </div>
+            const parts = value.memberName.trim().split(/\s+/);
+            return (
+              <Avatar
+                firstName={parts[0]}
+                lastName={parts.slice(1).join(' ')}
+                photoUrl={member?.photoUrl}
+                size="xs"
+                shape="circle"
+              />
             );
           })()}
           <span className="text-xs font-semibold text-indigo-800 flex-1 truncate">{value.memberName}</span>
@@ -108,13 +112,13 @@ const MemberSearchField: React.FC<MemberSearchProps> = ({ label, members, value,
                   onClick={() => handleSelect(m)}
                   className="w-full flex items-center gap-2 px-3 py-2 hover:bg-indigo-50 text-left transition-colors"
                 >
-                  {m.photoUrl ? (
-                    <img src={m.photoUrl} alt="" className="w-7 h-7 rounded-full object-cover shrink-0" />
-                  ) : (
-                    <div className="w-7 h-7 rounded-full bg-slate-200 flex items-center justify-center text-slate-600 text-xs font-bold shrink-0">
-                      {m.firstName.charAt(0)}
-                    </div>
-                  )}
+                  <Avatar
+                    firstName={m.firstName}
+                    lastName={m.lastName}
+                    photoUrl={m.photoUrl}
+                    size="sm"
+                    shape="circle"
+                  />
                   <div className="min-w-0">
                     <p className="text-xs font-semibold text-slate-800 truncate">{m.firstName} {m.lastName}</p>
                     {m.type && <p className="text-xs text-slate-400 truncate">{m.type}</p>}

@@ -357,19 +357,19 @@ const ExerciceSpirituelDashboard: React.FC = () => {
           <div className="absolute -top-40 -right-40 w-80 h-80 bg-white/5 rounded-full blur-3xl" />
           <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-violet-500/10 rounded-full blur-3xl" />
         </div>
-        <div className="relative bg-white/10 backdrop-blur-md border border-white/20 rounded-3xl p-8 shadow-2xl w-full max-w-sm text-center">
-          <div className="w-20 h-20 rounded-2xl overflow-hidden mx-auto mb-4 border-2 border-white/30 shadow-xl">
+        <div className="relative bg-white/10 backdrop-blur-md border border-white/20 rounded-3xl p-8 shadow-2xl w-full max-w-sm md:max-w-md text-center">
+          <div className="w-20 h-20 md:w-24 md:h-24 rounded-2xl overflow-hidden mx-auto mb-4 border-2 border-white/30 shadow-xl">
             {session.photoUrl ? (
               <img src={session.photoUrl} alt="" className="w-full h-full object-cover" />
             ) : (
               <div className="w-full h-full bg-white/10 flex items-center justify-center">
-                <span className="text-2xl font-black text-white">
+                <span className="text-2xl md:text-3xl font-black text-white">
                   {session.firstName.charAt(0)}{session.lastName.charAt(0)}
                 </span>
               </div>
             )}
           </div>
-          <h2 className="text-white text-lg font-bold mb-1">
+          <h2 className="text-white text-lg md:text-xl font-bold mb-1">
             {session.gender === 'Masculin' ? 'Frère' : 'Sœur'} {session.firstName}
           </h2>
           <p className="text-indigo-200 text-sm mb-8">Que souhaitez-vous faire ?</p>
@@ -485,7 +485,7 @@ const ExerciceSpirituelDashboard: React.FC = () => {
     return (
       <div className="min-h-screen bg-slate-50 flex flex-col">
         {header}
-        <div className="max-w-2xl mx-auto w-full px-4 py-6 space-y-5 flex-1">
+        <div className="max-w-3xl mx-auto w-full px-4 py-6 space-y-5 flex-1">
           {/* Date picker */}
           <div className="space-y-2">
             <label className="text-xs font-semibold text-slate-500 flex items-center gap-2">
@@ -612,7 +612,7 @@ const ExerciceSpirituelDashboard: React.FC = () => {
             <Loader2 size={28} className="animate-spin text-indigo-400" />
           </div>
         ) : (
-          <div className="max-w-2xl mx-auto w-full px-4 py-6 space-y-4 flex-1">
+          <div className="max-w-3xl mx-auto w-full px-4 py-6 space-y-4 flex-1">
             {enabledObjectives.length === 0 ? (
               <div className="bg-amber-50 border border-amber-200 rounded-2xl p-8 text-center">
                 <Target size={36} className="text-amber-400 mx-auto mb-3" />
@@ -757,7 +757,7 @@ const ExerciceSpirituelDashboard: React.FC = () => {
             <Loader2 size={28} className="animate-spin text-indigo-400" />
           </div>
         ) : (
-          <div className="max-w-2xl mx-auto w-full px-4 py-6 space-y-4 flex-1">
+          <div className="max-w-3xl mx-auto w-full px-4 py-6 space-y-4 flex-1">
             <div className="bg-indigo-50 border border-indigo-100 rounded-2xl px-5 py-4">
               <p className="text-sm font-semibold text-indigo-800 mb-1">Mes engagements {currentYear}</p>
               <p className="text-xs text-indigo-500 leading-relaxed">
@@ -874,7 +874,7 @@ const ExerciceSpirituelDashboard: React.FC = () => {
 
       {/* ── Panneau de notifications unifié ── */}
       {showNotifs && (
-        <div className="mx-4 mt-4 space-y-3">
+        <div className="max-w-3xl mx-auto px-4 mt-4 space-y-3">
           <div className="flex items-center justify-between">
             <p className="text-xs font-bold text-slate-700 flex items-center gap-1.5"><Bell size={13} className="text-indigo-500" /> Notifications</p>
             <button onClick={() => setShowNotifs(false)} className="p-1 rounded-lg hover:bg-slate-100 text-slate-400 transition-colors"><X size={14} /></button>
@@ -966,10 +966,10 @@ const ExerciceSpirituelDashboard: React.FC = () => {
         </div>
       )}
 
-      <div className="max-w-2xl mx-auto w-full px-4 py-5 space-y-5 flex-1">
+      <div className="max-w-3xl mx-auto w-full px-4 py-5 space-y-5 flex-1">
 
         {/* ── 4 boutons d'action ── */}
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           <button
             onClick={() => setActiveView('exercices')}
             className="flex flex-col items-center gap-2 p-4 bg-indigo-600 text-white rounded-2xl shadow-lg shadow-indigo-200 hover:bg-indigo-700 transition-all active:scale-95"
@@ -1015,17 +1015,17 @@ const ExerciceSpirituelDashboard: React.FC = () => {
 
         {/* ── Stats rapides ── */}
         <div className="grid grid-cols-3 gap-3 text-center">
-          <div className="bg-white rounded-2xl border border-slate-100 shadow-sm py-3 px-2">
-            <p className="text-lg font-black text-indigo-600">{allExercises.length}</p>
-            <p className="text-[10px] text-slate-400 font-semibold">Journaliers</p>
+          <div className="bg-white rounded-2xl border border-slate-100 shadow-sm py-3 px-2 md:py-4">
+            <p className="text-lg md:text-2xl font-black text-indigo-600">{allExercises.length}</p>
+            <p className="text-[10px] md:text-xs text-slate-400 font-semibold mt-0.5">Journaliers</p>
           </div>
-          <div className="bg-white rounded-2xl border border-slate-100 shadow-sm py-3 px-2">
-            <p className="text-lg font-black text-emerald-600">{monthlyPoints.length}</p>
-            <p className="text-[10px] text-slate-400 font-semibold">Mensuels</p>
+          <div className="bg-white rounded-2xl border border-slate-100 shadow-sm py-3 px-2 md:py-4">
+            <p className="text-lg md:text-2xl font-black text-emerald-600">{monthlyPoints.length}</p>
+            <p className="text-[10px] md:text-xs text-slate-400 font-semibold mt-0.5">Mensuels</p>
           </div>
-          <div className="bg-white rounded-2xl border border-slate-100 shadow-sm py-3 px-2">
-            <p className="text-lg font-black text-violet-600">{enabledObjectives.length}</p>
-            <p className="text-[10px] text-slate-400 font-semibold">Exercices</p>
+          <div className="bg-white rounded-2xl border border-slate-100 shadow-sm py-3 px-2 md:py-4">
+            <p className="text-lg md:text-2xl font-black text-violet-600">{enabledObjectives.length}</p>
+            <p className="text-[10px] md:text-xs text-slate-400 font-semibold mt-0.5">Exercices</p>
           </div>
         </div>
 

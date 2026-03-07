@@ -90,7 +90,7 @@ const MonEspaceActivites: React.FC = () => {
         </button>
       </header>
 
-      <div className="max-w-2xl mx-auto w-full px-4 py-6 space-y-6 flex-1">
+      <div className="max-w-3xl mx-auto w-full px-4 py-6 flex-1">
         {loading ? (
           <div className="flex items-center justify-center py-16">
             <div className="w-8 h-8 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
@@ -104,8 +104,9 @@ const MonEspaceActivites: React.FC = () => {
             <p className="text-xs text-slate-400">Vous n'êtes pas encore affecté(e) à un culte ou une activité.</p>
           </div>
         ) : (
-          <>
-            {upcoming.length > 0 && (
+          <div className="md:grid md:grid-cols-2 md:gap-6 space-y-6 md:space-y-0 md:items-start">
+            {/* ── À venir ── */}
+            {upcoming.length > 0 ? (
               <div className="space-y-3">
                 <div className="flex items-center gap-2">
                   <span className="px-2.5 py-1 bg-amber-500 text-white text-xs font-bold rounded-lg">À venir</span>
@@ -137,7 +138,14 @@ const MonEspaceActivites: React.FC = () => {
                   })}
                 </div>
               </div>
+            ) : (
+              <div className="hidden md:flex flex-col items-center justify-center py-10 text-center bg-white border border-slate-100 rounded-2xl">
+                <UserCheck size={28} className="text-slate-200 mb-2" />
+                <p className="text-xs text-slate-400">Aucune activité à venir</p>
+              </div>
             )}
+
+            {/* ── Passées ── */}
             {past.length > 0 && (
               <div className="space-y-3">
                 <div className="flex items-center gap-2">
@@ -165,7 +173,7 @@ const MonEspaceActivites: React.FC = () => {
                 </div>
               </div>
             )}
-          </>
+          </div>
         )}
       </div>
     </div>

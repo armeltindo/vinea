@@ -224,7 +224,10 @@ const PersonDetailModal: React.FC<PersonDetailModalProps> = ({ target, onClose, 
   };
 
   return (
-    <div className="fixed inset-0 z-[200] flex flex-col bg-slate-50">
+    <>
+      {/* Backdrop desktop */}
+      <div className="hidden md:block fixed inset-0 z-[199] bg-black/40 backdrop-blur-sm" onClick={onClose} />
+      <div className="fixed inset-0 z-[200] flex flex-col bg-slate-50 md:inset-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-full md:max-w-2xl md:rounded-3xl md:shadow-2xl md:h-[90vh] md:overflow-hidden">
       {/* Header */}
       <div className={cn("px-4 py-4 flex items-center gap-3 shadow-sm shrink-0", isMember ? "bg-indigo-700" : "bg-violet-700")}>
         <button onClick={onClose} className="p-2 rounded-xl bg-white/10 hover:bg-white/20 transition-colors text-white">
@@ -391,6 +394,7 @@ const PersonDetailModal: React.FC<PersonDetailModalProps> = ({ target, onClose, 
 
       </div>
     </div>
+    </>
   );
 };
 
@@ -884,30 +888,30 @@ const ExerciceSpirituelGroupe: React.FC = () => {
         </div>
       </header>
 
-      <div className="max-w-2xl mx-auto px-4 py-5 space-y-5">
+      <div className="max-w-3xl mx-auto px-4 py-5 space-y-5">
 
         {/* Stats résumé */}
         {!loading && (disciples.length > 0 || visitors.length > 0) && (
-          <div className="grid grid-cols-4 gap-2">
-            <div className="bg-white rounded-2xl border border-slate-200 p-3 text-center shadow-sm">
-              <p className="text-xl font-black text-slate-800">{disciples.length}</p>
-              <p className="text-[10px] text-slate-400 mt-0.5">Disciples</p>
+          <div className="grid grid-cols-4 gap-2 md:gap-3">
+            <div className="bg-white rounded-2xl border border-slate-200 p-3 md:p-4 text-center shadow-sm">
+              <p className="text-xl md:text-2xl font-black text-slate-800">{disciples.length}</p>
+              <p className="text-[10px] md:text-xs text-slate-400 mt-0.5">Disciples</p>
             </div>
-            <div className="bg-white rounded-2xl border border-slate-200 p-3 text-center shadow-sm">
-              <p className="text-xl font-black text-emerald-600">{activeCount}</p>
-              <p className="text-[10px] text-slate-400 mt-0.5">Actifs</p>
+            <div className="bg-white rounded-2xl border border-slate-200 p-3 md:p-4 text-center shadow-sm">
+              <p className="text-xl md:text-2xl font-black text-emerald-600">{activeCount}</p>
+              <p className="text-[10px] md:text-xs text-slate-400 mt-0.5">Actifs</p>
             </div>
-            <div className="bg-white rounded-2xl border border-amber-200 p-3 text-center shadow-sm">
-              <p className={cn("text-xl font-black", absentDisciples.length > 0 ? "text-amber-500" : "text-slate-300")}>
+            <div className="bg-white rounded-2xl border border-amber-200 p-3 md:p-4 text-center shadow-sm">
+              <p className={cn("text-xl md:text-2xl font-black", absentDisciples.length > 0 ? "text-amber-500" : "text-slate-300")}>
                 {absentDisciples.length}
               </p>
-              <p className="text-[10px] text-slate-400 mt-0.5">Absents</p>
+              <p className="text-[10px] md:text-xs text-slate-400 mt-0.5">Absents</p>
             </div>
-            <div className="bg-white rounded-2xl border border-violet-200 p-3 text-center shadow-sm">
-              <p className={cn("text-xl font-black", visitors.length > 0 ? "text-violet-600" : "text-slate-300")}>
+            <div className="bg-white rounded-2xl border border-violet-200 p-3 md:p-4 text-center shadow-sm">
+              <p className={cn("text-xl md:text-2xl font-black", visitors.length > 0 ? "text-violet-600" : "text-slate-300")}>
                 {visitors.length}
               </p>
-              <p className="text-[10px] text-slate-400 mt-0.5">Visiteurs</p>
+              <p className="text-[10px] md:text-xs text-slate-400 mt-0.5">Visiteurs</p>
             </div>
           </div>
         )}

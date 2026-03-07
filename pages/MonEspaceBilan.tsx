@@ -221,7 +221,7 @@ const MonEspaceBilan: React.FC = () => {
           <Loader2 size={28} className="animate-spin text-indigo-400" />
         </div>
       ) : (
-        <div className="max-w-2xl mx-auto px-4 py-6 space-y-4">
+        <div className="max-w-4xl mx-auto px-4 py-6 space-y-4">
 
           {/* ── Tab Objectifs ─────────────────────────────────── */}
           {activeTab === 'objectifs' && (
@@ -379,158 +379,162 @@ const MonEspaceBilan: React.FC = () => {
                   </button>
                 </div>
               ) : (
-                <>
-                  {/* Month/Year selector */}
-                  <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 space-y-4">
-                    <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider">Période du bilan</h3>
-                    <div className="grid grid-cols-2 gap-3">
-                      <div className="space-y-1">
-                        <label className="text-xs font-medium text-slate-500">Mois</label>
-                        <select
-                          value={selectedMonth}
-                          onChange={e => setSelectedMonth(Number(e.target.value))}
-                          className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none"
-                        >
-                          {MONTHS.map((m, i) => {
-                            const disabled = (selectedYear === currentYear && i > currentMonth) || selectedYear > currentYear;
-                            return (
-                              <option key={i} value={i} disabled={disabled}>
-                                {m}{disabled ? ' (futur)' : ''}
-                              </option>
-                            );
-                          })}
-                        </select>
+                <div className="md:grid md:grid-cols-[1fr_320px] md:gap-5 md:items-start space-y-4 md:space-y-0">
+
+                  {/* ── Colonne gauche : sélecteur + checklist ── */}
+                  <div className="space-y-4">
+                    {/* Month/Year selector */}
+                    <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 space-y-4">
+                      <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider">Période du bilan</h3>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="space-y-1">
+                          <label className="text-xs font-medium text-slate-500">Mois</label>
+                          <select
+                            value={selectedMonth}
+                            onChange={e => setSelectedMonth(Number(e.target.value))}
+                            className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none"
+                          >
+                            {MONTHS.map((m, i) => {
+                              const disabled = (selectedYear === currentYear && i > currentMonth) || selectedYear > currentYear;
+                              return (
+                                <option key={i} value={i} disabled={disabled}>
+                                  {m}{disabled ? ' (futur)' : ''}
+                                </option>
+                              );
+                            })}
+                          </select>
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-xs font-medium text-slate-500">Année</label>
+                          <select
+                            value={selectedYear}
+                            onChange={e => setSelectedYear(Number(e.target.value))}
+                            className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none"
+                          >
+                            <option value={currentYear}>{currentYear}</option>
+                            {new Date().getMonth() === 0 && new Date().getDate() <= 15 && (
+                              <option value={currentYear - 1}>{currentYear - 1}</option>
+                            )}
+                          </select>
+                        </div>
                       </div>
-                      <div className="space-y-1">
-                        <label className="text-xs font-medium text-slate-500">Année</label>
-                        <select
-                          value={selectedYear}
-                          onChange={e => setSelectedYear(Number(e.target.value))}
-                          className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none"
-                        >
-                          <option value={currentYear}>{currentYear}</option>
-                          {new Date().getMonth() === 0 && new Date().getDate() <= 15 && (
-                            <option value={currentYear - 1}>{currentYear - 1}</option>
-                          )}
-                        </select>
-                      </div>
+                      {existingBilan && (
+                        <p className="text-xs text-emerald-600 font-medium flex items-center gap-1.5">
+                          <CheckCircle2 size={13} /> Bilan déjà soumis — vous pouvez le modifier
+                        </p>
+                      )}
                     </div>
-                    {existingBilan && (
-                      <p className="text-xs text-emerald-600 font-medium flex items-center gap-1.5">
-                        <CheckCircle2 size={13} /> Bilan déjà soumis — vous pouvez le modifier
-                      </p>
+
+                    {/* Blocked states */}
+                    {isDeadlinePassed ? (
+                      <div className="bg-white rounded-2xl border border-slate-200 p-10 text-center">
+                        <Lock size={36} className="text-slate-300 mx-auto mb-3" />
+                        <p className="text-sm font-semibold text-slate-500">Période expirée</p>
+                        <p className="text-xs text-slate-400 mt-1.5">
+                          Le délai de soumission pour {selectedYear} est expiré (limite : 15 janvier {selectedYear + 1}).
+                        </p>
+                      </div>
+                    ) : isFutureMonth ? (
+                      <div className="bg-white rounded-2xl border border-slate-200 p-10 text-center">
+                        <Calendar size={36} className="text-slate-300 mx-auto mb-3" />
+                        <p className="text-sm font-semibold text-slate-500">Mois futur</p>
+                        <p className="text-xs text-slate-400 mt-1.5">
+                          L'évaluation ne peut pas être faite pour un mois à venir.
+                        </p>
+                      </div>
+                    ) : (
+                      <>
+                        {/* Exercise checklist */}
+                        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                          <div className="px-5 py-4 border-b border-slate-100">
+                            <h3 className="text-sm font-bold text-slate-800">
+                              Bilan de {MONTHS[selectedMonth]} {selectedYear}
+                            </h3>
+                            <p className="text-xs text-slate-400 mt-0.5">
+                              Cochez les exercices accomplis ce mois-ci
+                            </p>
+                          </div>
+
+                          <div className="divide-y divide-slate-100">
+                            {enabledObjectives.map(obj => {
+                              const ex = SPIRITUAL_EXERCISES_LIST.find(e => e.id === obj.exerciseId);
+                              if (!ex) return null;
+                              const isChecked = results[ex.id] === true;
+                              return (
+                                <button
+                                  key={ex.id}
+                                  onClick={() => setResults(prev => ({ ...prev, [ex.id]: !prev[ex.id] }))}
+                                  className={cn(
+                                    'w-full flex items-center gap-4 px-5 py-4 text-left transition-all',
+                                    isChecked ? 'bg-emerald-50' : 'hover:bg-slate-50'
+                                  )}
+                                >
+                                  <div className={cn(
+                                    'w-8 h-8 rounded-xl flex items-center justify-center border-2 shrink-0 transition-all',
+                                    isChecked
+                                      ? 'bg-emerald-600 border-emerald-600 text-white'
+                                      : 'bg-white border-slate-200 text-transparent'
+                                  )}>
+                                    <CheckCircle size={16} strokeWidth={3} />
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                    <p className={cn('text-sm font-semibold', isChecked ? 'text-emerald-800' : 'text-slate-700')}>
+                                      {ex.label}
+                                    </p>
+                                    <p className="text-xs text-slate-400">
+                                      Objectif : {ex.valueType === 'boolean' ? 'Fidélité' : `${obj.targetValue} ${ex.unit || ''}`}
+                                    </p>
+                                  </div>
+                                  <span className={cn(
+                                    'text-xs font-semibold px-2.5 py-1 rounded-lg shrink-0',
+                                    isChecked ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-400'
+                                  )}>
+                                    {isChecked ? 'À jour' : 'Non'}
+                                  </span>
+                                </button>
+                              );
+                            })}
+                          </div>
+
+                          <div className="px-5 py-4 border-t border-slate-100 bg-slate-50/50 flex items-center justify-between">
+                            <div>
+                              <p className="text-xs text-slate-500">Exercices validés</p>
+                              <p className={cn(
+                                'text-2xl font-bold',
+                                currentScore >= 4 ? 'text-emerald-600' : currentScore >= 2 ? 'text-amber-500' : 'text-rose-500'
+                              )}>
+                                {currentScore}
+                              </p>
+                            </div>
+                            <p className="text-xs text-slate-400">sur {enabledObjectives.length} engagements</p>
+                          </div>
+                        </div>
+
+                        <button
+                          onClick={handleSaveBilan}
+                          disabled={savingBilan}
+                          className={cn(
+                            'w-full py-4 rounded-2xl text-sm font-bold transition-all flex items-center justify-center gap-2 shadow-lg',
+                            savingBilan
+                              ? 'bg-slate-200 text-slate-400 cursor-not-allowed shadow-none'
+                              : bilanSaved
+                              ? 'bg-emerald-600 text-white shadow-emerald-200'
+                              : 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-indigo-200'
+                          )}
+                        >
+                          {savingBilan
+                            ? <><Loader2 size={18} className="animate-spin" /> Enregistrement...</>
+                            : bilanSaved
+                            ? <><CheckCircle2 size={18} /> Bilan enregistré !</>
+                            : <><Save size={18} /> {existingBilan ? 'Mettre à jour le bilan' : 'Soumettre le bilan'}</>}
+                        </button>
+                      </>
                     )}
                   </div>
 
-                  {/* Blocked states */}
-                  {isDeadlinePassed ? (
-                    <div className="bg-white rounded-2xl border border-slate-200 p-10 text-center">
-                      <Lock size={36} className="text-slate-300 mx-auto mb-3" />
-                      <p className="text-sm font-semibold text-slate-500">Période expirée</p>
-                      <p className="text-xs text-slate-400 mt-1.5">
-                        Le délai de soumission pour {selectedYear} est expiré (limite : 15 janvier {selectedYear + 1}).
-                      </p>
-                    </div>
-                  ) : isFutureMonth ? (
-                    <div className="bg-white rounded-2xl border border-slate-200 p-10 text-center">
-                      <Calendar size={36} className="text-slate-300 mx-auto mb-3" />
-                      <p className="text-sm font-semibold text-slate-500">Mois futur</p>
-                      <p className="text-xs text-slate-400 mt-1.5">
-                        L'évaluation ne peut pas être faite pour un mois à venir.
-                      </p>
-                    </div>
-                  ) : (
-                    <>
-                      {/* Exercise checklist */}
-                      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-                        <div className="px-5 py-4 border-b border-slate-100">
-                          <h3 className="text-sm font-bold text-slate-800">
-                            Bilan de {MONTHS[selectedMonth]} {selectedYear}
-                          </h3>
-                          <p className="text-xs text-slate-400 mt-0.5">
-                            Cochez les exercices accomplis ce mois-ci
-                          </p>
-                        </div>
-
-                        <div className="divide-y divide-slate-100">
-                          {enabledObjectives.map(obj => {
-                            const ex = SPIRITUAL_EXERCISES_LIST.find(e => e.id === obj.exerciseId);
-                            if (!ex) return null;
-                            const isChecked = results[ex.id] === true;
-                            return (
-                              <button
-                                key={ex.id}
-                                onClick={() => setResults(prev => ({ ...prev, [ex.id]: !prev[ex.id] }))}
-                                className={cn(
-                                  'w-full flex items-center gap-4 px-5 py-4 text-left transition-all',
-                                  isChecked ? 'bg-emerald-50' : 'hover:bg-slate-50'
-                                )}
-                              >
-                                <div className={cn(
-                                  'w-8 h-8 rounded-xl flex items-center justify-center border-2 shrink-0 transition-all',
-                                  isChecked
-                                    ? 'bg-emerald-600 border-emerald-600 text-white'
-                                    : 'bg-white border-slate-200 text-transparent'
-                                )}>
-                                  <CheckCircle size={16} strokeWidth={3} />
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                  <p className={cn('text-sm font-semibold', isChecked ? 'text-emerald-800' : 'text-slate-700')}>
-                                    {ex.label}
-                                  </p>
-                                  <p className="text-xs text-slate-400">
-                                    Objectif : {ex.valueType === 'boolean' ? 'Fidélité' : `${obj.targetValue} ${ex.unit || ''}`}
-                                  </p>
-                                </div>
-                                <span className={cn(
-                                  'text-xs font-semibold px-2.5 py-1 rounded-lg shrink-0',
-                                  isChecked ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-400'
-                                )}>
-                                  {isChecked ? 'À jour' : 'Non'}
-                                </span>
-                              </button>
-                            );
-                          })}
-                        </div>
-
-                        <div className="px-5 py-4 border-t border-slate-100 bg-slate-50/50 flex items-center justify-between">
-                          <div>
-                            <p className="text-xs text-slate-500">Exercices validés</p>
-                            <p className={cn(
-                              'text-2xl font-bold',
-                              currentScore >= 4 ? 'text-emerald-600' : currentScore >= 2 ? 'text-amber-500' : 'text-rose-500'
-                            )}>
-                              {currentScore}
-                            </p>
-                          </div>
-                          <p className="text-xs text-slate-400">sur {enabledObjectives.length} engagements</p>
-                        </div>
-                      </div>
-
-                      <button
-                        onClick={handleSaveBilan}
-                        disabled={savingBilan}
-                        className={cn(
-                          'w-full py-4 rounded-2xl text-sm font-bold transition-all flex items-center justify-center gap-2 shadow-lg',
-                          savingBilan
-                            ? 'bg-slate-200 text-slate-400 cursor-not-allowed shadow-none'
-                            : bilanSaved
-                            ? 'bg-emerald-600 text-white shadow-emerald-200'
-                            : 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-indigo-200'
-                        )}
-                      >
-                        {savingBilan
-                          ? <><Loader2 size={18} className="animate-spin" /> Enregistrement...</>
-                          : bilanSaved
-                          ? <><CheckCircle2 size={18} /> Bilan enregistré !</>
-                          : <><Save size={18} /> {existingBilan ? 'Mettre à jour le bilan' : 'Soumettre le bilan'}</>}
-                      </button>
-                    </>
-                  )}
-
-                  {/* Bilan history */}
+                  {/* ── Colonne droite : historique (visible dès qu'il y a des bilans) ── */}
                   {monthlyPoints.length > 0 && (
-                    <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
+                    <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 md:sticky md:top-20">
                       <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">
                         Historique des bilans
                       </h3>
@@ -563,7 +567,8 @@ const MonEspaceBilan: React.FC = () => {
                       </div>
                     </div>
                   )}
-                </>
+
+                </div>
               )}
             </>
           )}

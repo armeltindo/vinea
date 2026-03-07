@@ -196,128 +196,173 @@ const ExerciceSpirituelLogin: React.FC = () => {
     : '';
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-indigo-800 to-violet-900 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-indigo-800 to-violet-900 flex items-center justify-center p-4 md:p-10">
       {/* Fond décoratif */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute -top-40 -right-40 w-80 h-80 bg-white/5 rounded-full blur-3xl" />
         <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-violet-500/10 rounded-full blur-3xl" />
+        <div className="hidden md:block absolute top-1/3 left-1/4 w-64 h-64 bg-indigo-400/5 rounded-full blur-3xl" />
       </div>
 
-      <div className="relative w-full max-w-md">
-        {/* Logo / Titre */}
-        <div className="text-center mb-8">
-          <div className="w-16 h-16 mx-auto mb-4 shadow-xl">
-            <Logo className="w-full h-full" />
-          </div>
-          <h1 className="text-2xl font-bold text-white">Mon Espace - MIDC</h1>
-          <p className="text-indigo-200 text-sm mt-1 font-medium">Portail Membres — Vinea</p>
-        </div>
+      <div className="relative w-full max-w-md md:max-w-5xl">
+        <div className="md:grid md:grid-cols-2 md:gap-14 md:items-center">
 
-        {/* Card */}
-        <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-3xl p-8 shadow-2xl">
-          {step === 'form' ? (
-            <>
-              <p className="text-indigo-100 text-sm text-center mb-6 leading-relaxed">
-                Veuillez entrer votre numéro de téléphone et votre nom de famille.
-              </p>
+          {/* ── Colonne gauche : Logo + Formulaire ── */}
+          <div>
+            <div className="text-center mb-8">
+              <div className="w-16 h-16 md:w-20 md:h-20 mx-auto mb-4 shadow-xl">
+                <Logo className="w-full h-full" />
+              </div>
+              <h1 className="text-2xl md:text-3xl font-bold text-white">Mon Espace · MIDC</h1>
+              <p className="text-indigo-200 text-sm mt-1 font-medium">Portail Membres — Vinea</p>
+            </div>
 
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div>
-                  <label className="text-xs font-semibold text-indigo-200 mb-1.5 ml-1 block">
-                    Numéro de téléphone
-                  </label>
-                  <div className="relative">
-                    <Phone size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-indigo-300" />
-                    <input
-                      type="tel"
-                      value={phone}
-                      onChange={e => setPhone(e.target.value)}
-                      placeholder="Ex : 07 12 34 56 78"
-                      className="w-full pl-11 pr-4 py-3.5 bg-white/10 border border-white/20 rounded-xl text-white placeholder-indigo-300/60 focus:bg-white/20 focus:border-white/40 focus:ring-4 focus:ring-white/10 outline-none text-sm font-medium transition-all"
-                    />
+            <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-3xl p-8 shadow-2xl">
+              {step === 'form' ? (
+                <>
+                  <p className="text-indigo-100 text-sm text-center mb-6 leading-relaxed">
+                    Veuillez entrer votre numéro de téléphone et votre nom de famille.
+                  </p>
+
+                  <form onSubmit={handleSubmit} className="space-y-4">
+                    <div>
+                      <label className="text-xs font-semibold text-indigo-200 mb-1.5 ml-1 block">
+                        Numéro de téléphone
+                      </label>
+                      <div className="relative">
+                        <Phone size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-indigo-300" />
+                        <input
+                          type="tel"
+                          value={phone}
+                          onChange={e => setPhone(e.target.value)}
+                          placeholder="Ex : 07 12 34 56 78"
+                          className="w-full pl-11 pr-4 py-3.5 bg-white/10 border border-white/20 rounded-xl text-white placeholder-indigo-300/60 focus:bg-white/20 focus:border-white/40 focus:ring-4 focus:ring-white/10 outline-none text-sm font-medium transition-all"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="text-xs font-semibold text-indigo-200 mb-1.5 ml-1 block">
+                        Nom de famille
+                      </label>
+                      <div className="relative">
+                        <User size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-indigo-300" />
+                        <input
+                          type="text"
+                          value={lastName}
+                          onChange={e => setLastName(e.target.value)}
+                          placeholder="Ex : DUPONT"
+                          className="w-full pl-11 pr-4 py-3.5 bg-white/10 border border-white/20 rounded-xl text-white placeholder-indigo-300/60 focus:bg-white/20 focus:border-white/40 focus:ring-4 focus:ring-white/10 outline-none text-sm font-medium transition-all"
+                        />
+                      </div>
+                    </div>
+
+                    {error && (
+                      <div className="flex items-start gap-3 p-3 bg-rose-500/20 border border-rose-400/30 rounded-xl">
+                        <AlertCircle size={16} className="text-rose-300 mt-0.5 shrink-0" />
+                        <p className="text-rose-200 text-xs leading-relaxed">{error}</p>
+                      </div>
+                    )}
+
+                    <button
+                      type="submit"
+                      disabled={loading}
+                      className={cn(
+                        "w-full py-4 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2 mt-2",
+                        loading
+                          ? "bg-white/20 text-white/60 cursor-not-allowed"
+                          : "bg-white text-indigo-700 hover:bg-indigo-50 shadow-lg shadow-indigo-900/30"
+                      )}
+                    >
+                      {loading ? (
+                        <><Loader2 size={18} className="animate-spin" /> Vérification...</>
+                      ) : (
+                        <><LogIn size={18} /> Se connecter</>
+                      )}
+                    </button>
+                  </form>
+                </>
+              ) : (
+                <div className="text-center py-4 space-y-4">
+                  <div className="w-20 h-20 bg-emerald-400/20 rounded-full flex items-center justify-center mx-auto border-2 border-emerald-400/40">
+                    <span className="text-3xl">🙏</span>
+                  </div>
+                  <div>
+                    <h2 className="text-lg font-bold text-white leading-snug">{title}</h2>
+                    <p className="text-indigo-200 text-sm mt-2">Chargement de votre espace...</p>
+                  </div>
+                  <div className="flex justify-center">
+                    <Loader2 size={20} className="animate-spin text-indigo-300" />
                   </div>
                 </div>
+              )}
+            </div>
 
+            {/* Verset biblique du jour — mobile uniquement */}
+            <div className="mt-5 md:hidden bg-white/5 border border-white/10 rounded-2xl px-5 py-4 backdrop-blur-sm">
+              <div className="flex items-center gap-1.5 mb-2">
+                <Sparkles size={11} className="text-amber-300 shrink-0" />
+                <span className="text-[10px] font-semibold text-indigo-200 tracking-wide uppercase">Méditation du jour</span>
+              </div>
+              <div className="flex gap-2.5">
+                <Quote size={18} className="text-white/15 shrink-0 mt-0.5" />
                 <div>
-                  <label className="text-xs font-semibold text-indigo-200 mb-1.5 ml-1 block">
-                    Nom de famille
-                  </label>
-                  <div className="relative">
-                    <User size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-indigo-300" />
-                    <input
-                      type="text"
-                      value={lastName}
-                      onChange={e => setLastName(e.target.value)}
-                      placeholder="Ex : DUPONT"
-                      className="w-full pl-11 pr-4 py-3.5 bg-white/10 border border-white/20 rounded-xl text-white placeholder-indigo-300/60 focus:bg-white/20 focus:border-white/40 focus:ring-4 focus:ring-white/10 outline-none text-sm font-medium transition-all"
-                    />
+                  <p className="text-white/80 text-xs leading-relaxed italic">{selectedVerse.text}</p>
+                  <div className="flex items-center gap-2 mt-2">
+                    <div className="h-px w-4 bg-indigo-400/30" />
+                    <p className="text-[10px] font-medium text-indigo-300">{selectedVerse.ref}</p>
                   </div>
                 </div>
-
-                {error && (
-                  <div className="flex items-start gap-3 p-3 bg-rose-500/20 border border-rose-400/30 rounded-xl">
-                    <AlertCircle size={16} className="text-rose-300 mt-0.5 shrink-0" />
-                    <p className="text-rose-200 text-xs leading-relaxed">{error}</p>
-                  </div>
-                )}
-
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className={cn(
-                    "w-full py-4 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2 mt-2",
-                    loading
-                      ? "bg-white/20 text-white/60 cursor-not-allowed"
-                      : "bg-white text-indigo-700 hover:bg-indigo-50 shadow-lg shadow-indigo-900/30"
-                  )}
-                >
-                  {loading ? (
-                    <><Loader2 size={18} className="animate-spin" /> Vérification...</>
-                  ) : (
-                    <><LogIn size={18} /> Se connecter</>
-                  )}
-                </button>
-              </form>
-            </>
-          ) : (
-            <div className="text-center py-4 space-y-4">
-              <div className="w-20 h-20 bg-emerald-400/20 rounded-full flex items-center justify-center mx-auto border-2 border-emerald-400/40">
-                <span className="text-3xl">🙏</span>
-              </div>
-              <div>
-                <h2 className="text-lg font-bold text-white leading-snug">{title}</h2>
-                <p className="text-indigo-200 text-sm mt-2">Chargement de votre espace...</p>
-              </div>
-              <div className="flex justify-center">
-                <Loader2 size={20} className="animate-spin text-indigo-300" />
               </div>
             </div>
-          )}
-        </div>
 
-        {/* Verset biblique du jour */}
-        <div className="mt-6 bg-white/5 border border-white/10 rounded-2xl px-5 py-4 backdrop-blur-sm">
-          <div className="flex items-center gap-1.5 mb-2">
-            <Sparkles size={11} className="text-amber-300 shrink-0" />
-            <span className="text-[10px] font-semibold text-indigo-200 tracking-wide uppercase">Méditation du jour</span>
+            <p className="text-center text-indigo-300/60 text-xs mt-4">
+              Vinea — Système de gestion ecclésiale
+            </p>
           </div>
-          <div className="flex gap-2.5">
-            <Quote size={18} className="text-white/15 shrink-0 mt-0.5" />
-            <div>
-              <p className="text-white/80 text-xs leading-relaxed italic">
+
+          {/* ── Colonne droite — desktop uniquement ── */}
+          <div className="hidden md:flex flex-col gap-6">
+            {/* Grand verset du jour */}
+            <div className="bg-white/8 border border-white/15 rounded-3xl p-8 backdrop-blur-sm">
+              <div className="flex items-center gap-2 mb-5">
+                <Sparkles size={14} className="text-amber-300 shrink-0" />
+                <span className="text-xs font-semibold text-indigo-200 tracking-wide uppercase">Méditation du jour</span>
+              </div>
+              <Quote size={44} className="text-white/10 mb-3" />
+              <p className="text-white/90 text-lg leading-relaxed italic font-medium mb-5">
                 {selectedVerse.text}
               </p>
-              <div className="flex items-center gap-2 mt-2">
-                <div className="h-px w-4 bg-indigo-400/30" />
-                <p className="text-[10px] font-medium text-indigo-300">{selectedVerse.ref}</p>
+              <div className="flex items-center gap-3">
+                <div className="h-px flex-1 bg-indigo-400/30" />
+                <p className="text-sm font-semibold text-indigo-300">{selectedVerse.ref}</p>
+              </div>
+            </div>
+
+            {/* Bloc descriptif */}
+            <div className="bg-white/5 border border-white/10 rounded-2xl p-6 space-y-3">
+              <h3 className="text-white font-bold text-base flex items-center gap-2">
+                <span className="text-xl">🕊️</span> Portail MIDC
+              </h3>
+              <p className="text-indigo-200 text-sm leading-relaxed">
+                Saisissez vos exercices spirituels quotidiens, soumettez vos bilans mensuels et définissez vos engagements pour l'année.
+              </p>
+              <div className="grid grid-cols-3 gap-2 pt-1">
+                {[
+                  { icon: '📖', label: 'Exercices journaliers' },
+                  { icon: '📋', label: 'Bilans mensuels' },
+                  { icon: '🎯', label: 'Objectifs annuels' },
+                ].map(item => (
+                  <div key={item.label} className="bg-white/5 rounded-xl p-3 text-center">
+                    <p className="text-xl mb-1">{item.icon}</p>
+                    <p className="text-[10px] font-semibold text-indigo-300 leading-tight">{item.label}</p>
+                  </div>
+                ))}
               </div>
             </div>
           </div>
-        </div>
 
-        <p className="text-center text-indigo-300/60 text-xs mt-4">
-          Vinea — Système de gestion ecclésiale
-        </p>
+        </div>
       </div>
     </div>
   );

@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Phone, User, LogIn, Loader2, AlertCircle, Sparkles, Quote } from 'lucide-react';
+import { Phone, User, LogIn, Loader2, AlertCircle, Sparkles, Quote, ArrowRight } from 'lucide-react';
 import { getMemberByPhoneAndLastName, normalizeForLogin } from '../lib/db';
 import { MemberSession, MemberType } from '../types';
 import { cn } from '../utils';
@@ -247,22 +247,34 @@ const ExerciceSpirituelLogin: React.FC = () => {
                   </div>
                 )}
 
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className={cn(
-                    "w-full py-4 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2 mt-2",
-                    loading
-                      ? "bg-white/20 text-white/60 cursor-not-allowed"
-                      : "bg-white text-indigo-700 hover:bg-indigo-50 shadow-lg shadow-indigo-900/30"
-                  )}
-                >
-                  {loading ? (
-                    <><Loader2 size={18} className="animate-spin" /> Vérification...</>
-                  ) : (
-                    <><LogIn size={18} /> Se connecter</>
-                  )}
-                </button>
+                <div className="mt-4 space-y-3">
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className={cn(
+                      "w-full py-4 rounded-2xl text-sm font-bold transition-all duration-200 flex items-center justify-center gap-2.5 relative overflow-hidden group",
+                      loading
+                        ? "bg-white/20 text-white/60 cursor-not-allowed"
+                        : "bg-gradient-to-r from-white to-indigo-50 text-indigo-700 hover:from-indigo-50 hover:to-white shadow-xl shadow-indigo-900/40 hover:shadow-indigo-900/60 hover:scale-[1.01] active:scale-[0.99]"
+                    )}
+                  >
+                    {loading ? (
+                      <>
+                        <Loader2 size={18} className="animate-spin" />
+                        <span>Vérification en cours...</span>
+                      </>
+                    ) : (
+                      <>
+                        <LogIn size={18} className="shrink-0" />
+                        <span>Accéder à mon espace membre</span>
+                        <ArrowRight size={16} className="shrink-0 ml-auto opacity-50 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" />
+                      </>
+                    )}
+                  </button>
+                  <p className="text-center text-indigo-300/70 text-[11px]">
+                    Accès réservé aux membres enregistrés
+                  </p>
+                </div>
               </form>
             </>
           ) : (

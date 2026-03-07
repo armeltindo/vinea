@@ -3,41 +3,41 @@ import { useNavigate } from 'react-router-dom';
 import { usePermissions } from '../context/PermissionsContext';
 import Card from '../components/Card';
 import AIAnalysis from '../components/AIAnalysis';
-import { 
-  BookOpen, 
-  Sparkles, 
-  Calendar, 
-  ChevronRight, 
-  Plus, 
+import MeditationEditModal, { Meditation } from '../components/MeditationEditModal';
+import {
+  BookOpen,
+  Sparkles,
+  Calendar,
+  ChevronRight,
+  Plus,
   Search,
-  Heart, 
-  Share2, 
-  Clock, 
-  Languages, 
-  Loader2, 
-  X, 
-  Save, 
-  Send, 
-  Trash2, 
-  BookMarked, 
-  Quote, 
-  ArrowLeft, 
-  Copy, 
-  Check, 
-  TrendingUp, 
-  Download, 
-  ArrowUpFromLine, 
-  CheckCircle2, 
-  Info, 
-  HelpCircle, 
-  Eye, 
-  Timer, 
-  CheckCircle, 
-  History as HistoryIcon, 
-  Leaf, 
-  ScrollText, 
-  Lightbulb, 
-  PenTool, 
+  Heart,
+  Share2,
+  Clock,
+  Languages,
+  Loader2,
+  X,
+  Send,
+  Trash2,
+  BookMarked,
+  Quote,
+  ArrowLeft,
+  Copy,
+  Check,
+  TrendingUp,
+  Download,
+  ArrowUpFromLine,
+  CheckCircle2,
+  Info,
+  HelpCircle,
+  Eye,
+  Timer,
+  CheckCircle,
+  History as HistoryIcon,
+  Leaf,
+  ScrollText,
+  Lightbulb,
+  PenTool,
   FileSpreadsheet,
   Upload,
   MessageCircle,
@@ -127,18 +127,9 @@ const Meditations: React.FC = () => {
   const importInputRef = useRef<HTMLInputElement>(null);
 
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [editingMeditation, setEditingMeditation] = useState<Meditation | null>(null);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [meditationToDeleteId, setMeditationToDeleteId] = useState<string | null>(null);
-
-  const [formData, setFormData] = useState({
-    title: '',
-    scripture: '',
-    questions: '',
-    date: new Date().toISOString().split('T')[0],
-    excerpt: ''
-  });
 
 
   const availableYears = useMemo(() => {
@@ -186,19 +177,14 @@ const Meditations: React.FC = () => {
     setIsAnalyzing(false);
   };
 
-  const handleFormSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!formData.title.trim() && !formData.scripture.trim()) {
-      setErrors({ title: "Requis", scripture: "Requis" });
-      return;
-    }
-    setIsSubmitting(true);
-    const newMed = { ...formData, id: generateId(), likes: 0, isRead: false };
-    setMeditations([newMed, ...meditations]);
-    await createMeditation(newMed);
+  const handleModalSave = (saved: Meditation) => {
+    setMeditations(prev =>
+      prev.find(m => m.id === saved.id)
+        ? prev.map(m => m.id === saved.id ? saved : m)
+        : [saved, ...prev]
+    );
     setIsFormOpen(false);
-    setIsSubmitting(false);
-    setFormData({ title: '', scripture: '', questions: '', date: new Date().toISOString().split('T')[0], excerpt: '' });
+    setEditingMeditation(null);
   };
 
   const filteredMeditations = useMemo(() => {
@@ -297,7 +283,7 @@ const Meditations: React.FC = () => {
           <button onClick={handleAnalyze} disabled={isAnalyzing} className="flex items-center gap-2 px-4 py-2 bg-indigo-50 text-indigo-700 border border-indigo-100 rounded-xl text-xs font-medium shadow-sm transition-all hover:bg-indigo-100"><Sparkles size={16} /> {isAnalyzing ? '...' : 'Analyse Thématique'}</button>
           <button onClick={handleExportCSV} className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-xl text-xs font-medium text-slate-600 transition-all hover:bg-slate-50 shadow-sm"><Download size={18} /> Exporter</button>
           <button onClick={() => setIsImportModalOpen(true)} className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-xl text-xs font-medium text-slate-600 transition-all hover:bg-slate-50 shadow-sm"><ArrowUpFromLine size={18} /> Importer</button>
-          <button onClick={() => setIsFormOpen(true)} className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-xl text-xs font-medium hover:bg-indigo-700 shadow-lg"><Plus size={18} /> Créer</button>
+          <button onClick={() => { setEditingMeditation(null); setIsFormOpen(true); }} className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-xl text-xs font-medium hover:bg-indigo-700 shadow-lg"><Plus size={18} /> Créer</button>
         </div>
       </div>
 
@@ -422,50 +408,11 @@ const Meditations: React.FC = () => {
       </div>
 
       {isFormOpen && (
-        <div className="fixed inset-0 z-[180] flex items-center justify-center p-4 overflow-hidden">
-          <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity" onClick={() => setIsFormOpen(false)} />
-          <div className="relative w-full max-w-lg bg-white shadow-2xl animate-in zoom-in-95 duration-300 flex flex-col rounded-2xl overflow-hidden max-h-[90vh]">
-            <div className="px-10 py-8 bg-indigo-600 text-white shrink-0 flex items-center justify-between">
-              <div>
-                <h3 className="text-xl font-semibold">Rédaction</h3>
-                <p className="text-xs text-indigo-200 mt-0.5">Vinea Management</p>
-              </div>
-              <button onClick={() => setIsFormOpen(false)} className="p-2 hover:bg-white/10 rounded-full transition-colors">
-                <X size={24} />
-              </button>
-            </div>
-            <form onSubmit={handleFormSubmit} className="flex-1 overflow-y-auto p-10 space-y-6 custom-scrollbar bg-slate-50/30">
-              <div className="space-y-6">
-                <div className="space-y-1.5">
-                  <label className="text-xs font-medium text-slate-500 ml-1">Date</label>
-                  <input type="date" value={formData.date} onChange={e => setFormData({...formData, date: e.target.value})} className="w-full px-5 py-3.5 bg-white border border-slate-200 rounded-2xl text-sm font-semibold shadow-sm" />
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-xs font-medium text-slate-500 ml-1">Thème</label>
-                  <input type="text" value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} className={cn("w-full px-5 py-3.5 bg-white border rounded-2xl text-sm font-semibold shadow-sm", (errors as any).title ? "border-rose-300" : "border-slate-200")} />
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-xs font-medium text-slate-500 ml-1">Versets</label>
-                  <input type="text" value={formData.scripture} onChange={e => setFormData({...formData, scripture: e.target.value})} className={cn("w-full px-5 py-3.5 bg-white border rounded-2xl text-sm font-bold shadow-sm", (errors as any).scripture ? "border-rose-300" : "border-slate-200")} />
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-xs font-medium text-slate-500 ml-1">Résumé</label>
-                  <textarea rows={6} value={formData.excerpt} onChange={e => setFormData({...formData, excerpt: e.target.value})} className="w-full px-5 py-4 bg-white border border-slate-200 rounded-xl text-sm font-medium resize-none shadow-sm" />
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-xs font-medium text-slate-500 ml-1">Questions</label>
-                  <textarea rows={4} value={formData.questions} onChange={e => setFormData({...formData, questions: e.target.value})} className="w-full px-5 py-4 bg-white border border-slate-200 rounded-xl text-sm font-medium resize-none shadow-sm" />
-                </div>
-              </div>
-              <div className="pt-8 flex gap-4">
-                <button type="button" onClick={() => setIsFormOpen(false)} className="flex-1 py-4 bg-white border border-slate-200 text-slate-500 rounded-2xl text-xs font-medium">Annuler</button>
-                <button type="submit" disabled={isSubmitting} className="flex-1 py-4 bg-indigo-600 text-white rounded-2xl text-xs font-medium shadow-xl hover:bg-indigo-700">
-                  {isSubmitting ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />} Publier
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
+        <MeditationEditModal
+          meditation={editingMeditation}
+          onSave={handleModalSave}
+          onClose={() => { setIsFormOpen(false); setEditingMeditation(null); }}
+        />
       )}
 
       {isImportModalOpen && (

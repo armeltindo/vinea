@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
-  ArrowLeft, Calendar, Clock, Copy, Heart,
+  ArrowLeft, Calendar, Clock, Copy, Edit, Heart,
   Leaf, Loader2, MessageCircle, Quote, Trash2
 } from 'lucide-react';
 import { getMeditations, updateMeditation, deleteMeditation } from '../lib/db';
 import { cn } from '../utils';
 import { usePermissions } from '../context/PermissionsContext';
+import MeditationEditModal, { Meditation } from '../components/MeditationEditModal';
 
 const THEME_MAX_LENGTH = 60;
 
@@ -22,6 +23,7 @@ const MeditationDetailPage: React.FC = () => {
   const [isThemeExpanded, setIsThemeExpanded] = useState(false);
   const [scrollProgress, setScrollProgress] = useState(0);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
+  const [isEditOpen, setIsEditOpen] = useState(false);
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
@@ -71,6 +73,11 @@ const MeditationDetailPage: React.FC = () => {
     if (!meditation) return;
     await deleteMeditation(meditation.id);
     navigate('/meditations');
+  };
+
+  const handleEditSave = (updated: Meditation) => {
+    setMeditation(updated);
+    setIsEditOpen(false);
   };
 
   if (loading) {
@@ -155,6 +162,12 @@ const MeditationDetailPage: React.FC = () => {
                 title="Copier la réflexion"
               >
                 <Copy size={13} />
+              </button>
+              <button
+                onClick={() => setIsEditOpen(true)}
+                className="flex items-center gap-1.5 px-3 py-2 bg-indigo-500/30 hover:bg-indigo-500/40 rounded-xl text-white text-xs font-medium transition-all border border-indigo-400/20"
+              >
+                <Edit size={13} /> Modifier
               </button>
               {canDelete('meditations') && (
                 <button
@@ -296,6 +309,14 @@ const MeditationDetailPage: React.FC = () => {
         </div>
 
       </div>
+
+      {isEditOpen && meditation && (
+        <MeditationEditModal
+          meditation={meditation as Meditation}
+          onSave={handleEditSave}
+          onClose={() => setIsEditOpen(false)}
+        />
+      )}
 
       {/* Delete confirm */}
       {isDeleteConfirmOpen && (

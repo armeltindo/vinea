@@ -261,7 +261,7 @@ const MemberEditModal: React.FC<MemberEditModalProps> = ({
           await createDiscipleshipPair({
             id: generateId(), mentorId: newMentorId, discipleId: savedMember.id,
             startDate: new Date().toISOString().split('T')[0],
-            progress: 0, status: 'active', lastMeeting: '',
+            progress: 0, status: 'Actif', lastMeeting: '',
           });
         }
       } else if (existingPair) {

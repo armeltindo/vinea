@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import {
   Calendar, Save, LogOut, CheckCircle2, AlertCircle, Loader2, Bell, Users,
   Trash2, ClipboardCheck, Target, Flame, CheckCircle, Lock, ArrowLeft,
-  Plus, ChevronRight, UserCheck
+  Plus, ChevronRight, UserCheck, UserPlus, UserX, X
 } from 'lucide-react';
 import {
   getSpiritualExerciseTypes,
@@ -18,11 +18,14 @@ import {
   getServicesByMemberId,
   getMemberAssignmentNotifications,
   markNotificationRead,
+  getVisitorsByParrainId,
+  getDisciplesByMentorId,
+  getRecentAttendanceSessions,
 } from '../lib/db';
 import {
   SpiritualExerciseType, DailyExercise, MemberSession,
   YearlySpiritualGoals, MonthlySpiritualPoint, SpiritualObjective,
-  ChurchService
+  ChurchService, Visitor, Member, AttendanceSession
 } from '../types';
 import { SPIRITUAL_EXERCISES_LIST } from '../constants';
 import { cn, generateId } from '../utils';
@@ -108,6 +111,11 @@ const ExerciceSpirituelDashboard: React.FC = () => {
   const [assignedServices, setAssignedServices] = useState<ChurchService[]>([]);
   const [assignmentNotifs, setAssignmentNotifs] = useState<any[]>([]);
 
+  // ── Extra notifications state ──
+  const [visitorAssignments, setVisitorAssignments] = useState<Visitor[]>([]);
+  const [discipleAssignments, setDiscipleAssignments] = useState<Member[]>([]);
+  const [recentAbsences, setRecentAbsences] = useState<AttendanceSession[]>([]);
+
   // ── UI state ──
   const [activeView, setActiveView] = useState<ActiveView>(null);
   const [historyTab, setHistoryTab] = useState<HistoryTab>('exercices');
@@ -169,6 +177,24 @@ const ExerciceSpirituelDashboard: React.FC = () => {
       setAssignedServices(services);
       setAssignmentNotifs(notifs);
     });
+  }, [session]);
+
+  // ── Load visitors, disciples, absences ───────────────────
+  useEffect(() => {
+    if (!session) return;
+    const load = async () => {
+      const [visitors, sessions] = await Promise.all([
+        getVisitorsByParrainId(session.memberId),
+        getRecentAttendanceSessions(15),
+      ]);
+      setVisitorAssignments(visitors.filter(v => v.status !== 'Intégration/Membre'));
+      setRecentAbsences(sessions.filter(s => s.absentMembers.includes(session.memberId)));
+      if (session.isDiscipleMaker) {
+        const disciples = await getDisciplesByMentorId(session.memberId);
+        setDiscipleAssignments(disciples);
+      }
+    };
+    load();
   }, [session]);
 
   // ── Load goals & bilan ────────────────────────────────────
@@ -405,7 +431,6 @@ const ExerciceSpirituelDashboard: React.FC = () => {
             {activeView === 'exercices' ? 'Points journaliers'
               : activeView === 'bilan' ? 'Points mensuels'
               : activeView === 'objectifs' ? 'Définir mes exercices'
-              : activeView === 'activites' ? 'Mes activités programmées'
               : 'Mon Espace - MIDC'}
           </h1>
           <p className="text-indigo-200 text-xs">
@@ -414,17 +439,24 @@ const ExerciceSpirituelDashboard: React.FC = () => {
         </div>
       </div>
       <div className="flex items-center gap-2">
-        {activeView === null && (notifications.length > 0 || assignmentNotifs.filter(n => !n.isRead).length > 0) && (
-          <button
-            onClick={() => setShowNotifs(!showNotifs)}
-            className="relative p-2 rounded-xl bg-white/10 hover:bg-white/20 transition-colors"
-          >
-            <Bell size={18} />
-            <span className="absolute -top-1 -right-1 w-4 h-4 bg-rose-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center">
-              {notifications.length + assignmentNotifs.filter(n => !n.isRead).length}
-            </span>
-          </button>
-        )}
+        {activeView === null && (() => {
+          const totalNotifs = notifications.length
+            + assignmentNotifs.filter(n => !n.isRead).length
+            + visitorAssignments.length
+            + recentAbsences.length
+            + discipleAssignments.length;
+          return totalNotifs > 0 ? (
+            <button
+              onClick={() => setShowNotifs(!showNotifs)}
+              className="relative p-2 rounded-xl bg-white/10 hover:bg-white/20 transition-colors"
+            >
+              <Bell size={18} />
+              <span className="absolute -top-1 -right-1 w-4 h-4 bg-rose-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center">
+                {totalNotifs}
+              </span>
+            </button>
+          ) : null;
+        })()}
         {activeView === null && session.isDiscipleMaker && (
           <button
             onClick={() => navigate('/mon-espace/groupe')}
@@ -840,21 +872,97 @@ const ExerciceSpirituelDashboard: React.FC = () => {
     <div className="min-h-screen bg-slate-50 flex flex-col">
       {header}
 
-      {/* Notification panel */}
-      {showNotifs && notifications.length > 0 && (
-        <div className="mx-4 mt-4">
-          <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4">
-            <div className="flex items-start gap-3">
-              <AlertCircle size={18} className="text-amber-600 shrink-0 mt-0.5" />
-              <div className="flex-1">
-                <p className="text-xs font-bold text-amber-800 mb-1">Jours sans exercices soumis :</p>
-                <ul className="space-y-0.5">
-                  {notifications.map(n => <li key={n} className="text-xs text-amber-700">• {n}</li>)}
-                </ul>
-                <button onClick={() => setShowNotifs(false)} className="mt-2 text-xs text-amber-600 font-medium hover:text-amber-800 transition-colors">Fermer</button>
+      {/* ── Panneau de notifications unifié ── */}
+      {showNotifs && (
+        <div className="mx-4 mt-4 space-y-3">
+          <div className="flex items-center justify-between">
+            <p className="text-xs font-bold text-slate-700 flex items-center gap-1.5"><Bell size={13} className="text-indigo-500" /> Notifications</p>
+            <button onClick={() => setShowNotifs(false)} className="p-1 rounded-lg hover:bg-slate-100 text-slate-400 transition-colors"><X size={14} /></button>
+          </div>
+
+          {/* Exercices manquants */}
+          {notifications.length > 0 && (
+            <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4">
+              <div className="flex items-start gap-3">
+                <AlertCircle size={16} className="text-amber-600 shrink-0 mt-0.5" />
+                <div className="flex-1">
+                  <p className="text-xs font-bold text-amber-800 mb-1">Jours sans exercices soumis</p>
+                  <ul className="space-y-0.5">
+                    {notifications.map(n => <li key={n} className="text-xs text-amber-700">• {n}</li>)}
+                  </ul>
+                </div>
               </div>
             </div>
-          </div>
+          )}
+
+          {/* Affectations de service (non lues) */}
+          {assignmentNotifs.filter(n => !n.isRead).length > 0 && (
+            <div className="bg-indigo-50 border border-indigo-200 rounded-2xl p-4 space-y-2">
+              <p className="text-xs font-bold text-indigo-800 flex items-center gap-1.5"><UserCheck size={13} /> Affectations aux cultes</p>
+              {assignmentNotifs.filter(n => !n.isRead).map(notif => (
+                <div key={notif.id} className="flex items-start gap-2 p-2 bg-white rounded-xl border border-indigo-100">
+                  <CheckCircle2 size={13} className="text-indigo-500 mt-0.5 shrink-0" />
+                  <p className="text-xs text-slate-700 flex-1">{notif.message}</p>
+                  <button
+                    onClick={() => {
+                      markNotificationRead(notif.id);
+                      setAssignmentNotifs(prev => prev.map(n => n.id === notif.id ? { ...n, isRead: true } : n));
+                    }}
+                    className="text-indigo-400 hover:text-indigo-600 shrink-0 text-[10px] font-semibold"
+                  >Lu</button>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Visiteurs parrainés */}
+          {visitorAssignments.length > 0 && (
+            <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-4 space-y-2">
+              <p className="text-xs font-bold text-emerald-800 flex items-center gap-1.5"><UserPlus size={13} /> Visiteurs à accompagner ({visitorAssignments.length})</p>
+              {visitorAssignments.map(v => (
+                <div key={v.id} className="flex items-center gap-2 p-2 bg-white rounded-xl border border-emerald-100">
+                  <div className="w-6 h-6 rounded-lg bg-emerald-100 flex items-center justify-center text-[10px] font-bold text-emerald-700 shrink-0">
+                    {v.firstName.charAt(0)}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-semibold text-slate-800 truncate">{v.firstName} {v.lastName}</p>
+                    <p className="text-[10px] text-slate-400">{v.status}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Disciples */}
+          {discipleAssignments.length > 0 && (
+            <div className="bg-violet-50 border border-violet-200 rounded-2xl p-4 space-y-2">
+              <p className="text-xs font-bold text-violet-800 flex items-center gap-1.5"><Users size={13} /> Mes disciples ({discipleAssignments.length})</p>
+              {discipleAssignments.map(d => (
+                <div key={d.id} className="flex items-center gap-2 p-2 bg-white rounded-xl border border-violet-100">
+                  <div className="w-6 h-6 rounded-lg bg-violet-100 flex items-center justify-center text-[10px] font-bold text-violet-700 shrink-0">
+                    {d.firstName.charAt(0)}
+                  </div>
+                  <p className="text-xs font-semibold text-slate-800 truncate flex-1">{d.firstName} {d.lastName}</p>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Absences récentes */}
+          {recentAbsences.length > 0 && (
+            <div className="bg-rose-50 border border-rose-200 rounded-2xl p-4 space-y-2">
+              <p className="text-xs font-bold text-rose-800 flex items-center gap-1.5"><UserX size={13} /> Absences récentes ({recentAbsences.length})</p>
+              {recentAbsences.map(s => (
+                <div key={s.id} className="flex items-center gap-2 p-2 bg-white rounded-xl border border-rose-100">
+                  <AlertCircle size={13} className="text-rose-400 shrink-0" />
+                  <div className="min-w-0">
+                    <p className="text-xs font-semibold text-slate-800 truncate">{s.service}</p>
+                    <p className="text-[10px] text-slate-400">{new Date(s.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
@@ -920,31 +1028,6 @@ const ExerciceSpirituelDashboard: React.FC = () => {
             <p className="text-[10px] text-slate-400 font-semibold">Exercices</p>
           </div>
         </div>
-
-        {/* ── Notification d'affectation (nouvelles) ── */}
-        {showNotifs && assignmentNotifs.filter(n => !n.isRead).length > 0 && (
-          <div className="bg-indigo-50 border border-indigo-200 rounded-2xl p-4 space-y-2">
-            <div className="flex items-center gap-2 mb-1">
-              <Bell size={14} className="text-indigo-600" />
-              <p className="text-xs font-bold text-indigo-800">Nouvelles affectations</p>
-            </div>
-            {assignmentNotifs.filter(n => !n.isRead).map(notif => (
-              <div key={notif.id} className="flex items-start gap-2 p-2 bg-white rounded-xl border border-indigo-100">
-                <CheckCircle2 size={13} className="text-indigo-500 mt-0.5 shrink-0" />
-                <p className="text-xs text-slate-700 flex-1">{notif.message}</p>
-                <button
-                  onClick={() => {
-                    markNotificationRead(notif.id);
-                    setAssignmentNotifs(prev => prev.map(n => n.id === notif.id ? { ...n, isRead: true } : n));
-                  }}
-                  className="text-indigo-400 hover:text-indigo-600 shrink-0 text-[10px] font-semibold"
-                >
-                  Lu
-                </button>
-              </div>
-            ))}
-          </div>
-        )}
 
         {/* ── Onglets historiques ── */}
         <div className="space-y-3">

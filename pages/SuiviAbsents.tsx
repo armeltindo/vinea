@@ -400,8 +400,8 @@ const SuiviAbsents: React.FC = () => {
 
       {/* ── Liste ── */}
       {filteredEntries.length === 0 ? (
-        <div className="bg-white border border-slate-100 rounded-2xl py-20 flex flex-col items-center justify-center opacity-30 shadow-sm">
-          <UserCheck size={48} />
+        <div className="bg-white border border-slate-100 rounded-2xl py-20 flex flex-col items-center justify-center opacity-40 shadow-sm">
+          <UserCheck size={48} strokeWidth={1.5} />
           <p className="text-sm font-medium mt-3">Aucun absent trouvé</p>
         </div>
       ) : (

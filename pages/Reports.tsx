@@ -512,8 +512,8 @@ const Reports: React.FC = () => {
                  </div>
                </div>
              )) : (
-               <div className="py-20 text-center opacity-30">
-                 <Briefcase size={48} className="mx-auto" />
+               <div className="py-20 text-center opacity-40">
+                 <Briefcase size={48} className="mx-auto" strokeWidth={1.5} />
                  <p className="text-xs font-medium mt-4">Aucun département au registre</p>
                </div>
              )}

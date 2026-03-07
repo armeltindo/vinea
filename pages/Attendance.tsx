@@ -619,7 +619,7 @@ const Attendance: React.FC = () => {
                 </ComposedChart>
               </ResponsiveContainer>
             ) : (
-              <div className="h-full flex flex-col items-center justify-center opacity-20"><BarChartIcon size={64} /><p className="text-xs font-medium mt-4">Aucune donnée historique</p></div>
+              <div className="h-full flex flex-col items-center justify-center text-slate-300 opacity-40"><BarChartIcon size={64} strokeWidth={1.5} /><p className="text-xs font-medium mt-4 text-slate-400">Aucune donnée historique</p></div>
             )}
           </div>
         </Card>
@@ -629,7 +629,7 @@ const Attendance: React.FC = () => {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-600 transition-colors" size={14} />
               <input 
                 type="text" 
-                placeholder="Réchercher un absent..." 
+                placeholder="Rechercher un absent..." 
                 value={absentSearchTerm} 
                 onChange={(e) => setAbsentSearchTerm(e.target.value)} 
                 className="w-full pl-9 pr-3 py-2 bg-white text-slate-900 text-xs font-medium border border-slate-200 rounded-xl outline-none focus:ring-4 focus:ring-indigo-500/5 focus:border-indigo-300 transition-all shadow-sm" 
@@ -688,9 +688,9 @@ const Attendance: React.FC = () => {
                  </div>
                );
              }) : (
-               <div className="py-20 text-center opacity-30">
-                 <UserCheck size={48} className="mx-auto" />
-                 <p className="text-xs font-medium mt-2">Aucun absent trouvé</p>
+               <div className="py-20 text-center text-slate-300 opacity-40">
+                 <UserCheck size={48} className="mx-auto" strokeWidth={1.5} />
+                 <p className="text-xs font-medium mt-2 text-slate-400">Aucun absent trouvé</p>
                </div>
              )}
            </div>
@@ -705,7 +705,7 @@ const Attendance: React.FC = () => {
               <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-600 transition-colors" size={16} />
               <input 
                 type="text" 
-                placeholder="RECHERCHER PAR CULTE OU DATE..." 
+                placeholder="Rechercher par culte ou date..."
                 value={historySearchTerm} 
                 onChange={(e) => setHistorySearchTerm(e.target.value)}
                 className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none text-sm font-normal tracking-wide focus:bg-white focus:border-indigo-400 transition-all shadow-sm"
@@ -772,8 +772,8 @@ const Attendance: React.FC = () => {
                 </tr>
               )) : (
                 <tr>
-                  <td colSpan={8} className="px-8 py-20 text-center opacity-30">
-                    <ClipboardList size={40} className="mx-auto mb-2" />
+                  <td colSpan={8} className="px-8 py-20 text-center opacity-40">
+                    <ClipboardList size={40} className="mx-auto mb-2" strokeWidth={1.5} />
                     <p className="text-xs font-medium">Aucun relevé enregistré</p>
                   </td>
                 </tr>
@@ -917,7 +917,7 @@ const Attendance: React.FC = () => {
               <div className="p-8 bg-slate-50 border-b border-slate-100 shrink-0">
                  <div className="relative group">
                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-rose-500 transition-colors" size={18} />
-                   <input type="text" placeholder="Réchercher un fidèle absent..." value={absentSearchTerm} onChange={(e) => setAbsentSearchTerm(e.target.value)} className="w-full pl-12 pr-4 py-3.5 bg-white border border-slate-200 rounded-2xl outline-none text-sm font-bold shadow-sm focus:ring-4 focus:ring-rose-500/5 focus:border-rose-300 transition-all" />
+                   <input type="text" placeholder="Rechercher un fidèle absent..." value={absentSearchTerm} onChange={(e) => setAbsentSearchTerm(e.target.value)} className="w-full pl-12 pr-4 py-3.5 bg-white border border-slate-200 rounded-2xl outline-none text-sm font-bold shadow-sm focus:ring-4 focus:ring-rose-500/5 focus:border-rose-300 transition-all" />
                  </div>
               </div>
               <div className="flex-1 overflow-y-auto p-10 custom-scrollbar bg-slate-50/30 space-y-6">
@@ -997,7 +997,7 @@ const Attendance: React.FC = () => {
                     </div>
                   );
                 }) : (
-                  <div className="py-20 text-center opacity-30"><UserCheck size={48} className="mx-auto" /><p className="text-xs font-medium">Aucun absent trouvé</p></div>
+                  <div className="py-20 text-center opacity-40"><UserCheck size={48} className="mx-auto" strokeWidth={1.5} /><p className="text-xs font-medium">Aucun absent trouvé</p></div>
                 )}
               </div>
           </div>
@@ -1324,7 +1324,7 @@ const Attendance: React.FC = () => {
                        <p className="text-xs text-slate-400 italic">Inclut les membres et les visiteurs.</p>
                        <div className="relative group">
                           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
-                          <input type="text" placeholder="Réchercher pour cocher..." value={formMemberSearch} onChange={e => setFormMemberSearch(e.target.value)} className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none text-sm font-normal shadow-inner transition-all focus:bg-white" />
+                          <input type="text" placeholder="Rechercher pour cocher..." value={formMemberSearch} onChange={e => setFormMemberSearch(e.target.value)} className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none text-sm font-normal shadow-inner transition-all focus:bg-white" />
                        </div>
                        <div className="max-h-64 overflow-y-auto custom-scrollbar space-y-1 pr-1">
                           {allPeople.filter(p => `${p.firstName} ${p.lastName}`.toLowerCase().includes(formMemberSearch.toLowerCase())).map(p => (

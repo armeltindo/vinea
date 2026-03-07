@@ -768,8 +768,8 @@ const Planning: React.FC = () => {
                   );
                 }) : (
                   <tr>
-                    <td colSpan={6} className="px-10 py-32 text-center opacity-30">
-                       <ListChecks size={64} strokeWidth={1} className="mx-auto mb-4" />
+                    <td colSpan={6} className="px-10 py-32 text-center opacity-40">
+                       <ListChecks size={64} strokeWidth={1.5} className="mx-auto mb-4" />
                        <p className="text-sm font-medium">Aucune activité enregistrée</p>
                     </td>
                   </tr>

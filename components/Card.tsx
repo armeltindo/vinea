@@ -32,8 +32,12 @@ const Card: React.FC<CardProps> = ({
   return (
     <div
       onClick={onClick}
+      role={onClick ? 'button' : undefined}
+      tabIndex={onClick ? 0 : undefined}
+      onKeyDown={onClick ? (e) => e.key === 'Enter' && onClick(e as unknown as React.MouseEvent) : undefined}
       className={cn(
         'bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden',
+        onClick && 'cursor-pointer hover:shadow-md hover:border-slate-300 transition-all duration-200 active:scale-[0.995]',
         className
       )}
     >

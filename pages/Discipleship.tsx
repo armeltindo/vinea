@@ -426,8 +426,8 @@ const Discipleship: React.FC = () => {
                    </div>
                  );
                }) : searchQuery ? (
-                 <div className="col-span-full py-12 text-center opacity-30">
-                    <SearchIcon size={40} className="mx-auto" />
+                 <div className="col-span-full py-12 text-center opacity-40">
+                    <SearchIcon size={40} className="mx-auto" strokeWidth={1.5} />
                     <p className="text-xs font-medium mt-3">Aucun binôme ne correspond à votre recherche</p>
                  </div>
                ) : null}

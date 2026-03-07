@@ -416,7 +416,7 @@ const MeetingDetailPage: React.FC = () => {
               ))}
               {!meeting.decisions?.length && !isAddingDecision && (
                 <div className="text-center py-6 text-slate-400">
-                  <ClipboardCheck size={28} className="mx-auto mb-2 opacity-20" />
+                  <ClipboardCheck size={28} className="mx-auto mb-2 opacity-40" strokeWidth={1.5} />
                   <p className="text-xs italic">Aucune résolution enregistrée.</p>
                 </div>
               )}

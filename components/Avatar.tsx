@@ -126,7 +126,7 @@ const Avatar: React.FC<AvatarProps> = ({
           {onPhotoClick && (
             <button
               onClick={(e) => { e.stopPropagation(); onPhotoClick(); }}
-              className="absolute inset-0 bg-black/25 opacity-0 hover:opacity-100 flex items-center justify-center transition-opacity"
+              className="absolute inset-0 bg-black/25 opacity-0 hover:opacity-100 flex items-center justify-center transition-opacity duration-200"
               aria-label="Voir la photo en grand"
             >
               <Maximize2 size={size === 'xl' || size === '2xl' ? 22 : 16} className="text-white drop-shadow" />

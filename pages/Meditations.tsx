@@ -400,8 +400,8 @@ const Meditations: React.FC = () => {
             </div>
           </div>
         )) : (
-          <div className="col-span-full py-24 text-center bg-white border border-dashed border-slate-200 rounded-2xl opacity-30">
-            <Quote size={48} className="mx-auto text-slate-300 mb-4" />
+          <div className="col-span-full py-24 text-center bg-white border border-dashed border-slate-200 rounded-2xl opacity-40">
+            <Quote size={48} className="mx-auto text-slate-300 mb-4" strokeWidth={1.5} />
             <p className="text-sm text-slate-400 italic tracking-wide">Aucune méditation au registre.</p>
           </div>
         )}

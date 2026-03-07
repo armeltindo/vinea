@@ -588,7 +588,7 @@ const Visitors: React.FC = () => {
               )) : (
                 <tr>
                   <td colSpan={5} className="px-8 py-24 text-center">
-                    <div className="flex flex-col items-center gap-3 text-slate-400 opacity-30"><UserPlus size={48} /><p className="text-sm font-medium">Aucun Visiteur Enregistré</p></div>
+                    <div className="flex flex-col items-center gap-3 text-slate-400 opacity-40"><UserPlus size={48} strokeWidth={1.5} /><p className="text-sm font-medium">Aucun Visiteur Enregistré</p></div>
                   </td>
                 </tr>
               )}

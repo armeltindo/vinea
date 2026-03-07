@@ -235,7 +235,7 @@ const FollowUpCalendar: React.FC<FollowUpCalendarProps> = ({ visitors, onSelectV
           <div className="flex-1 overflow-y-auto custom-scrollbar space-y-4 pr-1">
             {(selectedDayData.visits.length === 0 && selectedDayData.followUps.length === 0) ? (
               <div className="flex flex-col items-center justify-center py-12 text-center text-slate-300">
-                <CalendarIcon size={40} className="mb-3 opacity-20" />
+                <CalendarIcon size={40} className="mb-3 opacity-40" strokeWidth={1.5} />
                 <p className="text-xs font-bold italic">Aucune activité prévue ce jour.</p>
               </div>
             ) : (

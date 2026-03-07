@@ -370,8 +370,8 @@ const Dashboard: React.FC<DashboardProps> = ({ adminName: _adminName }) => {
                 </AreaChart>
               </ResponsiveContainer>
             ) : (
-              <div className="h-full flex flex-col items-center justify-center text-slate-200">
-                <TrendingUp size={44} />
+              <div className="h-full flex flex-col items-center justify-center text-slate-300 opacity-40">
+                <TrendingUp size={44} strokeWidth={1.5} />
                 <p className="text-xs text-slate-400 mt-3">Aucune donnée financière</p>
               </div>
             )}
@@ -414,8 +414,8 @@ const Dashboard: React.FC<DashboardProps> = ({ adminName: _adminName }) => {
                   <ChevronRight size={14} className="text-slate-300 group-hover:text-indigo-400 group-hover:translate-x-0.5 transition-all" />
                 </div>
               )) : (
-                <div className="py-10 text-center flex flex-col items-center opacity-30">
-                  <CalendarDays size={40} />
+                <div className="py-10 text-center flex flex-col items-center opacity-40">
+                  <CalendarDays size={40} strokeWidth={1.5} />
                   <p className="text-xs text-slate-400 mt-2">Aucune activité prévue</p>
                 </div>
               )}
@@ -465,8 +465,8 @@ const Dashboard: React.FC<DashboardProps> = ({ adminName: _adminName }) => {
             ))}
           </div>
         ) : (
-          <div className="py-16 text-center flex flex-col items-center opacity-20">
-            <Briefcase size={40} />
+          <div className="py-16 text-center flex flex-col items-center opacity-40">
+            <Briefcase size={40} strokeWidth={1.5} />
             <p className="text-xs text-slate-400 mt-2">Aucun département assigné</p>
           </div>
         )}

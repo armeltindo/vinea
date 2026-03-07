@@ -669,8 +669,8 @@ const App: React.FC = () => {
                             </div>
                          </div>
                        )) : (
-                         <div className="py-16 text-center space-y-3 opacity-30">
-                            <Bell size={36} className="mx-auto" />
+                         <div className="py-16 text-center space-y-3 opacity-40">
+                            <Bell size={36} className="mx-auto" strokeWidth={1.5} />
                             <p className="text-xs font-medium text-slate-500">Aucune alerte pour le moment</p>
                          </div>
                        )}

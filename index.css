@@ -48,6 +48,26 @@ body {
   scrollbar-width: none;
 }
 
+/* ─── Scrollbar personnalisé ──────────────────── */
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #e2e8f0 transparent;
+}
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #e2e8f0;
+  border-radius: 10px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #cbd5e1;
+}
+
 /* ─── Transitions fluides ────────────────────── */
 button, a, [role="button"] {
   transition-property: color, background-color, border-color, box-shadow, opacity, transform;

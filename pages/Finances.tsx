@@ -837,7 +837,7 @@ const Finances: React.FC = () => {
             {view === 'campaigns' && (
               <button 
                 onClick={() => { setEditingCampaignId(null); setNewCampaign({ name: '', description: '', goal: undefined, startDate: new Date().toISOString().split('T')[0] }); setIsCampaignFormOpen(true); }}
-                className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-xl text-xs font-medium shadow-lg ml-4 shrink-0"
+                className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-xl text-xs font-medium shadow-lg hover:bg-indigo-700 active:scale-95 transition-all ml-4 shrink-0"
               >
                 <Plus size={14} /> Créer Campagne
               </button>
@@ -928,8 +928,8 @@ const Finances: React.FC = () => {
                   </div>
                 );
               }) : (
-                <div className="py-24 text-center bg-white border border-dashed border-slate-200 rounded-2xl opacity-30">
-                  <HistoryIcon size={48} className="mx-auto" />
+                <div className="py-24 text-center bg-white border border-dashed border-slate-200 rounded-2xl opacity-40">
+                  <HistoryIcon size={48} className="mx-auto" strokeWidth={1.5} />
                   <p className="text-sm font-medium mt-4">Aucune opération trouvée</p>
                 </div>
               )}
@@ -988,10 +988,10 @@ const Finances: React.FC = () => {
                   </div>
                 </Card>
               )) : (
-                <div className="col-span-2 py-24 text-center bg-white border border-dashed border-slate-200 rounded-2xl opacity-30">
-                  <Flag size={48} className="mx-auto" />
+                <div className="col-span-2 py-24 text-center bg-white border border-dashed border-slate-200 rounded-2xl opacity-40">
+                  <Flag size={48} className="mx-auto" strokeWidth={1.5} />
                   <p className="text-sm font-medium mt-4">Aucune campagne de don active</p>
-                  <button onClick={() => setIsCampaignFormOpen(true)} className="mt-4 px-6 py-2 bg-indigo-600 text-white rounded-xl text-xs font-medium">Lancer une campagne</button>
+                  <button onClick={() => setIsCampaignFormOpen(true)} className="mt-4 px-6 py-2 bg-indigo-600 text-white rounded-xl text-xs font-medium hover:bg-indigo-700 active:scale-95 transition-all">Lancer une campagne</button>
                 </div>
               )}
             </div>
@@ -1088,8 +1088,8 @@ const Finances: React.FC = () => {
                 </ResponsiveContainer>
               </div>
             ) : (
-              <div className="h-64 flex flex-col items-center justify-center text-slate-300 opacity-20 border-2 border-dashed border-slate-100 rounded-3xl">
-                <TrendingUp size={48} />
+              <div className="h-64 flex flex-col items-center justify-center text-slate-300 opacity-40 border-2 border-dashed border-slate-100 rounded-3xl">
+                <TrendingUp size={48} strokeWidth={1.5} />
                 <p className="text-xs font-medium mt-2">Aucune donnée</p>
               </div>
             )}
@@ -1570,8 +1570,8 @@ const Finances: React.FC = () => {
                         );
                       })}
                       {promises.filter(p => p.campaignId === selectedCampaign.id).length === 0 && (
-                        <div className="py-12 text-center opacity-20 border border-dashed border-slate-200 rounded-xl">
-                          <StickyNote size={40} className="mx-auto" />
+                        <div className="py-12 text-center opacity-40 border border-dashed border-slate-200 rounded-xl">
+                          <StickyNote size={40} className="mx-auto" strokeWidth={1.5} />
                           <p className="text-xs font-medium mt-3">Aucun engagement enregistré</p>
                         </div>
                       )}
@@ -1606,8 +1606,8 @@ const Finances: React.FC = () => {
                         );
                       })}
                       {operations.filter(op => op.campaignId === selectedCampaign.id).length === 0 && (
-                        <div className="py-12 text-center opacity-20">
-                          <HistoryIcon size={40} className="mx-auto" />
+                        <div className="py-12 text-center opacity-40">
+                          <HistoryIcon size={40} className="mx-auto" strokeWidth={1.5} />
                           <p className="text-xs font-medium mt-3">Aucun versement enregistré</p>
                         </div>
                       )}
@@ -1794,8 +1794,8 @@ const Finances: React.FC = () => {
                   </div>
                ))}
                {campaignDonorsSummary[donorListFilter].length === 0 && (
-                 <div className="py-24 text-center opacity-30">
-                    <UserX size={48} className="mx-auto" />
+                 <div className="py-24 text-center opacity-40">
+                    <UserX size={48} className="mx-auto" strokeWidth={1.5} />
                     <p className="text-xs font-medium mt-3">Aucun donateur dans cette catégorie</p>
                  </div>
                )}

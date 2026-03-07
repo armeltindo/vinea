@@ -717,9 +717,9 @@ const Members: React.FC = () => {
                 <tr>
                   <td colSpan={10} className="px-8 py-24 text-center">
                     <div className="flex flex-col items-center gap-3 text-slate-300">
-                      <Users size={64} strokeWidth={1} className="opacity-20 mb-2" />
+                      <Users size={64} strokeWidth={1.5} className="opacity-40 mb-2" />
                       <p className="text-sm font-medium">Base de données vide</p>
-                      <button onClick={() => setIsFormOpen(true)} className="mt-4 px-6 py-2 bg-indigo-600 text-white rounded-xl text-xs font-medium shadow-lg">Inscrire le premier membre</button>
+                      <button onClick={() => setIsFormOpen(true)} className="mt-4 px-6 py-2.5 bg-indigo-600 text-white rounded-xl text-xs font-medium shadow-lg hover:bg-indigo-700 active:scale-95 transition-all">Inscrire le premier membre</button>
                     </div>
                   </td>
                 </tr>

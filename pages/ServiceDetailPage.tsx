@@ -5,13 +5,13 @@ import {
   BookMarked, Quote, Copy, Check, Share2, Sparkles, Loader2,
   Globe, Youtube, Facebook, Headphones, ExternalLink, Printer,
   Edit, Trash2, Info, MessageSquareText, BrainCircuit, Send,
-  CheckCircle2, AlertTriangle, Tags
+  CheckCircle2, AlertTriangle, Tags, UserCheck
 } from 'lucide-react';
-import { getChurchServices, updateChurchService, deleteChurchService, getAppConfig } from '../lib/db';
+import { getChurchServices, updateChurchService, deleteChurchService, getAppConfig, getMembers } from '../lib/db';
 import ServiceEditModal from '../components/ServiceEditModal';
 import { SERVICES_LIST } from '../constants';
 import { analyzeSermon, generateSocialSummary, suggestSermonTags } from '../lib/gemini';
-import { ChurchService } from '../types';
+import { ChurchService, Member } from '../types';
 import { cn } from '../utils';
 import { usePermissions } from '../context/PermissionsContext';
 
@@ -25,6 +25,7 @@ const ServiceDetailPage: React.FC = () => {
   const [service, setService] = useState<ChurchService | null>(null);
   const [allServices, setAllServices] = useState<ChurchService[]>([]);
   const [availableServiceTypes, setAvailableServiceTypes] = useState(SERVICES_LIST);
+  const [members, setMembers] = useState<Member[]>([]);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
@@ -38,10 +39,11 @@ const ServiceDetailPage: React.FC = () => {
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
 
   useEffect(() => {
-    Promise.all([getChurchServices(), getAppConfig('service_types')]).then(([services, serviceTypes]) => {
+    Promise.all([getChurchServices(), getAppConfig('service_types'), getMembers()]).then(([services, serviceTypes, m]) => {
       const found = services.find(s => s.id === id) ?? null;
       setService(found);
       setAllServices(services);
+      setMembers(m);
       setNotFound(!found);
       setLoading(false);
       if (serviceTypes && Array.isArray(serviceTypes) && serviceTypes.length > 0) setAvailableServiceTypes(serviceTypes);
@@ -338,11 +340,68 @@ const ServiceDetailPage: React.FC = () => {
                   </div>
                 </div>
               )}
-              {!service.moderator && !service.worshipLeader && !service.attendance && (
+              {!service.moderator && !service.worshipLeader && !service.attendance && !Object.values(service.servicePersonnel ?? {}).some(v => v?.memberId) && (
                 <p className="text-xs text-slate-400 italic">Aucune information complémentaire.</p>
               )}
             </div>
           </div>
+
+          {/* Programmation des activités */}
+          {(() => {
+            const ROLE_LABELS: Record<string, string> = {
+              moderateur: 'Modérateur',
+              priereOuverture: "Prière d'ouverture",
+              adoration: 'Adoration',
+              annonces: 'Annonces',
+              accueil: 'Accueil',
+              conducteurOuvriers: 'Conducteur groupe des ouvriers',
+              conducteurFons: 'Conducteur groupe des fons',
+              conducteurEnfants: 'Conducteur groupe des enfants',
+              conducteurAdolescents: 'Conducteur groupe des adolescents',
+            };
+            const entries = Object.entries(service.servicePersonnel ?? {}).filter(([, v]) => v?.memberId);
+            return (
+              <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+                <div className="px-5 py-4 border-b border-slate-50 flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <UserCheck size={13} className="text-amber-500" />
+                    <h4 className="text-xs font-semibold text-slate-600">Programmation des activités</h4>
+                  </div>
+                  {entries.length > 0 && (
+                    <span className="px-2 py-0.5 bg-amber-100 text-amber-700 text-xs font-bold rounded-full">{entries.length}</span>
+                  )}
+                </div>
+                <div className="p-5">
+                  {entries.length === 0 ? (
+                    <p className="text-xs text-slate-400 italic">Aucune affectation enregistrée.</p>
+                  ) : (
+                    <div className="space-y-2.5">
+                      {entries.map(([role, item]) => {
+                        const member = members.find(m => m.id === item!.memberId);
+                        return (
+                          <div key={role} className="flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-xl overflow-hidden shrink-0 border border-slate-100">
+                              {member?.photoUrl ? (
+                                <img src={member.photoUrl} alt="" className="w-full h-full object-cover" />
+                              ) : (
+                                <div className="w-full h-full bg-amber-100 flex items-center justify-center text-xs font-bold text-amber-700">
+                                  {item!.memberName.charAt(0)}
+                                </div>
+                              )}
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <p className="text-xs font-semibold text-slate-800 truncate">{item!.memberName}</p>
+                              <p className="text-[10px] text-slate-400 truncate">{ROLE_LABELS[role] ?? role}</p>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })()}
 
           {/* Assistant Social */}
           <div className="bg-gradient-to-br from-emerald-600 to-emerald-700 rounded-2xl p-5 text-white shadow-lg shadow-emerald-100/50 space-y-4">
@@ -483,6 +542,7 @@ const ServiceDetailPage: React.FC = () => {
           service={service}
           allServices={allServices}
           availableServiceTypes={availableServiceTypes}
+          members={members}
           onSave={handleEditSave}
           onClose={() => setIsEditOpen(false)}
         />

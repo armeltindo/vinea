@@ -127,7 +127,8 @@ const ExerciceSpirituelLogin: React.FC = () => {
   const [foundMember, setFoundMember] = useState<MemberSession | null>(null);
 
   const selectedVerse = useMemo(() => {
-    return VERSES[Math.floor(Math.random() * VERSES.length)];
+    const dayIndex = Math.floor(Date.now() / 86400000);
+    return VERSES[dayIndex % VERSES.length];
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {

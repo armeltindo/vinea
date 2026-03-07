@@ -408,7 +408,8 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
   const currentYear = new Date().getFullYear();
   
   const selectedVerse = useMemo(() => {
-    return VERSES[Math.floor(Math.random() * VERSES.length)];
+    const dayIndex = Math.floor(Date.now() / 86400000);
+    return VERSES[dayIndex % VERSES.length];
   }, []);
 
   // Salutation contextuelle

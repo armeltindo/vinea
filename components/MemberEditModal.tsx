@@ -80,7 +80,10 @@ const uploadMemberPhoto = async (file: File, memberId: string): Promise<string> 
     img.src = url;
   });
   const fileName = `photo-${memberId}.webp`;
-  await supabase.storage.from('members').upload(fileName, blob, { upsert: true, contentType: 'image/webp' });
+  const { error: uploadError } = await supabase.storage
+    .from('members')
+    .upload(fileName, blob, { upsert: true, contentType: 'image/webp' });
+  if (uploadError) throw new Error(uploadError.message);
   const { data } = supabase.storage.from('members').getPublicUrl(fileName);
   return data.publicUrl;
 };
@@ -229,25 +232,29 @@ const MemberEditModal: React.FC<MemberEditModalProps> = ({
       let savedMember: Member;
       let previousDepts: string[] = [];
 
+      let photoUploadWarning = false;
+
       if (member) {
         previousDepts = member.departments ?? [];
         const isDiscipleMaker = ![MemberType.MEMBRE_SIMPLE, MemberType.ENFANT].includes(
           (formData.type ?? member.type) as MemberType
         );
-        let photoUrl = formData.photoUrl;
+        let photoUrl = member.photoUrl ?? ''; // keep original as fallback
         if (pendingPhotoFile) {
           try { photoUrl = await uploadMemberPhoto(pendingPhotoFile, member.id); }
-          catch { photoUrl = formData.photoUrl; }
+          catch { photoUploadWarning = true; } // keep original, do not save blob URL
+        } else {
+          photoUrl = formData.photoUrl ?? member.photoUrl ?? '';
         }
         savedMember = { ...member, ...formData, photoUrl, firstName: formattedFirstName, lastName: formattedLastName, isDiscipleMaker } as Member;
         await updateMember(member.id, savedMember);
       } else {
         const newId = generateId();
         const isDiscipleMaker = ![MemberType.MEMBRE_SIMPLE, MemberType.ENFANT].includes(formData.type as MemberType);
-        let photoUrl = formData.photoUrl;
+        let photoUrl = '';
         if (pendingPhotoFile) {
           try { photoUrl = await uploadMemberPhoto(pendingPhotoFile, newId); }
-          catch { photoUrl = formData.photoUrl; }
+          catch { photoUploadWarning = true; } // leave empty, do not save blob URL
         }
         savedMember = {
           ...formData as Member,

@@ -1290,12 +1290,12 @@ export const getMemberByPhoneAndLastName = async (
   const normalizedPhone = phone.replace(/\s/g, '');
   const { data, error } = await supabase
     .from('members')
-    .select('*')
-    .eq('phone', normalizedPhone);
+    .select('*');
   if (error) { console.error('getMemberByPhoneAndLastName:', error.message); return null; }
   if (!data || data.length === 0) return null;
   const normalizedInput = normalizeForLogin(lastName);
   const match = data.find((row: any) =>
+    (row.phone || '').replace(/\s/g, '') === normalizedPhone &&
     normalizeForLogin(row.last_name || '') === normalizedInput
   );
   return match ? dbToMember(match) : null;

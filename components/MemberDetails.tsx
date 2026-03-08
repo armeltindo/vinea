@@ -228,15 +228,13 @@ const MemberDetails: React.FC<MemberDetailsProps> = ({ member, isOpen, onClose, 
   const handleActivateAccount = async () => {
     setIsActivatingAccount(true);
     const username = await generateMemberUsername(member);
-    // Mot de passe : téléphone si disponible, sinon nom normalisé sans accent
-    const password = member.phone
-      ? member.phone.replace(/\s/g, '')
-      : member.lastName.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
     const success = await activateMemberAccount(member.id, username);
     setIsActivatingAccount(false);
     if (success) {
       if (onUpdateMember) onUpdateMember({ ...member, memberAccountActive: true, memberUsername: username });
-      setAccountModal({ username, password });
+      // username = téléphone (ce que le membre saisit dans le champ "Téléphone")
+      // password = nom de famille (ce que le membre saisit dans le champ "Nom de famille")
+      setAccountModal({ username: member.phone || '', password: member.lastName });
     }
   };
 
@@ -258,7 +256,7 @@ const MemberDetails: React.FC<MemberDetailsProps> = ({ member, isOpen, onClose, 
   const loginUrl = `${window.location.origin}/mon-espace`;
   const copyAll = () => {
     if (!accountModal) return;
-    const text = `Lien : ${loginUrl}\nIdentifiant : ${accountModal.username}\nMot de passe : ${accountModal.password}`;
+    const text = `Lien : ${loginUrl}\nTéléphone : ${accountModal.username}\nNom de famille : ${accountModal.password}`;
     handleCopy(text, 'all');
   };
 
@@ -918,7 +916,7 @@ const MemberDetails: React.FC<MemberDetailsProps> = ({ member, isOpen, onClose, 
                   </div>
                 </div>
                 <div className="bg-slate-50 rounded-xl p-4 border border-slate-200">
-                  <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Identifiant</p>
+                  <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Téléphone</p>
                   <div className="flex items-center justify-between gap-2">
                     <p className="text-sm font-black text-slate-800 font-mono">{accountModal.username}</p>
                     <button onClick={() => handleCopy(accountModal.username, 'username')} className="shrink-0 p-1.5 rounded-lg hover:bg-slate-200 transition-colors text-slate-500">
@@ -927,7 +925,7 @@ const MemberDetails: React.FC<MemberDetailsProps> = ({ member, isOpen, onClose, 
                   </div>
                 </div>
                 <div className="bg-slate-50 rounded-xl p-4 border border-slate-200">
-                  <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Mot de passe</p>
+                  <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Nom de famille</p>
                   <div className="flex items-center justify-between gap-2">
                     <p className="text-sm font-black text-slate-800 font-mono">{accountModal.password}</p>
                     <button onClick={() => handleCopy(accountModal.password, 'password')} className="shrink-0 p-1.5 rounded-lg hover:bg-slate-200 transition-colors text-slate-500">
@@ -1620,9 +1618,9 @@ const MemberDetails: React.FC<MemberDetailsProps> = ({ member, isOpen, onClose, 
               </div>
             </div>
 
-            {/* Identifiant */}
+            {/* Téléphone */}
             <div className="bg-slate-50 rounded-xl p-4 border border-slate-200">
-              <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Identifiant</p>
+              <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Téléphone</p>
               <div className="flex items-center justify-between gap-2">
                 <p className="text-sm font-black text-slate-800 font-mono">{accountModal.username}</p>
                 <button onClick={() => handleCopy(accountModal.username, 'username')} className="shrink-0 p-1.5 rounded-lg hover:bg-slate-200 transition-colors text-slate-500">
@@ -1631,9 +1629,9 @@ const MemberDetails: React.FC<MemberDetailsProps> = ({ member, isOpen, onClose, 
               </div>
             </div>
 
-            {/* Mot de passe */}
+            {/* Nom de famille */}
             <div className="bg-slate-50 rounded-xl p-4 border border-slate-200">
-              <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Mot de passe</p>
+              <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Nom de famille</p>
               <div className="flex items-center justify-between gap-2">
                 <p className="text-sm font-black text-slate-800 font-mono">{accountModal.password}</p>
                 <button onClick={() => handleCopy(accountModal.password, 'password')} className="shrink-0 p-1.5 rounded-lg hover:bg-slate-200 transition-colors text-slate-500">

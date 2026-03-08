@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { LogOut, ArrowLeft, Church, UserCheck } from 'lucide-react';
+import { LogOut, ArrowLeft, Church, UserCheck, Users } from 'lucide-react';
 import { getServicesByMemberId } from '../lib/db';
 import { MemberSession, ChurchService, ServicePersonnel } from '../types';
 
@@ -25,6 +25,23 @@ const getMemberRoleInService = (memberId: string, personnel?: ServicePersonnel):
     if (arr.some((item: any) => item?.memberId === memberId)) return ROLE_LABELS[role] ?? role;
   }
   return null;
+};
+
+const getOtherMembersInService = (
+  memberId: string,
+  personnel?: ServicePersonnel
+): { name: string; role: string }[] => {
+  if (!personnel) return [];
+  const result: { name: string; role: string }[] = [];
+  for (const [role, items] of Object.entries(personnel)) {
+    const arr: any[] = Array.isArray(items) ? items : items ? [items] : [];
+    for (const item of arr) {
+      if (item?.memberId && item.memberId !== memberId && item.memberName) {
+        result.push({ name: item.memberName, role: ROLE_LABELS[role] ?? role });
+      }
+    }
+  }
+  return result;
 };
 
 const MonEspaceActivites: React.FC = () => {
@@ -115,24 +132,43 @@ const MonEspaceActivites: React.FC = () => {
                 <div className="space-y-2">
                   {upcoming.map(service => {
                     const role = session ? getMemberRoleInService(session.memberId, service.servicePersonnel) : null;
+                    const others = session ? getOtherMembersInService(session.memberId, service.servicePersonnel) : [];
                     return (
-                      <div key={service.id} className="flex items-start gap-3 px-4 py-4 bg-amber-50 border border-amber-200 rounded-2xl">
-                        <div className="w-10 h-10 rounded-xl bg-amber-500 flex items-center justify-center shrink-0">
-                          <UserCheck size={17} className="text-white" />
+                      <div key={service.id} className="px-4 py-4 bg-amber-50 border border-amber-200 rounded-2xl space-y-3">
+                        <div className="flex items-start gap-3">
+                          <div className="w-10 h-10 rounded-xl bg-amber-500 flex items-center justify-center shrink-0">
+                            <UserCheck size={17} className="text-white" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-bold text-slate-800">{service.serviceType}</p>
+                            <p className="text-xs text-slate-500 mt-0.5">
+                              {new Date(service.date).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+                              {service.time ? ` · ${service.time}` : ''}
+                            </p>
+                            {service.theme && <p className="text-xs text-slate-600 mt-1 italic truncate">{service.theme}</p>}
+                            {role && (
+                              <span className="inline-block mt-1.5 px-2.5 py-1 bg-amber-200 text-amber-800 text-xs font-semibold rounded-lg">
+                                {role}
+                              </span>
+                            )}
+                          </div>
                         </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-bold text-slate-800">{service.serviceType}</p>
-                          <p className="text-xs text-slate-500 mt-0.5">
-                            {new Date(service.date).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
-                            {service.time ? ` · ${service.time}` : ''}
-                          </p>
-                          {service.theme && <p className="text-xs text-slate-600 mt-1 italic truncate">{service.theme}</p>}
-                          {role && (
-                            <span className="inline-block mt-1.5 px-2.5 py-1 bg-amber-200 text-amber-800 text-xs font-semibold rounded-lg">
-                              {role}
-                            </span>
-                          )}
-                        </div>
+                        {others.length > 0 && (
+                          <div className="border-t border-amber-200 pt-2.5">
+                            <div className="flex items-center gap-1.5 mb-2">
+                              <Users size={12} className="text-amber-600" />
+                              <p className="text-xs font-semibold text-amber-700">Programmés avec vous</p>
+                            </div>
+                            <div className="flex flex-wrap gap-1.5">
+                              {others.map((m, i) => (
+                                <div key={i} className="flex flex-col px-2.5 py-1.5 bg-white border border-amber-200 rounded-xl">
+                                  <span className="text-xs font-semibold text-slate-700 leading-tight">{m.name}</span>
+                                  <span className="text-[10px] text-amber-600 leading-tight">{m.role}</span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
                       </div>
                     );
                   })}
@@ -155,18 +191,37 @@ const MonEspaceActivites: React.FC = () => {
                 <div className="space-y-2">
                   {past.map(service => {
                     const role = session ? getMemberRoleInService(session.memberId, service.servicePersonnel) : null;
+                    const others = session ? getOtherMembersInService(session.memberId, service.servicePersonnel) : [];
                     return (
-                      <div key={service.id} className="flex items-start gap-3 px-4 py-3 bg-slate-50 border border-slate-100 rounded-2xl">
-                        <div className="w-9 h-9 rounded-xl bg-slate-200 flex items-center justify-center shrink-0">
-                          <UserCheck size={15} className="text-slate-500" />
+                      <div key={service.id} className="px-4 py-3 bg-slate-50 border border-slate-100 rounded-2xl space-y-2">
+                        <div className="flex items-start gap-3">
+                          <div className="w-9 h-9 rounded-xl bg-slate-200 flex items-center justify-center shrink-0">
+                            <UserCheck size={15} className="text-slate-500" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-xs font-bold text-slate-700">{service.serviceType}</p>
+                            <p className="text-xs text-slate-400 mt-0.5">
+                              {new Date(service.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
+                            </p>
+                            {role && <p className="text-xs text-slate-400 mt-0.5">{role}</p>}
+                          </div>
                         </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-xs font-bold text-slate-700">{service.serviceType}</p>
-                          <p className="text-xs text-slate-400 mt-0.5">
-                            {new Date(service.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
-                          </p>
-                          {role && <p className="text-xs text-slate-400 mt-0.5">{role}</p>}
-                        </div>
+                        {others.length > 0 && (
+                          <div className="border-t border-slate-200 pt-2">
+                            <div className="flex items-center gap-1.5 mb-1.5">
+                              <Users size={11} className="text-slate-400" />
+                              <p className="text-[10px] font-semibold text-slate-500">Équipe du culte</p>
+                            </div>
+                            <div className="flex flex-wrap gap-1">
+                              {others.map((m, i) => (
+                                <div key={i} className="flex flex-col px-2 py-1 bg-white border border-slate-200 rounded-lg">
+                                  <span className="text-[10px] font-semibold text-slate-600 leading-tight">{m.name}</span>
+                                  <span className="text-[9px] text-slate-400 leading-tight">{m.role}</span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
                       </div>
                     );
                   })}

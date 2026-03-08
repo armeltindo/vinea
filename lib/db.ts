@@ -1303,16 +1303,31 @@ export const getMemberByPhoneAndLastName = async (
 
 /**
  * Active le compte membre et persiste le username généré.
+ * Retourne true si la mise à jour a réussi, false sinon.
  */
 export const activateMemberAccount = async (
   memberId: string,
   username: string
-): Promise<void> => {
+): Promise<boolean> => {
   const { error } = await supabase
     .from('members')
     .update({ member_account_active: true, member_username: username })
     .eq('id', memberId);
-  if (error) console.error('activateMemberAccount:', error.message);
+  if (error) { console.error('activateMemberAccount:', error.message); return false; }
+  return true;
+};
+
+/**
+ * Désactive le compte membre et efface le username.
+ * Retourne true si la mise à jour a réussi, false sinon.
+ */
+export const deactivateMemberAccount = async (memberId: string): Promise<boolean> => {
+  const { error } = await supabase
+    .from('members')
+    .update({ member_account_active: false, member_username: null })
+    .eq('id', memberId);
+  if (error) { console.error('deactivateMemberAccount:', error.message); return false; }
+  return true;
 };
 
 /**

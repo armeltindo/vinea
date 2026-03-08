@@ -44,6 +44,7 @@ import {
   BarChart2,
   CreditCard,
   UserCheck,
+  UserX,
   Copy,
   KeyRound,
   Loader2
@@ -52,7 +53,7 @@ import MemberCardModal from './MemberCardModal';
 import { Member, MemberStatus, Department, DepartmentActivity, ActivityStatus, FinancialRecord, AttendanceSession, OperationType, FollowUpEntry } from '../types';
 import { formatPhone } from '../constants';
 import { cn, getInitials, getDisplayNickname, formatFirstName } from '../utils';
-import { getMembers, getDepartmentActivities, getDiscipleshipEnrollments, getDiscipleshipPairs, getFinancialRecords, getAttendanceSessions, generateMemberUsername, activateMemberAccount, updateMember } from '../lib/db';
+import { getMembers, getDepartmentActivities, getDiscipleshipEnrollments, getDiscipleshipPairs, getFinancialRecords, getAttendanceSessions, generateMemberUsername, activateMemberAccount, deactivateMemberAccount, updateMember } from '../lib/db';
 import Avatar from './Avatar';
 
 const MOIS = ['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
@@ -127,6 +128,7 @@ const MemberDetails: React.FC<MemberDetailsProps> = ({ member, isOpen, onClose, 
   const [financialRecords, setFinancialRecords] = useState<FinancialRecord[]>([]);
   const [attendanceSessions, setAttendanceSessions] = useState<AttendanceSession[]>([]);
   const [isActivatingAccount, setIsActivatingAccount] = useState(false);
+  const [isDeactivatingAccount, setIsDeactivatingAccount] = useState(false);
   const [accountModal, setAccountModal] = useState<{ username: string; password: string } | null>(null);
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const [localFollowUp, setLocalFollowUp] = useState<FollowUpEntry[]>(member.followUpHistory ?? []);
@@ -230,9 +232,21 @@ const MemberDetails: React.FC<MemberDetailsProps> = ({ member, isOpen, onClose, 
     const password = member.phone
       ? member.phone.replace(/\s/g, '')
       : member.lastName.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
-    await activateMemberAccount(member.id, username);
+    const success = await activateMemberAccount(member.id, username);
     setIsActivatingAccount(false);
-    setAccountModal({ username, password });
+    if (success) {
+      if (onUpdateMember) onUpdateMember({ ...member, memberAccountActive: true, memberUsername: username });
+      setAccountModal({ username, password });
+    }
+  };
+
+  const handleDeactivateAccount = async () => {
+    setIsDeactivatingAccount(true);
+    const success = await deactivateMemberAccount(member.id);
+    setIsDeactivatingAccount(false);
+    if (success && onUpdateMember) {
+      onUpdateMember({ ...member, memberAccountActive: false, memberUsername: undefined });
+    }
   };
 
   const handleCopy = (text: string, field: string) => {
@@ -448,23 +462,42 @@ const MemberDetails: React.FC<MemberDetailsProps> = ({ member, isOpen, onClose, 
 
         {/* Account Activation */}
         <div className="mb-6">
-          <button
-            onClick={handleActivateAccount}
-            disabled={isActivatingAccount}
-            className={cn(
-              "w-full py-3.5 rounded-2xl text-xs font-medium transition-all flex items-center justify-center gap-2 border shadow-sm",
-              member.memberAccountActive
-                ? "bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100"
-                : "bg-violet-50 text-violet-700 border-violet-200 hover:bg-violet-100"
-            )}
-          >
-            {isActivatingAccount
-              ? <><Loader2 size={15} className="animate-spin" /> Génération en cours...</>
-              : member.memberAccountActive
-              ? <><UserCheck size={15} /> Compte actif — Réinitialiser les informations de connexion</>
-              : <><KeyRound size={15} /> Activer le compte Exercices Spirituels</>
-            }
-          </button>
+          {member.memberAccountActive ? (
+            <div className="flex gap-2">
+              <button
+                onClick={handleActivateAccount}
+                disabled={isActivatingAccount || isDeactivatingAccount}
+                className="flex-1 py-3.5 rounded-2xl text-xs font-medium transition-all flex items-center justify-center gap-2 border shadow-sm bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100 disabled:opacity-60"
+              >
+                {isActivatingAccount
+                  ? <><Loader2 size={15} className="animate-spin" /> Génération en cours...</>
+                  : <><UserCheck size={15} /> Compte actif — Réinitialiser</>
+                }
+              </button>
+              <button
+                onClick={handleDeactivateAccount}
+                disabled={isDeactivatingAccount || isActivatingAccount}
+                className="py-3.5 px-4 rounded-2xl text-xs font-medium transition-all flex items-center justify-center gap-2 border shadow-sm bg-rose-50 text-rose-600 border-rose-200 hover:bg-rose-100 disabled:opacity-60"
+                title="Désactiver le compte"
+              >
+                {isDeactivatingAccount
+                  ? <Loader2 size={15} className="animate-spin" />
+                  : <UserX size={15} />
+                }
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={handleActivateAccount}
+              disabled={isActivatingAccount}
+              className="w-full py-3.5 rounded-2xl text-xs font-medium transition-all flex items-center justify-center gap-2 border shadow-sm bg-violet-50 text-violet-700 border-violet-200 hover:bg-violet-100 disabled:opacity-60"
+            >
+              {isActivatingAccount
+                ? <><Loader2 size={15} className="animate-spin" /> Génération en cours...</>
+                : <><KeyRound size={15} /> Activer le compte Exercices Spirituels</>
+              }
+            </button>
+          )}
         </div>
 
         {/* 2-column content grid */}

@@ -417,7 +417,7 @@ const Members: React.FC = () => {
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
         <div>
           <h2 className="text-2xl font-bold text-slate-900">Gestion des Membres</h2>
-          <p className="text-sm text-slate-500 font-medium italic opacity-70">Administrez la base de données vivante de votre communauté Vinea.</p>
+          <p className="text-sm text-slate-500 font-medium italic opacity-70">Administrez la base de données vivante de votre communauté MIDC.</p>
         </div>
         <div className="flex flex-wrap items-center gap-3">
           <button 

@@ -497,7 +497,7 @@ const Events: React.FC = () => {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h2 className="text-2xl font-bold text-slate-900">Planification des Événements</h2>
-          <p className="text-sm text-slate-500 font-medium italic">Vinea : Gérez vos grands rassemblements, conventions et retraites spirituelles.</p>
+          <p className="text-sm text-slate-500 font-medium italic">Gérez vos grands rassemblements, conventions et retraites spirituelles.</p>
         </div>
         <div className="flex gap-2">
           <button 

@@ -278,7 +278,7 @@ const Meditations: React.FC = () => {
   return (
     <div className="space-y-6 animate-in fade-in duration-500 pb-20">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div><h2 className="text-2xl font-bold text-slate-900">Méditations Quotidiennes</h2><p className="text-sm text-slate-500 font-medium italic">Vinea : Édifiez votre assemblée.</p></div>
+        <div><h2 className="text-2xl font-bold text-slate-900">Méditations Quotidiennes</h2><p className="text-sm text-slate-500 font-medium italic">Édifiez votre assemblée.</p></div>
         <div className="flex flex-wrap gap-2">
           <button onClick={handleAnalyze} disabled={isAnalyzing} className="flex items-center gap-2 px-4 py-2 bg-indigo-50 text-indigo-700 border border-indigo-100 rounded-xl text-xs font-medium shadow-sm transition-all hover:bg-indigo-100"><Sparkles size={16} /> {isAnalyzing ? '...' : 'Analyse Thématique'}</button>
           <button onClick={handleExportCSV} className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-xl text-xs font-medium text-slate-600 transition-all hover:bg-slate-50 shadow-sm"><Download size={18} /> Exporter</button>

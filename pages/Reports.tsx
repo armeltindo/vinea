@@ -376,7 +376,7 @@ const Reports: React.FC = () => {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
           <h2 className="text-2xl font-bold text-slate-900">Rapports & Analyses</h2>
-          <p className="text-sm text-slate-500 font-medium italic">Vinea Intelligence : Pilotez votre église avec des données réelles.</p>
+          <p className="text-sm text-slate-500 font-medium italic">Pilotez votre église avec des données réelles.</p>
         </div>
         <div className="flex flex-wrap gap-2">
           <button onClick={handleGenerateReport} disabled={isAnalyzing} className="flex items-center gap-2 px-5 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-semibold hover:bg-indigo-700 transition-all shadow-lg disabled:opacity-50">

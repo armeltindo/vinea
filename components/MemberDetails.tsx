@@ -269,7 +269,7 @@ const MemberDetails: React.FC<MemberDetailsProps> = ({ member, isOpen, onClose, 
         id: 'join',
         date: member.joinDate,
         type: 'Adhésion',
-        label: 'A rejoint la communauté Vinea',
+        label: 'A rejoint la communauté MIDC',
         icon: <User size={12} />
       });
     }

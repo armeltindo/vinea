@@ -331,7 +331,7 @@ const Services: React.FC = () => {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 print:hidden">
         <div>
           <h2 className="text-2xl font-bold text-slate-900">Registre des Prédications</h2>
-          <p className="text-sm text-slate-500 font-medium italic">Vinea : Archivez, analysez et diffusez la parole.</p>
+          <p className="text-sm text-slate-500 font-medium italic">Archivez, analysez et diffusez la parole.</p>
         </div>
         <div className="flex items-center gap-3">
           <button onClick={() => setIsImportModalOpen(true)} className="flex items-center gap-2 px-5 py-2.5 bg-white border border-slate-200 text-slate-600 rounded-2xl text-xs font-medium hover:bg-slate-50 transition-all shadow-sm group">

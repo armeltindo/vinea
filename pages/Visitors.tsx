@@ -385,7 +385,7 @@ const Visitors: React.FC = () => {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
           <h2 className="text-2xl font-bold text-slate-900">Registre des Visiteurs</h2>
-          <p className="text-sm text-slate-500 opacity-60">Suivi d'Intégration & Accueil Vinea</p>
+          <p className="text-sm text-slate-500 opacity-60">Suivi d'Intégration & Accueil</p>
         </div>
         <div className="flex flex-wrap items-center gap-3">
           <button 

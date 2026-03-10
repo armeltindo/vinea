@@ -446,7 +446,7 @@ const Visitors: React.FC = () => {
             statusFilter === 'Suivi Actif' ? "ring-2 ring-blue-500 ring-offset-4" : ""
           )}
         >
-          <Card title="Suivi Actif" subtitle="Immersion Vinea" className="group-hover:border-blue-300">
+          <Card title="Suivi Actif" subtitle="Immersion MIDC" className="group-hover:border-blue-300">
             <div className="flex items-end justify-between">
               <span className="text-3xl font-bold text-blue-600">{stats.activeFollowUp}</span>
               <div className="w-12 h-12 rounded-2xl bg-blue-50 flex items-center justify-center text-blue-600 shadow-inner border border-blue-100 group-hover:scale-110 transition-transform">

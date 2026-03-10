@@ -949,7 +949,7 @@ const Settings: React.FC = () => {
     <div className="space-y-6 animate-in fade-in duration-500 pb-12">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-semibold text-slate-900">Paramètres Vinea</h2>
+          <h2 className="text-2xl font-semibold text-slate-900">Paramètres</h2>
           <p className="text-sm text-slate-500 font-medium italic">Configurez votre environnement de gestion ecclésiale.</p>
         </div>
         <button 
@@ -1475,7 +1475,7 @@ const Settings: React.FC = () => {
                 <div className="mt-12 pt-8 border-t border-slate-100 space-y-6">
                    <div className="flex items-center gap-2">
                       <Palette size={18} className="text-indigo-600" />
-                      <h4 className="text-xs font-medium text-slate-700">Galerie d'Avatars Vinea</h4>
+                      <h4 className="text-xs font-medium text-slate-700">Galerie d'Avatars</h4>
                    </div>
                    <p className="text-xs text-slate-500 font-medium italic">Choisissez une illustration prédéfinie pour votre profil si vous ne souhaitez pas utiliser de photo.</p>
                    

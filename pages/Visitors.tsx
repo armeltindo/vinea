@@ -557,8 +557,7 @@ const Visitors: React.FC = () => {
                           {formatFirstName(visitor.firstName)} <span className="uppercase">{visitor.lastName}</span>
                         </p>
                         <div className="flex items-center gap-2 mt-0.5">
-                          <span className="text-xs text-slate-400 font-bold">{visitor.source}</span>
-                          {visitor.parrainId && <span className="text-xs font-semibold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-100 flex items-center gap-1"><ShieldCheck size={10}/> Parrainé</span>}
+                          {visitor.parrainId ? (() => { const parrain = members.find(m => m.id === visitor.parrainId); return parrain ? <span className="text-xs font-semibold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-100 flex items-center gap-1"><ShieldCheck size={10}/> {formatFirstName(parrain.firstName)} {parrain.lastName.toUpperCase()}</span> : <span className="text-xs text-slate-400 font-bold">{visitor.source}</span>; })() : <span className="text-xs text-slate-400 font-bold">{visitor.source}</span>}
                         </div>
                       </div>
                     </div>

@@ -71,6 +71,7 @@ import { cn, generateId, getInitials, formatFirstName } from '../utils';
 import { OperationType, PaymentMethod, FinancialRecord, Member, DonationCampaign, DonationPromise } from '../types';
 import { GoogleGenAI } from "@google/genai";
 import { getFinancialRecords, createFinancialRecord, updateFinancialRecord, deleteFinancialRecord, getDonationCampaigns, createDonationCampaign, updateDonationCampaign, deleteDonationCampaign, getDonationPromises, createDonationPromise, updateDonationPromise, deleteDonationPromise, getMembers, getChurchSettings, getAppConfig, setAppConfig } from '../lib/db';
+import FinancialReceiptModal from '../components/FinancialReceiptModal';
 
 interface FinanceCategory {
   id: string;
@@ -117,6 +118,8 @@ const Finances: React.FC = () => {
   const [categories, setCategories] = useState<FinanceCategory[]>(DEFAULT_CATEGORIES);
   const [members, setMembers] = useState<Member[]>([]);
   const [churchName, setChurchName] = useState('Vinea');
+  const [churchSettings, setChurchSettings] = useState<any>(null);
+  const [receiptOp, setReceiptOp] = useState<FinancialRecord | null>(null);
 
   const [startDate, setStartDate] = useState(() => {
     const now = new Date();
@@ -204,6 +207,7 @@ const Finances: React.FC = () => {
       setPromises(proms);
       setMembers(mems);
       if (settings?.name) setChurchName(settings.name);
+      if (settings) setChurchSettings(settings);
       if (savedCats) setCategories(savedCats);
       const params = new URLSearchParams(window.location.search);
       const detailId = params.get('detail');
@@ -910,12 +914,12 @@ const Finances: React.FC = () => {
                        </p>
                        <div className="flex justify-end gap-2 mt-2 opacity-0 group-hover:opacity-100 transition-opacity">
                          {op.type === OperationType.REVENU && (member || op.externalName) && (
-                           <button 
-                             onClick={(e) => { e.stopPropagation(); handleGenerateReceipt(op); }}
+                           <button
+                             onClick={(e) => { e.stopPropagation(); setReceiptOp(op); }}
                              className="p-1.5 bg-emerald-50 text-emerald-600 rounded-lg hover:bg-emerald-100"
-                             title="Générer reçu IA"
+                             title="Générer reçu"
                            >
-                             <Sparkles size={14} />
+                             <Receipt size={14} />
                            </button>
                          )}
                          <button 
@@ -1914,6 +1918,14 @@ const Finances: React.FC = () => {
 
             <div className="flex-1 overflow-y-auto p-10 custom-scrollbar bg-slate-50/30 space-y-8">
               {selectedOperation.type === OperationType.REVENU && (selectedOperation.memberId || selectedOperation.externalName) && (
+                <button
+                  onClick={() => setReceiptOp(selectedOperation)}
+                  className="w-full flex items-center justify-center gap-2.5 py-3.5 bg-emerald-600 text-white rounded-2xl text-sm font-semibold shadow-lg shadow-emerald-100 hover:bg-emerald-700 transition-all active:scale-[0.98]"
+                >
+                  <Receipt size={16} /> Générer le reçu
+                </button>
+              )}
+              {selectedOperation.type === OperationType.REVENU && (selectedOperation.memberId || selectedOperation.externalName) && (
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <h4 className="text-xs font-medium text-slate-500 flex items-center gap-2"><Sparkles size={14} className="text-indigo-600" /> Reçu de remerciement IA</h4>
@@ -2098,6 +2110,21 @@ const Finances: React.FC = () => {
             </div>
           </div>
         </div>
+      )}
+
+      {receiptOp && (
+        <FinancialReceiptModal
+          operation={receiptOp}
+          donor={(() => {
+            if (receiptOp.memberId) {
+              const m = members.find(x => x.id === receiptOp.memberId);
+              return m ? { firstName: m.firstName, lastName: m.lastName } : null;
+            }
+            return receiptOp.externalName ? { firstName: receiptOp.externalName, lastName: '' } : null;
+          })()}
+          church={{ ...churchSettings, name: churchName }}
+          onClose={() => setReceiptOp(null)}
+        />
       )}
     </div>
   );

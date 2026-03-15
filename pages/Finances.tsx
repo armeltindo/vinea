@@ -60,7 +60,8 @@ import {
   StickyNote,
   Heart,
   ArrowLeft,
-  AlertCircle
+  AlertCircle,
+  FileDown
 } from 'lucide-react';
 import { formatCurrency } from '../constants';
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip, Sector } from 'recharts';
@@ -69,6 +70,7 @@ import { cn, generateId, getInitials, formatFirstName } from '../utils';
 import { OperationType, PaymentMethod, FinancialRecord, Member, DonationCampaign, DonationPromise } from '../types';
 import { GoogleGenAI } from "@google/genai";
 import { getFinancialRecords, createFinancialRecord, updateFinancialRecord, deleteFinancialRecord, getDonationCampaigns, createDonationCampaign, updateDonationCampaign, deleteDonationCampaign, getDonationPromises, createDonationPromise, deleteDonationPromise, getMembers, getChurchSettings, getAppConfig, setAppConfig } from '../lib/db';
+import { generateDonationReceiptPDF, type ChurchInfo } from '../lib/pdfReceipt';
 
 interface FinanceCategory {
   id: string;
@@ -113,6 +115,8 @@ const Finances: React.FC = () => {
   const [categories, setCategories] = useState<FinanceCategory[]>(DEFAULT_CATEGORIES);
   const [members, setMembers] = useState<Member[]>([]);
   const [churchName, setChurchName] = useState('Vinea');
+  const [churchInfo, setChurchInfo] = useState<ChurchInfo>({ name: 'Vinea' });
+  const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
 
   const [startDate, setStartDate] = useState(() => {
     const now = new Date();
@@ -200,6 +204,16 @@ const Finances: React.FC = () => {
       setPromises(proms);
       setMembers(mems);
       if (settings?.name) setChurchName(settings.name);
+      if (settings) {
+        setChurchInfo({
+          name: settings.name || 'Vinea',
+          address: settings.address,
+          phone: settings.phone,
+          email: settings.email,
+          slogan: settings.slogan,
+          currency: settings.currency,
+        });
+      }
       if (savedCats) setCategories(savedCats);
     };
     load();
@@ -460,6 +474,27 @@ const Finances: React.FC = () => {
     setIsGeneratingReceipt(false);
   };
 
+  const handleDownloadPdf = (op: FinancialRecord) => {
+    setIsGeneratingPdf(true);
+    try {
+      const member = members.find(m => m.id === op.memberId);
+      const donor = member
+        ? { firstName: member.firstName, lastName: member.lastName }
+        : op.externalName
+          ? { externalName: op.externalName }
+          : undefined;
+      generateDonationReceiptPDF(op, donor, {
+        ...churchInfo,
+        currency: churchInfo.currency || 'F CFA',
+      });
+    } catch (err) {
+      console.error('Erreur génération PDF:', err);
+      alert('Une erreur est survenue lors de la génération du PDF.');
+    } finally {
+      setIsGeneratingPdf(false);
+    }
+  };
+
   const shareReceiptWhatsApp = (op: FinancialRecord, text: string) => {
     const member = members.find(m => m.id === op.memberId);
     const phone = member?.whatsappPhone || member?.phone;
@@ -503,6 +538,23 @@ const Finances: React.FC = () => {
         };
         setOperations([operation, ...operations]);
         createFinancialRecord(operation);
+        // Auto-génération du reçu PDF pour les dons (entrées)
+        if (operation.type === OperationType.REVENU) {
+          const member = members.find(m => m.id === operation.memberId);
+          const donor = member
+            ? { firstName: member.firstName, lastName: member.lastName }
+            : operation.externalName
+              ? { externalName: operation.externalName }
+              : undefined;
+          try {
+            generateDonationReceiptPDF(operation, donor, {
+              ...churchInfo,
+              currency: churchInfo.currency || 'F CFA',
+            });
+          } catch (err) {
+            console.error('Erreur auto-génération PDF reçu:', err);
+          }
+        }
       }
       setIsOpFormOpen(false);
       setEditingOpId(null);
@@ -886,12 +938,22 @@ const Finances: React.FC = () => {
                        </p>
                        <div className="flex justify-end gap-2 mt-2 opacity-0 group-hover:opacity-100 transition-opacity">
                          {op.type === OperationType.REVENU && (member || op.externalName) && (
-                           <button 
+                           <button
                              onClick={(e) => { e.stopPropagation(); handleGenerateReceipt(op); }}
                              className="p-1.5 bg-emerald-50 text-emerald-600 rounded-lg hover:bg-emerald-100"
                              title="Générer reçu IA"
                            >
                              <Sparkles size={14} />
+                           </button>
+                         )}
+                         {op.type === OperationType.REVENU && (
+                           <button
+                             onClick={(e) => { e.stopPropagation(); handleDownloadPdf(op); }}
+                             className="p-1.5 bg-indigo-50 text-indigo-600 rounded-lg hover:bg-indigo-100"
+                             title="Télécharger reçu PDF"
+                             disabled={isGeneratingPdf}
+                           >
+                             <FileDown size={14} />
                            </button>
                          )}
                          <button 
@@ -1961,14 +2023,26 @@ const Finances: React.FC = () => {
               </div>
             </div>
 
-            <div className="p-10 border-t border-slate-100 bg-white flex gap-3 shrink-0">
-              <button 
-                onClick={() => handleEditOperation(selectedOperation)}
-                className="flex-[2] py-4 bg-indigo-50 text-indigo-600 border border-indigo-100 rounded-2xl text-xs font-medium hover:bg-indigo-100 transition-all flex items-center justify-center gap-2"
-              >
-                <Edit size={16} /> Modifier l'opération
-              </button>
-              <button onClick={() => { setOpToDeleteId(selectedOperation.id); setIsDeleteConfirmOpen(true); }} className="flex-1 py-4 bg-rose-50 text-rose-600 border border-rose-100 rounded-2xl text-xs font-medium hover:bg-rose-100 transition-all flex items-center justify-center gap-2"><Trash2 size={16} /></button>
+            <div className="p-10 border-t border-slate-100 bg-white space-y-3 shrink-0">
+              {selectedOperation.type === OperationType.REVENU && (
+                <button
+                  onClick={() => handleDownloadPdf(selectedOperation)}
+                  disabled={isGeneratingPdf}
+                  className="w-full py-4 bg-indigo-600 text-white rounded-2xl text-xs font-semibold hover:bg-indigo-700 active:scale-95 transition-all flex items-center justify-center gap-2 shadow-lg shadow-indigo-200 disabled:opacity-60"
+                >
+                  {isGeneratingPdf ? <Loader2 size={16} className="animate-spin" /> : <FileDown size={16} />}
+                  Télécharger le reçu PDF
+                </button>
+              )}
+              <div className="flex gap-3">
+                <button
+                  onClick={() => handleEditOperation(selectedOperation)}
+                  className="flex-[2] py-4 bg-indigo-50 text-indigo-600 border border-indigo-100 rounded-2xl text-xs font-medium hover:bg-indigo-100 transition-all flex items-center justify-center gap-2"
+                >
+                  <Edit size={16} /> Modifier l'opération
+                </button>
+                <button onClick={() => { setOpToDeleteId(selectedOperation.id); setIsDeleteConfirmOpen(true); }} className="flex-1 py-4 bg-rose-50 text-rose-600 border border-rose-100 rounded-2xl text-xs font-medium hover:bg-rose-100 transition-all flex items-center justify-center gap-2"><Trash2 size={16} /></button>
+              </div>
             </div>
           </div>
         </div>

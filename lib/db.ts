@@ -1723,19 +1723,15 @@ export const getRegistryEvents = async (): Promise<RegistryEvent[]> => {
 };
 
 export const getRegistryEventsByMemberId = async (memberId: string): Promise<RegistryEvent[]> => {
-  const [r1, r2, r3, r4, r5] = await Promise.all([
+  const [r1, r2, r3] = await Promise.all([
     supabase.from('registry_events').select('*').eq('member_id', memberId),
     supabase.from('registry_events').select('*').eq('groom_id', memberId),
     supabase.from('registry_events').select('*').eq('bride_id', memberId),
-    supabase.from('registry_events').select('*').eq('father_id', memberId),
-    supabase.from('registry_events').select('*').eq('mother_id', memberId),
   ]);
   const all = [
     ...(r1.data ?? []),
     ...(r2.data ?? []),
     ...(r3.data ?? []),
-    ...(r4.data ?? []),
-    ...(r5.data ?? []),
   ];
   const unique = Array.from(new Map(all.map(r => [r.id, r])).values());
   return unique.map(dbToRegistryEvent).sort(

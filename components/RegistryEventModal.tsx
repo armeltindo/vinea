@@ -170,37 +170,44 @@ interface MemberPickerProps {
 
 export const MemberPicker: React.FC<MemberPickerProps> = ({
   members, value, onChange,
-  placeholder = 'Rechercher un membre…', required, label
+  placeholder = 'Nom ou rechercher un membre…', required, label
 }) => {
-  const [query, setQuery] = useState('');
+  const [inputVal, setInputVal] = useState(value.name || '');
   const [open, setOpen] = useState(false);
-  const [freeText, setFreeText] = useState('');
+
+  // Sync quand value change depuis l'extérieur (ex: reset du form)
+  useEffect(() => {
+    setInputVal(value.name || '');
+  }, [value.name]);
 
   const filtered = useMemo(() => {
-    if (!query.trim()) return [];
-    const q = query.toLowerCase();
+    if (!inputVal.trim()) return [];
+    const q = inputVal.toLowerCase();
     return members.filter(m =>
       m.firstName.toLowerCase().includes(q) ||
       m.lastName.toLowerCase().includes(q) ||
       (m.nickname || '').toLowerCase().includes(q)
     ).slice(0, 8);
-  }, [members, query]);
+  }, [members, inputVal]);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    setInputVal(val);
+    // Commit immédiatement — texte libre, pas de membre lié
+    onChange({ id: undefined, name: val });
+    setOpen(true);
+  };
 
   const handleSelect = (m: Member) => {
-    onChange({ id: m.id, name: `${formatFirstName(m.firstName)} ${m.lastName.toUpperCase()}` });
-    setQuery('');
+    const name = `${formatFirstName(m.firstName)} ${m.lastName.toUpperCase()}`;
+    setInputVal(name);
+    onChange({ id: m.id, name });
     setOpen(false);
   };
 
   const handleClear = () => {
+    setInputVal('');
     onChange({ id: undefined, name: '' });
-    setQuery('');
-    setFreeText('');
-  };
-
-  const commitFreeText = (text: string) => {
-    const trimmed = text.trim();
-    if (trimmed) onChange({ id: undefined, name: trimmed });
   };
 
   return (
@@ -210,69 +217,50 @@ export const MemberPicker: React.FC<MemberPickerProps> = ({
           {label}{required && <span className="text-rose-500 ml-0.5">*</span>}
         </label>
       )}
-
-      {value.name ? (
-        <div className="flex items-center gap-2 px-3 py-2.5 bg-indigo-50 border border-indigo-200 rounded-xl">
-          <div className="w-6 h-6 rounded-full bg-indigo-200 flex items-center justify-center shrink-0">
-            <User size={12} className="text-indigo-600" />
-          </div>
-          <span className="text-xs font-semibold text-indigo-700 flex-1 truncate">{value.name}</span>
-          {value.id && <span className="text-[10px] bg-indigo-100 text-indigo-500 px-1.5 py-0.5 rounded-full font-medium">Membre</span>}
-          <button type="button" onClick={handleClear} className="p-0.5 text-indigo-400 hover:text-rose-500 transition-colors">
+      <div className="relative">
+        <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+        <input
+          type="text"
+          value={inputVal}
+          onChange={handleChange}
+          onFocus={() => setOpen(true)}
+          onBlur={() => setTimeout(() => setOpen(false), 150)}
+          placeholder={placeholder}
+          className={cn(
+            "w-full pl-8 pr-8 py-2.5 text-xs border rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-300 transition-all",
+            value.id
+              ? "bg-indigo-50/60 border-indigo-200 focus:border-indigo-400"
+              : "bg-white border-slate-200 focus:border-indigo-400"
+          )}
+        />
+        {inputVal && (
+          <button type="button" onClick={handleClear} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors">
             <X size={13} />
           </button>
-        </div>
-      ) : (
-        <div className="space-y-1.5">
-          {/* Member search */}
-          <div className="relative">
-            <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-            <input
-              type="text"
-              value={query}
-              onChange={e => { setQuery(e.target.value); setOpen(true); }}
-              onFocus={() => setOpen(true)}
-              onBlur={() => setTimeout(() => setOpen(false), 150)}
-              placeholder={placeholder}
-              className="w-full pl-8 pr-3 py-2.5 text-xs bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-300 focus:border-indigo-400 transition-all"
-            />
-            {open && filtered.length > 0 && (
-              <div className="absolute z-20 top-full mt-1 w-full bg-white border border-slate-200 rounded-xl shadow-xl overflow-hidden">
-                {filtered.map(m => (
-                  <button
-                    key={m.id}
-                    type="button"
-                    onMouseDown={() => handleSelect(m)}
-                    className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-indigo-50 transition-colors text-left"
-                  >
-                    <Avatar firstName={m.firstName} lastName={m.lastName} photoUrl={m.photoUrl} size="xs" shape="circle" />
-                    <div>
-                      <p className="text-xs font-semibold text-slate-800">{formatFirstName(m.firstName)} {m.lastName.toUpperCase()}</p>
-                      <p className="text-[10px] text-slate-400">{m.type}</p>
-                    </div>
-                  </button>
-                ))}
-              </div>
-            )}
+        )}
+        {open && filtered.length > 0 && (
+          <div className="absolute z-20 top-full mt-1 w-full bg-white border border-slate-200 rounded-xl shadow-xl overflow-hidden">
+            {filtered.map(m => (
+              <button
+                key={m.id}
+                type="button"
+                onMouseDown={() => handleSelect(m)}
+                className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-indigo-50 transition-colors text-left"
+              >
+                <Avatar firstName={m.firstName} lastName={m.lastName} photoUrl={m.photoUrl} size="xs" shape="circle" />
+                <div>
+                  <p className="text-xs font-semibold text-slate-800">{formatFirstName(m.firstName)} {m.lastName.toUpperCase()}</p>
+                  <p className="text-[10px] text-slate-400">{m.type}</p>
+                </div>
+              </button>
+            ))}
           </div>
-
-          {/* Free-text fallback */}
-          <input
-            type="text"
-            value={freeText}
-            onChange={e => setFreeText(e.target.value)}
-            onBlur={e => { commitFreeText(e.target.value); setFreeText(''); }}
-            onKeyDown={e => {
-              if (e.key === 'Enter') {
-                e.preventDefault();
-                commitFreeText(freeText);
-                setFreeText('');
-              }
-            }}
-            placeholder="Ou saisir un nom (non-membre)"
-            className="w-full px-3 py-2 text-xs bg-slate-50 border border-dashed border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-300 transition-all placeholder:text-slate-400"
-          />
-        </div>
+        )}
+      </div>
+      {value.id && (
+        <p className="text-[10px] text-indigo-500 mt-1 flex items-center gap-1">
+          <User size={10} /> Membre enregistré
+        </p>
       )}
     </div>
   );

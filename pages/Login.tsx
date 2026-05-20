@@ -458,7 +458,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
       // Récupérer le profil administrateur
       const adminUser = await getAdminUserByEmail(data.user.email ?? '');
 
-      const ALL_PERMISSIONS = ['dashboard', 'members', 'visitors', 'spiritual', 'discipleship', 'attendance', 'planning', 'services', 'meetings', 'events', 'finances', 'meditations', 'reports', 'settings', 'admin'];
+      const ALL_PERMISSIONS = ['dashboard', 'members', 'visitors', 'spiritual', 'discipleship', 'attendance', 'planning', 'services', 'meetings', 'events', 'registre', 'finances', 'meditations', 'reports', 'settings', 'admin'];
 
       if (!adminUser) {
         // Super Admin par défaut si aucun enregistrement admin_users

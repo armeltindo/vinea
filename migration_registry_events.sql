@@ -74,9 +74,17 @@ CREATE TRIGGER update_registry_events_updated_at
 ALTER TABLE registry_events ENABLE ROW LEVEL SECURITY;
 
 -- Politique : accès complet pour les utilisateurs authentifiés
-CREATE POLICY IF NOT EXISTS "registry_events_policy"
-  ON registry_events
-  FOR ALL
-  TO authenticated
-  USING (true)
-  WITH CHECK (true);
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies
+    WHERE tablename = 'registry_events' AND policyname = 'registry_events_policy'
+  ) THEN
+    CREATE POLICY "registry_events_policy"
+      ON registry_events
+      FOR ALL
+      TO authenticated
+      USING (true)
+      WITH CHECK (true);
+  END IF;
+END $$;

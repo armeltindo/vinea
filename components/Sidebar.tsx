@@ -16,7 +16,8 @@ import {
   LogOut,
   Briefcase,
   Flame,
-  X
+  X,
+  ScrollText
 } from 'lucide-react';
 import { cn } from '../utils';
 import Logo from './Logo';
@@ -46,6 +47,7 @@ const MENU_ITEMS = [
   { id: 'services', label: 'Nos cultes', icon: Church },
   { id: 'meetings', label: 'Réunions', icon: UsersRound },
   { id: 'events', label: 'Evénements', icon: Calendar },
+  { id: 'registre', label: 'Registre', icon: ScrollText },
   { id: 'finances', label: 'Finances', icon: Wallet },
   { id: 'meditations', label: 'Méditations', icon: BookOpen },
   { id: 'reports', label: 'Rapports', icon: BarChart3 },
@@ -76,7 +78,7 @@ const Sidebar: React.FC<SidebarProps> = ({
 
   const isActive = (id: string) => {
     if (id === 'dashboard') return location.pathname === '/';
-    return location.pathname === `/${id}`;
+    return location.pathname === `/${id}` || location.pathname.startsWith(`/${id}/`);
   };
 
   return (

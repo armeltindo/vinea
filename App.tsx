@@ -34,6 +34,8 @@ const MeditationDetailPage = React.lazy(() => import('./pages/MeditationDetailPa
 const Meditations = React.lazy(() => import('./pages/Meditations'));
 const Meetings = React.lazy(() => import('./pages/Meetings'));
 const Events = React.lazy(() => import('./pages/Events'));
+const Registry = React.lazy(() => import('./pages/Registry'));
+const RegistryDetailPage = React.lazy(() => import('./pages/RegistryDetailPage'));
 const Reports = React.lazy(() => import('./pages/Reports'));
 const Settings = React.lazy(() => import('./pages/Settings'));
 const Admin = React.lazy(() => import('./pages/Admin'));
@@ -351,7 +353,7 @@ const App: React.FC = () => {
 
 
   // --- Supabase Auth ---
-  const ALL_PERMISSIONS = ['dashboard', 'members', 'visitors', 'spiritual', 'discipleship', 'attendance', 'planning', 'services', 'meetings', 'events', 'finances', 'meditations', 'reports', 'settings', 'admin'];
+  const ALL_PERMISSIONS = ['dashboard', 'members', 'visitors', 'spiritual', 'discipleship', 'attendance', 'planning', 'services', 'meetings', 'events', 'registre', 'finances', 'meditations', 'reports', 'settings', 'admin'];
 
   const applyAdminUser = (adminUser: any, email: string) => {
     let perms: string[];
@@ -759,6 +761,8 @@ const App: React.FC = () => {
                 <Route path="/services" element={canAccessRoute('services') ? <Services /> : <Navigate to="/" replace />} />
                 <Route path="/meetings" element={canAccessRoute('meetings') ? <Meetings /> : <Navigate to="/" replace />} />
                 <Route path="/events" element={canAccessRoute('events') ? <Events /> : <Navigate to="/" replace />} />
+                <Route path="/registre" element={canAccessRoute('registre') ? <Registry /> : <Navigate to="/" replace />} />
+                <Route path="/registre/:id" element={canAccessRoute('registre') ? <RegistryDetailPage /> : <Navigate to="/" replace />} />
                 <Route path="/finances" element={canAccessRoute('finances') ? <Finances /> : <Navigate to="/" replace />} />
                 <Route path="/meditations" element={canAccessRoute('meditations') ? <Meditations /> : <Navigate to="/" replace />} />
                 <Route path="/reports" element={canAccessRoute('reports') ? <Reports /> : <Navigate to="/" replace />} />

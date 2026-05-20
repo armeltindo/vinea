@@ -47,13 +47,18 @@ import {
   UserX,
   Copy,
   KeyRound,
-  Loader2
+  Loader2,
+  ScrollText,
+  Heart as HeartIcon,
+  Baby as BabyIcon,
+  Waves as WavesIcon,
+  ExternalLink,
 } from 'lucide-react';
 import MemberCardModal from './MemberCardModal';
-import { Member, MemberStatus, Department, DepartmentActivity, ActivityStatus, FinancialRecord, AttendanceSession, OperationType, FollowUpEntry } from '../types';
+import { Member, MemberStatus, Department, DepartmentActivity, ActivityStatus, FinancialRecord, AttendanceSession, OperationType, FollowUpEntry, RegistryEvent } from '../types';
 import { formatPhone } from '../constants';
 import { cn, getInitials, getDisplayNickname, formatFirstName } from '../utils';
-import { getMembers, getDepartmentActivities, getDiscipleshipEnrollments, getDiscipleshipPairs, getFinancialRecords, getAttendanceSessions, generateMemberUsername, activateMemberAccount, deactivateMemberAccount, updateMember } from '../lib/db';
+import { getMembers, getDepartmentActivities, getDiscipleshipEnrollments, getDiscipleshipPairs, getFinancialRecords, getAttendanceSessions, generateMemberUsername, activateMemberAccount, deactivateMemberAccount, updateMember, getRegistryEventsByMemberId } from '../lib/db';
 import Avatar from './Avatar';
 
 const MOIS = ['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
@@ -132,6 +137,7 @@ const MemberDetails: React.FC<MemberDetailsProps> = ({ member, isOpen, onClose, 
   const [accountModal, setAccountModal] = useState<{ username: string; password: string } | null>(null);
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const [localFollowUp, setLocalFollowUp] = useState<FollowUpEntry[]>(member.followUpHistory ?? []);
+  const [registryEvents, setRegistryEvents] = useState<RegistryEvent[]>([]);
 
   useEffect(() => { setLocalFollowUp(member.followUpHistory ?? []); }, [member.id, member.followUpHistory]);
 
@@ -150,6 +156,7 @@ const MemberDetails: React.FC<MemberDetailsProps> = ({ member, isOpen, onClose, 
       getDiscipleshipEnrollments().then(setEnrollments);
       getFinancialRecords().then(setFinancialRecords);
       getAttendanceSessions().then(setAttendanceSessions);
+      getRegistryEventsByMemberId(member.id).then(setRegistryEvents);
     }
   }, [isOpen, asPage, member.id]);
 
@@ -1510,6 +1517,69 @@ const MemberDetails: React.FC<MemberDetailsProps> = ({ member, isOpen, onClose, 
                   "{member.notes}"
                 </div>
              </div>
+          )}
+
+          {/* Section: Registre */}
+          {registryEvents.length > 0 && (
+            <div className="space-y-3">
+              <h4 className="text-xs font-medium text-slate-500 flex items-center gap-2">
+                <ScrollText size={14} className="text-indigo-600" /> Registre paroissial ({registryEvents.length})
+              </h4>
+              <div className="space-y-2">
+                {registryEvents.map(ev => {
+                  const isMarriage = ev.type === 'Mariage';
+                  const isBaptism = ev.type === 'Baptême';
+                  const isChild = ev.type === "Sortie d'enfant";
+                  const cfg = isMarriage
+                    ? { Icon: HeartIcon, bg: 'bg-rose-50', color: 'text-rose-600', border: 'border-rose-100', badge: 'bg-rose-100 text-rose-700' }
+                    : isChild
+                    ? { Icon: BabyIcon, bg: 'bg-amber-50', color: 'text-amber-600', border: 'border-amber-100', badge: 'bg-amber-100 text-amber-700' }
+                    : { Icon: WavesIcon, bg: 'bg-blue-50', color: 'text-blue-600', border: 'border-blue-100', badge: 'bg-blue-100 text-blue-700' };
+                  const getSubtitle = () => {
+                    if (isMarriage) {
+                      const parts: string[] = [];
+                      if (ev.groomName) parts.push(`Époux: ${ev.groomName}`);
+                      if (ev.brideName) parts.push(`Épouse: ${ev.brideName}`);
+                      if (ev.celebrationDate) parts.push(new Date(ev.celebrationDate + 'T00:00:00').toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }));
+                      return parts.join(' • ');
+                    }
+                    if (isChild) {
+                      return [
+                        ev.childFullName,
+                        ev.dedicationDate && new Date(ev.dedicationDate + 'T00:00:00').toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }),
+                      ].filter(Boolean).join(' • ');
+                    }
+                    if (isBaptism) {
+                      return ev.baptismDate
+                        ? new Date(ev.baptismDate + 'T00:00:00').toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })
+                        : '';
+                    }
+                    return '';
+                  };
+                  return (
+                    <div
+                      key={ev.id}
+                      className={cn(
+                        "flex items-center gap-3 p-3 rounded-xl border shadow-sm transition-all",
+                        cfg.bg + '/50', cfg.border,
+                        onNavigateToMember && "cursor-pointer hover:opacity-80"
+                      )}
+                      onClick={onNavigateToMember ? () => window.location.pathname = `/registre/${ev.id}` : undefined}
+                    >
+                      <div className={cn("w-9 h-9 rounded-xl flex items-center justify-center shrink-0", cfg.bg)}>
+                        <cfg.Icon size={16} className={cfg.color} />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-0.5">
+                          <span className={cn("text-[10px] font-bold px-2 py-0.5 rounded-full", cfg.badge)}>{ev.type}</span>
+                        </div>
+                        {getSubtitle() && <p className="text-xs text-slate-600 truncate">{getSubtitle()}</p>}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
           )}
 
           {/* Comptes rendus de suivi */}

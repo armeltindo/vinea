@@ -9,7 +9,8 @@ import {
   Member, Visitor, FinancialRecord, DonationCampaign, DonationPromise,
   AttendanceSession, ChurchService, DepartmentInfo, DepartmentActivity,
   OperationType, PaymentMethod, MemberStatus, MemberType, VisitorStatus, ActivityStatus,
-  SpiritualExerciseType, DailyExercise, DailyExerciseEntry, ServicePersonnel
+  SpiritualExerciseType, DailyExercise, DailyExerciseEntry, ServicePersonnel,
+  RegistryEvent
 } from '../types';
 
 // ─────────────────────────────────────────────
@@ -1646,4 +1647,123 @@ export const getRecentAttendanceSessions = async (limit = 5): Promise<Attendance
     .limit(limit);
   if (error) { console.error('getRecentAttendanceSessions:', error.message); return []; }
   return (data ?? []).map(dbToAttendance);
+};
+
+// ─────────────────────────────────────────────
+// REGISTRE DES ÉVÉNEMENTS
+// ─────────────────────────────────────────────
+
+function dbToRegistryEvent(row: any): RegistryEvent {
+  return {
+    id: row.id,
+    type: row.type,
+    memberId: row.member_id ?? undefined,
+    groomId: row.groom_id ?? undefined,
+    groomName: row.groom_name ?? undefined,
+    brideId: row.bride_id ?? undefined,
+    brideName: row.bride_name ?? undefined,
+    godfatherId: row.godfather_id ?? undefined,
+    godfatherName: row.godfather_name ?? undefined,
+    godmotherId: row.godmother_id ?? undefined,
+    godmotherName: row.godmother_name ?? undefined,
+    celebratingPastorId: row.celebrating_pastor_id ?? undefined,
+    celebratingPastorName: row.celebrating_pastor_name ?? undefined,
+    celebrationDate: row.celebration_date ?? undefined,
+    civilMarriageDate: row.civil_marriage_date ?? undefined,
+    traditionalMarriageDate: row.traditional_marriage_date ?? undefined,
+    childFullName: row.child_full_name ?? undefined,
+    fatherId: row.father_id ?? undefined,
+    fatherName: row.father_name ?? undefined,
+    motherId: row.mother_id ?? undefined,
+    motherName: row.mother_name ?? undefined,
+    dedicationDate: row.dedication_date ?? undefined,
+    baptismDate: row.baptism_date ?? undefined,
+    observations: row.observations ?? undefined,
+    createdAt: row.created_at ?? new Date().toISOString(),
+    updatedAt: row.updated_at ?? undefined,
+  };
+}
+
+function registryEventToDb(e: Partial<RegistryEvent>): Record<string, unknown> {
+  const db: Record<string, unknown> = {};
+  if (e.id !== undefined) db.id = e.id;
+  if (e.type !== undefined) db.type = e.type;
+  if (e.memberId !== undefined) db.member_id = e.memberId || null;
+  if (e.groomId !== undefined) db.groom_id = e.groomId || null;
+  if (e.groomName !== undefined) db.groom_name = e.groomName || null;
+  if (e.brideId !== undefined) db.bride_id = e.brideId || null;
+  if (e.brideName !== undefined) db.bride_name = e.brideName || null;
+  if (e.godfatherId !== undefined) db.godfather_id = e.godfatherId || null;
+  if (e.godfatherName !== undefined) db.godfather_name = e.godfatherName || null;
+  if (e.godmotherId !== undefined) db.godmother_id = e.godmotherId || null;
+  if (e.godmotherName !== undefined) db.godmother_name = e.godmotherName || null;
+  if (e.celebratingPastorId !== undefined) db.celebrating_pastor_id = e.celebratingPastorId || null;
+  if (e.celebratingPastorName !== undefined) db.celebrating_pastor_name = e.celebratingPastorName || null;
+  if (e.celebrationDate !== undefined) db.celebration_date = e.celebrationDate || null;
+  if (e.civilMarriageDate !== undefined) db.civil_marriage_date = e.civilMarriageDate || null;
+  if (e.traditionalMarriageDate !== undefined) db.traditional_marriage_date = e.traditionalMarriageDate || null;
+  if (e.childFullName !== undefined) db.child_full_name = e.childFullName || null;
+  if (e.fatherId !== undefined) db.father_id = e.fatherId || null;
+  if (e.fatherName !== undefined) db.father_name = e.fatherName || null;
+  if (e.motherId !== undefined) db.mother_id = e.motherId || null;
+  if (e.motherName !== undefined) db.mother_name = e.motherName || null;
+  if (e.dedicationDate !== undefined) db.dedication_date = e.dedicationDate || null;
+  if (e.baptismDate !== undefined) db.baptism_date = e.baptismDate || null;
+  if (e.observations !== undefined) db.observations = e.observations || null;
+  return db;
+}
+
+export const getRegistryEvents = async (): Promise<RegistryEvent[]> => {
+  const { data, error } = await supabase
+    .from('registry_events')
+    .select('*')
+    .order('created_at', { ascending: false });
+  if (error) { console.error('getRegistryEvents:', error.message); return []; }
+  return (data ?? []).map(dbToRegistryEvent);
+};
+
+export const getRegistryEventsByMemberId = async (memberId: string): Promise<RegistryEvent[]> => {
+  const [r1, r2, r3, r4, r5] = await Promise.all([
+    supabase.from('registry_events').select('*').eq('member_id', memberId),
+    supabase.from('registry_events').select('*').eq('groom_id', memberId),
+    supabase.from('registry_events').select('*').eq('bride_id', memberId),
+    supabase.from('registry_events').select('*').eq('father_id', memberId),
+    supabase.from('registry_events').select('*').eq('mother_id', memberId),
+  ]);
+  const all = [
+    ...(r1.data ?? []),
+    ...(r2.data ?? []),
+    ...(r3.data ?? []),
+    ...(r4.data ?? []),
+    ...(r5.data ?? []),
+  ];
+  const unique = Array.from(new Map(all.map(r => [r.id, r])).values());
+  return unique.map(dbToRegistryEvent).sort(
+    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+  );
+};
+
+export const createRegistryEvent = async (
+  event: Omit<RegistryEvent, 'id' | 'createdAt' | 'updatedAt'>
+): Promise<RegistryEvent | null> => {
+  const { data, error } = await supabase
+    .from('registry_events')
+    .insert(registryEventToDb(event))
+    .select()
+    .single();
+  if (error) { console.error('createRegistryEvent:', error.message); return null; }
+  return dbToRegistryEvent(data);
+};
+
+export const updateRegistryEvent = async (id: string, data: Partial<RegistryEvent>): Promise<void> => {
+  const { error } = await supabase
+    .from('registry_events')
+    .update(registryEventToDb(data))
+    .eq('id', id);
+  if (error) console.error('updateRegistryEvent:', error.message);
+};
+
+export const deleteRegistryEvent = async (id: string): Promise<void> => {
+  const { error } = await supabase.from('registry_events').delete().eq('id', id);
+  if (error) console.error('deleteRegistryEvent:', error.message);
 };

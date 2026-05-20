@@ -366,3 +366,43 @@ export interface AttendanceSession {
   };
   absentMembers: string[];
 }
+
+// --- Registre des Événements ---
+
+export type RegistryEventType = 'Mariage' | "Sortie d'enfant" | 'Baptême';
+
+export interface RegistryEvent {
+  id: string;
+  type: RegistryEventType;
+  memberId?: string;
+
+  // Mariage
+  groomId?: string;
+  groomName?: string;
+  brideId?: string;
+  brideName?: string;
+  godfatherId?: string;
+  godfatherName?: string;
+  godmotherId?: string;
+  godmotherName?: string;
+  celebratingPastorId?: string;
+  celebratingPastorName?: string;
+  celebrationDate?: string;
+  civilMarriageDate?: string;
+  traditionalMarriageDate?: string;
+
+  // Sortie d'enfant
+  childFullName?: string;
+  fatherId?: string;
+  fatherName?: string;
+  motherId?: string;
+  motherName?: string;
+  dedicationDate?: string;
+
+  // Baptême
+  baptismDate?: string;
+
+  observations?: string;
+  createdAt: string;
+  updatedAt?: string;
+}

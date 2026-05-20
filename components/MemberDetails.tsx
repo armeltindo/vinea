@@ -150,13 +150,23 @@ const MemberDetails: React.FC<MemberDetailsProps> = ({ member, isOpen, onClose, 
 
   useEffect(() => {
     if (isOpen || asPage) {
-      getMembers().then(setAllMembers);
-      getDiscipleshipPairs().then(setDiscipleshipPairs);
-      getDepartmentActivities().then(setActivities);
-      getDiscipleshipEnrollments().then(setEnrollments);
-      getFinancialRecords().then(setFinancialRecords);
-      getAttendanceSessions().then(setAttendanceSessions);
-      getRegistryEventsByMemberId(member.id).then(setRegistryEvents);
+      Promise.all([
+        getMembers(),
+        getDiscipleshipPairs(),
+        getDepartmentActivities(),
+        getDiscipleshipEnrollments(),
+        getFinancialRecords(),
+        getAttendanceSessions(),
+        getRegistryEventsByMemberId(member.id),
+      ]).then(([members, pairs, activities, enrollments, finances, attendance, registryEvts]) => {
+        setAllMembers(members);
+        setDiscipleshipPairs(pairs);
+        setActivities(activities);
+        setEnrollments(enrollments);
+        setFinancialRecords(finances);
+        setAttendanceSessions(attendance);
+        setRegistryEvents(registryEvts);
+      });
     }
   }, [isOpen, asPage, member.id]);
 

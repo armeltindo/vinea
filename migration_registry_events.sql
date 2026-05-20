@@ -2,26 +2,26 @@
 -- Module : Registre (Mariage, Sortie d'enfant, Baptême)
 
 CREATE TABLE IF NOT EXISTS registry_events (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
   type TEXT NOT NULL CHECK (type IN ('Mariage', 'Sortie d''enfant', 'Baptême')),
 
   -- Lien principal au membre
-  member_id UUID REFERENCES members(id) ON DELETE SET NULL,
+  member_id TEXT REFERENCES members(id) ON DELETE SET NULL,
 
   -- Mariage : époux & épouse (obligatoires)
-  groom_id UUID REFERENCES members(id) ON DELETE SET NULL,
+  groom_id TEXT REFERENCES members(id) ON DELETE SET NULL,
   groom_name TEXT,
-  bride_id UUID REFERENCES members(id) ON DELETE SET NULL,
+  bride_id TEXT REFERENCES members(id) ON DELETE SET NULL,
   bride_name TEXT,
 
   -- Mariage : témoins (facultatifs, membres ou non)
-  godfather_id UUID REFERENCES members(id) ON DELETE SET NULL,
+  godfather_id TEXT REFERENCES members(id) ON DELETE SET NULL,
   godfather_name TEXT,
-  godmother_id UUID REFERENCES members(id) ON DELETE SET NULL,
+  godmother_id TEXT REFERENCES members(id) ON DELETE SET NULL,
   godmother_name TEXT,
 
   -- Pasteur célébrant (commun à tous les types)
-  celebrating_pastor_id UUID REFERENCES members(id) ON DELETE SET NULL,
+  celebrating_pastor_id TEXT REFERENCES members(id) ON DELETE SET NULL,
   celebrating_pastor_name TEXT,
 
   -- Dates mariage
@@ -31,9 +31,9 @@ CREATE TABLE IF NOT EXISTS registry_events (
 
   -- Sortie d'enfant
   child_full_name TEXT,
-  father_id UUID REFERENCES members(id) ON DELETE SET NULL,
+  father_id TEXT REFERENCES members(id) ON DELETE SET NULL,
   father_name TEXT,
-  mother_id UUID REFERENCES members(id) ON DELETE SET NULL,
+  mother_id TEXT REFERENCES members(id) ON DELETE SET NULL,
   mother_name TEXT,
   dedication_date DATE,
 

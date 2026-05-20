@@ -54,7 +54,7 @@ export interface EventFormData {
   civilMarriageDate: string;
   traditionalMarriageDate: string;
   observations: string;
-  childFullName: string;
+  childFullName: string; childId?: string;
   fatherName: string; fatherId?: string;
   motherName: string; motherId?: string;
   dedicationDate: string;
@@ -73,7 +73,7 @@ export const emptyForm = (): EventFormData => ({
   civilMarriageDate: '',
   traditionalMarriageDate: '',
   observations: '',
-  childFullName: '',
+  childFullName: '', childId: undefined,
   fatherName: '', fatherId: undefined,
   motherName: '', motherId: undefined,
   dedicationDate: '',
@@ -104,6 +104,7 @@ export const eventToForm = (e: RegistryEvent, members: Member[]): EventFormData 
     traditionalMarriageDate: e.traditionalMarriageDate || '',
     observations: e.observations || '',
     childFullName: e.childFullName || '',
+    childId: undefined,
     fatherName: e.fatherName || getMemberName(e.fatherId),
     fatherId: e.fatherId,
     motherName: e.motherName || getMemberName(e.motherId),
@@ -452,15 +453,13 @@ const RegistryEventModal: React.FC<RegistryEventModalProps> = ({
             {form.type === "Sortie d'enfant" && (
               <div className="space-y-5">
                 <div>
-                  <label className="block text-xs font-medium text-slate-600 mb-1.5">
-                    Nom et prénom de l'enfant <span className="text-rose-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    value={form.childFullName}
-                    onChange={e => set('childFullName', e.target.value)}
+                  <MemberPicker
+                    members={members}
+                    label="Nom et prénom de l'enfant"
+                    required
+                    value={{ id: form.childId, name: form.childFullName }}
+                    onChange={v => setForm(f => ({ ...f, childId: v.id, childFullName: v.name }))}
                     placeholder="Ex : Jean-Pierre KOUDOU"
-                    className={inputCls(errors.childFullName)}
                   />
                   {errors.childFullName && <p className="text-[10px] text-rose-500 mt-1">{errors.childFullName}</p>}
                 </div>

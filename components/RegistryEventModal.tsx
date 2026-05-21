@@ -326,41 +326,60 @@ const RegistryEventModal: React.FC<RegistryEventModalProps> = ({
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={onClose} />
       <div className="relative w-full max-w-2xl bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
-        {/* Header */}
-        <div className="px-6 py-5 border-b border-slate-100 flex items-center justify-between shrink-0">
-          <div>
-            <h2 className="text-base font-bold text-slate-900">{initial ? 'Modifier l\'événement' : 'Nouvel événement'}</h2>
-            <p className="text-xs text-slate-400 mt-0.5">Registre paroissial</p>
-          </div>
-          <button onClick={onClose} className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-xl transition-colors">
-            <X size={18} />
-          </button>
-        </div>
+        {/* Header — coloré selon le type d'événement */}
+        {(() => {
+          const cfg = typeConfig[form.type];
+          const Icon = cfg.icon;
+          return (
+            <div className={cn("px-6 py-5 border-b flex items-center justify-between shrink-0 bg-gradient-to-r", cfg.gradient, cfg.border.replace('border-', 'border-b-'))}>
+              <div className="flex items-center gap-3">
+                <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center shadow-sm shrink-0", cfg.bg)}>
+                  <Icon size={20} className={cfg.color} />
+                </div>
+                <div>
+                  <h2 className="text-base font-bold text-slate-900">
+                    {initial ? 'Modifier l\'événement' : 'Nouvel événement'}
+                  </h2>
+                  {initial && (
+                    <span className={cn("text-[10px] font-bold px-2 py-0.5 rounded-full", cfg.badge)}>{form.type}</span>
+                  )}
+                </div>
+              </div>
+              <button onClick={onClose} className="p-2 text-slate-400 hover:text-slate-600 hover:bg-white/70 rounded-xl transition-colors">
+                <X size={18} />
+              </button>
+            </div>
+          );
+        })()}
 
         <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto">
           <div className="p-6 space-y-6">
             {/* Type selector (only for new events) */}
             {!initial && (
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-2">Type d'événement</label>
-                <div className="grid grid-cols-3 gap-2">
+                <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">Type d'événement</label>
+                <div className="grid grid-cols-3 gap-3">
                   {EVENT_TYPES.map(t => {
                     const cfg = typeConfig[t];
                     const Icon = cfg.icon;
+                    const isSelected = form.type === t;
                     return (
                       <button
                         key={t}
                         type="button"
                         onClick={() => { setForm({ ...emptyForm(), type: t }); setErrors({}); }}
                         className={cn(
-                          "flex flex-col items-center gap-2 p-3 rounded-xl border-2 text-xs font-semibold transition-all",
-                          form.type === t
-                            ? `${cfg.bg} ${cfg.border} ${cfg.color} border-current`
-                            : "border-slate-100 text-slate-400 hover:border-slate-200"
+                          "flex flex-col items-center gap-2.5 py-4 px-3 rounded-xl border-2 text-xs font-bold transition-all",
+                          isSelected
+                            ? `${cfg.bg} ${cfg.color} shadow-sm`
+                            : "border-slate-100 text-slate-400 hover:border-slate-200 hover:bg-slate-50",
+                          isSelected ? cfg.border : ''
                         )}
                       >
-                        <Icon size={20} />
-                        {t}
+                        <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center transition-all", isSelected ? cfg.bg + ' shadow-inner border ' + cfg.border : 'bg-slate-100')}>
+                          <Icon size={20} className={isSelected ? cfg.color : 'text-slate-400'} />
+                        </div>
+                        <span>{t}</span>
                       </button>
                     );
                   })}
@@ -370,74 +389,88 @@ const RegistryEventModal: React.FC<RegistryEventModalProps> = ({
 
             {/* ── MARIAGE ── */}
             {form.type === 'Mariage' && (
-              <div className="space-y-5">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <MemberPicker
-                      members={members}
-                      label="Époux"
-                      required
-                      value={{ id: form.groomId, name: form.groomName }}
-                      onChange={v => setForm(f => ({ ...f, groomId: v.id, groomName: v.name }))}
-                      placeholder="Rechercher l'époux…"
-                    />
-                    {errors.groomName && <p className="text-[10px] text-rose-500 mt-1">{errors.groomName}</p>}
-                  </div>
-                  <div>
-                    <MemberPicker
-                      members={members}
-                      label="Épouse"
-                      required
-                      value={{ id: form.brideId, name: form.brideName }}
-                      onChange={v => setForm(f => ({ ...f, brideId: v.id, brideName: v.name }))}
-                      placeholder="Rechercher l'épouse…"
-                    />
-                    {errors.brideName && <p className="text-[10px] text-rose-500 mt-1">{errors.brideName}</p>}
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <MemberPicker
-                    members={members}
-                    label="Parrain du mariage"
-                    value={{ id: form.godfatherId, name: form.godfatherName }}
-                    onChange={v => setForm(f => ({ ...f, godfatherId: v.id, godfatherName: v.name }))}
-                    placeholder="Rechercher le parrain…"
-                  />
-                  <MemberPicker
-                    members={members}
-                    label="Marraine du mariage"
-                    value={{ id: form.godmotherId, name: form.godmotherName }}
-                    onChange={v => setForm(f => ({ ...f, godmotherId: v.id, godmotherName: v.name }))}
-                    placeholder="Rechercher la marraine…"
-                  />
-                </div>
-
-                <MemberPicker
-                  members={members}
-                  label="Pasteur célébrant"
-                  value={{ id: form.celebratingPastorId, name: form.celebratingPastorName }}
-                  onChange={v => setForm(f => ({ ...f, celebratingPastorId: v.id, celebratingPastorName: v.name }))}
-                  placeholder="Rechercher le pasteur…"
-                />
-
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  <div>
-                    <label className="block text-xs font-medium text-slate-600 mb-1.5">Date de célébration</label>
-                    <input type="date" value={form.celebrationDate} onChange={e => set('celebrationDate', e.target.value)} className={inputCls()} />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-medium text-slate-600 mb-1.5">Date mariage civil</label>
-                    <input type="date" value={form.civilMarriageDate} onChange={e => set('civilMarriageDate', e.target.value)} className={inputCls()} />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-medium text-slate-600 mb-1.5">Date de la dot</label>
-                    <input type="date" value={form.traditionalMarriageDate} onChange={e => set('traditionalMarriageDate', e.target.value)} className={inputCls()} />
-                  </div>
-                </div>
-
+              <div className="space-y-6">
+                {/* Les époux */}
                 <div>
-                  <label className="block text-xs font-medium text-slate-600 mb-1.5">Autres observations</label>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-3">Les époux</p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <MemberPicker
+                        members={members}
+                        label="Époux"
+                        required
+                        value={{ id: form.groomId, name: form.groomName }}
+                        onChange={v => setForm(f => ({ ...f, groomId: v.id, groomName: v.name }))}
+                        placeholder="Rechercher l'époux…"
+                      />
+                      {errors.groomName && <p className="text-[10px] text-rose-500 mt-1">{errors.groomName}</p>}
+                    </div>
+                    <div>
+                      <MemberPicker
+                        members={members}
+                        label="Épouse"
+                        required
+                        value={{ id: form.brideId, name: form.brideName }}
+                        onChange={v => setForm(f => ({ ...f, brideId: v.id, brideName: v.name }))}
+                        placeholder="Rechercher l'épouse…"
+                      />
+                      {errors.brideName && <p className="text-[10px] text-rose-500 mt-1">{errors.brideName}</p>}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Témoins & célébrant */}
+                <div>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-3">Témoins &amp; célébrant</p>
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <MemberPicker
+                        members={members}
+                        label="Parrain du mariage"
+                        value={{ id: form.godfatherId, name: form.godfatherName }}
+                        onChange={v => setForm(f => ({ ...f, godfatherId: v.id, godfatherName: v.name }))}
+                        placeholder="Rechercher le parrain…"
+                      />
+                      <MemberPicker
+                        members={members}
+                        label="Marraine du mariage"
+                        value={{ id: form.godmotherId, name: form.godmotherName }}
+                        onChange={v => setForm(f => ({ ...f, godmotherId: v.id, godmotherName: v.name }))}
+                        placeholder="Rechercher la marraine…"
+                      />
+                    </div>
+                    <MemberPicker
+                      members={members}
+                      label="Pasteur célébrant"
+                      value={{ id: form.celebratingPastorId, name: form.celebratingPastorName }}
+                      onChange={v => setForm(f => ({ ...f, celebratingPastorId: v.id, celebratingPastorName: v.name }))}
+                      placeholder="Rechercher le pasteur…"
+                    />
+                  </div>
+                </div>
+
+                {/* Dates */}
+                <div>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-3">Dates</p>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div>
+                      <label className="block text-xs font-medium text-slate-600 mb-1.5">Célébration</label>
+                      <input type="date" value={form.celebrationDate} onChange={e => set('celebrationDate', e.target.value)} className={inputCls()} />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-slate-600 mb-1.5">Mariage civil</label>
+                      <input type="date" value={form.civilMarriageDate} onChange={e => set('civilMarriageDate', e.target.value)} className={inputCls()} />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-slate-600 mb-1.5">Dot</label>
+                      <input type="date" value={form.traditionalMarriageDate} onChange={e => set('traditionalMarriageDate', e.target.value)} className={inputCls()} />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Observations */}
+                <div>
+                  <label className="block text-xs font-medium text-slate-600 mb-1.5">Observations</label>
                   <textarea
                     rows={3}
                     value={form.observations}
@@ -451,8 +484,10 @@ const RegistryEventModal: React.FC<RegistryEventModalProps> = ({
 
             {/* ── SORTIE D'ENFANT ── */}
             {form.type === "Sortie d'enfant" && (
-              <div className="space-y-5">
+              <div className="space-y-6">
+                {/* L'enfant */}
                 <div>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-3">L'enfant</p>
                   <MemberPicker
                     members={members}
                     label="Nom et prénom de l'enfant"
@@ -464,43 +499,53 @@ const RegistryEventModal: React.FC<RegistryEventModalProps> = ({
                   {errors.childFullName && <p className="text-[10px] text-rose-500 mt-1">{errors.childFullName}</p>}
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <MemberPicker
-                    members={members}
-                    label="Père"
-                    value={{ id: form.fatherId, name: form.fatherName }}
-                    onChange={v => setForm(f => ({ ...f, fatherId: v.id, fatherName: v.name }))}
-                    placeholder="Rechercher le père…"
-                  />
-                  <MemberPicker
-                    members={members}
-                    label="Mère"
-                    value={{ id: form.motherId, name: form.motherName }}
-                    onChange={v => setForm(f => ({ ...f, motherId: v.id, motherName: v.name }))}
-                    placeholder="Rechercher la mère…"
-                  />
+                {/* Parents */}
+                <div>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-3">Parents</p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <MemberPicker
+                      members={members}
+                      label="Père"
+                      value={{ id: form.fatherId, name: form.fatherName }}
+                      onChange={v => setForm(f => ({ ...f, fatherId: v.id, fatherName: v.name }))}
+                      placeholder="Rechercher le père…"
+                    />
+                    <MemberPicker
+                      members={members}
+                      label="Mère"
+                      value={{ id: form.motherId, name: form.motherName }}
+                      onChange={v => setForm(f => ({ ...f, motherId: v.id, motherName: v.name }))}
+                      placeholder="Rechercher la mère…"
+                    />
+                  </div>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-xs font-medium text-slate-600 mb-1.5">Date de sortie</label>
-                    <input type="date" value={form.dedicationDate} onChange={e => set('dedicationDate', e.target.value)} className={inputCls()} />
+                {/* Cérémonie */}
+                <div>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-3">Cérémonie</p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-medium text-slate-600 mb-1.5">Date de sortie</label>
+                      <input type="date" value={form.dedicationDate} onChange={e => set('dedicationDate', e.target.value)} className={inputCls()} />
+                    </div>
+                    <MemberPicker
+                      members={members}
+                      label="Pasteur célébrant"
+                      value={{ id: form.celebratingPastorId, name: form.celebratingPastorName }}
+                      onChange={v => setForm(f => ({ ...f, celebratingPastorId: v.id, celebratingPastorName: v.name }))}
+                      placeholder="Rechercher le pasteur…"
+                    />
                   </div>
-                  <MemberPicker
-                    members={members}
-                    label="Pasteur célébrant"
-                    value={{ id: form.celebratingPastorId, name: form.celebratingPastorName }}
-                    onChange={v => setForm(f => ({ ...f, celebratingPastorId: v.id, celebratingPastorName: v.name }))}
-                    placeholder="Rechercher le pasteur…"
-                  />
                 </div>
               </div>
             )}
 
             {/* ── BAPTÊME ── */}
             {form.type === 'Baptême' && (
-              <div className="space-y-5">
+              <div className="space-y-6">
+                {/* Le baptisé */}
                 <div>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-3">Le baptisé</p>
                   <MemberPicker
                     members={members}
                     label="Membre baptisé"
@@ -512,18 +557,22 @@ const RegistryEventModal: React.FC<RegistryEventModalProps> = ({
                   {errors.memberName && <p className="text-[10px] text-rose-500 mt-1">{errors.memberName}</p>}
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-xs font-medium text-slate-600 mb-1.5">Date de baptême</label>
-                    <input type="date" value={form.baptismDate} onChange={e => set('baptismDate', e.target.value)} className={inputCls()} />
+                {/* Cérémonie */}
+                <div>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-3">Cérémonie</p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-medium text-slate-600 mb-1.5">Date de baptême</label>
+                      <input type="date" value={form.baptismDate} onChange={e => set('baptismDate', e.target.value)} className={inputCls()} />
+                    </div>
+                    <MemberPicker
+                      members={members}
+                      label="Pasteur célébrant"
+                      value={{ id: form.celebratingPastorId, name: form.celebratingPastorName }}
+                      onChange={v => setForm(f => ({ ...f, celebratingPastorId: v.id, celebratingPastorName: v.name }))}
+                      placeholder="Rechercher le pasteur…"
+                    />
                   </div>
-                  <MemberPicker
-                    members={members}
-                    label="Pasteur célébrant"
-                    value={{ id: form.celebratingPastorId, name: form.celebratingPastorName }}
-                    onChange={v => setForm(f => ({ ...f, celebratingPastorId: v.id, celebratingPastorName: v.name }))}
-                    placeholder="Rechercher le pasteur…"
-                  />
                 </div>
               </div>
             )}

@@ -16,6 +16,8 @@ import {
   Loader2,
   Calendar,
   BookMarked,
+  ChevronRight,
+  FileSearch,
 } from 'lucide-react';
 import { getRegistryEvents, createRegistryEvent, updateRegistryEvent, deleteRegistryEvent, getMembers } from '../lib/db';
 import { RegistryEvent, RegistryEventType, Member } from '../types';
@@ -145,35 +147,57 @@ const Registry: React.FC = () => {
         )}
       </div>
 
-      {/* Stats */}
+      {/* Stats — cliquables pour filtrer */}
       <div className="grid grid-cols-3 gap-3">
         {(['Mariage', "Sortie d'enfant", 'Baptême'] as RegistryEventType[]).map(t => {
           const cfg = typeConfig[t];
           const Icon = cfg.icon;
           const count = events.filter(e => e.type === t).length;
+          const isActive = activeTab === t;
+          const singularLabel: Record<string, string> = {
+            'Mariage': 'Mariage',
+            "Sortie d'enfant": "Sortie d'enfant",
+            'Baptême': 'Baptême',
+          };
+          const pluralLabel: Record<string, string> = {
+            'Mariage': 'Mariages',
+            "Sortie d'enfant": "Sorties d'enfants",
+            'Baptême': 'Baptêmes',
+          };
+          const label = count !== 1 ? pluralLabel[t] : singularLabel[t];
           return (
-            <div key={t} className={cn("bg-white rounded-2xl border p-4 flex items-center gap-3 shadow-sm", cfg.border)}>
-              <div className={cn("w-9 h-9 rounded-xl flex items-center justify-center shrink-0", cfg.bg)}>
-                <Icon size={18} className={cfg.color} />
+            <button
+              key={t}
+              onClick={() => setActiveTab(isActive ? 'Tous' : t)}
+              className={cn(
+                "bg-white rounded-2xl border p-4 flex items-center gap-3 shadow-sm transition-all text-left group hover:shadow-md active:scale-[0.98]",
+                isActive ? cn(cfg.border, cfg.bg + '/30') : "border-slate-100 hover:border-slate-200"
+              )}
+            >
+              <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-transform group-hover:scale-105", cfg.bg)}>
+                <Icon size={19} className={cfg.color} />
               </div>
-              <div>
-                <p className="text-xl font-bold text-slate-900">{count}</p>
-                <p className="text-[11px] text-slate-400 font-medium leading-tight">{t}{count !== 1 ? 's' : ''}</p>
+              <div className="flex-1 min-w-0">
+                <p className="text-2xl font-bold text-slate-900 leading-none">{count}</p>
+                <p className={cn("text-[11px] font-semibold leading-tight mt-0.5 truncate", isActive ? cfg.color : "text-slate-400")}>
+                  {label}
+                </p>
               </div>
-            </div>
+              <ChevronRight size={14} className={cn("shrink-0 transition-all", isActive ? cfg.color : "text-slate-200 group-hover:text-slate-400")} />
+            </button>
           );
         })}
       </div>
 
       {/* Filters + Search */}
       <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
-        <div className="flex gap-1 bg-slate-100 p-1 rounded-xl flex-wrap">
+        <div className="flex gap-1 bg-slate-100 p-1 rounded-xl">
           {tabs.map(tab => (
             <button
               key={tab.value}
               onClick={() => setActiveTab(tab.value)}
               className={cn(
-                "px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5",
+                "px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 whitespace-nowrap",
                 activeTab === tab.value
                   ? "bg-white text-slate-900 shadow-sm"
                   : "text-slate-500 hover:text-slate-700"
@@ -188,13 +212,13 @@ const Registry: React.FC = () => {
           ))}
         </div>
 
-        <div className="relative flex-1 min-w-0 sm:max-w-xs">
+        <div className="relative flex-1 min-w-0">
           <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
           <input
             type="text"
             value={search}
             onChange={e => setSearch(e.target.value)}
-            placeholder="Rechercher…"
+            placeholder="Rechercher un événement…"
             className="w-full pl-8 pr-8 py-2.5 text-xs bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-300 transition-all"
           />
           {search && (
@@ -207,22 +231,43 @@ const Registry: React.FC = () => {
 
       {/* List */}
       {loading ? (
-        <div className="flex items-center justify-center py-20 opacity-40">
+        <div className="flex items-center justify-center py-24 opacity-40">
           <Loader2 size={28} className="animate-spin text-indigo-400" />
         </div>
       ) : filtered.length === 0 ? (
-        <div className="text-center py-20 opacity-40 space-y-3">
-          <BookMarked size={40} className="mx-auto text-slate-300" strokeWidth={1.5} />
-          <p className="text-sm font-medium text-slate-400">Aucun événement trouvé</p>
-          {canWrite('registre') && events.length === 0 && (
+        events.length === 0 ? (
+          /* État vide initial — aucun événement dans la base */
+          <div className="flex flex-col items-center justify-center py-16 px-6">
+            <div className="w-20 h-20 bg-indigo-50 rounded-3xl flex items-center justify-center mb-5 shadow-inner">
+              <BookMarked size={34} className="text-indigo-300" strokeWidth={1.5} />
+            </div>
+            <h3 className="text-base font-bold text-slate-700 mb-1">Aucun événement enregistré</h3>
+            <p className="text-xs text-slate-400 text-center max-w-xs mb-6 leading-relaxed">
+              Mariages, sorties d'enfants, baptêmes — consignez ici tous les moments importants de votre paroisse.
+            </p>
+            {canWrite('registre') && (
+              <button
+                onClick={() => { setEditingEvent(undefined); setModalOpen(true); }}
+                className="flex items-center gap-2 px-5 py-3 bg-indigo-600 text-white rounded-xl text-xs font-semibold hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-200"
+              >
+                <Plus size={15} />
+                Enregistrer le premier événement
+              </button>
+            )}
+          </div>
+        ) : (
+          /* Aucun résultat pour la recherche/filtre */
+          <div className="flex flex-col items-center justify-center py-16 px-6 opacity-60">
+            <FileSearch size={36} className="text-slate-300 mb-3" strokeWidth={1.5} />
+            <p className="text-sm font-medium text-slate-400">Aucun résultat</p>
             <button
-              onClick={() => { setEditingEvent(undefined); setModalOpen(true); }}
-              className="text-xs text-indigo-600 underline font-medium"
+              onClick={() => { setSearch(''); setActiveTab('Tous'); }}
+              className="mt-3 text-xs text-indigo-600 font-medium hover:underline"
             >
-              Ajouter le premier événement
+              Réinitialiser les filtres
             </button>
-          )}
-        </div>
+          </div>
+        )
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {filtered.map(event => {
@@ -232,21 +277,23 @@ const Registry: React.FC = () => {
             return (
               <div
                 key={event.id}
-                className="bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-md hover:border-slate-200 transition-all overflow-hidden"
+                onClick={() => navigate(`/registre/${event.id}`)}
+                className="bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-lg hover:border-slate-200 hover:-translate-y-0.5 transition-all overflow-hidden cursor-pointer group"
               >
                 {/* Card header */}
-                <div className={cn("px-5 py-4 border-b flex items-center gap-3", cfg.border, cfg.bg + '/40')}>
-                  <div className={cn("w-9 h-9 rounded-xl flex items-center justify-center shrink-0", cfg.bg)}>
-                    <Icon size={17} className={cfg.color} />
+                <div className={cn("px-5 py-4 border-b flex items-center gap-3", cfg.border, cfg.bg + '/50')}>
+                  <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center shrink-0 shadow-sm", cfg.bg)}>
+                    <Icon size={18} className={cfg.color} />
                   </div>
                   <div className="flex-1 min-w-0">
                     <span className={cn("text-[10px] font-bold px-2 py-0.5 rounded-full", cfg.badge)}>{event.type}</span>
-                    <p className="text-sm font-bold text-slate-800 mt-0.5 truncate">{title}</p>
+                    <p className="text-sm font-bold text-slate-800 mt-0.5 truncate group-hover:text-indigo-700 transition-colors">{title}</p>
                   </div>
+                  <ChevronRight size={15} className="text-slate-200 group-hover:text-indigo-400 group-hover:translate-x-0.5 transition-all shrink-0" />
                 </div>
 
                 {/* Card body */}
-                <div className="px-5 py-3 space-y-1.5">
+                <div className="px-5 py-3 space-y-1.5 min-h-[52px]">
                   {event.type === 'Mariage' && (
                     <>
                       {event.celebrationDate && (
@@ -307,29 +354,30 @@ const Registry: React.FC = () => {
                 </div>
 
                 {/* Card footer */}
-                <div className="px-5 py-3 border-t border-slate-50 flex items-center gap-2">
-                  <button
-                    onClick={() => navigate(`/registre/${event.id}`)}
-                    className="flex-1 flex items-center justify-center gap-1.5 py-2 text-xs font-medium text-indigo-600 bg-indigo-50 rounded-xl hover:bg-indigo-100 transition-colors"
-                  >
-                    <Eye size={12} /> Détails
-                  </button>
-                  {canWrite('registre') && (
-                    <button
-                      onClick={() => { setEditingEvent(event); setModalOpen(true); }}
-                      className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-colors"
-                    >
-                      <Edit size={14} />
-                    </button>
-                  )}
-                  {canDelete('registre') && (
-                    <button
-                      onClick={() => setDeleteTarget(event)}
-                      className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-colors"
-                    >
-                      <Trash2 size={14} />
-                    </button>
-                  )}
+                <div className="px-5 py-2.5 border-t border-slate-50 flex items-center justify-between">
+                  <span className="text-[10px] text-slate-300">
+                    {event.createdAt ? formatDate(event.createdAt.split('T')[0]) : '—'}
+                  </span>
+                  <div className="flex items-center gap-1" onClick={e => e.stopPropagation()}>
+                    {canWrite('registre') && (
+                      <button
+                        onClick={() => { setEditingEvent(event); setModalOpen(true); }}
+                        className="p-1.5 text-slate-300 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+                        title="Modifier"
+                      >
+                        <Edit size={13} />
+                      </button>
+                    )}
+                    {canDelete('registre') && (
+                      <button
+                        onClick={() => setDeleteTarget(event)}
+                        className="p-1.5 text-slate-300 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
+                        title="Supprimer"
+                      >
+                        <Trash2 size={13} />
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
             );

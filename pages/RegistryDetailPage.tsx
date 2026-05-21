@@ -7,7 +7,6 @@ import {
   Trash2,
   Edit,
   Heart,
-  Baby,
   Waves,
   Calendar,
   User,
@@ -270,17 +269,6 @@ const MariageDetail: React.FC<DetailProps> = ({ event, getMember, resolvedName, 
 
 const SortieEnfantDetail: React.FC<DetailProps> = ({ event, getMember, resolvedName, onNavigate }) => (
   <div className="space-y-4">
-    {/* L'enfant — full width */}
-    <div className="bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-100 rounded-2xl p-6 flex items-center gap-5">
-      <div className="w-16 h-16 bg-white rounded-2xl border border-amber-200 flex items-center justify-center shadow-sm shrink-0">
-        <Baby size={28} className="text-amber-500" />
-      </div>
-      <div>
-        <p className="text-[10px] font-bold text-amber-500 uppercase tracking-wider mb-1">Nom de l'enfant</p>
-        <p className="text-2xl font-bold text-slate-900 leading-tight">{event.childFullName || '—'}</p>
-      </div>
-    </div>
-
     {/* Parents + Cérémonie */}
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
       <Section title="Parents" icon={<Users size={13} />} colorClass="text-amber-500">

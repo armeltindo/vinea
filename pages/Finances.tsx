@@ -692,9 +692,11 @@ const Finances: React.FC = () => {
   const handleExportCSV = () => {
     const rows = filteredOperations.map(op => {
       const member = members.find(m => m.id === op.memberId);
-      const nameStr = member 
-        ? `${member.lastName.toUpperCase()} ${formatFirstName(member.firstName)}` 
+      const nameStr = member
+        ? `${member.lastName.toUpperCase()} ${formatFirstName(member.firstName)}`
         : (op.externalName || 'Anonyme');
+      const campaign = op.campaignId ? campaigns.find(c => c.id === op.campaignId) : null;
+      const campaignName = campaign ? campaign.name : '';
       return [
         op.date,
         op.type,
@@ -702,10 +704,11 @@ const Finances: React.FC = () => {
         nameStr,
         op.amount,
         op.paymentMethod,
-        `"${(op.description || '').replace(/"/g, '""')}"`
+        `"${(op.description || '').replace(/"/g, '""')}"`,
+        `"${campaignName.replace(/"/g, '""')}"`
       ];
     });
-    const headers = ['Date', 'Type', 'Catégorie', 'Fidèle', 'Montant', 'Méthode', 'Description'];
+    const headers = ['Date', 'Type', 'Catégorie', 'Fidèle', 'Montant', 'Méthode', 'Description', 'Campagne'];
     const csvContent = "\ufeff" + [headers.join(';'), ...rows.map(r => r.join(';'))].join('\n');
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
